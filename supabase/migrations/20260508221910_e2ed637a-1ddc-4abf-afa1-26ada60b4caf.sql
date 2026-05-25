@@ -1,0 +1,1 @@
+ALTER TABLE public.pedidos REPLICA IDENTITY FULL;

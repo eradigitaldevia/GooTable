@@ -1,0 +1,1 @@
+DELETE FROM pedidos WHERE observacao = 'TESTE_BURST_DASHBOARD';

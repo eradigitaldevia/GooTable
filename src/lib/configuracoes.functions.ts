@@ -1,0 +1,88 @@
+import { createServerFn } from "@tanstack/react-start";
+import { z } from "zod";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { assertAcessoRestaurante } from "./auth.server";
+
+/* ---------- Validação PIX (chamada no submit) ---------- */
+
+const pixSchema = z.object({
+  pix_habilitado: z.boolean(),
+  pix_chave: z.string().trim().max(120).nullable(),
+  pix_nome_titular: z.string().trim().max(80).nullable(),
+});
+
+export const validarPixFn = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) => pixSchema.parse(d))
+  .handler(async ({ data }) => {
+    if (data.pix_habilitado && !data.pix_chave) {
+      throw new Error("Informe a chave PIX ou desabilite o PIX");
+    }
+    return { ok: true };
+  });
+
+const configSchema = z.object({
+  restauranteId: z.string().uuid(),
+  nome: z.string().trim().min(2).max(100),
+  cor_primaria: z.string().regex(/^#[0-9a-fA-F]{6}$/, "Cor inválida"),
+  logo_url: z.string().nullable(),
+  pix_habilitado: z.boolean(),
+  pix_chave: z.string().trim().max(120).nullable(),
+  pix_nome_titular: z.string().trim().max(80).nullable(),
+});
+
+export const atualizarConfiguracoesFn = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) => configSchema.parse(d))
+  .handler(async ({ context, data }) => {
+    const { supabase, userId } = context;
+    await assertAcessoRestaurante(supabase, userId, data.restauranteId);
+
+    // Regra de negócio: PIX habilitado exige chave preenchida.
+    if (data.pix_habilitado && !data.pix_chave) {
+      throw new Error("Informe a chave PIX ou desabilite o PIX");
+    }
+
+    const { error } = await supabase
+      .from("restaurantes")
+      .update({
+        nome: data.nome,
+        cor_primaria: data.cor_primaria,
+        logo_url: data.logo_url,
+        pix_habilitado: data.pix_habilitado,
+        pix_chave: data.pix_chave || null,
+        pix_nome_titular: data.pix_nome_titular || null,
+      })
+      .eq("id", data.restauranteId);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+/* ---------- Upload de logo ---------- */
+
+export const uploadLogoFn = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) => {
+    if (!(d instanceof FormData)) throw new Error("Esperado FormData");
+    const file = d.get("file");
+    const restauranteId = d.get("restauranteId");
+    if (!(file instanceof File)) throw new Error("Arquivo inválido");
+    if (typeof restauranteId !== "string" || !restauranteId) throw new Error("restauranteId inválido");
+    z.string().uuid().parse(restauranteId);
+    if (file.size > 2 * 1024 * 1024) throw new Error("Logo maior que 2MB");
+    return { file, restauranteId };
+  })
+  .handler(async ({ context, data }) => {
+    const { supabase, userId } = context;
+    await assertAcessoRestaurante(supabase, userId, data.restauranteId);
+
+    const ext = data.file.name.split(".").pop() ?? "png";
+    const path = `${data.restauranteId}/logo-${Date.now()}.${ext}`;
+    const { error } = await supabaseAdmin.storage
+      .from("produtos")
+      .upload(path, data.file, { upsert: true, contentType: data.file.type || undefined });
+    if (error) throw new Error(error.message);
+    const { data: pub } = supabaseAdmin.storage.from("produtos").getPublicUrl(path);
+    return { url: pub.publicUrl };
+  });

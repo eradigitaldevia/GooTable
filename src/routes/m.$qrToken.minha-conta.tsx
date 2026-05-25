@@ -1,0 +1,278 @@
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
+import { ArrowLeft, Loader2, Wallet, Receipt } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Slider } from "@/components/ui/slider";
+import { toast } from "sonner";
+import { useClienteMesa } from "@/hooks/use-cliente-mesa";
+import { useAplicarCashback, useMinhaConta } from "@/hooks/use-minha-conta";
+import { useRealtimeMesa } from "@/hooks/use-realtime";
+import { formatBRL } from "@/lib/cart";
+
+export const Route = createFileRoute("/m/$qrToken/minha-conta")({
+  component: MinhaConta,
+});
+
+const PAGE_SIZE = 10;
+
+function MinhaConta() {
+  const { qrToken } = Route.useParams();
+  const navigate = useNavigate();
+  const { identidade, hidratado } = useClienteMesa(qrToken);
+  const [page, setPage] = useState(0);
+
+  useEffect(() => {
+    if (hidratado && !identidade) {
+      navigate({ to: "/m/$qrToken", params: { qrToken } });
+    }
+  }, [hidratado, identidade, navigate, qrToken]);
+
+  const { data, isLoading } = useMinhaConta({
+    qrToken,
+    clienteId: identidade?.clienteId,
+    comandaId: identidade?.comandaId,
+    sessaoId: identidade?.sessaoId,
+    page,
+    pageSize: PAGE_SIZE,
+  });
+
+  useRealtimeMesa(qrToken, identidade?.sessaoId);
+
+  const totalPages = data ? Math.max(1, Math.ceil(data.historico_total / PAGE_SIZE)) : 1;
+
+
+  return (
+    <div className="min-h-screen bg-background pb-12">
+      <header className="sticky top-0 z-30 flex items-center gap-2 border-b bg-background/90 px-4 py-3 backdrop-blur">
+        <Link to="/m/$qrToken" params={{ qrToken }} className="rounded-full p-2 hover:bg-accent">
+          <ArrowLeft className="h-5 w-5" />
+        </Link>
+        <h1 className="text-lg font-bold">Minha Conta</h1>
+      </header>
+
+      <main className="mx-auto max-w-2xl px-4 py-4 space-y-4">
+        {isLoading || !hidratado || !data ? (
+          <div className="py-16 text-center">
+            <Loader2 className="mx-auto h-6 w-6 animate-spin text-primary" />
+          </div>
+        ) : (
+          <>
+            <section className="rounded-2xl border bg-card p-4 shadow-[var(--shadow-soft)]">
+              <div className="text-sm text-muted-foreground">Olá,</div>
+              <div className="text-xl font-bold">{data.cliente.nome}</div>
+              <div className="text-xs text-muted-foreground">{data.cliente.telefone}</div>
+            </section>
+
+            <section className="grid grid-cols-2 gap-3">
+              <div className="rounded-2xl border bg-card p-4 shadow-[var(--shadow-soft)]">
+                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <Wallet className="h-4 w-4" /> Cashback
+                </div>
+                <div className="mt-1 text-lg font-bold text-primary">
+                  {formatBRL(data.cliente.cashback_saldo)}
+                </div>
+              </div>
+              <div className="rounded-2xl border bg-card p-4 shadow-[var(--shadow-soft)]">
+                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <Receipt className="h-4 w-4" /> Pedidos
+                </div>
+                <div className="mt-1 text-lg font-bold">{data.cliente.pedidos_count}</div>
+              </div>
+            </section>
+
+            <section className="rounded-2xl border bg-card p-4 shadow-[var(--shadow-soft)]">
+              <div className="text-sm font-semibold">Esta visita</div>
+              <div className="mt-2 space-y-1 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Meu subtotal nesta comanda</span>
+                  <span className="font-semibold">
+                    {formatBRL(data.meu_subtotal_na_comanda)}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Meu consumo na mesa</span>
+                  <span className="font-semibold">
+                    {formatBRL(data.meu_consumo_na_sessao)}
+                  </span>
+                </div>
+              </div>
+            </section>
+
+            <CashbackSection
+              qrToken={qrToken}
+              clienteId={identidade?.clienteId}
+              comandaId={identidade?.comandaId}
+              sessaoId={identidade?.sessaoId}
+              saldo={data.cliente.cashback_saldo}
+              meuSubtotalComanda={data.meu_subtotal_na_comanda}
+              cashbackResgatadoComanda={data.cashback_resgatado_comanda}
+              programaAtivo={data.programa.ativo}
+              percentualMaxResgate={data.programa.percentual_max_resgate}
+            />
+
+            <section className="rounded-2xl border bg-card p-4 shadow-[var(--shadow-soft)]">
+              <div className="text-sm font-semibold">Resumo do cliente</div>
+              <div className="mt-2 grid grid-cols-2 gap-2 text-sm">
+                <div>
+                  <div className="text-xs text-muted-foreground">Total gasto</div>
+                  <div className="font-semibold">{formatBRL(data.cliente.total_gasto)}</div>
+                </div>
+                <div>
+                  <div className="text-xs text-muted-foreground">Ticket médio</div>
+                  <div className="font-semibold">{formatBRL(data.cliente.ticket_medio)}</div>
+                </div>
+                <div className="col-span-2">
+                  <div className="text-xs text-muted-foreground">Última visita</div>
+                  <div className="font-semibold">
+                    {data.cliente.ultima_visita
+                      ? new Date(data.cliente.ultima_visita).toLocaleString("pt-BR")
+                      : "—"}
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            <section className="rounded-2xl border bg-card p-4 shadow-[var(--shadow-soft)]">
+              <div className="flex items-center justify-between">
+                <div className="text-sm font-semibold">Histórico de pedidos</div>
+                <div className="text-xs text-muted-foreground">
+                  {data.historico_total} no total
+                </div>
+              </div>
+
+              {data.historico.length === 0 ? (
+                <p className="mt-3 text-sm text-muted-foreground">Sem pedidos anteriores.</p>
+              ) : (
+                <ul className="mt-3 divide-y">
+                  {data.historico.map((p) => (
+                    <li key={p.id} className="flex items-center justify-between py-2 text-sm">
+                      <div className="min-w-0">
+                        <div className="font-medium">
+                          {new Date(p.criado_em).toLocaleString("pt-BR")}
+                        </div>
+                        <div className="text-xs text-muted-foreground">{p.status}</div>
+                      </div>
+                      <div className="font-semibold">{formatBRL(p.total)}</div>
+                    </li>
+                  ))}
+                </ul>
+              )}
+
+              {data.historico_total > PAGE_SIZE && (
+                <div className="mt-3 flex items-center justify-between">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    disabled={page === 0}
+                    onClick={() => setPage((p) => Math.max(0, p - 1))}
+                  >
+                    Anterior
+                  </Button>
+                  <span className="text-xs text-muted-foreground">
+                    Página {page + 1} de {totalPages}
+                  </span>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    disabled={page + 1 >= totalPages}
+                    onClick={() => setPage((p) => p + 1)}
+                  >
+                    Próxima
+                  </Button>
+                </div>
+              )}
+            </section>
+          </>
+        )}
+      </main>
+    </div>
+  );
+}
+
+function CashbackSection({
+  qrToken,
+  clienteId,
+  comandaId,
+  sessaoId,
+  saldo,
+  meuSubtotalComanda,
+  cashbackResgatadoComanda,
+  programaAtivo,
+  percentualMaxResgate,
+}: {
+  qrToken: string;
+  clienteId: string | undefined;
+  comandaId: string | undefined;
+  sessaoId: string | undefined;
+  saldo: number;
+  meuSubtotalComanda: number;
+  cashbackResgatadoComanda: number;
+  programaAtivo: boolean;
+  percentualMaxResgate: number;
+}) {
+  const aplicar = useAplicarCashback(qrToken);
+  const limitePct = Math.round(meuSubtotalComanda * (percentualMaxResgate / 100) * 100) / 100;
+  const limite = Math.min(saldo, Math.max(0, limitePct - cashbackResgatadoComanda));
+  const [valor, setValor] = useState(0);
+
+  if (!programaAtivo) return null;
+
+  const podeAplicar = limite > 0 && meuSubtotalComanda > 0 && saldo > 0;
+
+  const handleAplicar = async () => {
+    if (!clienteId || !comandaId || !sessaoId) return;
+    if (valor <= 0) return;
+    try {
+      await aplicar.mutateAsync({ clienteId, comandaId, sessaoId, valor });
+      toast.success(`Cashback de ${formatBRL(valor)} aplicado`);
+      setValor(0);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Erro ao aplicar cashback");
+    }
+  };
+
+  return (
+    <section className="rounded-2xl border bg-card p-4 shadow-[var(--shadow-soft)]">
+      <div className="flex items-center gap-2 text-sm font-semibold">
+        <Wallet className="h-4 w-4" /> Aplicar cashback
+      </div>
+      {!podeAplicar ? (
+        <p className="mt-2 text-sm text-muted-foreground">
+          {saldo <= 0
+            ? "Você ainda não tem saldo de cashback."
+            : meuSubtotalComanda <= 0
+              ? "Adicione itens à sua comanda para aplicar cashback."
+              : "Limite de resgate desta comanda já atingido."}
+        </p>
+      ) : (
+        <>
+          <div className="mt-2 text-xs text-muted-foreground">
+            Saldo: <span className="font-semibold">{formatBRL(saldo)}</span> · Limite nesta
+            comanda: <span className="font-semibold">{formatBRL(limite)}</span>
+          </div>
+          <div className="mt-3">
+            <Slider
+              value={[valor]}
+              onValueChange={(v) => setValor(Math.min(limite, Math.max(0, v[0])))}
+              min={0}
+              max={limite}
+              step={0.5}
+            />
+            <div className="mt-2 flex items-center justify-between text-sm">
+              <span className="text-muted-foreground">Valor</span>
+              <span className="font-bold text-primary">{formatBRL(valor)}</span>
+            </div>
+          </div>
+          <Button
+            className="mt-3 w-full"
+            disabled={valor <= 0 || aplicar.isPending}
+            onClick={handleAplicar}
+          >
+            {aplicar.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+            Aplicar {formatBRL(valor)}
+          </Button>
+        </>
+      )}
+    </section>
+  );
+}

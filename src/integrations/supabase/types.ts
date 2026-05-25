@@ -1,0 +1,1184 @@
+export type Json =
+  | string
+  | number
+  | boolean
+  | null
+  | { [key: string]: Json | undefined }
+  | Json[]
+
+export type Database = {
+  // Allows to automatically instantiate createClient with right options
+  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
+  __InternalSupabase: {
+    PostgrestVersion: "14.5"
+  }
+  public: {
+    Tables: {
+      audit_logs: {
+        Row: {
+          acao: string
+          actor_user_id: string | null
+          criado_em: string
+          entidade: string
+          entidade_id: string | null
+          id: string
+          metadata: Json | null
+        }
+        Insert: {
+          acao: string
+          actor_user_id?: string | null
+          criado_em?: string
+          entidade: string
+          entidade_id?: string | null
+          id?: string
+          metadata?: Json | null
+        }
+        Update: {
+          acao?: string
+          actor_user_id?: string | null
+          criado_em?: string
+          entidade?: string
+          entidade_id?: string | null
+          id?: string
+          metadata?: Json | null
+        }
+        Relationships: []
+      }
+      campanhas: {
+        Row: {
+          agendada_para: string | null
+          atualizado_em: string
+          canal: Database["public"]["Enums"]["campanha_canal"]
+          conteudo_json: Json
+          criado_em: string
+          enviada_em: string | null
+          id: string
+          nome: string
+          restaurante_id: string
+          segmento_json: Json
+          status: Database["public"]["Enums"]["campanha_status"]
+          template_id: string | null
+        }
+        Insert: {
+          agendada_para?: string | null
+          atualizado_em?: string
+          canal: Database["public"]["Enums"]["campanha_canal"]
+          conteudo_json?: Json
+          criado_em?: string
+          enviada_em?: string | null
+          id?: string
+          nome: string
+          restaurante_id: string
+          segmento_json?: Json
+          status?: Database["public"]["Enums"]["campanha_status"]
+          template_id?: string | null
+        }
+        Update: {
+          agendada_para?: string | null
+          atualizado_em?: string
+          canal?: Database["public"]["Enums"]["campanha_canal"]
+          conteudo_json?: Json
+          criado_em?: string
+          enviada_em?: string | null
+          id?: string
+          nome?: string
+          restaurante_id?: string
+          segmento_json?: Json
+          status?: Database["public"]["Enums"]["campanha_status"]
+          template_id?: string | null
+        }
+        Relationships: []
+      }
+      cashback_movimentos: {
+        Row: {
+          cliente_id: string
+          comanda_id: string | null
+          criado_em: string
+          id: string
+          observacao: string | null
+          pedido_id: string | null
+          restaurante_id: string
+          tipo: Database["public"]["Enums"]["cashback_movimento_tipo"]
+          valor: number
+        }
+        Insert: {
+          cliente_id: string
+          comanda_id?: string | null
+          criado_em?: string
+          id?: string
+          observacao?: string | null
+          pedido_id?: string | null
+          restaurante_id: string
+          tipo: Database["public"]["Enums"]["cashback_movimento_tipo"]
+          valor: number
+        }
+        Update: {
+          cliente_id?: string
+          comanda_id?: string | null
+          criado_em?: string
+          id?: string
+          observacao?: string | null
+          pedido_id?: string | null
+          restaurante_id?: string
+          tipo?: Database["public"]["Enums"]["cashback_movimento_tipo"]
+          valor?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cashback_movimentos_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cashback_movimentos_comanda_id_fkey"
+            columns: ["comanda_id"]
+            isOneToOne: false
+            referencedRelation: "comandas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      categorias: {
+        Row: {
+          criado_em: string
+          id: string
+          nome: string
+          ordem: number
+          restaurante_id: string
+        }
+        Insert: {
+          criado_em?: string
+          id?: string
+          nome: string
+          ordem?: number
+          restaurante_id: string
+        }
+        Update: {
+          criado_em?: string
+          id?: string
+          nome?: string
+          ordem?: number
+          restaurante_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "categorias_restaurante_id_fkey"
+            columns: ["restaurante_id"]
+            isOneToOne: false
+            referencedRelation: "restaurantes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      chamados_garcom: {
+        Row: {
+          atendido_em: string | null
+          atendido_por: string | null
+          atualizado_em: string
+          cliente_id: string | null
+          comanda_id: string | null
+          criado_em: string
+          id: string
+          mesa_id: string
+          restaurante_id: string
+          sessao_id: string | null
+          status: Database["public"]["Enums"]["chamado_status"]
+          tempo_atendimento_segundos: number | null
+          tipo_chamado_id: string
+        }
+        Insert: {
+          atendido_em?: string | null
+          atendido_por?: string | null
+          atualizado_em?: string
+          cliente_id?: string | null
+          comanda_id?: string | null
+          criado_em?: string
+          id?: string
+          mesa_id: string
+          restaurante_id: string
+          sessao_id?: string | null
+          status?: Database["public"]["Enums"]["chamado_status"]
+          tempo_atendimento_segundos?: number | null
+          tipo_chamado_id: string
+        }
+        Update: {
+          atendido_em?: string | null
+          atendido_por?: string | null
+          atualizado_em?: string
+          cliente_id?: string | null
+          comanda_id?: string | null
+          criado_em?: string
+          id?: string
+          mesa_id?: string
+          restaurante_id?: string
+          sessao_id?: string | null
+          status?: Database["public"]["Enums"]["chamado_status"]
+          tempo_atendimento_segundos?: number | null
+          tipo_chamado_id?: string
+        }
+        Relationships: []
+      }
+      clientes: {
+        Row: {
+          atualizado_em: string
+          cashback_saldo: number
+          criado_em: string
+          id: string
+          nome: string
+          pedidos_count: number
+          restaurante_id: string
+          telefone: string
+          ticket_medio: number
+          total_gasto: number
+          ultima_visita: string | null
+        }
+        Insert: {
+          atualizado_em?: string
+          cashback_saldo?: number
+          criado_em?: string
+          id?: string
+          nome: string
+          pedidos_count?: number
+          restaurante_id: string
+          telefone: string
+          ticket_medio?: number
+          total_gasto?: number
+          ultima_visita?: string | null
+        }
+        Update: {
+          atualizado_em?: string
+          cashback_saldo?: number
+          criado_em?: string
+          id?: string
+          nome?: string
+          pedidos_count?: number
+          restaurante_id?: string
+          telefone?: string
+          ticket_medio?: number
+          total_gasto?: number
+          ultima_visita?: string | null
+        }
+        Relationships: []
+      }
+      comandas: {
+        Row: {
+          atualizado_em: string
+          cashback_resgatado: number
+          criado_em: string
+          cupom_id: string | null
+          desconto_cupom: number
+          fechada_em: string | null
+          id: string
+          restaurante_id: string
+          sessao_id: string
+          status: Database["public"]["Enums"]["comanda_status"]
+          subtotal: number
+          tipo: Database["public"]["Enums"]["comanda_tipo"]
+          titular_cliente_id: string | null
+          total: number
+          total_pago: number
+        }
+        Insert: {
+          atualizado_em?: string
+          cashback_resgatado?: number
+          criado_em?: string
+          cupom_id?: string | null
+          desconto_cupom?: number
+          fechada_em?: string | null
+          id?: string
+          restaurante_id: string
+          sessao_id: string
+          status?: Database["public"]["Enums"]["comanda_status"]
+          subtotal?: number
+          tipo?: Database["public"]["Enums"]["comanda_tipo"]
+          titular_cliente_id?: string | null
+          total?: number
+          total_pago?: number
+        }
+        Update: {
+          atualizado_em?: string
+          cashback_resgatado?: number
+          criado_em?: string
+          cupom_id?: string | null
+          desconto_cupom?: number
+          fechada_em?: string | null
+          id?: string
+          restaurante_id?: string
+          sessao_id?: string
+          status?: Database["public"]["Enums"]["comanda_status"]
+          subtotal?: number
+          tipo?: Database["public"]["Enums"]["comanda_tipo"]
+          titular_cliente_id?: string | null
+          total?: number
+          total_pago?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "comandas_sessao_id_fkey"
+            columns: ["sessao_id"]
+            isOneToOne: false
+            referencedRelation: "mesa_sessoes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "comandas_titular_cliente_id_fkey"
+            columns: ["titular_cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      cupons: {
+        Row: {
+          ativo: boolean
+          atualizado_em: string
+          codigo: string
+          criado_em: string
+          id: string
+          regras_json: Json
+          restaurante_id: string
+          tipo: string
+          uso_atual: number
+          uso_max: number | null
+          validade_fim: string | null
+          validade_inicio: string | null
+          valor: number
+        }
+        Insert: {
+          ativo?: boolean
+          atualizado_em?: string
+          codigo: string
+          criado_em?: string
+          id?: string
+          regras_json?: Json
+          restaurante_id: string
+          tipo?: string
+          uso_atual?: number
+          uso_max?: number | null
+          validade_fim?: string | null
+          validade_inicio?: string | null
+          valor?: number
+        }
+        Update: {
+          ativo?: boolean
+          atualizado_em?: string
+          codigo?: string
+          criado_em?: string
+          id?: string
+          regras_json?: Json
+          restaurante_id?: string
+          tipo?: string
+          uso_atual?: number
+          uso_max?: number | null
+          validade_fim?: string | null
+          validade_inicio?: string | null
+          valor?: number
+        }
+        Relationships: []
+      }
+      ia_eventos: {
+        Row: {
+          cliente_id: string | null
+          criado_em: string
+          id: string
+          payload_jsonb: Json
+          restaurante_id: string
+          tipo: string
+        }
+        Insert: {
+          cliente_id?: string | null
+          criado_em?: string
+          id?: string
+          payload_jsonb?: Json
+          restaurante_id: string
+          tipo: string
+        }
+        Update: {
+          cliente_id?: string | null
+          criado_em?: string
+          id?: string
+          payload_jsonb?: Json
+          restaurante_id?: string
+          tipo?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ia_eventos_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      mesa_sessao_clientes: {
+        Row: {
+          cliente_id: string
+          comanda_id: string | null
+          entrou_em: string
+          id: string
+          saiu_em: string | null
+          sessao_id: string
+        }
+        Insert: {
+          cliente_id: string
+          comanda_id?: string | null
+          entrou_em?: string
+          id?: string
+          saiu_em?: string | null
+          sessao_id: string
+        }
+        Update: {
+          cliente_id?: string
+          comanda_id?: string | null
+          entrou_em?: string
+          id?: string
+          saiu_em?: string | null
+          sessao_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mesa_sessao_clientes_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mesa_sessao_clientes_comanda_id_fkey"
+            columns: ["comanda_id"]
+            isOneToOne: false
+            referencedRelation: "comandas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mesa_sessao_clientes_sessao_id_fkey"
+            columns: ["sessao_id"]
+            isOneToOne: false
+            referencedRelation: "mesa_sessoes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      mesa_sessoes: {
+        Row: {
+          aberta_em: string
+          atualizado_em: string
+          criado_em: string
+          fechada_em: string | null
+          id: string
+          mesa_id: string
+          restaurante_id: string
+          status: Database["public"]["Enums"]["mesa_sessao_status"]
+        }
+        Insert: {
+          aberta_em?: string
+          atualizado_em?: string
+          criado_em?: string
+          fechada_em?: string | null
+          id?: string
+          mesa_id: string
+          restaurante_id: string
+          status?: Database["public"]["Enums"]["mesa_sessao_status"]
+        }
+        Update: {
+          aberta_em?: string
+          atualizado_em?: string
+          criado_em?: string
+          fechada_em?: string | null
+          id?: string
+          mesa_id?: string
+          restaurante_id?: string
+          status?: Database["public"]["Enums"]["mesa_sessao_status"]
+        }
+        Relationships: []
+      }
+      mesas: {
+        Row: {
+          ativa: boolean
+          criado_em: string
+          id: string
+          numero: string
+          qr_token: string
+          restaurante_id: string
+        }
+        Insert: {
+          ativa?: boolean
+          criado_em?: string
+          id?: string
+          numero: string
+          qr_token?: string
+          restaurante_id: string
+        }
+        Update: {
+          ativa?: boolean
+          criado_em?: string
+          id?: string
+          numero?: string
+          qr_token?: string
+          restaurante_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mesas_restaurante_id_fkey"
+            columns: ["restaurante_id"]
+            isOneToOne: false
+            referencedRelation: "restaurantes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pagamentos: {
+        Row: {
+          atualizado_em: string
+          cliente_id: string | null
+          comanda_id: string
+          confirmado_em: string | null
+          confirmado_por: string | null
+          criado_em: string
+          id: string
+          metodo: Database["public"]["Enums"]["pagamento_metodo"]
+          observacao: string | null
+          restaurante_id: string
+          sessao_id: string | null
+          status: Database["public"]["Enums"]["pagamento_status"]
+          valor: number
+        }
+        Insert: {
+          atualizado_em?: string
+          cliente_id?: string | null
+          comanda_id: string
+          confirmado_em?: string | null
+          confirmado_por?: string | null
+          criado_em?: string
+          id?: string
+          metodo: Database["public"]["Enums"]["pagamento_metodo"]
+          observacao?: string | null
+          restaurante_id: string
+          sessao_id?: string | null
+          status?: Database["public"]["Enums"]["pagamento_status"]
+          valor: number
+        }
+        Update: {
+          atualizado_em?: string
+          cliente_id?: string | null
+          comanda_id?: string
+          confirmado_em?: string | null
+          confirmado_por?: string | null
+          criado_em?: string
+          id?: string
+          metodo?: Database["public"]["Enums"]["pagamento_metodo"]
+          observacao?: string | null
+          restaurante_id?: string
+          sessao_id?: string | null
+          status?: Database["public"]["Enums"]["pagamento_status"]
+          valor?: number
+        }
+        Relationships: []
+      }
+      pedido_itens: {
+        Row: {
+          cliente_id: string | null
+          cliente_nome: string | null
+          criado_em: string
+          id: string
+          nome_produto: string
+          observacao: string | null
+          pedido_id: string
+          preco_unit: number
+          produto_id: string
+          quantidade: number
+        }
+        Insert: {
+          cliente_id?: string | null
+          cliente_nome?: string | null
+          criado_em?: string
+          id?: string
+          nome_produto: string
+          observacao?: string | null
+          pedido_id: string
+          preco_unit: number
+          produto_id: string
+          quantidade: number
+        }
+        Update: {
+          cliente_id?: string | null
+          cliente_nome?: string | null
+          criado_em?: string
+          id?: string
+          nome_produto?: string
+          observacao?: string | null
+          pedido_id?: string
+          preco_unit?: number
+          produto_id?: string
+          quantidade?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pedido_itens_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pedido_itens_pedido_id_fkey"
+            columns: ["pedido_id"]
+            isOneToOne: false
+            referencedRelation: "pedidos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pedido_itens_produto_id_fkey"
+            columns: ["produto_id"]
+            isOneToOne: false
+            referencedRelation: "produtos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pedidos: {
+        Row: {
+          atualizado_em: string
+          cashback_gerado: number
+          cashback_resgatado: number
+          cliente_id: string | null
+          cliente_nome: string | null
+          comanda_id: string | null
+          criado_em: string
+          id: string
+          mesa_id: string
+          observacao: string | null
+          restaurante_id: string
+          sessao_id: string | null
+          status: Database["public"]["Enums"]["pedido_status"]
+          total: number
+        }
+        Insert: {
+          atualizado_em?: string
+          cashback_gerado?: number
+          cashback_resgatado?: number
+          cliente_id?: string | null
+          cliente_nome?: string | null
+          comanda_id?: string | null
+          criado_em?: string
+          id?: string
+          mesa_id: string
+          observacao?: string | null
+          restaurante_id: string
+          sessao_id?: string | null
+          status?: Database["public"]["Enums"]["pedido_status"]
+          total?: number
+        }
+        Update: {
+          atualizado_em?: string
+          cashback_gerado?: number
+          cashback_resgatado?: number
+          cliente_id?: string | null
+          cliente_nome?: string | null
+          comanda_id?: string | null
+          criado_em?: string
+          id?: string
+          mesa_id?: string
+          observacao?: string | null
+          restaurante_id?: string
+          sessao_id?: string | null
+          status?: Database["public"]["Enums"]["pedido_status"]
+          total?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pedidos_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pedidos_comanda_id_fkey"
+            columns: ["comanda_id"]
+            isOneToOne: false
+            referencedRelation: "comandas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pedidos_mesa_id_fkey"
+            columns: ["mesa_id"]
+            isOneToOne: false
+            referencedRelation: "mesas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pedidos_restaurante_id_fkey"
+            columns: ["restaurante_id"]
+            isOneToOne: false
+            referencedRelation: "restaurantes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pedidos_sessao_id_fkey"
+            columns: ["sessao_id"]
+            isOneToOne: false
+            referencedRelation: "mesa_sessoes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      platform_admins: {
+        Row: {
+          criado_em: string
+          user_id: string
+        }
+        Insert: {
+          criado_em?: string
+          user_id: string
+        }
+        Update: {
+          criado_em?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      produtos: {
+        Row: {
+          categoria_id: string | null
+          criado_em: string
+          descricao: string | null
+          disponivel: boolean
+          id: string
+          imagem_url: string | null
+          nome: string
+          ordem: number
+          preco: number
+          restaurante_id: string
+        }
+        Insert: {
+          categoria_id?: string | null
+          criado_em?: string
+          descricao?: string | null
+          disponivel?: boolean
+          id?: string
+          imagem_url?: string | null
+          nome: string
+          ordem?: number
+          preco: number
+          restaurante_id: string
+        }
+        Update: {
+          categoria_id?: string | null
+          criado_em?: string
+          descricao?: string | null
+          disponivel?: boolean
+          id?: string
+          imagem_url?: string | null
+          nome?: string
+          ordem?: number
+          preco?: number
+          restaurante_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "produtos_categoria_id_fkey"
+            columns: ["categoria_id"]
+            isOneToOne: false
+            referencedRelation: "categorias"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "produtos_restaurante_id_fkey"
+            columns: ["restaurante_id"]
+            isOneToOne: false
+            referencedRelation: "restaurantes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      programa_fidelidade: {
+        Row: {
+          ativo: boolean
+          atualizado_em: string
+          criado_em: string
+          id: string
+          percentual_cashback: number
+          percentual_max_resgate: number
+          regras_json: Json
+          restaurante_id: string
+          validade_dias: number
+          valor_minimo_pedido: number
+        }
+        Insert: {
+          ativo?: boolean
+          atualizado_em?: string
+          criado_em?: string
+          id?: string
+          percentual_cashback?: number
+          percentual_max_resgate?: number
+          regras_json?: Json
+          restaurante_id: string
+          validade_dias?: number
+          valor_minimo_pedido?: number
+        }
+        Update: {
+          ativo?: boolean
+          atualizado_em?: string
+          criado_em?: string
+          id?: string
+          percentual_cashback?: number
+          percentual_max_resgate?: number
+          regras_json?: Json
+          restaurante_id?: string
+          validade_dias?: number
+          valor_minimo_pedido?: number
+        }
+        Relationships: []
+      }
+      restaurante_membros: {
+        Row: {
+          criado_em: string
+          id: string
+          papel: Database["public"]["Enums"]["app_role"]
+          restaurante_id: string
+          user_id: string
+        }
+        Insert: {
+          criado_em?: string
+          id?: string
+          papel?: Database["public"]["Enums"]["app_role"]
+          restaurante_id: string
+          user_id: string
+        }
+        Update: {
+          criado_em?: string
+          id?: string
+          papel?: Database["public"]["Enums"]["app_role"]
+          restaurante_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "restaurante_membros_restaurante_id_fkey"
+            columns: ["restaurante_id"]
+            isOneToOne: false
+            referencedRelation: "restaurantes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      restaurantes: {
+        Row: {
+          ativo: boolean
+          cor_primaria: string | null
+          criado_em: string
+          id: string
+          logo_url: string | null
+          nome: string
+          pix_chave: string | null
+          pix_habilitado: boolean
+          pix_nome_titular: string | null
+          slug: string
+        }
+        Insert: {
+          ativo?: boolean
+          cor_primaria?: string | null
+          criado_em?: string
+          id?: string
+          logo_url?: string | null
+          nome: string
+          pix_chave?: string | null
+          pix_habilitado?: boolean
+          pix_nome_titular?: string | null
+          slug: string
+        }
+        Update: {
+          ativo?: boolean
+          cor_primaria?: string | null
+          criado_em?: string
+          id?: string
+          logo_url?: string | null
+          nome?: string
+          pix_chave?: string | null
+          pix_habilitado?: boolean
+          pix_nome_titular?: string | null
+          slug?: string
+        }
+        Relationships: []
+      }
+      tipos_chamado: {
+        Row: {
+          ativo: boolean
+          atualizado_em: string
+          criado_em: string
+          icone: string
+          id: string
+          nome: string
+          ordem: number
+          restaurante_id: string
+        }
+        Insert: {
+          ativo?: boolean
+          atualizado_em?: string
+          criado_em?: string
+          icone?: string
+          id?: string
+          nome: string
+          ordem?: number
+          restaurante_id: string
+        }
+        Update: {
+          ativo?: boolean
+          atualizado_em?: string
+          criado_em?: string
+          icone?: string
+          id?: string
+          nome?: string
+          ordem?: number
+          restaurante_id?: string
+        }
+        Relationships: []
+      }
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      aplicar_cashback: {
+        Args: { _cliente_id: string; _comanda_id: string; _valor: number }
+        Returns: Json
+      }
+      aplicar_cupom_comanda: {
+        Args: { _cliente_id?: string; _codigo: string; _comanda_id: string }
+        Returns: Json
+      }
+      confirmar_pagamento: {
+        Args: { _pagamento_id: string }
+        Returns: undefined
+      }
+      creditar_cashback_pedido: {
+        Args: { _pedido_id: string }
+        Returns: number
+      }
+      criar_pedido_publico: {
+        Args: {
+          _cliente_id: string
+          _comanda_id: string
+          _itens: Json
+          _mesa_id: string
+          _observacao: string
+          _restaurante_id: string
+          _sessao_id: string
+          _total: number
+        }
+        Returns: string
+      }
+      dashboard_admin_resumo: {
+        Args: { _restaurante_id: string }
+        Returns: Json
+      }
+      dashboard_superadmin_resumo: { Args: never; Returns: Json }
+      is_platform_admin: { Args: { _user_id: string }; Returns: boolean }
+      is_restaurante_membro: {
+        Args: { _restaurante_id: string; _user_id: string }
+        Returns: boolean
+      }
+      metricas_chamados: { Args: { _restaurante_id: string }; Returns: Json }
+      registrar_pagamento: {
+        Args: {
+          _comanda_id: string
+          _metodo: Database["public"]["Enums"]["pagamento_metodo"]
+          _observacao?: string
+          _valor: number
+        }
+        Returns: string
+      }
+      remover_cupom_comanda: {
+        Args: { _comanda_id: string }
+        Returns: undefined
+      }
+      validar_cupom: {
+        Args: {
+          _cliente_id?: string
+          _codigo: string
+          _restaurante_id: string
+          _subtotal: number
+        }
+        Returns: Json
+      }
+    }
+    Enums: {
+      app_role: "admin" | "staff"
+      campanha_canal: "whatsapp" | "email" | "sms"
+      campanha_status:
+        | "rascunho"
+        | "agendada"
+        | "enviando"
+        | "enviada"
+        | "cancelada"
+      cashback_movimento_tipo: "credito" | "resgate" | "ajuste" | "expiracao"
+      chamado_status: "pendente" | "atendido" | "cancelado"
+      comanda_status: "aberta" | "fechada"
+      comanda_tipo: "individual" | "compartilhada"
+      mesa_sessao_status: "aberta" | "fechada"
+      pagamento_metodo: "pix" | "dinheiro" | "outro"
+      pagamento_status: "pendente" | "confirmado" | "cancelado"
+      pedido_status:
+        | "recebido"
+        | "em_preparo"
+        | "pronto"
+        | "entregue"
+        | "cancelado"
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
+  }
+}
+
+type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">
+
+type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "public">]
+
+export type Tables<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+        DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
+    : never = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+      DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
+      Row: infer R
+    }
+    ? R
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema["Tables"] &
+        DefaultSchema["Views"])
+    ? (DefaultSchema["Tables"] &
+        DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
+        Row: infer R
+      }
+      ? R
+      : never
+    : never
+
+export type TablesInsert<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof DefaultSchema["Tables"]
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    : never = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+      Insert: infer I
+    }
+    ? I
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+        Insert: infer I
+      }
+      ? I
+      : never
+    : never
+
+export type TablesUpdate<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof DefaultSchema["Tables"]
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    : never = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+      Update: infer U
+    }
+    ? U
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+        Update: infer U
+      }
+      ? U
+      : never
+    : never
+
+export type Enums<
+  DefaultSchemaEnumNameOrOptions extends
+    | keyof DefaultSchema["Enums"]
+    | { schema: keyof DatabaseWithoutInternals },
+  EnumName extends DefaultSchemaEnumNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
+    : never = never,
+> = DefaultSchemaEnumNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
+  : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"]
+    ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
+    : never
+
+export type CompositeTypes<
+  PublicCompositeTypeNameOrOptions extends
+    | keyof DefaultSchema["CompositeTypes"]
+    | { schema: keyof DatabaseWithoutInternals },
+  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
+    : never = never,
+> = PublicCompositeTypeNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
+  : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
+    ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
+    : never
+
+export const Constants = {
+  public: {
+    Enums: {
+      app_role: ["admin", "staff"],
+      campanha_canal: ["whatsapp", "email", "sms"],
+      campanha_status: [
+        "rascunho",
+        "agendada",
+        "enviando",
+        "enviada",
+        "cancelada",
+      ],
+      cashback_movimento_tipo: ["credito", "resgate", "ajuste", "expiracao"],
+      chamado_status: ["pendente", "atendido", "cancelado"],
+      comanda_status: ["aberta", "fechada"],
+      comanda_tipo: ["individual", "compartilhada"],
+      mesa_sessao_status: ["aberta", "fechada"],
+      pagamento_metodo: ["pix", "dinheiro", "outro"],
+      pagamento_status: ["pendente", "confirmado", "cancelado"],
+      pedido_status: [
+        "recebido",
+        "em_preparo",
+        "pronto",
+        "entregue",
+        "cancelado",
+      ],
+    },
+  },
+} as const
