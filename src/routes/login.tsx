@@ -22,6 +22,13 @@ async function resolveDestination(userId: string, requested?: string) {
     .eq("user_id", userId)
     .maybeSingle();
   if (pa) return "/superadmin";
+  const { data: garcom } = await supabase
+    .from("garcons")
+    .select("id")
+    .eq("user_id", userId)
+    .eq("ativo", true)
+    .maybeSingle();
+  if (garcom) return "/sala";
   const { data: membro } = await supabase
     .from("restaurante_membros")
     .select("papel")
