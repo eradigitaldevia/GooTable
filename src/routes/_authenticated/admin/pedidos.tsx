@@ -13,6 +13,7 @@ import { DetalhePedido } from "@/components/pedidos/detalhe-pedido";
 import { usePedidosDoDia, useAtualizarStatusPedido } from "@/hooks/use-pedidos";
 import { queryKeys } from "@/lib/query-keys";
 import { listarPedidosDoDiaFn } from "@/lib/pedidos.functions";
+import { useGarcomLookup } from "@/hooks/use-garcom-lookup";
 
 export const Route = createFileRoute("/_authenticated/admin/pedidos")({
   loader: ({ context }) => {
@@ -41,6 +42,7 @@ interface Pedido {
   mesa_id: string;
   restaurante_id: string;
   comanda_id: string | null;
+  garcom_id?: string | null;
 }
 interface Item {
   id: string;
@@ -69,6 +71,7 @@ function PedidosPainel() {
 
   const { data, isLoading } = usePedidosDoDia(restauranteId ?? undefined);
   const atualizarStatusMut = useAtualizarStatusPedido(restauranteId ?? undefined);
+  const { nomeDoPedido } = useGarcomLookup(restauranteId ?? undefined);
 
   const pedidos = (data?.pedidos ?? []) as Pedido[];
   const itens = (data?.itens ?? []) as Item[];
@@ -169,12 +172,14 @@ function PedidosPainel() {
         mesas={mesas}
         onAbrir={setAberto}
         onAvancar={atualizarStatus}
+        garcomPorPedido={(p) => nomeDoPedido(p)}
       />
 
       <DetalhePedido
         pedido={aberto}
         itens={aberto ? itensPorPedido.get(aberto.id) ?? [] : []}
         mesa={aberto ? mesas.get(aberto.mesa_id)?.numero : undefined}
+        garcomNome={aberto ? nomeDoPedido(aberto) : null}
         onClose={() => setAberto(null)}
         onCancelar={async () => {
           if (!aberto) return;

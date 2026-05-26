@@ -12,6 +12,7 @@ import { queryKeys } from "@/lib/query-keys";
 import { PageHeaderSkeleton } from "@/components/admin/skeletons/page-header-skeleton";
 import { CardsGridSkeleton } from "@/components/admin/skeletons/cards-grid-skeleton";
 import { EmptyState } from "@/components/ui/empty-state";
+import { useGarcomLookup } from "@/hooks/use-garcom-lookup";
 
 export const Route = createFileRoute("/_authenticated/admin/mesas")({
   loader: ({ context }) => {
@@ -34,6 +35,7 @@ function Mesas() {
   const { data: restaurante, isLoading: loadingRest } = useMeuRestaurante(user?.id);
   const { data: mesas = [], isLoading: loadingMesas } = useMesas(restaurante?.id);
   const [origin, setOrigin] = useState("");
+  const { nomeDaMesa } = useGarcomLookup(restaurante?.id);
 
   useEffect(() => {
     if (typeof window !== "undefined") setOrigin(window.location.origin);
@@ -72,7 +74,13 @@ function Mesas() {
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 print:grid-cols-2">
           {mesas.map((m) => (
-            <MesaCard key={m.id} mesa={m} origin={origin} restauranteId={restaurante.id} />
+            <MesaCard
+              key={m.id}
+              mesa={m}
+              origin={origin}
+              restauranteId={restaurante.id}
+              garcomNome={nomeDaMesa(m.id)}
+            />
           ))}
         </div>
       )}
