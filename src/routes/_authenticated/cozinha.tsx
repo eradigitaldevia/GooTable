@@ -10,6 +10,7 @@ import { useTick } from "@/hooks/use-tick";
 import { supabase } from "@/integrations/supabase/client";
 import { queryKeys } from "@/lib/query-keys";
 import { usePedidosDoDia, useAtualizarStatusPedido } from "@/hooks/use-pedidos";
+import { useMarcarItemUnidades } from "@/hooks/use-kds-item";
 
 import { KdsHeader } from "@/components/cozinha/kds-header";
 import { KdsCard } from "@/components/cozinha/kds-card";
@@ -38,6 +39,8 @@ interface Item {
   preco_unit: number;
   observacao: string | null;
   cliente_nome: string | null;
+  status: "pendente" | "em_preparo" | "pronto";
+  quantidade_pronta: number;
 }
 interface Mesa { id: string; numero: string; }
 
@@ -56,6 +59,7 @@ function CozinhaKDS() {
 
   const { data, isLoading } = usePedidosDoDia(restauranteId ?? undefined);
   const atualizarStatusMut = useAtualizarStatusPedido(restauranteId ?? undefined);
+  const marcarItemMut = useMarcarItemUnidades(restauranteId ?? undefined);
 
   const pedidos = (data?.pedidos ?? []) as Pedido[];
   const itens = (data?.itens ?? []) as Item[];
@@ -144,6 +148,17 @@ function CozinhaKDS() {
     }
   };
 
+  const marcarItem = async (itemId: string, quantidadePronta: number) => {
+    try {
+      await marcarItemMut.mutateAsync({ itemId, quantidadePronta });
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Erro ao atualizar item");
+    }
+  };
+  const itemPendingId = marcarItemMut.isPending
+    ? (marcarItemMut.variables?.itemId ?? null)
+    : null;
+
   if (loadingRest || !restauranteId) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background text-muted-foreground">
@@ -192,6 +207,8 @@ function CozinhaKDS() {
                   observacao={p.observacao}
                   onAvancar={() => avancar(p)}
                   loading={atualizarStatusMut.isPending}
+                  onMarcarItem={marcarItem}
+                  itemPendingId={itemPendingId}
                 />
               ))}
             </Coluna>
@@ -211,6 +228,8 @@ function CozinhaKDS() {
                   observacao={p.observacao}
                   onAvancar={() => avancar(p)}
                   loading={atualizarStatusMut.isPending}
+                  onMarcarItem={marcarItem}
+                  itemPendingId={itemPendingId}
                 />
               ))}
             </Coluna>
