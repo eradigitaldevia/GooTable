@@ -30,6 +30,7 @@ import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import type { Restaurante } from "@/lib/restaurante.functions";
 import { listarChamadosFn } from "@/lib/chamados.functions";
+import type { PapelMembro } from "@/lib/equipe.functions";
 
 const NAV = [
   { to: "/admin", label: "Dashboard", icon: LayoutDashboard, exact: true },
@@ -84,14 +85,20 @@ export function AdminSidebar({
   isPlatformAdmin,
   onSignOut,
   collapsed = false,
+  papel,
 }: {
   restaurante: Restaurante;
   isPlatformAdmin: boolean;
   onSignOut: () => Promise<void>;
   collapsed?: boolean;
+  papel?: PapelMembro | null;
 }) {
   const path = useRouterState({ select: (s) => s.location.pathname });
   const pendentes = useChamadosPendentesCount(restaurante.id);
+  const podeVerEquipe = isPlatformAdmin || papel === "admin";
+  const navItems = NAV.filter(
+    (item) => item.to !== "/admin/equipe" || podeVerEquipe,
+  );
   return (
     <TooltipProvider delayDuration={0}>
       <div
@@ -112,7 +119,7 @@ export function AdminSidebar({
       </div>
 
       <nav className={cn("flex-1 space-y-1", collapsed ? "p-2" : "p-3")}>
-        {NAV.map((item) => {
+        {navItems.map((item) => {
           const active = item.exact ? path === item.to : path.startsWith(item.to);
           const showBadge = item.to === "/admin/chamados" && pendentes > 0;
           const link = (

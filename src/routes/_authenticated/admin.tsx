@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { useMeuRestaurante } from "@/hooks/use-restaurante";
 import { useVerificarPlatformAdmin } from "@/hooks/use-superadmin";
+import { useMeuPapel } from "@/hooks/use-equipe";
 import { AdminSidebar } from "@/components/admin/admin-sidebar";
 import { AdminMobileHeader } from "@/components/admin/admin-mobile-header";
 import { useRouterState } from "@tanstack/react-router";
@@ -64,6 +65,8 @@ function AdminLayout() {
   const { data: restaurante, isLoading: loadingRest } = useMeuRestaurante(user?.id);
   const { data: paData, isLoading: loadingPa } = useVerificarPlatformAdmin(!!user);
   const isPlatformAdmin = !!paData?.isPlatformAdmin;
+  const { data: papelData } = useMeuPapel(!!user);
+  const papel = papelData?.papel ?? null;
 
   useEffect(() => {
     setMobileOpen(false);
@@ -98,6 +101,7 @@ function AdminLayout() {
           isPlatformAdmin={isPlatformAdmin}
           onSignOut={handleSignOut}
           collapsed
+          papel={papel}
         />
       </aside>
       <aside className="hidden w-64 shrink-0 flex-col border-r border-sidebar-border bg-sidebar lg:flex">
@@ -105,6 +109,7 @@ function AdminLayout() {
           restaurante={restaurante}
           isPlatformAdmin={isPlatformAdmin}
           onSignOut={handleSignOut}
+          papel={papel}
         />
       </aside>
 
@@ -116,6 +121,7 @@ function AdminLayout() {
               restaurante={restaurante}
               isPlatformAdmin={isPlatformAdmin}
               onSignOut={handleSignOut}
+              papel={papel}
             />
           </aside>
         </div>
