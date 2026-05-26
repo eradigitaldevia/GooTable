@@ -37,7 +37,7 @@ const NAV = [
   { to: "/admin/cardapio-preview", label: "Prévia do cardápio", icon: Eye, exact: false },
   { to: "/admin/mesas", label: "Mesas", icon: QrCode, exact: false },
   { to: "/admin/chamados", label: "Chamados", icon: Bell, exact: false },
-  { to: "/cozinha", label: "Display de cozinha", icon: ChefHat, exact: false },
+  { to: "/cozinha", label: "Display de cozinha", icon: ChefHat, exact: false, target: "_blank" as const },
   { to: "/admin/clientes", label: "Clientes", icon: Users, exact: false },
   { to: "/admin/fidelidade", label: "Fidelidade", icon: Gift, exact: false },
   { to: "/admin/cupons", label: "Cupons", icon: Ticket, exact: false },
@@ -117,6 +117,7 @@ export function AdminSidebar({
             <Link
               key={item.to}
               to={item.to}
+              target={(item as { target?: string }).target}
               className={cn(
                 "flex items-center rounded-xl text-sm font-medium transition-colors",
                 collapsed
