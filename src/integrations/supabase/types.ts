@@ -331,6 +331,56 @@ export type Database = {
           },
         ]
       }
+      comissoes: {
+        Row: {
+          calculado_em: string
+          garcom_id: string
+          id: string
+          pago_em: string | null
+          pago_por: string | null
+          pedido_id: string
+          percentual: number
+          restaurante_id: string
+          status: string
+          valor_comissao: number
+          valor_pedido: number
+        }
+        Insert: {
+          calculado_em?: string
+          garcom_id: string
+          id?: string
+          pago_em?: string | null
+          pago_por?: string | null
+          pedido_id: string
+          percentual: number
+          restaurante_id: string
+          status?: string
+          valor_comissao: number
+          valor_pedido: number
+        }
+        Update: {
+          calculado_em?: string
+          garcom_id?: string
+          id?: string
+          pago_em?: string | null
+          pago_por?: string | null
+          pedido_id?: string
+          percentual?: number
+          restaurante_id?: string
+          status?: string
+          valor_comissao?: number
+          valor_pedido?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "comissoes_garcom_id_fkey"
+            columns: ["garcom_id"]
+            isOneToOne: false
+            referencedRelation: "garcons"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       cupons: {
         Row: {
           ativo: boolean
@@ -379,6 +429,39 @@ export type Database = {
         }
         Relationships: []
       }
+      garcons: {
+        Row: {
+          ativo: boolean
+          atualizado_em: string
+          criado_em: string
+          id: string
+          nome: string
+          percentual_comissao: number
+          restaurante_id: string
+          telefone: string | null
+        }
+        Insert: {
+          ativo?: boolean
+          atualizado_em?: string
+          criado_em?: string
+          id?: string
+          nome: string
+          percentual_comissao?: number
+          restaurante_id: string
+          telefone?: string | null
+        }
+        Update: {
+          ativo?: boolean
+          atualizado_em?: string
+          criado_em?: string
+          id?: string
+          nome?: string
+          percentual_comissao?: number
+          restaurante_id?: string
+          telefone?: string | null
+        }
+        Relationships: []
+      }
       ia_eventos: {
         Row: {
           cliente_id: string | null
@@ -410,6 +493,50 @@ export type Database = {
             columns: ["cliente_id"]
             isOneToOne: false
             referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      mesa_garcom: {
+        Row: {
+          atribuido_em: string
+          atribuido_por: string | null
+          garcom_id: string
+          id: string
+          liberado_em: string | null
+          liberado_por: string | null
+          mesa_id: string
+          restaurante_id: string
+          sessao_id: string | null
+        }
+        Insert: {
+          atribuido_em?: string
+          atribuido_por?: string | null
+          garcom_id: string
+          id?: string
+          liberado_em?: string | null
+          liberado_por?: string | null
+          mesa_id: string
+          restaurante_id: string
+          sessao_id?: string | null
+        }
+        Update: {
+          atribuido_em?: string
+          atribuido_por?: string | null
+          garcom_id?: string
+          id?: string
+          liberado_em?: string | null
+          liberado_por?: string | null
+          mesa_id?: string
+          restaurante_id?: string
+          sessao_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mesa_garcom_garcom_id_fkey"
+            columns: ["garcom_id"]
+            isOneToOne: false
+            referencedRelation: "garcons"
             referencedColumns: ["id"]
           },
         ]
@@ -655,6 +782,7 @@ export type Database = {
           cliente_nome: string | null
           comanda_id: string | null
           criado_em: string
+          garcom_id: string | null
           id: string
           mesa_id: string
           observacao: string | null
@@ -671,6 +799,7 @@ export type Database = {
           cliente_nome?: string | null
           comanda_id?: string | null
           criado_em?: string
+          garcom_id?: string | null
           id?: string
           mesa_id: string
           observacao?: string | null
@@ -687,6 +816,7 @@ export type Database = {
           cliente_nome?: string | null
           comanda_id?: string | null
           criado_em?: string
+          garcom_id?: string | null
           id?: string
           mesa_id?: string
           observacao?: string | null
@@ -708,6 +838,13 @@ export type Database = {
             columns: ["comanda_id"]
             isOneToOne: false
             referencedRelation: "comandas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pedidos_garcom_id_fkey"
+            columns: ["garcom_id"]
+            isOneToOne: false
+            referencedRelation: "garcons"
             referencedColumns: ["id"]
           },
           {
@@ -958,6 +1095,10 @@ export type Database = {
         Args: { _cliente_id?: string; _codigo: string; _comanda_id: string }
         Returns: Json
       }
+      atribuir_garcom_mesa: {
+        Args: { _garcom_id: string; _mesa_id: string; _sessao_id?: string }
+        Returns: string
+      }
       confirmar_pagamento: {
         Args: { _pagamento_id: string }
         Returns: undefined
@@ -993,7 +1134,9 @@ export type Database = {
         Args: { _restaurante_id: string; _user_id: string }
         Returns: boolean
       }
+      liberar_garcom_mesa: { Args: { _mesa_id: string }; Returns: undefined }
       metricas_chamados: { Args: { _restaurante_id: string }; Returns: Json }
+      pagar_comissoes: { Args: { _ids: string[] }; Returns: number }
       registrar_pagamento: {
         Args: {
           _comanda_id: string
@@ -1007,6 +1150,7 @@ export type Database = {
         Args: { _comanda_id: string }
         Returns: undefined
       }
+      resumo_comissoes: { Args: { _restaurante_id: string }; Returns: Json }
       validar_cupom: {
         Args: {
           _cliente_id?: string

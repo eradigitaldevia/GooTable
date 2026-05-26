@@ -30,4 +30,13 @@ export const queryKeys = {
 
   // Cardápio público (cliente via QR)
   cardapioPublico: (qrToken: string) => ["cardapio-publico", qrToken] as const,
+
+  // Garçons / comissões
+  garcons: (restauranteId: string) => ["garcons", restauranteId] as const,
+  atribuicoesMesas: (restauranteId: string) => ["atribuicoes-mesas", restauranteId] as const,
+  comissoes: (restauranteId: string, filtros?: Record<string, unknown>) =>
+    filtros
+      ? (["comissoes", restauranteId, filtros] as const)
+      : (["comissoes", restauranteId] as const),
+  resumoComissoes: (restauranteId: string) => ["resumo-comissoes", restauranteId] as const,
 } as const;
