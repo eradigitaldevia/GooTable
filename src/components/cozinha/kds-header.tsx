@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { ChefHat, Maximize2, Minimize2, Volume2, VolumeX } from "lucide-react";
+import { ChefHat, LogOut, Maximize2, Minimize2, Volume2, VolumeX } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useNavigate } from "@tanstack/react-router";
 
 export function KdsHeader({
   ativos,
@@ -13,6 +15,7 @@ export function KdsHeader({
 }) {
   const [hora, setHora] = useState("");
   const [fs, setFs] = useState(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const upd = () =>
@@ -64,6 +67,17 @@ export function KdsHeader({
         <Button variant="outline" size="sm" onClick={toggleFullscreen}>
           {fs ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
           <span className="ml-2 hidden sm:inline">{fs ? "Sair" : "Tela cheia"}</span>
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={async () => {
+            await supabase.auth.signOut();
+            await navigate({ to: "/login" });
+          }}
+        >
+          <LogOut className="h-4 w-4" />
+          <span className="ml-2 hidden sm:inline">Sair</span>
         </Button>
       </div>
     </header>
