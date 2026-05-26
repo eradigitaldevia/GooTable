@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { formatBRL } from "@/lib/cart";
+import { GarcomBadge } from "@/components/garcons/garcom-badge";
 
 type StatusPedido = "recebido" | "em_preparo" | "pronto" | "entregue" | "cancelado";
 
@@ -12,6 +13,7 @@ interface Pedido {
   mesa_id: string;
   restaurante_id: string;
   comanda_id: string | null;
+  garcom_id?: string | null;
 }
 interface Item {
   id: string;
@@ -30,6 +32,7 @@ export function PedidoCard({
   next,
   onClick,
   onAvancar,
+  garcomNome,
 }: {
   pedido: Pedido;
   itens: Item[];
@@ -37,6 +40,7 @@ export function PedidoCard({
   next?: StatusPedido;
   onClick: () => void;
   onAvancar: (next: StatusPedido) => void;
+  garcomNome?: string | null;
 }) {
   const minutos = Math.floor((Date.now() - new Date(pedido.criado_em).getTime()) / 60000);
   return (
@@ -48,6 +52,11 @@ export function PedidoCard({
         <span className="text-sm font-bold">Mesa {mesaNumero ?? "?"}</span>
         <span className="text-xs text-muted-foreground">{minutos}min</span>
       </div>
+      {garcomNome && (
+        <div className="mt-1">
+          <GarcomBadge nome={garcomNome} />
+        </div>
+      )}
       <ul className="mt-2 space-y-0.5 text-xs">
         {itens.slice(0, 3).map((it) => (
           <li key={it.id} className="truncate">
