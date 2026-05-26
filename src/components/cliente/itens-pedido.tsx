@@ -9,6 +9,34 @@ interface Item {
   preco_unit: number;
   observacao: string | null;
   cliente_nome: string | null;
+  status?: "pendente" | "em_preparo" | "pronto";
+  quantidade_pronta?: number;
+}
+
+function StatusBadge({ item }: { item: Item }) {
+  const status = item.status ?? "pendente";
+  const qp = item.quantidade_pronta ?? 0;
+  const label =
+    status === "pronto"
+      ? item.quantidade > 1
+        ? `Pronto ${qp}/${item.quantidade}`
+        : "Pronto"
+      : status === "em_preparo"
+        ? item.quantidade > 1
+          ? `Preparando ${qp}/${item.quantidade}`
+          : "Preparando"
+        : "Aguardando";
+  const cls =
+    status === "pronto"
+      ? "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400"
+      : status === "em_preparo"
+        ? "bg-amber-500/15 text-amber-700 dark:text-amber-400"
+        : "bg-muted text-muted-foreground";
+  return (
+    <span className={`mt-0.5 inline-block rounded-full px-2 py-0.5 text-[10px] font-semibold ${cls}`}>
+      {label}
+    </span>
+  );
 }
 
 export function ItensPedido({ itens, total }: { itens: Item[]; total: number }) {
@@ -57,6 +85,7 @@ export function ItensPedido({ itens, total }: { itens: Item[]; total: number }) 
                 {it.observacao && (
                   <span className="block text-xs text-muted-foreground">↳ {it.observacao}</span>
                 )}
+                <StatusBadge item={it} />
               </span>
               <span className="text-muted-foreground">
                 {formatBRL(Number(it.preco_unit) * it.quantidade)}
