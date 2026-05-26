@@ -29,6 +29,8 @@ export interface PedidoItem {
   preco_unit: number;
   observacao: string | null;
   cliente_nome: string | null;
+  status: "pendente" | "em_preparo" | "pronto";
+  quantidade_pronta: number;
 }
 export interface MesaResumo {
   id: string;
@@ -61,7 +63,7 @@ export const listarPedidosDoDiaFn = createServerFn({ method: "POST" })
     if (ids.length) {
       const { data: its, error: iErr } = await supabase
         .from("pedido_itens")
-        .select("id, pedido_id, nome_produto, quantidade, preco_unit, observacao, cliente_nome")
+        .select("id, pedido_id, nome_produto, quantidade, preco_unit, observacao, cliente_nome, status, quantidade_pronta")
         .in("pedido_id", ids);
       if (iErr) throw new Error(iErr.message);
       itens = (its ?? []) as PedidoItem[];
@@ -87,7 +89,7 @@ export const buscarItensPedidoFn = createServerFn({ method: "POST" })
     const { supabase } = context;
     const { data: its, error } = await supabase
       .from("pedido_itens")
-      .select("id, pedido_id, nome_produto, quantidade, preco_unit, observacao, cliente_nome")
+      .select("id, pedido_id, nome_produto, quantidade, preco_unit, observacao, cliente_nome, status, quantidade_pronta")
       .eq("pedido_id", data.pedidoId);
     if (error) throw new Error(error.message);
     return (its ?? []) as PedidoItem[];
@@ -439,7 +441,7 @@ export const carregarStatusPedidoFn = createServerFn({ method: "POST" })
     const [{ data: its, error: iErr }, { data: r, error: rErr }] = await Promise.all([
       supabaseAdmin
         .from("pedido_itens")
-        .select("id, pedido_id, nome_produto, quantidade, preco_unit, observacao, cliente_nome")
+        .select("id, pedido_id, nome_produto, quantidade, preco_unit, observacao, cliente_nome, status, quantidade_pronta")
         .eq("pedido_id", data.pedidoId),
       supabaseAdmin
         .from("restaurantes")
