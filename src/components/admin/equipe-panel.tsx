@@ -39,7 +39,7 @@ const PAPEL_LABEL: Record<PapelMembro, string> = {
 
 const PAPEL_DESC: Record<PapelMembro, string> = {
   admin: "Acesso total ao painel administrativo",
-  staff: "Acesso ao painel (operação do dia a dia)",
+  staff: "Acesso ao painel (exceto equipe)",
   cozinheiro: "Apenas o Display de cozinha",
 };
 
