@@ -18,9 +18,10 @@ export function useGarcomLookup(restauranteId: string | undefined) {
     const porMesaId = new Map<string, { garcomId: string; nome: string }>();
     for (const a of (atribuicoes ?? []) as Array<{
       mesa_id: string;
-      garcom_id: string;
+      garcom_id: string | null;
       garcom_nome?: string | null;
     }>) {
+      if (!a.garcom_id) continue;
       const nome = a.garcom_nome ?? porGarcomId.get(a.garcom_id) ?? null;
       if (nome) porMesaId.set(a.mesa_id, { garcomId: a.garcom_id, nome });
     }
