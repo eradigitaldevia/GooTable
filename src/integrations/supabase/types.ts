@@ -439,6 +439,7 @@ export type Database = {
           percentual_comissao: number
           restaurante_id: string
           telefone: string | null
+          user_id: string | null
         }
         Insert: {
           ativo?: boolean
@@ -449,6 +450,7 @@ export type Database = {
           percentual_comissao?: number
           restaurante_id: string
           telefone?: string | null
+          user_id?: string | null
         }
         Update: {
           ativo?: boolean
@@ -459,6 +461,7 @@ export type Database = {
           percentual_comissao?: number
           restaurante_id?: string
           telefone?: string | null
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -1162,7 +1165,7 @@ export type Database = {
       }
     }
     Enums: {
-      app_role: "admin" | "staff" | "cozinheiro"
+      app_role: "admin" | "staff" | "cozinheiro" | "garcom"
       campanha_canal: "whatsapp" | "email" | "sms"
       campanha_status:
         | "rascunho"
@@ -1311,7 +1314,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["admin", "staff", "cozinheiro"],
+      app_role: ["admin", "staff", "cozinheiro", "garcom"],
       campanha_canal: ["whatsapp", "email", "sms"],
       campanha_status: [
         "rascunho",

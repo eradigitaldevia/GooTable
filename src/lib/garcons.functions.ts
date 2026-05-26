@@ -10,6 +10,7 @@ export interface Garcom {
   telefone: string | null;
   percentual_comissao: number;
   ativo: boolean;
+  user_id: string | null;
   criado_em: string;
   atualizado_em: string;
 }
