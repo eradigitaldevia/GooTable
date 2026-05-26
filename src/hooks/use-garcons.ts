@@ -12,6 +12,7 @@ import {
   pagarComissoesFn,
   resumoComissoesFn,
 } from "@/lib/garcons.functions";
+import { vincularUsuarioGarcomFn } from "@/lib/garcom-usuario.functions";
 
 export function useGarcons(restauranteId: string | undefined, incluirInativos = true) {
   const fn = useServerFn(listarGarconsFn);
@@ -160,5 +161,25 @@ export function useResumoComissoes(restauranteId: string | undefined) {
       : ["resumo-comissoes", "none"],
     queryFn: () => fn({ data: { restauranteId: restauranteId! } }),
     enabled: !!restauranteId,
+  });
+}
+
+export function useVincularUsuarioGarcom(restauranteId: string | undefined) {
+  const fn = useServerFn(vincularUsuarioGarcomFn);
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (data: { garcomId: string; email: string; senha: string }) =>
+      fn({
+        data: {
+          restauranteId: restauranteId!,
+          garcomId: data.garcomId,
+          email: data.email,
+          senha: data.senha,
+        },
+      }),
+    onSuccess: () => {
+      if (restauranteId)
+        qc.invalidateQueries({ queryKey: queryKeys.garcons(restauranteId) });
+    },
   });
 }
