@@ -13,12 +13,13 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Pencil, Plus } from "lucide-react";
+import { Pencil, Plus, UserPlus, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
 import {
   useAtualizarGarcom,
   useCriarGarcom,
   useGarcons,
+  useVincularUsuarioGarcom,
 } from "@/hooks/use-garcons";
 import type { Garcom } from "@/lib/garcons.functions";
 
@@ -106,8 +107,12 @@ export function GarconsRoster({ restauranteId }: { restauranteId: string }) {
   const { data: garcons = [], isLoading } = useGarcons(restauranteId, true);
   const criar = useCriarGarcom(restauranteId);
   const atualizar = useAtualizarGarcom(restauranteId);
+  const vincular = useVincularUsuarioGarcom(restauranteId);
   const [openNovo, setOpenNovo] = useState(false);
   const [edit, setEdit] = useState<Garcom | null>(null);
+  const [vincularAlvo, setVincularAlvo] = useState<Garcom | null>(null);
+  const [vincEmail, setVincEmail] = useState("");
+  const [vincSenha, setVincSenha] = useState("");
 
   return (
     <Card className="overflow-hidden">
@@ -155,20 +160,21 @@ export function GarconsRoster({ restauranteId }: { restauranteId: string }) {
             <th className="px-4 py-3">Telefone</th>
             <th className="px-4 py-3">%</th>
             <th className="px-4 py-3">Status</th>
+            <th className="px-4 py-3">Login</th>
             <th className="px-4 py-3"></th>
           </tr>
         </thead>
         <tbody className="divide-y divide-border">
           {isLoading && (
             <tr>
-              <td colSpan={5} className="px-4 py-6 text-center text-muted-foreground">
+              <td colSpan={6} className="px-4 py-6 text-center text-muted-foreground">
                 Carregando…
               </td>
             </tr>
           )}
           {!isLoading && garcons.length === 0 && (
             <tr>
-              <td colSpan={5} className="px-4 py-6 text-center text-muted-foreground">
+              <td colSpan={6} className="px-4 py-6 text-center text-muted-foreground">
                 Nenhum garçom cadastrado.
               </td>
             </tr>
@@ -185,6 +191,25 @@ export function GarconsRoster({ restauranteId }: { restauranteId: string }) {
                   <Badge variant="outline" className="text-muted-foreground">
                     Inativo
                   </Badge>
+                )}
+              </td>
+              <td className="px-4 py-3">
+                {g.user_id ? (
+                  <Badge variant="secondary" className="gap-1">
+                    <CheckCircle2 className="h-3 w-3" /> Vinculado
+                  </Badge>
+                ) : (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => {
+                      setVincularAlvo(g);
+                      setVincEmail("");
+                      setVincSenha("");
+                    }}
+                  >
+                    <UserPlus className="mr-1 h-3.5 w-3.5" /> Vincular
+                  </Button>
                 )}
               </td>
               <td className="px-4 py-3 text-right">
@@ -223,6 +248,79 @@ export function GarconsRoster({ restauranteId }: { restauranteId: string }) {
               }}
             />
           )}
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={!!vincularAlvo}
+        onOpenChange={(o) => !o && setVincularAlvo(null)}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>
+              Vincular usuário {vincularAlvo ? `— ${vincularAlvo.nome}` : ""}
+            </DialogTitle>
+          </DialogHeader>
+          <form
+            className="space-y-4"
+            onSubmit={async (e) => {
+              e.preventDefault();
+              if (!vincularAlvo) return;
+              const email = vincEmail.trim();
+              if (!email || !/^\S+@\S+\.\S+$/.test(email)) {
+                toast.error("E-mail inválido");
+                return;
+              }
+              if (vincSenha.length < 6) {
+                toast.error("Senha deve ter ao menos 6 caracteres");
+                return;
+              }
+              try {
+                await vincular.mutateAsync({
+                  garcomId: vincularAlvo.id,
+                  email,
+                  senha: vincSenha,
+                });
+                toast.success("Usuário criado e vinculado");
+                setVincularAlvo(null);
+              } catch (err) {
+                toast.error(
+                  err instanceof Error ? err.message : "Erro ao vincular",
+                );
+              }
+            }}
+          >
+            <div>
+              <Label htmlFor="vinc-email">E-mail</Label>
+              <Input
+                id="vinc-email"
+                type="email"
+                value={vincEmail}
+                onChange={(e) => setVincEmail(e.target.value)}
+                placeholder="garcom@restaurante.com"
+                autoComplete="off"
+              />
+            </div>
+            <div>
+              <Label htmlFor="vinc-senha">Senha temporária</Label>
+              <Input
+                id="vinc-senha"
+                type="text"
+                value={vincSenha}
+                onChange={(e) => setVincSenha(e.target.value)}
+                placeholder="mínimo 6 caracteres"
+                autoComplete="off"
+              />
+              <p className="mt-1 text-xs text-muted-foreground">
+                O garçom poderá alterar a senha depois pelo próprio login.
+              </p>
+            </div>
+            <DialogFooter>
+              <Button type="submit" disabled={vincular.isPending}>
+                {vincular.isPending ? "Vinculando…" : "Criar e vincular"}
+              </Button>
+            </DialogFooter>
+          </form>
         </DialogContent>
       </Dialog>
     </Card>
