@@ -591,6 +591,8 @@ export type Database = {
           preco_unit: number
           produto_id: string
           quantidade: number
+          quantidade_pronta: number
+          status: Database["public"]["Enums"]["pedido_item_status"]
         }
         Insert: {
           cliente_id?: string | null
@@ -603,6 +605,8 @@ export type Database = {
           preco_unit: number
           produto_id: string
           quantidade: number
+          quantidade_pronta?: number
+          status?: Database["public"]["Enums"]["pedido_item_status"]
         }
         Update: {
           cliente_id?: string | null
@@ -615,6 +619,8 @@ export type Database = {
           preco_unit?: number
           produto_id?: string
           quantidade?: number
+          quantidade_pronta?: number
+          status?: Database["public"]["Enums"]["pedido_item_status"]
         }
         Relationships: [
           {
@@ -978,6 +984,10 @@ export type Database = {
         Returns: Json
       }
       dashboard_superadmin_resumo: { Args: never; Returns: Json }
+      derivar_status_pedido: {
+        Args: { _pedido_id: string }
+        Returns: undefined
+      }
       is_platform_admin: { Args: { _user_id: string }; Returns: boolean }
       is_restaurante_membro: {
         Args: { _restaurante_id: string; _user_id: string }
@@ -1023,6 +1033,7 @@ export type Database = {
       mesa_sessao_status: "aberta" | "fechada"
       pagamento_metodo: "pix" | "dinheiro" | "outro"
       pagamento_status: "pendente" | "confirmado" | "cancelado"
+      pedido_item_status: "pendente" | "em_preparo" | "pronto"
       pedido_status:
         | "recebido"
         | "em_preparo"
@@ -1172,6 +1183,7 @@ export const Constants = {
       mesa_sessao_status: ["aberta", "fechada"],
       pagamento_metodo: ["pix", "dinheiro", "outro"],
       pagamento_status: ["pendente", "confirmado", "cancelado"],
+      pedido_item_status: ["pendente", "em_preparo", "pronto"],
       pedido_status: [
         "recebido",
         "em_preparo",
