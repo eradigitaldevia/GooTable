@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { AlertTriangle, Clock, ChefHat } from "lucide-react";
 import { toast } from "sonner";
@@ -7,13 +7,14 @@ import { toast } from "sonner";
 import { useAuth } from "@/hooks/use-auth";
 import { useMeuRestaurante } from "@/hooks/use-restaurante";
 import { useTick } from "@/hooks/use-tick";
-import { supabase } from "@/integrations/supabase/client";
 import { queryKeys } from "@/lib/query-keys";
 import { usePedidosDoDia, useAtualizarStatusPedido } from "@/hooks/use-pedidos";
 import { useMarcarItemUnidades } from "@/hooks/use-kds-item";
+import { useRealtimeStatus } from "@/hooks/use-realtime-status";
 
 import { KdsHeader } from "@/components/cozinha/kds-header";
 import { KdsCard } from "@/components/cozinha/kds-card";
+import { KdsConnectionBanner } from "@/components/cozinha/kds-connection-banner";
 
 export const Route = createFileRoute("/_authenticated/cozinha")({
   component: CozinhaKDS,
@@ -57,7 +58,6 @@ function CozinhaKDS() {
   // Re-render timers a cada 30s
   useTick(30_000);
 
-  const { data, isLoading } = usePedidosDoDia(restauranteId ?? undefined);
   const atualizarStatusMut = useAtualizarStatusPedido(restauranteId ?? undefined);
   const marcarItemMut = useMarcarItemUnidades(restauranteId ?? undefined);
 
@@ -80,56 +80,94 @@ function CozinhaKDS() {
     return m;
   }, [itens]);
 
-  // Realtime + beep no INSERT
-  useEffect(() => {
+  // Realtime via hook reutilizável com banner de conexão.
+  const invalidateTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const scheduleInvalidate = useCallback(() => {
     if (!restauranteId) return;
-    let timeout: ReturnType<typeof setTimeout> | null = null;
-    const scheduleInvalidate = () => {
-      if (timeout) clearTimeout(timeout);
-      timeout = setTimeout(() => {
-        qc.invalidateQueries({ queryKey: queryKeys.pedidos(restauranteId) });
-        timeout = null;
-      }, 1000);
-    };
-    const channel = supabase
-      .channel(`kds-${restauranteId}`)
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "pedidos", filter: `restaurante_id=eq.${restauranteId}` },
-        (payload) => {
-          scheduleInvalidate();
-          if (payload.eventType === "INSERT") {
-            const novo = payload.new as Pedido;
-            toast.success(`Novo pedido — Mesa ${mesasRef.current.get(novo.mesa_id)?.numero ?? "?"}`);
-            if (somRef.current) {
-              try {
-                const Ctx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
-                const ctx = new Ctx();
-                const o = ctx.createOscillator();
-                const g = ctx.createGain();
-                o.connect(g); g.connect(ctx.destination);
-                o.frequency.value = 880;
-                g.gain.setValueAtTime(0.18, ctx.currentTime);
-                g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.5);
-                o.start();
-                o.stop(ctx.currentTime + 0.5);
-              } catch { /* ignore */ }
-            }
-          }
-        },
-      )
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "pedido_itens" },
-        () => scheduleInvalidate(),
-      )
-      .subscribe();
+    if (invalidateTimeoutRef.current) clearTimeout(invalidateTimeoutRef.current);
+    invalidateTimeoutRef.current = setTimeout(() => {
+      qc.invalidateQueries({ queryKey: queryKeys.pedidos(restauranteId) });
+      invalidateTimeoutRef.current = null;
+    }, 1000);
+  }, [qc, restauranteId]);
+  useEffect(() => () => {
+    if (invalidateTimeoutRef.current) clearTimeout(invalidateTimeoutRef.current);
+  }, []);
 
-    return () => {
-      if (timeout) clearTimeout(timeout);
-      supabase.removeChannel(channel);
-    };
-  }, [restauranteId, qc]);
+  const setupChannel = useCallback(
+    (channel: import("@supabase/supabase-js").RealtimeChannel) =>
+      channel
+        .on(
+          "postgres_changes",
+          { event: "*", schema: "public", table: "pedidos", filter: `restaurante_id=eq.${restauranteId}` },
+          (payload) => {
+            scheduleInvalidate();
+            if (payload.eventType === "INSERT") {
+              const novo = payload.new as Pedido;
+              toast.success(`Novo pedido — Mesa ${mesasRef.current.get(novo.mesa_id)?.numero ?? "?"}`);
+              if (somRef.current) {
+                try {
+                  const Ctx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+                  const ctx = new Ctx();
+                  const o = ctx.createOscillator();
+                  const g = ctx.createGain();
+                  o.connect(g); g.connect(ctx.destination);
+                  o.frequency.value = 880;
+                  g.gain.setValueAtTime(0.18, ctx.currentTime);
+                  g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.5);
+                  o.start();
+                  o.stop(ctx.currentTime + 0.5);
+                } catch { /* ignore */ }
+              }
+            }
+          },
+        )
+        .on(
+          "postgres_changes",
+          { event: "*", schema: "public", table: "pedido_itens" },
+          () => scheduleInvalidate(),
+        ),
+    [restauranteId, scheduleInvalidate],
+  );
+
+  const onReconnect = useCallback(() => {
+    if (restauranteId) {
+      qc.invalidateQueries({ queryKey: queryKeys.pedidos(restauranteId) });
+    }
+  }, [qc, restauranteId]);
+
+  const { status: rtStatus, reconnect: rtReconnect } = useRealtimeStatus({
+    channelName: `kds-${restauranteId ?? "none"}`,
+    enabled: !!restauranteId,
+    setup: setupChannel,
+    onReconnect,
+  });
+
+  // Polling de fallback enquanto realtime não está conectado.
+  const { data, isLoading } = usePedidosDoDia(restauranteId ?? undefined, {
+    refetchInterval: rtStatus === "connected" ? false : 15000,
+  });
+
+  // Beep distinto na queda (transição para "disconnected").
+  const prevStatusRef = useRef<typeof rtStatus>("connecting");
+  useEffect(() => {
+    const prev = prevStatusRef.current;
+    prevStatusRef.current = rtStatus;
+    if (rtStatus !== "disconnected" || prev === "disconnected") return;
+    if (!somRef.current) return;
+    try {
+      const Ctx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+      const ctx = new Ctx();
+      const o = ctx.createOscillator();
+      const g = ctx.createGain();
+      o.connect(g); g.connect(ctx.destination);
+      o.frequency.value = 220;
+      g.gain.setValueAtTime(0.2, ctx.currentTime);
+      g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.8);
+      o.start();
+      o.stop(ctx.currentTime + 0.8);
+    } catch { /* ignore */ }
+  }, [rtStatus]);
 
   const ativos = pedidos.filter((p) => p.status === "recebido" || p.status === "em_preparo");
   const recebidos = ativos.filter((p) => p.status === "recebido");
@@ -173,6 +211,12 @@ function CozinhaKDS() {
         ativos={ativos.length}
         somLigado={somLigado}
         onToggleSom={() => setSomLigado((v) => !v)}
+      />
+
+      <KdsConnectionBanner
+        status={rtStatus}
+        onReconnect={rtReconnect}
+        onReload={() => window.location.reload()}
       />
 
       {algumAtrasado && (
