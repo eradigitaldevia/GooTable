@@ -28,6 +28,8 @@ interface Item {
   preco_unit: number;
   observacao: string | null;
   cliente_nome: string | null;
+  status: "pendente" | "em_preparo" | "pronto";
+  quantidade_pronta: number;
 }
 interface RestaurantePix {
   nome: string;
@@ -54,7 +56,7 @@ function Status() {
           .maybeSingle(),
         supabase
           .from("pedido_itens")
-          .select("id, nome_produto, quantidade, preco_unit, observacao, cliente_nome")
+          .select("id, nome_produto, quantidade, preco_unit, observacao, cliente_nome, status, quantidade_pronta")
           .eq("pedido_id", pedidoId),
       ]);
       if (!mounted) return;
@@ -79,6 +81,17 @@ function Status() {
         { event: "UPDATE", schema: "public", table: "pedidos", filter: `id=eq.${pedidoId}` },
         (payload) => {
           setPedido((prev) => (prev ? { ...prev, ...(payload.new as Pedido) } : (payload.new as Pedido)));
+        },
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "pedido_itens", filter: `pedido_id=eq.${pedidoId}` },
+        async () => {
+          const { data: its } = await supabase
+            .from("pedido_itens")
+            .select("id, nome_produto, quantidade, preco_unit, observacao, cliente_nome, status, quantidade_pronta")
+            .eq("pedido_id", pedidoId);
+          setItens((its as Item[]) ?? []);
         },
       )
       .subscribe();
