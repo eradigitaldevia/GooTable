@@ -11,12 +11,16 @@ import {
   type StatusPedido,
 } from "@/lib/pedidos.functions";
 
-export function usePedidosDoDia(restauranteId: string | undefined) {
+export function usePedidosDoDia(
+  restauranteId: string | undefined,
+  options?: { refetchInterval?: number | false },
+) {
   const fn = useServerFn(listarPedidosDoDiaFn);
   return useQuery({
     queryKey: restauranteId ? queryKeys.pedidos(restauranteId) : ["pedidos", "none"],
     queryFn: () => fn({ data: { restauranteId: restauranteId! } }),
     enabled: !!restauranteId,
+    refetchInterval: options?.refetchInterval ?? false,
   });
 }
 
