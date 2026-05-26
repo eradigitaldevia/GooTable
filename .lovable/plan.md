@@ -1,93 +1,156 @@
 
-# Resiliência do Realtime no KDS
+# Evolução da gestão de garçons
 
-Adicionar detecção de falha do canal realtime na tela `/admin/cozinha`, com banner visual, reconexão automática, fallback de polling, revalidação ao voltar foco/conexão e som de alerta na queda. Nenhum comportamento atual é alterado — apenas adicionado.
+Plano dividido em 6 fases independentes e aprováveis em separado. Cada fase entrega valor sozinha e a ordem reflete dependências técnicas (1→2→3 são base, 4→5→6 são opcionais).
 
-## 1. Novo hook `src/hooks/use-realtime-status.ts`
+---
 
-Hook reutilizável que encapsula o ciclo de vida do canal e expõe o estado de conexão.
+## Fase 1 — Badges de garçom no KDS, Mesas e Pedidos
 
-**API:**
-```ts
-type RealtimeStatus = "connecting" | "connected" | "degraded" | "disconnected";
+**Objetivo:** tornar o garçom responsável visível em todas as telas operacionais (sem alterar comportamento).
 
-useRealtimeStatus(opts: {
-  channelName: string;
-  enabled: boolean;
-  setup: (channel: RealtimeChannel) => RealtimeChannel; // registra .on(...)
-  onReconnect?: () => void; // chamado ao reconectar (para invalidar cache)
-}): {
-  status: RealtimeStatus;
-  reconnect: () => void; // força recriação do canal
-}
+### Frontend
+- `src/components/cozinha/kds-card.tsx`: adicionar chip "Garçom: Nome" (ou "—") usando `pedido.garcom_id` resolvido contra a lista de garçons (já existe `useGarcons`).
+- `src/components/mesas/mesa-card.tsx`: badge com nome do garçom ativo da mesa (via `useAtribuicoesMesas`).
+- `src/components/pedidos/pedido-card.tsx` e `detalhe-pedido.tsx`: exibir garçom responsável.
+- Novo hook utilitário `useGarcomLookup(restauranteId)` → retorna `Map<garcomId, Garcom>` para evitar prop drilling.
+
+**Sem mudanças de banco.** Os dados já existem (`pedidos.garcom_id`, `mesa_garcom`).
+
+---
+
+## Fase 2 — Login próprio do garçom + rota `/sala`
+
+**Objetivo:** garçom acessa sua tela operacional dedicada, vendo apenas suas mesas, pratos prontos e chamados.
+
+### Decisão de autenticação
+Conforme o documento anexo, há duas opções. **Recomendação: opção A (usuário Supabase Auth por garçom)** para auditoria limpa e RLS natural. Opção B (PIN) fica fora desse plano.
+
+### Banco (migração)
+- `garcons` ganha coluna `user_id uuid UNIQUE NULL` (FK lógica a `auth.users.id`, sem FK física conforme padrão do projeto).
+- Novo enum/coluna em `restaurante_membros.papel`: incluir valor `'garcom'` (se ainda não existir como `app_role`).
+- Função `vincular_garcom_usuario(_garcom_id uuid, _email text)` — admin convida; gera membership com papel `garcom`.
+- View/RPC `sala_dados_garcom()` — retorna `{ garcom, mesas[], pedidos_prontos[], chamados_pendentes[] }` filtrados por `auth.uid()`.
+
+### Rotas
+- `src/routes/_authenticated/sala.tsx` — layout simplificado (sem sidebar admin).
+- `src/routes/_authenticated.tsx` ou um novo `_authenticated/_sala.tsx` para isolar o chrome.
+- Redirecionar usuários com papel `garcom` para `/sala` ao logar (em `login.tsx`).
+
+### UI (baseada no protótipo `sala_tela_garcom.html`)
+- Header: avatar + nome + mesas atribuídas + relógio + botão chamados.
+- Tabs: **Pratos prontos** / **Minhas mesas** / **Chamados**.
+- Realtime: canais `pedidos` (status=pronto, filtro mesas) e `chamados_garcom`.
+- Sons distintos (880 Hz prato pronto, 660 Hz chamado).
+- Ação "Confirmar entrega" → `status=entregue` (dispara trigger de comissão existente).
+- Ação "Atendido" no chamado → reaproveita fluxo existente.
+
+### Componentes novos
+```
+src/components/sala/
+  sala-header.tsx
+  pratos-prontos-list.tsx
+  minhas-mesas-grid.tsx
+  chamados-list.tsx
+src/hooks/use-sala.ts
+src/lib/sala.functions.ts
 ```
 
-**Comportamento interno:**
-- Cria canal via `supabase.channel(channelName)`, aplica `setup(channel)`, chama `.subscribe(cb)`.
-- Mapeia retornos do `subscribe`:
-  - `SUBSCRIBED` → `connected` (zera contador de tentativas, chama `onReconnect` se vinha de estado não-conectado)
-  - `TIMED_OUT` → `degraded`
-  - `CHANNEL_ERROR` / `CLOSED` → `disconnected`
-- Backoff exponencial em `disconnected`/`degraded`: 2s → 5s → 10s → 30s (máx). Remove canal antigo e recria.
-- Listeners de `window`: `online` força reconnect imediato; `offline` marca `disconnected`; `visibilitychange` (visible) força reconnect se não estiver `connected`.
-- Cleanup remove canal e listeners.
+### Sidebar admin
+- Em `/admin/garcons`, no roster, novo botão "Vincular usuário" (input de e-mail) que chama `vincular_garcom_usuario`.
 
-## 2. Novo componente `src/components/cozinha/kds-connection-banner.tsx`
+---
 
-Banner discreto abaixo do header. Não renderiza nada quando `status === "connected"`.
+## Fase 3 — Divisão de comissão entre múltiplos garçons no mesmo pedido
 
-| Status | Cor | Texto | Ação |
-|---|---|---|---|
-| `degraded` | amarelo (`bg-amber-500/10 text-amber-700`) | "Reconectando ao tempo real…" | spinner |
-| `disconnected` | vermelho (`bg-destructive/10 text-destructive`) | "Conexão em tempo real perdida. Novos pedidos podem demorar a aparecer." | botões "Tentar novamente" e "Recarregar página" |
+**Objetivo:** um pedido pode ter N garçons, cada um com peso percentual.
 
-Props: `{ status, onReconnect, onReload }`. Usa apenas tokens semânticos do design system.
+### Banco
+- Nova tabela `pedido_garcons` (`pedido_id`, `garcom_id`, `peso numeric` — soma deve dar 100 por pedido).
+- Manter `pedidos.garcom_id` como "garçom principal" (compatibilidade) — preenchido com o de maior peso.
+- `comissoes` ganha `peso numeric NOT NULL DEFAULT 100`.
+- Trigger `trg_pedido_gerar_comissao` reescrito: itera `pedido_garcons` (fallback para `pedidos.garcom_id` se vazio) e gera uma linha por garçom com `valor_comissao = total * percentual * peso/100`.
+- RPC `definir_garcons_pedido(_pedido_id, _items jsonb)` — substitui atribuições; bloqueia se já houver comissões pagas.
 
-## 3. Alterações em `src/routes/_authenticated/cozinha.tsx`
+### UI
+- `/admin/pedidos` e `detalhe-pedido.tsx`: nova ação "Dividir comissão" → modal com seleção de garçons + sliders de peso (validação: soma = 100).
+- Painel Comissões: agrupar por garçom mantendo visibilidade do peso aplicado.
 
-- Remover o `useEffect` que cria o canal `kds-${restauranteId}` (substituído pelo hook).
-- Chamar `useRealtimeStatus`:
-  - `channelName: kds-${restauranteId}`
-  - `enabled: !!restauranteId`
-  - `setup`: registra os mesmos dois `.on("postgres_changes", ...)` atuais (pedidos + pedido_itens), preservando 100% da lógica de toast, beep e `scheduleInvalidate`.
-  - `onReconnect`: `qc.invalidateQueries({ queryKey: queryKeys.pedidos(restauranteId) })` — garante que pedidos perdidos durante a queda apareçam.
-- Renderizar `<KdsConnectionBanner status={status} onReconnect={reconnect} onReload={() => window.location.reload()} />` logo abaixo do `<KdsHeader />` e antes da faixa de "pedido atrasado".
-- **Fallback de polling**: passar `refetchInterval` para o `usePedidosDoDia` quando `status !== "connected"`.
-- **Som de alerta na queda**: `useEffect` observando a transição para `disconnected`. Quando `somLigado === true` e o status passa para `disconnected` (apenas na transição, não em loop), tocar um beep distinto do "novo pedido" — frequência mais grave (`220 Hz`) e duração maior (`0.8s`), reaproveitando o padrão `AudioContext` já existente no arquivo. Não toca em `degraded` para evitar ruído em oscilações curtas.
+---
 
-## 4. Alteração mínima em `src/hooks/use-pedidos.ts`
+## Fase 4 — Comissão sobre item (opção configurável)
 
-Aceitar `refetchInterval?: number | false` opcional em `usePedidosDoDia(restauranteId, options?)`, repassado ao `useQuery`. Default mantém comportamento atual (`false`). Nenhum outro hook é tocado.
+**Objetivo:** permitir cálculo por item, não pelo total do pedido.
 
-No KDS:
-```ts
-const status = ...;
-const { data, isLoading } = usePedidosDoDia(restauranteId, {
-  refetchInterval: status === "connected" ? false : 15000,
-});
-```
+### Banco
+- `restaurantes` (ou nova tabela `restaurante_configuracoes`) ganha `comissao_modo text CHECK IN ('pedido','item') DEFAULT 'pedido'`.
+- `produtos` ganha `percentual_comissao numeric NULL` (sobrepõe % do garçom) e `comissao_aplicavel boolean DEFAULT true` (ex: combos zerados).
+- Trigger de comissão passa a:
+  - Se modo `pedido`: comportamento atual.
+  - Se modo `item`: percorrer `pedido_itens` do pedido, calcular `Σ (preco_unit * qtd * (produto.percentual_comissao ?? garcom.percentual_comissao))`.
+- Comissão fica registrada em uma única linha por garçom×pedido (campo `valor_pedido` passa a refletir a base calculada).
 
-## 5. Validação manual
+### UI
+- `/admin/configuracoes`: novo card "Comissão de garçons" (radio Pedido/Item).
+- `/admin/cardapio` (produto-form-fields): inputs `% comissão` e toggle "aplicável".
+- Painel Comissões: badge "por item" quando aplicável.
 
-1. Abrir `/admin/cozinha` — banner não aparece, realtime funciona normalmente.
-2. Desligar Wi-Fi → banner vermelho aparece em ≤2s, beep grave toca uma vez (se som ligado), polling de 15s começa.
-3. Religar Wi-Fi → reconnect, banner some, `onReconnect` invalida cache. Nova queda volta a tocar o beep.
-4. Hibernar laptop por 1min e voltar → `visibilitychange` dispara reconnect e invalidação.
-5. Criar pedido durante a queda → aparece após reconexão (via invalidação) ou no próximo polling, o que vier primeiro.
-6. Com som desligado no header, nenhum beep toca na queda.
+---
 
-## Arquivos
+## Fase 5 — Bônus por meta / horários
 
-**Criados:**
-- `src/hooks/use-realtime-status.ts`
-- `src/components/cozinha/kds-connection-banner.tsx`
+**Objetivo:** premiar garçons que atingem metas (faturamento, número de pedidos) ou trabalham em horários específicos.
 
-**Editados (mudança mínima):**
-- `src/routes/_authenticated/cozinha.tsx` — troca o `useEffect` do canal pelo hook + banner + polling condicional + beep na queda.
-- `src/hooks/use-pedidos.ts` — adiciona parâmetro opcional `refetchInterval` em `usePedidosDoDia`.
+### Banco
+- `garcom_metas` (`garcom_id`, `tipo enum('faturamento','pedidos','horario')`, `periodo enum('diario','semanal','mensal')`, `alvo numeric`, `bonus_valor numeric`, `bonus_percentual numeric`, `ativo`, `vigencia_inicio`, `vigencia_fim`).
+- `garcom_bonus` (`garcom_id`, `meta_id`, `periodo_ref date`, `valor`, `status enum('pendente','pago')`, `calculado_em`, `pago_em`).
+- Função `calcular_bonus_garcom(_garcom_id, _periodo_ref)` — chamada por job (pg_cron diário) ou via botão admin.
+- Horários: meta tipo `horario` aplica bônus % sobre comissões geradas dentro do intervalo (ex: 18h-23h sábado).
 
-## Fora de escopo
+### UI
+- Nova aba em `/admin/garcons`: **Metas & Bônus**.
+  - CRUD de metas por garçom (ou globais).
+  - Tabela de bônus calculados, com botão "Pagar" (integrado ao fluxo de comissões).
+- Painel Comissões: linha agregada por garçom passa a mostrar `Comissão + Bônus = Total`.
 
-- Aplicar o mesmo padrão em dashboard admin, status do cliente, mesa, clientes (o hook fica reutilizável, mas só é usado no KDS nesta entrega).
-- Telemetria/log de desconexões.
-- Mudanças visuais no `KdsHeader` ou no design existente.
+---
+
+## Fase 6 — Relatório PDF / Exportação
+
+**Objetivo:** admin exporta extrato por garçom para fechamento.
+
+### Backend
+- Server function `gerarRelatorioComissoesFn({ garcomId?, periodo: {inicio,fim}, formato: 'pdf'|'csv' })`.
+- PDF gerado server-side com `@react-pdf/renderer` ou `pdfkit` (escolher na implementação após teste no Worker runtime — fallback CSV garantido).
+- CSV: stream simples, sempre disponível.
+
+### Conteúdo do relatório
+- Cabeçalho: restaurante, garçom, período.
+- Resumo: total pedidos, total vendido, comissão (pendente/paga), bônus, total a pagar.
+- Detalhamento: tabela de comissões linha-a-linha (data, pedido, mesa, valor, %, peso, comissão).
+- Rodapé: assinatura, data de emissão.
+
+### UI
+- `/admin/garcons` aba Comissões: filtros de período + botões **Exportar CSV** e **Gerar PDF**.
+- Roster (por garçom): botão "Extrato" abre relatório individual.
+
+---
+
+## Limites / fora de escopo deste plano
+- PIN curto (opção B do doc) — fica como opção futura caso login por e-mail seja muito pesado para o turno.
+- App mobile dedicado para garçom.
+- Comissão sobre lucro (margem por produto).
+- Pagamento de comissões via Pix integrado.
+- Notificações push/SMS para garçom.
+
+---
+
+## Ordem sugerida de aprovação/execução
+1. **Fase 1 (Badges)** — risco baixo, valor imediato.
+2. **Fase 3 (Divisão de comissão)** — desbloqueia regras de negócio.
+3. **Fase 2 (Login + /sala)** — entrega operacional grande, justifica esforço.
+4. **Fase 4 (Comissão por item)** — refinamento de regra.
+5. **Fase 5 (Bônus)** — gestão avançada.
+6. **Fase 6 (Relatório PDF)** — fechamento contábil.
+
+Confirme quais fases (e em que ordem) devo implementar. Posso entregar 1 fase por iteração para manter cada deploy estável.
