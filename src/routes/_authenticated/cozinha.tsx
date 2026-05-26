@@ -63,6 +63,8 @@ function CozinhaKDS() {
   const atualizarStatusMut = useAtualizarStatusPedido(restauranteId ?? undefined);
   const marcarItemMut = useMarcarItemUnidades(restauranteId ?? undefined);
 
+  const { nomeDoPedido } = useGarcomLookup(restauranteId ?? undefined);
+
   // Ref mutável usada pelos callbacks de realtime (setado abaixo, após os dados chegarem).
   const mesasRef = useRef<Map<string, Mesa>>(new Map());
 
@@ -257,6 +259,7 @@ function CozinhaKDS() {
                   loading={atualizarStatusMut.isPending}
                   onMarcarItem={marcarItem}
                   itemPendingId={itemPendingId}
+                  garcomNome={nomeDoPedido(p)}
                 />
               ))}
             </Coluna>
@@ -278,6 +281,7 @@ function CozinhaKDS() {
                   loading={atualizarStatusMut.isPending}
                   onMarcarItem={marcarItem}
                   itemPendingId={itemPendingId}
+                  garcomNome={nomeDoPedido(p)}
                 />
               ))}
             </Coluna>
