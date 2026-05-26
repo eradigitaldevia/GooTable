@@ -12,6 +12,7 @@ interface Pedido {
   mesa_id: string;
   restaurante_id: string;
   comanda_id: string | null;
+  garcom_id?: string | null;
 }
 interface Item {
   id: string;
@@ -33,6 +34,7 @@ export function KanbanColuna({
   mesas,
   onAbrir,
   onAvancar,
+  garcomPorPedido,
 }: {
   label: string;
   icon: any;
@@ -42,6 +44,7 @@ export function KanbanColuna({
   mesas: Map<string, Mesa>;
   onAbrir: (p: Pedido) => void;
   onAvancar: (p: Pedido, next: StatusPedido) => void;
+  garcomPorPedido?: (p: Pedido) => string | null;
 }) {
   return (
     <div className="flex flex-col rounded-2xl border bg-card/50 p-3">
@@ -67,6 +70,7 @@ export function KanbanColuna({
             next={next}
             onClick={() => onAbrir(p)}
             onAvancar={(n) => onAvancar(p, n)}
+            garcomNome={garcomPorPedido?.(p) ?? null}
           />
         ))}
       </div>

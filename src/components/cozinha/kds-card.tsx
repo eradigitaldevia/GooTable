@@ -1,6 +1,7 @@
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Check, Minus, Plus, Undo2 } from "lucide-react";
+import { GarcomBadge } from "@/components/garcons/garcom-badge";
 
 type StatusPedido = "recebido" | "em_preparo" | "pronto" | "entregue" | "cancelado";
 type ItemStatus = "pendente" | "em_preparo" | "pronto";
@@ -24,6 +25,7 @@ export function KdsCard({
   loading,
   onMarcarItem,
   itemPendingId,
+  garcomNome,
 }: {
   mesa: string;
   status: StatusPedido;
@@ -34,6 +36,7 @@ export function KdsCard({
   loading?: boolean;
   onMarcarItem: (itemId: string, quantidadePronta: number) => void;
   itemPendingId?: string | null;
+  garcomNome?: string | null;
 }) {
   const minutos = Math.max(0, Math.floor((Date.now() - new Date(criadoEm).getTime()) / 60000));
   const urg =
@@ -61,7 +64,10 @@ export function KdsCard({
       )}
     >
       <div className="flex items-start justify-between gap-2">
-        <div className="text-base font-bold tracking-tight">Mesa {mesa}</div>
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="text-base font-bold tracking-tight">Mesa {mesa}</div>
+          <GarcomBadge nome={garcomNome} />
+        </div>
         <span className={cn("rounded-full px-2 py-0.5 text-xs font-semibold", badgeColor)}>
           {minutos} min
         </span>

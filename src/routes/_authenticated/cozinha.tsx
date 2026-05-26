@@ -11,6 +11,7 @@ import { queryKeys } from "@/lib/query-keys";
 import { usePedidosDoDia, useAtualizarStatusPedido } from "@/hooks/use-pedidos";
 import { useMarcarItemUnidades } from "@/hooks/use-kds-item";
 import { useRealtimeStatus } from "@/hooks/use-realtime-status";
+import { useGarcomLookup } from "@/hooks/use-garcom-lookup";
 
 import { KdsHeader } from "@/components/cozinha/kds-header";
 import { KdsCard } from "@/components/cozinha/kds-card";
@@ -31,6 +32,7 @@ interface Pedido {
   mesa_id: string;
   restaurante_id: string;
   comanda_id: string | null;
+  garcom_id?: string | null;
 }
 interface Item {
   id: string;

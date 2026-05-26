@@ -10,6 +10,7 @@ import { X, Wallet, CheckCircle2 } from "lucide-react";
 import { formatBRL } from "@/lib/cart";
 import { usePagamentosComanda } from "@/hooks/use-pagamentos";
 import { ConfirmarPagamentoDialog } from "@/components/admin/confirmar-pagamento-dialog";
+import { GarcomBadge } from "@/components/garcons/garcom-badge";
 
 type StatusPedido = "recebido" | "em_preparo" | "pronto" | "entregue" | "cancelado";
 
@@ -45,12 +46,14 @@ export function DetalhePedido({
   mesa,
   onClose,
   onCancelar,
+  garcomNome,
 }: {
   pedido: Pedido | null;
   itens: Item[];
   mesa: string | undefined;
   onClose: () => void;
   onCancelar: () => void;
+  garcomNome?: string | null;
 }) {
   const [pagOpen, setPagOpen] = useState(false);
 
@@ -79,6 +82,11 @@ export function DetalhePedido({
         <DialogHeader>
           <DialogTitle>Mesa {mesa ?? "?"} — Pedido #{pedido.id.slice(0, 8)}</DialogTitle>
         </DialogHeader>
+        {garcomNome && (
+          <div className="-mt-2">
+            <GarcomBadge nome={garcomNome} />
+          </div>
+        )}
         {pedido.observacao && (
           <div className="rounded-xl bg-warning/10 p-3 text-sm">
             <span className="font-semibold">Observação: </span>
