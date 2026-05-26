@@ -20,6 +20,7 @@ import { Route as SuperadminIndexRouteImport } from './routes/superadmin.index'
 import { Route as SuperadminRestaurantesRouteImport } from './routes/superadmin.restaurantes'
 import { Route as SuperadminLogsRouteImport } from './routes/superadmin.logs'
 import { Route as MQrTokenRouteImport } from './routes/m.$qrToken'
+import { Route as AuthenticatedSalaRouteImport } from './routes/_authenticated/sala'
 import { Route as AuthenticatedCozinhaRouteImport } from './routes/_authenticated/cozinha'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
 import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin/index'
@@ -94,6 +95,11 @@ const MQrTokenRoute = MQrTokenRouteImport.update({
   id: '/m/$qrToken',
   path: '/m/$qrToken',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedSalaRoute = AuthenticatedSalaRouteImport.update({
+  id: '/sala',
+  path: '/sala',
+  getParentRoute: () => AuthenticatedRoute,
 } as any)
 const AuthenticatedCozinhaRoute = AuthenticatedCozinhaRouteImport.update({
   id: '/cozinha',
@@ -217,6 +223,7 @@ export interface FileRoutesByFullPath {
   '/superadmin': typeof SuperadminRouteWithChildren
   '/admin': typeof AuthenticatedAdminRouteWithChildren
   '/cozinha': typeof AuthenticatedCozinhaRoute
+  '/sala': typeof AuthenticatedSalaRoute
   '/m/$qrToken': typeof MQrTokenRouteWithChildren
   '/superadmin/logs': typeof SuperadminLogsRoute
   '/superadmin/restaurantes': typeof SuperadminRestaurantesRouteWithChildren
@@ -247,6 +254,7 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/reset-password': typeof ResetPasswordRoute
   '/cozinha': typeof AuthenticatedCozinhaRoute
+  '/sala': typeof AuthenticatedSalaRoute
   '/m/$qrToken': typeof MQrTokenRouteWithChildren
   '/superadmin/logs': typeof SuperadminLogsRoute
   '/superadmin/restaurantes': typeof SuperadminRestaurantesRouteWithChildren
@@ -281,6 +289,7 @@ export interface FileRoutesById {
   '/superadmin': typeof SuperadminRouteWithChildren
   '/_authenticated/admin': typeof AuthenticatedAdminRouteWithChildren
   '/_authenticated/cozinha': typeof AuthenticatedCozinhaRoute
+  '/_authenticated/sala': typeof AuthenticatedSalaRoute
   '/m/$qrToken': typeof MQrTokenRouteWithChildren
   '/superadmin/logs': typeof SuperadminLogsRoute
   '/superadmin/restaurantes': typeof SuperadminRestaurantesRouteWithChildren
@@ -315,6 +324,7 @@ export interface FileRouteTypes {
     | '/superadmin'
     | '/admin'
     | '/cozinha'
+    | '/sala'
     | '/m/$qrToken'
     | '/superadmin/logs'
     | '/superadmin/restaurantes'
@@ -345,6 +355,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/reset-password'
     | '/cozinha'
+    | '/sala'
     | '/m/$qrToken'
     | '/superadmin/logs'
     | '/superadmin/restaurantes'
@@ -378,6 +389,7 @@ export interface FileRouteTypes {
     | '/superadmin'
     | '/_authenticated/admin'
     | '/_authenticated/cozinha'
+    | '/_authenticated/sala'
     | '/m/$qrToken'
     | '/superadmin/logs'
     | '/superadmin/restaurantes'
@@ -491,6 +503,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/m/$qrToken'
       preLoaderRoute: typeof MQrTokenRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/sala': {
+      id: '/_authenticated/sala'
+      path: '/sala'
+      fullPath: '/sala'
+      preLoaderRoute: typeof AuthenticatedSalaRouteImport
+      parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/cozinha': {
       id: '/_authenticated/cozinha'
@@ -686,11 +705,13 @@ const AuthenticatedAdminRouteWithChildren =
 interface AuthenticatedRouteChildren {
   AuthenticatedAdminRoute: typeof AuthenticatedAdminRouteWithChildren
   AuthenticatedCozinhaRoute: typeof AuthenticatedCozinhaRoute
+  AuthenticatedSalaRoute: typeof AuthenticatedSalaRoute
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedAdminRoute: AuthenticatedAdminRouteWithChildren,
   AuthenticatedCozinhaRoute: AuthenticatedCozinhaRoute,
+  AuthenticatedSalaRoute: AuthenticatedSalaRoute,
 }
 
 const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
