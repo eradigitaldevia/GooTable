@@ -202,7 +202,6 @@ export const atribuirGarcomMesaFn = createServerFn({ method: "POST" })
     const { data: id, error } = await supabase.rpc("atribuir_garcom_mesa", {
       _mesa_id: data.mesaId,
       _garcom_id: data.garcomId,
-      _sessao_id: null,
     });
     if (error) throw new Error(error.message);
     return { id };
@@ -297,5 +296,5 @@ export const resumoComissoesFn = createServerFn({ method: "POST" })
       _restaurante_id: data.restauranteId,
     });
     if (error) throw new Error(error.message);
-    return (result ?? []) as ResumoComissaoGarcom[];
+    return (result ?? []) as unknown as ResumoComissaoGarcom[];
   });
