@@ -1,79 +1,80 @@
-# Plano: Display de Cozinha (KDS)
+# Plano: Papel `cozinheiro` + UI de membros no /admin
 
-Tela dedicada para cozinha, em rota separada, leve, sem o chrome do admin. Reaproveita 100% dos dados/realtime já existentes (`pedidos`, `pedido_itens`, canal Supabase Realtime).
+Objetivo: permitir que o admin do restaurante crie um usuário **só-cozinha** que entre direto no `/cozinha` e não tenha acesso ao painel admin. Hoje só existe `admin | staff`, e a UI de membros só está no superadmin.
 
-## Escopo (MVP)
+## Decisões
 
-- Rota protegida `/cozinha` — layout próprio (sem sidebar/admin header).
-- Mostra apenas colunas **Recebido** e **Em preparo** (cozinha não fecha conta nem entrega).
-- Card por pedido com: Mesa, idade do pedido, itens (qtd × nome + observação), botão de ação única (`Iniciar preparo` → `Marcar como pronto`).
-- Timer por card com cor de urgência: verde <8min, âmbar 8–15min, vermelho >15min (re-render local a cada 30s).
-- Alerta visual no topo quando há pedido >15min.
-- Botão **Tela cheia** (`requestFullscreen`) e toggle **Som ligado/desligado** (beep no INSERT, igual ao admin).
-- Otimizado para tablet landscape (grid 2 colunas em ≥md, 1 em mobile).
+1. **Novo valor do enum**: `cozinheiro` adicionado a `app_role` (mantém `admin` e `staff`).
+2. **Permissões**:
+   - `cozinheiro` continua sendo membro do restaurante → `is_restaurante_membro` retorna true → passa em `assertAcessoRestaurante` → pode ler pedidos e atualizar status. Zero mudança em RLS / server fns existentes.
+   - Diferença é puramente de **roteamento no cliente**: cozinheiro não acessa rotas `/admin/*`, apenas `/cozinha`.
+3. **Login**: após autenticar, se o papel do usuário no restaurante for `cozinheiro`, redirecionar para `/cozinha`. Platform admin continua indo para `/superadmin`.
+4. **Guarda no layout admin**: `_authenticated/admin.tsx` verifica papel; se for `cozinheiro`, redireciona para `/cozinha` (defesa em profundidade).
+5. **UI**: rota `/admin/equipe` reaproveitando padrão de `membros-panel.tsx` do superadmin, com seletor de papel (`admin` | `staff` | `cozinheiro`). Só `admin` do restaurante pode gerenciar membros.
 
-Fora de escopo agora: papel separado `cozinheiro`, agrupamento por estação, marcar item individual como pronto, histórico, métricas de tempo médio, rota `/sala` para garçom.
+## Migração de DB
 
-## Decisões de arquitetura
-
-**Acesso.** Não criar novo papel agora. Qualquer membro do restaurante (`admin` ou `staff`) acessa `/cozinha`. Justificativa: o enum atual é `admin | staff` e introduzir `cozinheiro` exige migração + UI no superadmin. Fica como evolução futura (ver "Próximos passos"). Na prática o restaurante cria um usuário `staff` compartilhado para a cozinha.
-
-**Dados.** Reutilizar `listarPedidosDoDiaFn` filtrando no cliente por `status in ('recebido','em_preparo')`. Sem nova server fn de leitura. Realtime já existe via `useRealtimePedidos` (ou canal inline como em `admin/pedidos.tsx`) — reaproveitar.
-
-**Avançar status.** Reusar `atualizarStatusPedidoFn` + hook `useAtualizarStatusPedido` (já tem auth + validação de restaurante). Zero código novo no backend.
-
-**Layout.** A rota `/cozinha` fica **fora** de `_authenticated/admin` para não herdar a sidebar. Criamos `src/routes/_authenticated/cozinha.tsx` (autenticado, mas sem chrome admin) — render direto da página em fullscreen-friendly (bg escuro, alto contraste).
-
-## Arquivos
-
-**Novos**
-- `src/routes/_authenticated/cozinha.tsx` — rota + página KDS (loader chamando `listarPedidosDoDiaFn`, realtime inline, fullscreen + som, grid de cards).
-- `src/components/cozinha/kds-card.tsx` — card de pedido com timer colorido e botão de ação.
-- `src/components/cozinha/kds-header.tsx` — header minimalista (título, relógio, contador, som, fullscreen).
-- `src/hooks/use-tick.ts` — hook simples `useTick(intervalMs)` para forçar re-render dos timers (30s).
-
-**Editados (mínimo)**
-- `src/components/admin/admin-sidebar.tsx` — adicionar link "Display de cozinha" (abre em nova aba) para o admin levar à rota.
-- `src/components/cliente/…` — nada.
-- Nada em `pedidos.functions.ts`, `use-pedidos.ts`, `use-realtime.ts`, schema do banco.
-
-## Backend / DB
-
-Nenhuma migração. Nenhuma server fn nova. Nenhum ajuste de RLS — `listarPedidosDoDiaFn` e `atualizarStatusPedidoFn` já validam `assertAcessoRestaurante`.
-
-## UI (referência do anexo)
-
-```text
-┌─────────────────────────────────────────────────────┐
-│ 🍴 Display de cozinha   11:06  4 ativos  🔊 ⛶     │
-├─────────────────────────────────────────────────────┤
-│ ⚠ Pedido com mais de 15 min sem atualização!       │
-├──────────────────────┬──────────────────────────────┤
-│ RECEBIDO (2)         │ EM PREPARO (2)               │
-│ ┌──────────────────┐ │ ┌──────────────────────────┐ │
-│ │ Mesa 3 · C-08 14m│ │ │ Mesa 1 · C-04        17m │ │
-│ │ 2× X-Burguer     │ │ │ 3× Pastel de carne       │ │
-│ │ 1× Batata grande │ │ │ 1× Suco s/ açúcar        │ │
-│ │ [Iniciar preparo]│ │ │ [Marcar como pronto]     │ │
-│ └──────────────────┘ │ └──────────────────────────┘ │
-└──────────────────────┴──────────────────────────────┘
+```sql
+ALTER TYPE public.app_role ADD VALUE IF NOT EXISTS 'cozinheiro';
 ```
 
-Cor da borda esquerda do card = nível de urgência (verde/âmbar/vermelho). Tema escuro para reduzir cansaço visual em uso contínuo. Sem dark/light toggle no MVP.
+Nada mais. RLS já usa `is_restaurante_membro` (independente de papel). Sem mudança em policies.
+
+## Server functions
+
+**Novas** (`src/lib/equipe.functions.ts`, com `requireSupabaseAuth`):
+- `listarMembrosFn({ restauranteId })` — lista membros (exige papel `admin` do solicitante).
+- `adicionarMembroFn({ restauranteId, email, papel })` — cria/encontra user e insere em `restaurante_membros`.
+- `alterarPapelMembroFn({ membroId, novoPapel })` — atualiza o `papel` de um membro existente. Validações:
+  - solicitante é `admin` do mesmo restaurante;
+  - não permitir rebaixar o **último admin** do restaurante (conta `papel = 'admin'` > 1 antes de aplicar);
+  - não permitir o usuário rebaixar a si mesmo se for o único admin.
+- `removerMembroFn({ membroId })` — remove, com as mesmas proteções de "último admin".
+- `getMeuPapelFn()` — retorna `{ papel, restauranteId }` para o usuário logado. Usado no login e no guarda de rota.
+
+**Editadas**: nenhuma. `superadmin.functions.ts` ganha `cozinheiro` no `z.enum` do `papel`.
+
+## Cliente
+
+**Novos**:
+- `src/routes/_authenticated/admin/equipe.tsx` — página com tabela de membros + dialog "Adicionar membro".
+- `src/components/admin/equipe-panel.tsx` — UI baseada em `membros-panel.tsx`. Cada linha tem:
+  - **Select inline de papel** (Admin / Staff / Cozinheiro) que dispara `alterarPapelMembroFn` com confirmação (`AlertDialog`) quando é rebaixamento do próprio usuário ou de admin.
+  - Botão de remover (igual ao superadmin).
+  - Descrição curta de cada papel no select.
+- `src/hooks/use-equipe.ts` — wrappers de React Query (`useMembros`, `useAdicionarMembro`, `useAlterarPapelMembro`, `useRemoverMembro`).
+- `src/routes/forgot-password.tsx` — formulário público pedindo email → chama `supabase.auth.resetPasswordForEmail(email, { redirectTo: window.location.origin + '/reset-password' })`. Link "Esqueci minha senha" adicionado em `/login`.
+- `src/routes/reset-password.tsx` — rota pública. Lê `type=recovery` do hash, mostra formulário de nova senha, chama `supabase.auth.updateUser({ password })` e redireciona para `/login`. Acessível para qualquer membro (admin, staff, cozinheiro).
+
+**Editados**:
+- `src/routes/login.tsx` — `resolveDestination` chama `getMeuPapelFn()`; se `cozinheiro`, retorna `/cozinha`. Adicionar link "Esqueci minha senha".
+- `src/routes/_authenticated/admin.tsx` — no `beforeLoad`, após resolver restaurante, buscar papel; se `cozinheiro`, `throw redirect({ to: '/cozinha' })`. Propaga `papel` para a sidebar.
+- `src/components/admin/admin-sidebar.tsx` — adicionar item "Equipe" visível apenas para `papel === 'admin'`.
+- `src/routes/_authenticated/cozinha.tsx` (header) — botão "Sair" para que o cozinheiro consiga deslogar.
+
+## Fluxos
+
+**Criar cozinheiro**: `/admin/equipe` → "Adicionar membro" → email + papel `Cozinheiro` → salvar.
+
+**Trocar papel**: na tabela em `/admin/equipe`, admin muda o select da linha. Confirmação extra ao rebaixar admin ou a si mesmo. Bloqueado pelo backend se for o último admin.
+
+**Login do cozinheiro**: insere credenciais → cai direto em `/cozinha`.
+
+**Acesso indevido**: cozinheiro digita `/admin/...` → guarda redireciona para `/cozinha`.
+
+**Reset de senha (self-service)**: em `/login`, link "Esqueci minha senha" → `/forgot-password` (informa email, recebe link por email) → `/reset-password` (define nova senha) → volta para `/login`. Funciona igualmente para admin, staff e cozinheiro — não precisa de fluxo separado.
 
 ## Validação
 
-1. Login com `admin@caririfood.com`, abrir `/cozinha` → tela KDS aparece em fullscreen-friendly.
-2. Cliente faz pedido pelo QR → card aparece em "Recebido" em <2s, beep dispara.
-3. Clicar **Iniciar preparo** → card move para "Em preparo".
-4. Clicar **Marcar como pronto** → card some do KDS (continua visível em `/admin/pedidos`).
-5. Pedido com mais de 15min → borda vermelha + banner de alerta.
-6. Botão tela cheia funciona em Chrome/Safari tablet.
+1. `enum_range(NULL::app_role)` retorna `{admin, staff, cozinheiro}`.
+2. Adicionar cozinheiro em `/admin/equipe`, depois trocar papel para `staff` e voltar para `cozinheiro` na mesma tela.
+3. Tentar rebaixar o único admin → backend rejeita com mensagem clara.
+4. Login do cozinheiro cai em `/cozinha` direto; digitar `/admin` redireciona.
+5. Cozinheiro consegue mover pedido de "Recebido" → "Em preparo" → "Pronto".
+6. "Sair" no KDS volta para `/login`.
+7. `/forgot-password` envia email; link abre `/reset-password`; nova senha funciona no próximo login.
 
-## Próximos passos (não fazer agora)
+## Fora de escopo
 
-- Papel `cozinheiro` no enum + UI no superadmin/admin para criar usuário só-cozinha.
-- Múltiplas estações (bar / cozinha quente / fria) com filtro por categoria do produto.
-- Marcar item individual como pronto (granularidade item-a-item).
-- Rota `/sala` para garçom (ver pedidos `pronto`, marcar como entregue).
-- Métricas: tempo médio por pedido, fila, throughput.
+- Estações (cozinha quente/fria/bar) e filtros por categoria.
+- Convite por link com expiração (hoje usa email + senha temporária).
