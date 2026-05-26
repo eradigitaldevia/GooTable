@@ -65,24 +65,37 @@ export const carregarSalaFn = createServerFn({ method: "POST" })
 
     const { data: atribs, error: aErr } = await supabase
       .from("mesa_garcom")
-      .select("mesa_id, atribuido_em, mesas:mesa_id(id, numero)")
+      .select("mesa_id, atribuido_em")
       .eq("restaurante_id", restauranteId)
       .eq("garcom_id", garcom.id as string)
       .is("liberado_em", null);
     if (aErr) throw new Error(aErr.message);
 
-    const mesas: SalaMesa[] = (atribs ?? [])
-      .map((a) => {
-        const m = (a as { mesas?: { id: string; numero: string } | null }).mesas;
-        if (!m) return null;
-        return {
-          id: m.id,
-          numero: m.numero,
-          atribuido_em: a.atribuido_em as string,
-        };
-      })
-      .filter((v): v is SalaMesa => v !== null)
-      .sort((x, y) => x.numero.localeCompare(y.numero, "pt-BR", { numeric: true }));
+    const mesaIdsAtrib = Array.from(
+      new Set((atribs ?? []).map((a) => a.mesa_id as string)),
+    );
+    const atribuidoEmByMesa = new Map<string, string>();
+    for (const a of atribs ?? []) {
+      atribuidoEmByMesa.set(a.mesa_id as string, a.atribuido_em as string);
+    }
+
+    let mesas: SalaMesa[] = [];
+    if (mesaIdsAtrib.length) {
+      const { data: ms, error: mErr } = await supabase
+        .from("mesas")
+        .select("id, numero")
+        .in("id", mesaIdsAtrib);
+      if (mErr) throw new Error(mErr.message);
+      mesas = (ms ?? [])
+        .map((m) => ({
+          id: m.id as string,
+          numero: m.numero as string,
+          atribuido_em: atribuidoEmByMesa.get(m.id as string) ?? "",
+        }))
+        .sort((x, y) =>
+          x.numero.localeCompare(y.numero, "pt-BR", { numeric: true }),
+        );
+    }
 
     const mesaIds = mesas.map((m) => m.id);
     const mesaNumeroById = new Map(mesas.map((m) => [m.id, m.numero]));
