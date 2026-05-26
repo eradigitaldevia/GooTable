@@ -5,6 +5,7 @@ import { QRCodeSVG } from "qrcode.react";
 import { Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { useAlterarMesaAtiva, useExcluirMesa } from "@/hooks/use-mesas";
+import { GarcomBadge } from "@/components/garcons/garcom-badge";
 
 interface Mesa {
   id: string;
@@ -17,10 +18,12 @@ export function MesaCard({
   mesa,
   origin,
   restauranteId,
+  garcomNome,
 }: {
   mesa: Mesa;
   origin: string;
   restauranteId: string;
+  garcomNome?: string | null;
 }) {
   const url = `${origin}/m/${mesa.qr_token}`;
   const alterar = useAlterarMesaAtiva(restauranteId);
@@ -51,6 +54,11 @@ export function MesaCard({
     <div className="break-inside-avoid rounded-2xl border border-border bg-card p-5 text-center shadow-[var(--shadow-soft)] print:border-2 print:shadow-none">
       <div className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Mesa</div>
       <div className="text-3xl font-extrabold tracking-tight">{mesa.numero}</div>
+      {garcomNome && (
+        <div className="mt-2 flex justify-center">
+          <GarcomBadge nome={garcomNome} />
+        </div>
+      )}
       <div className="mt-4 flex items-center justify-center rounded-2xl bg-white p-3">
         <QRCodeSVG value={url} size={180} level="M" />
       </div>
