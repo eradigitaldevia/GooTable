@@ -61,24 +61,8 @@ function CozinhaKDS() {
   const atualizarStatusMut = useAtualizarStatusPedido(restauranteId ?? undefined);
   const marcarItemMut = useMarcarItemUnidades(restauranteId ?? undefined);
 
-  const pedidos = (data?.pedidos ?? []) as Pedido[];
-  const itens = (data?.itens ?? []) as Item[];
-  const mesas = useMemo(() => {
-    const m = new Map<string, Mesa>();
-    for (const x of (data?.mesas ?? []) as Mesa[]) m.set(x.id, x);
-    return m;
-  }, [data?.mesas]);
-  const mesasRef = useRef(mesas);
-  useEffect(() => { mesasRef.current = mesas; }, [mesas]);
-
-  const itensPorPedido = useMemo(() => {
-    const m = new Map<string, Item[]>();
-    for (const it of itens) {
-      if (!m.has(it.pedido_id)) m.set(it.pedido_id, []);
-      m.get(it.pedido_id)!.push(it);
-    }
-    return m;
-  }, [itens]);
+  // Ref mutável usada pelos callbacks de realtime (setado abaixo, após os dados chegarem).
+  const mesasRef = useRef<Map<string, Mesa>>(new Map());
 
   // Realtime via hook reutilizável com banner de conexão.
   const invalidateTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -147,6 +131,24 @@ function CozinhaKDS() {
   const { data, isLoading } = usePedidosDoDia(restauranteId ?? undefined, {
     refetchInterval: rtStatus === "connected" ? false : 15000,
   });
+
+  const pedidos = (data?.pedidos ?? []) as Pedido[];
+  const itens = (data?.itens ?? []) as Item[];
+  const mesas = useMemo(() => {
+    const m = new Map<string, Mesa>();
+    for (const x of (data?.mesas ?? []) as Mesa[]) m.set(x.id, x);
+    return m;
+  }, [data?.mesas]);
+  useEffect(() => { mesasRef.current = mesas; }, [mesas]);
+
+  const itensPorPedido = useMemo(() => {
+    const m = new Map<string, Item[]>();
+    for (const it of itens) {
+      if (!m.has(it.pedido_id)) m.set(it.pedido_id, []);
+      m.get(it.pedido_id)!.push(it);
+    }
+    return m;
+  }, [itens]);
 
   // Beep distinto na queda (transição para "disconnected").
   const prevStatusRef = useRef<typeof rtStatus>("connecting");
