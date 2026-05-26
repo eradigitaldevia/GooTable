@@ -8,7 +8,32 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { QrCode, Loader2 } from "lucide-react";
 
+function safeRedirect(value: unknown): string | undefined {
+  if (typeof value !== "string") return undefined;
+  if (!value.startsWith("/") || value.startsWith("//")) return undefined;
+  return value;
+}
+
+async function resolveDestination(userId: string, requested?: string) {
+  if (requested) return requested;
+  const { data: pa } = await supabase
+    .from("platform_admins")
+    .select("user_id")
+    .eq("user_id", userId)
+    .maybeSingle();
+  return pa ? "/superadmin" : "/admin";
+}
+
 export const Route = createFileRoute("/login")({
+  validateSearch: (search: Record<string, unknown>) => ({
+    redirect: safeRedirect(search.redirect),
+  }),
+  beforeLoad: async ({ search }) => {
+    const { data } = await supabase.auth.getUser();
+    if (!data.user) return;
+    const dest = await resolveDestination(data.user.id, search.redirect);
+    throw (await import("@tanstack/react-router")).redirect({ to: dest, replace: true });
+  },
   component: Login,
 });
 
@@ -19,6 +44,7 @@ const schema = z.object({
 
 function Login() {
   const navigate = useNavigate();
+  const { redirect: redirectTo } = Route.useSearch();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -43,18 +69,9 @@ function Login() {
     }
 
     await supabase.auth.getSession();
-
-    const { data: pa } = await supabase
-      .from("platform_admins")
-      .select("user_id")
-      .eq("user_id", data.user.id)
-      .maybeSingle();
-
+    const dest = await resolveDestination(data.user.id, redirectTo);
     toast.success("Bem-vindo de volta!");
-    await navigate({
-      to: pa ? "/superadmin" : "/admin",
-      replace: true,
-    });
+    await navigate({ to: dest, replace: true });
   }
 
   return (
