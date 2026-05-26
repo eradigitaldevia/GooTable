@@ -21,7 +21,16 @@ async function resolveDestination(userId: string, requested?: string) {
     .select("user_id")
     .eq("user_id", userId)
     .maybeSingle();
-  return pa ? "/superadmin" : "/admin";
+  if (pa) return "/superadmin";
+  const { data: membro } = await supabase
+    .from("restaurante_membros")
+    .select("papel")
+    .eq("user_id", userId)
+    .order("criado_em", { ascending: true })
+    .limit(1)
+    .maybeSingle();
+  if (membro?.papel === "cozinheiro") return "/cozinha";
+  return "/admin";
 }
 
 export const Route = createFileRoute("/login")({
