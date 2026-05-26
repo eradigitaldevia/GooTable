@@ -25,6 +25,7 @@ import {
   Bell,
   ChefHat,
   UserCog,
+  UsersRound,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
@@ -45,6 +46,7 @@ const NAV = [
   { to: "/admin/cupons", label: "Cupons", icon: Ticket, exact: false },
   { to: "/admin/configuracoes", label: "Configurações", icon: Settings, exact: false },
   { to: "/admin/equipe", label: "Equipe", icon: UserCog, exact: false },
+  { to: "/admin/garcons", label: "Garçons", icon: UsersRound, exact: false },
 ] as const;
 
 function useChamadosPendentesCount(restauranteId: string) {
