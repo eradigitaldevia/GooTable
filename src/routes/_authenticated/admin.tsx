@@ -11,6 +11,7 @@ import { AlertTriangle } from "lucide-react";
 import { queryKeys } from "@/lib/query-keys";
 import { getMeuRestauranteFn } from "@/lib/restaurante.functions";
 import { verificarPlatformAdmin } from "@/lib/superadmin.functions";
+import { getMeuPapelFn } from "@/lib/equipe.functions";
 
 export const Route = createFileRoute("/_authenticated/admin")({
   beforeLoad: async ({ context }) => {
@@ -34,6 +35,16 @@ export const Route = createFileRoute("/_authenticated/admin")({
 
     if (!restaurante) {
       throw redirect({ to: paData?.isPlatformAdmin ? "/superadmin" : "/cadastro" });
+    }
+
+    if (!paData?.isPlatformAdmin) {
+      const papelData = await queryClient.ensureQueryData({
+        queryKey: ["meu-papel"],
+        queryFn: () => getMeuPapelFn(),
+      });
+      if (papelData?.papel === "cozinheiro") {
+        throw redirect({ to: "/cozinha" });
+      }
     }
 
     return {
