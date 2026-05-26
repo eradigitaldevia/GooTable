@@ -1095,6 +1095,10 @@ export type Database = {
         Args: { _cliente_id?: string; _codigo: string; _comanda_id: string }
         Returns: Json
       }
+      atribuir_garcom_mesa: {
+        Args: { _garcom_id: string; _mesa_id: string; _sessao_id?: string }
+        Returns: string
+      }
       confirmar_pagamento: {
         Args: { _pagamento_id: string }
         Returns: undefined
@@ -1130,7 +1134,9 @@ export type Database = {
         Args: { _restaurante_id: string; _user_id: string }
         Returns: boolean
       }
+      liberar_garcom_mesa: { Args: { _mesa_id: string }; Returns: undefined }
       metricas_chamados: { Args: { _restaurante_id: string }; Returns: Json }
+      pagar_comissoes: { Args: { _ids: string[] }; Returns: number }
       registrar_pagamento: {
         Args: {
           _comanda_id: string
@@ -1144,6 +1150,7 @@ export type Database = {
         Args: { _comanda_id: string }
         Returns: undefined
       }
+      resumo_comissoes: { Args: { _restaurante_id: string }; Returns: Json }
       validar_cupom: {
         Args: {
           _cliente_id?: string
