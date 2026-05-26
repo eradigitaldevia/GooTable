@@ -18,6 +18,7 @@ import { Route as SuperadminIndexRouteImport } from './routes/superadmin.index'
 import { Route as SuperadminRestaurantesRouteImport } from './routes/superadmin.restaurantes'
 import { Route as SuperadminLogsRouteImport } from './routes/superadmin.logs'
 import { Route as MQrTokenRouteImport } from './routes/m.$qrToken'
+import { Route as AuthenticatedCozinhaRouteImport } from './routes/_authenticated/cozinha'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
 import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin/index'
 import { Route as SuperadminRestaurantesIdRouteImport } from './routes/superadmin.restaurantes.$id'
@@ -79,6 +80,11 @@ const MQrTokenRoute = MQrTokenRouteImport.update({
   id: '/m/$qrToken',
   path: '/m/$qrToken',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedCozinhaRoute = AuthenticatedCozinhaRouteImport.update({
+  id: '/cozinha',
+  path: '/cozinha',
+  getParentRoute: () => AuthenticatedRoute,
 } as any)
 const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
   id: '/admin',
@@ -182,6 +188,7 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/superadmin': typeof SuperadminRouteWithChildren
   '/admin': typeof AuthenticatedAdminRouteWithChildren
+  '/cozinha': typeof AuthenticatedCozinhaRoute
   '/m/$qrToken': typeof MQrTokenRouteWithChildren
   '/superadmin/logs': typeof SuperadminLogsRoute
   '/superadmin/restaurantes': typeof SuperadminRestaurantesRouteWithChildren
@@ -207,6 +214,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/cadastro': typeof CadastroRoute
   '/login': typeof LoginRoute
+  '/cozinha': typeof AuthenticatedCozinhaRoute
   '/m/$qrToken': typeof MQrTokenRouteWithChildren
   '/superadmin/logs': typeof SuperadminLogsRoute
   '/superadmin/restaurantes': typeof SuperadminRestaurantesRouteWithChildren
@@ -236,6 +244,7 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/superadmin': typeof SuperadminRouteWithChildren
   '/_authenticated/admin': typeof AuthenticatedAdminRouteWithChildren
+  '/_authenticated/cozinha': typeof AuthenticatedCozinhaRoute
   '/m/$qrToken': typeof MQrTokenRouteWithChildren
   '/superadmin/logs': typeof SuperadminLogsRoute
   '/superadmin/restaurantes': typeof SuperadminRestaurantesRouteWithChildren
@@ -265,6 +274,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/superadmin'
     | '/admin'
+    | '/cozinha'
     | '/m/$qrToken'
     | '/superadmin/logs'
     | '/superadmin/restaurantes'
@@ -290,6 +300,7 @@ export interface FileRouteTypes {
     | '/'
     | '/cadastro'
     | '/login'
+    | '/cozinha'
     | '/m/$qrToken'
     | '/superadmin/logs'
     | '/superadmin/restaurantes'
@@ -318,6 +329,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/superadmin'
     | '/_authenticated/admin'
+    | '/_authenticated/cozinha'
     | '/m/$qrToken'
     | '/superadmin/logs'
     | '/superadmin/restaurantes'
@@ -413,6 +425,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/m/$qrToken'
       preLoaderRoute: typeof MQrTokenRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/cozinha': {
+      id: '/_authenticated/cozinha'
+      path: '/cozinha'
+      fullPath: '/cozinha'
+      preLoaderRoute: typeof AuthenticatedCozinhaRouteImport
+      parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/admin': {
       id: '/_authenticated/admin'
@@ -582,10 +601,12 @@ const AuthenticatedAdminRouteWithChildren =
 
 interface AuthenticatedRouteChildren {
   AuthenticatedAdminRoute: typeof AuthenticatedAdminRouteWithChildren
+  AuthenticatedCozinhaRoute: typeof AuthenticatedCozinhaRoute
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedAdminRoute: AuthenticatedAdminRouteWithChildren,
+  AuthenticatedCozinhaRoute: AuthenticatedCozinhaRoute,
 }
 
 const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
@@ -651,3 +672,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
