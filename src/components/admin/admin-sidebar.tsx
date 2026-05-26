@@ -117,6 +117,7 @@ export function AdminSidebar({
             <Link
               key={item.to}
               to={item.to}
+              target={(item as { target?: string }).target}
               className={cn(
                 "flex items-center rounded-xl text-sm font-medium transition-colors",
                 collapsed
