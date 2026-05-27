@@ -8,6 +8,7 @@ import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { IdentidadeForm } from "@/components/configuracoes/identidade-form";
 import { PixForm } from "@/components/configuracoes/pix-form";
+import { ComissaoModoForm } from "@/components/configuracoes/comissao-modo-form";
 
 export const Route = createFileRoute("/_authenticated/admin/configuracoes")({
   component: Configuracoes,
@@ -26,6 +27,7 @@ function Configuracoes() {
     pix_habilitado: false,
     pix_chave: "",
     pix_nome_titular: "",
+    comissao_modo: "pedido" as "pedido" | "item",
   });
 
   useEffect(() => {
@@ -37,6 +39,7 @@ function Configuracoes() {
       pix_habilitado: restaurante.pix_habilitado,
       pix_chave: restaurante.pix_chave ?? "",
       pix_nome_titular: restaurante.pix_nome_titular ?? "",
+      comissao_modo: restaurante.comissao_modo ?? "pedido",
     });
   }, [restaurante]);
 
@@ -69,6 +72,7 @@ function Configuracoes() {
         pix_habilitado: form.pix_habilitado,
         pix_chave: form.pix_chave.trim() || null,
         pix_nome_titular: form.pix_nome_titular.trim() || null,
+        comissao_modo: form.comissao_modo,
       });
       toast.success("Configurações salvas");
     } catch (e: any) {
@@ -101,6 +105,8 @@ function Configuracoes() {
         titular={form.pix_nome_titular}
         onChange={patch}
       />
+
+      <ComissaoModoForm modo={form.comissao_modo} onChange={patch} />
 
       <div className="flex justify-end">
         <Button onClick={save} disabled={atualizar.isPending} className="h-11 px-6">
