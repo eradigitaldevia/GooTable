@@ -6,11 +6,12 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { X, Wallet, CheckCircle2 } from "lucide-react";
+import { X, Wallet, CheckCircle2, Users } from "lucide-react";
 import { formatBRL } from "@/lib/cart";
 import { usePagamentosComanda } from "@/hooks/use-pagamentos";
 import { ConfirmarPagamentoDialog } from "@/components/admin/confirmar-pagamento-dialog";
 import { GarcomBadge } from "@/components/garcons/garcom-badge";
+import { DividirComissaoDialog } from "@/components/pedidos/dividir-comissao-dialog";
 
 type StatusPedido = "recebido" | "em_preparo" | "pronto" | "entregue" | "cancelado";
 
@@ -56,6 +57,7 @@ export function DetalhePedido({
   garcomNome?: string | null;
 }) {
   const [pagOpen, setPagOpen] = useState(false);
+  const [divOpen, setDivOpen] = useState(false);
 
   const { data: pagInfo } = usePagamentosComanda(
     pedido?.restaurante_id,
@@ -172,6 +174,12 @@ export function DetalhePedido({
           </Button>
         )}
 
+        {pedido.status !== "cancelado" && (
+          <Button variant="outline" onClick={() => setDivOpen(true)}>
+            <Users className="mr-2 h-4 w-4" /> Dividir comissão
+          </Button>
+        )}
+
         {pedido.comanda_id && (
           <ConfirmarPagamentoDialog
             open={pagOpen}
@@ -181,6 +189,13 @@ export function DetalhePedido({
             saldoSugerido={saldo}
           />
         )}
+
+        <DividirComissaoDialog
+          open={divOpen}
+          onOpenChange={setDivOpen}
+          restauranteId={pedido.restaurante_id}
+          pedidoId={pedido.id}
+        />
       </DialogContent>
     </Dialog>
   );
