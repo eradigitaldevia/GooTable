@@ -459,6 +459,69 @@ export function GarconsRoster({ restauranteId }: { restauranteId: string }) {
           </form>
         </DialogContent>
       </Dialog>
+
+      <Dialog
+        open={!!emailAlvo}
+        onOpenChange={(o) => {
+          if (!o) {
+            setEmailAlvo(null);
+            setNovoEmail("");
+          }
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>
+              Alterar e-mail {emailAlvo ? `— ${emailAlvo.nome}` : ""}
+            </DialogTitle>
+          </DialogHeader>
+          <form
+            className="space-y-4"
+            onSubmit={async (e) => {
+              e.preventDefault();
+              if (!emailAlvo) return;
+              const email = novoEmail.trim();
+              if (!email || !/^\S+@\S+\.\S+$/.test(email)) {
+                toast.error("E-mail inválido");
+                return;
+              }
+              try {
+                await alterarEmail.mutateAsync({
+                  garcomId: emailAlvo.id,
+                  email,
+                });
+                toast.success("E-mail alterado");
+                setEmailAlvo(null);
+                setNovoEmail("");
+              } catch (err) {
+                toast.error(
+                  err instanceof Error ? err.message : "Erro ao alterar e-mail",
+                );
+              }
+            }}
+          >
+            <div>
+              <Label htmlFor="garcom-novo-email">Novo e-mail</Label>
+              <Input
+                id="garcom-novo-email"
+                type="email"
+                value={novoEmail}
+                onChange={(e) => setNovoEmail(e.target.value)}
+                placeholder="garcom@restaurante.com"
+                autoComplete="off"
+              />
+              <p className="mt-1 text-xs text-muted-foreground">
+                O garçom passará a usar este e-mail para fazer login.
+              </p>
+            </div>
+            <DialogFooter>
+              <Button type="submit" disabled={alterarEmail.isPending}>
+                {alterarEmail.isPending ? "Salvando…" : "Alterar e-mail"}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
     </Card>
   );
 }
