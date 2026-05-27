@@ -1,4 +1,4 @@
-import { useCallback, lazy, Suspense } from "react";
+import { memo, useCallback, lazy, Suspense } from "react";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 const QRCodeSVG = lazy(() =>
@@ -16,7 +16,7 @@ interface Mesa {
   ativa: boolean;
 }
 
-export function MesaCard({
+function MesaCardComponent({
   mesa,
   origin,
   restauranteId,
@@ -80,3 +80,5 @@ export function MesaCard({
     </div>
   );
 }
+
+export const MesaCard = memo(MesaCardComponent);
