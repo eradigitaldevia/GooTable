@@ -12,6 +12,8 @@ import {
 } from "@/components/ui/select";
 import { toast } from "sonner";
 import { useComissoes, usePagarComissoes, useResumoComissoes } from "@/hooks/use-garcons";
+import { useAuth } from "@/hooks/use-auth";
+import { useMeuRestaurante } from "@/hooks/use-restaurante";
 
 const brl = (v: number) =>
   v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
@@ -22,6 +24,9 @@ export function ComissoesPanel({ restauranteId }: { restauranteId: string }) {
   const { data: resumo = [] } = useResumoComissoes(restauranteId);
   const { data: comissoes = [], isLoading } = useComissoes(restauranteId, { status });
   const pagar = usePagarComissoes(restauranteId);
+  const { user } = useAuth();
+  const { data: restaurante } = useMeuRestaurante(user?.id);
+  const modoItem = restaurante?.comissao_modo === "item";
 
   const totalPendente = useMemo(
     () => resumo.reduce((acc, r) => acc + Number(r.pendente ?? 0), 0),
@@ -80,6 +85,9 @@ export function ComissoesPanel({ restauranteId }: { restauranteId: string }) {
           <div className="mt-1 text-2xl font-bold tabular-nums">
             {resumo.filter((r) => r.ativo).length}
           </div>
+          {modoItem && (
+            <Badge variant="outline" className="mt-2">Cálculo por item</Badge>
+          )}
         </Card>
       </div>
 

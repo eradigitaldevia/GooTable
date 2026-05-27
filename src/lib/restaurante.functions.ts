@@ -14,6 +14,7 @@ export interface Restaurante {
   pix_chave: string | null;
   pix_nome_titular: string | null;
   ativo: boolean;
+  comissao_modo: "pedido" | "item";
 }
 
 /** Restaurante do usuário autenticado (primeiro vínculo). */

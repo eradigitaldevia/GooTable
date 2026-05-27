@@ -24,6 +24,8 @@ interface Produto {
   disponivel: boolean;
   categoria_id: string | null;
   ordem: number;
+  percentual_comissao?: number | null;
+  comissao_aplicavel?: boolean;
 }
 
 const produtoSchema = z.object({
@@ -31,6 +33,8 @@ const produtoSchema = z.object({
   descricao: z.string().max(500).optional(),
   preco: z.number().min(0, "Preço inválido"),
   categoria_id: z.string().uuid().nullable(),
+  percentual_comissao: z.number().min(0).max(100).nullable(),
+  comissao_aplicavel: z.boolean(),
 });
 
 export default function ProdutoDialogBody({
@@ -51,6 +55,9 @@ export default function ProdutoDialogBody({
     descricao: produto?.descricao ?? "",
     preco: produto?.preco ? String(produto.preco) : "",
     categoria_id: produto?.categoria_id ?? "",
+    percentual_comissao:
+      produto?.percentual_comissao != null ? String(produto.percentual_comissao) : "",
+    comissao_aplicavel: produto?.comissao_aplicavel ?? true,
   });
   const [imagemUrl, setImagemUrl] = useState<string | null>(produto?.imagem_url ?? null);
   const [uploading, setUploading] = useState(false);
@@ -78,11 +85,15 @@ export default function ProdutoDialogBody({
   }
 
   async function save() {
+    const pctRaw = form.percentual_comissao.trim();
+    const pctNum = pctRaw === "" ? null : Number(pctRaw.replace(",", "."));
     const parsed = produtoSchema.safeParse({
       nome: form.nome,
       descricao: form.descricao || undefined,
       preco: Number(form.preco.replace(",", ".")),
       categoria_id: form.categoria_id || null,
+      percentual_comissao: pctNum,
+      comissao_aplicavel: form.comissao_aplicavel,
     });
     if (!parsed.success) {
       toast.error(parsed.error.issues[0].message);
@@ -95,6 +106,8 @@ export default function ProdutoDialogBody({
       preco: parsed.data.preco,
       categoria_id: parsed.data.categoria_id,
       imagem_url: imagemUrl,
+      percentual_comissao: parsed.data.percentual_comissao,
+      comissao_aplicavel: parsed.data.comissao_aplicavel,
     };
     try {
       if (produto) {
