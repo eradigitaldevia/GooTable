@@ -389,6 +389,7 @@ export function EquipePanel({ restauranteId }: { restauranteId: string }) {
             ))}
           </tbody>
         </table>
+        </div>
       </Card>
 
       <AlertDialog
