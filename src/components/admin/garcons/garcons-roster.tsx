@@ -323,6 +323,53 @@ export function GarconsRoster({ restauranteId }: { restauranteId: string }) {
           </form>
         </DialogContent>
       </Dialog>
+
+      <Dialog open={!!extratoAlvo} onOpenChange={(o) => !o && setExtratoAlvo(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>
+              Extrato {extratoAlvo ? `— ${extratoAlvo.nome}` : ""}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label htmlFor="ext-inicio">De</Label>
+                <Input
+                  id="ext-inicio"
+                  type="date"
+                  value={extInicio}
+                  onChange={(e) => setExtInicio(e.target.value)}
+                />
+              </div>
+              <div>
+                <Label htmlFor="ext-fim">Até</Label>
+                <Input
+                  id="ext-fim"
+                  type="date"
+                  value={extFim}
+                  onChange={(e) => setExtFim(e.target.value)}
+                />
+              </div>
+            </div>
+            <DialogFooter className="gap-2">
+              <Button
+                variant="outline"
+                disabled={gerarRelatorio.isPending}
+                onClick={() => handleExtrato("csv")}
+              >
+                Exportar CSV
+              </Button>
+              <Button
+                disabled={gerarRelatorio.isPending}
+                onClick={() => handleExtrato("pdf")}
+              >
+                {gerarRelatorio.isPending ? "Gerando…" : "Gerar PDF"}
+              </Button>
+            </DialogFooter>
+          </div>
+        </DialogContent>
+      </Dialog>
     </Card>
   );
 }
