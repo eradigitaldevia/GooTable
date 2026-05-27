@@ -13,7 +13,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Pencil, Plus, UserPlus, CheckCircle2, FileText, KeyRound } from "lucide-react";
+import { Pencil, Plus, UserPlus, CheckCircle2, FileText, KeyRound, Mail } from "lucide-react";
 import { toast } from "sonner";
 import {
   useAtualizarGarcom,
@@ -21,6 +21,7 @@ import {
   useGarcons,
   useRedefinirSenhaGarcom,
   useVincularUsuarioGarcom,
+  useAlterarEmailGarcom,
 } from "@/hooks/use-garcons";
 import type { Garcom } from "@/lib/garcons.functions";
 import { ExtratoGarcomDialog } from "./extrato-garcom-dialog";
@@ -111,6 +112,7 @@ export function GarconsRoster({ restauranteId }: { restauranteId: string }) {
   const atualizar = useAtualizarGarcom(restauranteId);
   const vincular = useVincularUsuarioGarcom(restauranteId);
   const redefinirSenha = useRedefinirSenhaGarcom(restauranteId);
+  const alterarEmail = useAlterarEmailGarcom(restauranteId);
   const [openNovo, setOpenNovo] = useState(false);
   const [edit, setEdit] = useState<Garcom | null>(null);
   const [vincularAlvo, setVincularAlvo] = useState<Garcom | null>(null);
@@ -120,6 +122,8 @@ export function GarconsRoster({ restauranteId }: { restauranteId: string }) {
   const [senhaAlvo, setSenhaAlvo] = useState<Garcom | null>(null);
   const [novaSenha, setNovaSenha] = useState("");
   const [confirmarSenha, setConfirmarSenha] = useState("");
+  const [emailAlvo, setEmailAlvo] = useState<Garcom | null>(null);
+  const [novoEmail, setNovoEmail] = useState("");
 
   return (
     <Card className="overflow-hidden">
@@ -217,6 +221,17 @@ export function GarconsRoster({ restauranteId }: { restauranteId: string }) {
                       }}
                     >
                       <KeyRound className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      title="Alterar e-mail"
+                      onClick={() => {
+                        setEmailAlvo(g);
+                        setNovoEmail("");
+                      }}
+                    >
+                      <Mail className="h-4 w-4" />
                     </Button>
                   </div>
                 ) : (
@@ -439,6 +454,69 @@ export function GarconsRoster({ restauranteId }: { restauranteId: string }) {
                 }
               >
                 {redefinirSenha.isPending ? "Salvando…" : "Redefinir"}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={!!emailAlvo}
+        onOpenChange={(o) => {
+          if (!o) {
+            setEmailAlvo(null);
+            setNovoEmail("");
+          }
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>
+              Alterar e-mail {emailAlvo ? `— ${emailAlvo.nome}` : ""}
+            </DialogTitle>
+          </DialogHeader>
+          <form
+            className="space-y-4"
+            onSubmit={async (e) => {
+              e.preventDefault();
+              if (!emailAlvo) return;
+              const email = novoEmail.trim();
+              if (!email || !/^\S+@\S+\.\S+$/.test(email)) {
+                toast.error("E-mail inválido");
+                return;
+              }
+              try {
+                await alterarEmail.mutateAsync({
+                  garcomId: emailAlvo.id,
+                  email,
+                });
+                toast.success("E-mail alterado");
+                setEmailAlvo(null);
+                setNovoEmail("");
+              } catch (err) {
+                toast.error(
+                  err instanceof Error ? err.message : "Erro ao alterar e-mail",
+                );
+              }
+            }}
+          >
+            <div>
+              <Label htmlFor="garcom-novo-email">Novo e-mail</Label>
+              <Input
+                id="garcom-novo-email"
+                type="email"
+                value={novoEmail}
+                onChange={(e) => setNovoEmail(e.target.value)}
+                placeholder="garcom@restaurante.com"
+                autoComplete="off"
+              />
+              <p className="mt-1 text-xs text-muted-foreground">
+                O garçom passará a usar este e-mail para fazer login.
+              </p>
+            </div>
+            <DialogFooter>
+              <Button type="submit" disabled={alterarEmail.isPending}>
+                {alterarEmail.isPending ? "Salvando…" : "Alterar e-mail"}
               </Button>
             </DialogFooter>
           </form>
