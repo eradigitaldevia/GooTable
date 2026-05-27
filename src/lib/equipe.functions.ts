@@ -397,6 +397,47 @@ export const alterarPapelMembroFn = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
+/** Redefine a senha de um membro existente diretamente (admin do restaurante). */
+export const redefinirSenhaMembroFn = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) =>
+    z
+      .object({
+        membroId: z.string().uuid(),
+        restauranteId: z.string().uuid(),
+        novaSenha: z.string().min(6).max(72),
+      })
+      .parse(d),
+  )
+  .handler(async ({ context, data }) => {
+    const { supabase, userId } = context;
+    await assertAdminDoRestaurante(supabase, userId, data.restauranteId);
+
+    const { data: alvo } = await supabaseAdmin
+      .from("restaurante_membros")
+      .select("user_id, restaurante_id")
+      .eq("id", data.membroId)
+      .maybeSingle();
+    if (!alvo || alvo.restaurante_id !== data.restauranteId) {
+      throw new Error("Membro não encontrado.");
+    }
+
+    const { error: updErr } = await supabaseAdmin.auth.admin.updateUserById(
+      alvo.user_id,
+      { password: data.novaSenha },
+    );
+    if (updErr) throw new Error(updErr.message);
+
+    await supabaseAdmin.from("audit_logs").insert({
+      actor_user_id: userId,
+      acao: "redefinir_senha_membro",
+      entidade: "restaurante",
+      entidade_id: data.restauranteId,
+      metadata: { membroId: data.membroId } as any,
+    });
+    return { ok: true };
+  });
+
 /** Remove um membro. Protege o último admin. */
 export const removerMembroEquipeFn = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
