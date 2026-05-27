@@ -30,6 +30,7 @@ const configSchema = z.object({
   pix_habilitado: z.boolean(),
   pix_chave: z.string().trim().max(120).nullable(),
   pix_nome_titular: z.string().trim().max(80).nullable(),
+  comissao_modo: z.enum(["pedido", "item"]),
 });
 
 export const atualizarConfiguracoesFn = createServerFn({ method: "POST" })
@@ -53,6 +54,7 @@ export const atualizarConfiguracoesFn = createServerFn({ method: "POST" })
         pix_habilitado: data.pix_habilitado,
         pix_chave: data.pix_chave || null,
         pix_nome_titular: data.pix_nome_titular || null,
+        comissao_modo: data.comissao_modo,
       })
       .eq("id", data.restauranteId);
     if (error) throw new Error(error.message);
