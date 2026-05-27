@@ -5,6 +5,7 @@ import { useMeuRestaurante } from "@/hooks/use-restaurante";
 import { GarconsRoster } from "@/components/admin/garcons/garcons-roster";
 import { MesasGarcomPanel } from "@/components/admin/garcons/mesas-garcom-panel";
 import { ComissoesPanel } from "@/components/admin/garcons/comissoes-panel";
+import { MetasBonusPanel } from "@/components/admin/garcons/metas-bonus-panel";
 
 export const Route = createFileRoute("/_authenticated/admin/garcons")({
   component: GarconsPage,
@@ -31,6 +32,7 @@ function GarconsPage() {
           <TabsTrigger value="mesas">Mesas</TabsTrigger>
           <TabsTrigger value="garcons">Garçons</TabsTrigger>
           <TabsTrigger value="comissoes">Comissões</TabsTrigger>
+          <TabsTrigger value="bonus">Metas & Bônus</TabsTrigger>
         </TabsList>
         <TabsContent value="mesas" className="mt-4">
           <MesasGarcomPanel restauranteId={restaurante.id} />
@@ -40,6 +42,9 @@ function GarconsPage() {
         </TabsContent>
         <TabsContent value="comissoes" className="mt-4">
           <ComissoesPanel restauranteId={restaurante.id} />
+        </TabsContent>
+        <TabsContent value="bonus" className="mt-4">
+          <MetasBonusPanel restauranteId={restaurante.id} />
         </TabsContent>
       </Tabs>
     </div>

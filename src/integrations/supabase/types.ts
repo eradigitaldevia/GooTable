@@ -432,6 +432,102 @@ export type Database = {
         }
         Relationships: []
       }
+      garcom_bonus: {
+        Row: {
+          calculado_em: string
+          detalhe_json: Json
+          garcom_id: string
+          id: string
+          meta_id: string
+          pago_em: string | null
+          pago_por: string | null
+          periodo_ref: string
+          restaurante_id: string
+          status: Database["public"]["Enums"]["garcom_bonus_status"]
+          valor: number
+        }
+        Insert: {
+          calculado_em?: string
+          detalhe_json?: Json
+          garcom_id: string
+          id?: string
+          meta_id: string
+          pago_em?: string | null
+          pago_por?: string | null
+          periodo_ref: string
+          restaurante_id: string
+          status?: Database["public"]["Enums"]["garcom_bonus_status"]
+          valor?: number
+        }
+        Update: {
+          calculado_em?: string
+          detalhe_json?: Json
+          garcom_id?: string
+          id?: string
+          meta_id?: string
+          pago_em?: string | null
+          pago_por?: string | null
+          periodo_ref?: string
+          restaurante_id?: string
+          status?: Database["public"]["Enums"]["garcom_bonus_status"]
+          valor?: number
+        }
+        Relationships: []
+      }
+      garcom_metas: {
+        Row: {
+          alvo: number
+          ativo: boolean
+          atualizado_em: string
+          bonus_percentual: number
+          bonus_valor: number
+          criado_em: string
+          garcom_id: string
+          id: string
+          nome: string
+          periodo: Database["public"]["Enums"]["garcom_meta_periodo"]
+          regras_json: Json
+          restaurante_id: string
+          tipo: Database["public"]["Enums"]["garcom_meta_tipo"]
+          vigencia_fim: string | null
+          vigencia_inicio: string | null
+        }
+        Insert: {
+          alvo?: number
+          ativo?: boolean
+          atualizado_em?: string
+          bonus_percentual?: number
+          bonus_valor?: number
+          criado_em?: string
+          garcom_id: string
+          id?: string
+          nome: string
+          periodo?: Database["public"]["Enums"]["garcom_meta_periodo"]
+          regras_json?: Json
+          restaurante_id: string
+          tipo: Database["public"]["Enums"]["garcom_meta_tipo"]
+          vigencia_fim?: string | null
+          vigencia_inicio?: string | null
+        }
+        Update: {
+          alvo?: number
+          ativo?: boolean
+          atualizado_em?: string
+          bonus_percentual?: number
+          bonus_valor?: number
+          criado_em?: string
+          garcom_id?: string
+          id?: string
+          nome?: string
+          periodo?: Database["public"]["Enums"]["garcom_meta_periodo"]
+          regras_json?: Json
+          restaurante_id?: string
+          tipo?: Database["public"]["Enums"]["garcom_meta_tipo"]
+          vigencia_fim?: string | null
+          vigencia_inicio?: string | null
+        }
+        Relationships: []
+      }
       garcons: {
         Row: {
           ativo: boolean
@@ -1138,6 +1234,14 @@ export type Database = {
         Args: { _garcom_id: string; _mesa_id: string; _sessao_id?: string }
         Returns: string
       }
+      calcular_bonus_garcom: {
+        Args: { _meta_id: string; _periodo_ref: string }
+        Returns: number
+      }
+      calcular_bonus_restaurante: {
+        Args: { _periodo_ref?: string; _restaurante_id: string }
+        Returns: number
+      }
       confirmar_pagamento: {
         Args: { _pagamento_id: string }
         Returns: undefined
@@ -1179,7 +1283,18 @@ export type Database = {
       }
       liberar_garcom_mesa: { Args: { _mesa_id: string }; Returns: undefined }
       metricas_chamados: { Args: { _restaurante_id: string }; Returns: Json }
+      pagar_bonus: { Args: { _ids: string[] }; Returns: number }
       pagar_comissoes: { Args: { _ids: string[] }; Returns: number }
+      periodo_range: {
+        Args: {
+          _periodo: Database["public"]["Enums"]["garcom_meta_periodo"]
+          _ref: string
+        }
+        Returns: {
+          fim: string
+          inicio: string
+        }[]
+      }
       registrar_pagamento: {
         Args: {
           _comanda_id: string
@@ -1217,6 +1332,9 @@ export type Database = {
       chamado_status: "pendente" | "atendido" | "cancelado"
       comanda_status: "aberta" | "fechada"
       comanda_tipo: "individual" | "compartilhada"
+      garcom_bonus_status: "pendente" | "pago"
+      garcom_meta_periodo: "diario" | "semanal" | "mensal"
+      garcom_meta_tipo: "faturamento" | "pedidos" | "horario"
       mesa_sessao_status: "aberta" | "fechada"
       pagamento_metodo: "pix" | "dinheiro" | "outro"
       pagamento_status: "pendente" | "confirmado" | "cancelado"
@@ -1367,6 +1485,9 @@ export const Constants = {
       chamado_status: ["pendente", "atendido", "cancelado"],
       comanda_status: ["aberta", "fechada"],
       comanda_tipo: ["individual", "compartilhada"],
+      garcom_bonus_status: ["pendente", "pago"],
+      garcom_meta_periodo: ["diario", "semanal", "mensal"],
+      garcom_meta_tipo: ["faturamento", "pedidos", "horario"],
       mesa_sessao_status: ["aberta", "fechada"],
       pagamento_metodo: ["pix", "dinheiro", "outro"],
       pagamento_status: ["pendente", "confirmado", "cancelado"],

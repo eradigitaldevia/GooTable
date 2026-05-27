@@ -39,4 +39,11 @@ export const queryKeys = {
       ? (["comissoes", restauranteId, filtros] as const)
       : (["comissoes", restauranteId] as const),
   resumoComissoes: (restauranteId: string) => ["resumo-comissoes", restauranteId] as const,
+
+  // Bônus / metas
+  garcomMetas: (restauranteId: string) => ["garcom-metas", restauranteId] as const,
+  garcomBonus: (restauranteId: string, filtros?: Record<string, unknown>) =>
+    filtros
+      ? (["garcom-bonus", restauranteId, filtros] as const)
+      : (["garcom-bonus", restauranteId] as const),
 } as const;
