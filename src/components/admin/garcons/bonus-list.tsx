@@ -95,7 +95,8 @@ export function BonusList({ restauranteId }: { restauranteId: string }) {
           </Button>
         </div>
       </div>
-      <table className="w-full text-sm">
+      <div className="overflow-x-auto">
+      <table className="w-full min-w-[760px] text-sm">
         <thead className="bg-muted/40 text-left text-xs uppercase text-muted-foreground">
           <tr>
             <th className="px-4 py-3 w-10">
@@ -162,6 +163,7 @@ export function BonusList({ restauranteId }: { restauranteId: string }) {
           ))}
         </tbody>
       </table>
+      </div>
     </Card>
   );
 }
