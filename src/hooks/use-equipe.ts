@@ -4,8 +4,11 @@ import { queryKeys } from "@/lib/query-keys";
 import {
   adicionarMembroEquipeFn,
   alterarPapelMembroFn,
+  convidarMembroEquipeFn,
+  criarMembroEquipeFn,
   getMeuPapelFn,
   listarMembrosEquipeFn,
+  reenviarConviteMembroFn,
   removerMembroEquipeFn,
   type PapelMembro,
 } from "@/lib/equipe.functions";
@@ -69,5 +72,46 @@ export function useRemoverMembroEquipe(restauranteId: string | undefined) {
     onSuccess: () => {
       if (restauranteId) qc.invalidateQueries({ queryKey: queryKeys.membros(restauranteId) });
     },
+  });
+}
+
+export function useConvidarMembroEquipe(restauranteId: string | undefined) {
+  const fn = useServerFn(convidarMembroEquipeFn);
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (data: { email: string; papel: PapelMembro }) =>
+      fn({
+        data: { restauranteId: restauranteId!, email: data.email, papel: data.papel },
+      }),
+    onSuccess: () => {
+      if (restauranteId) qc.invalidateQueries({ queryKey: queryKeys.membros(restauranteId) });
+    },
+  });
+}
+
+export function useCriarMembroEquipe(restauranteId: string | undefined) {
+  const fn = useServerFn(criarMembroEquipeFn);
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (data: { email: string; senha: string; papel: PapelMembro }) =>
+      fn({
+        data: {
+          restauranteId: restauranteId!,
+          email: data.email,
+          senha: data.senha,
+          papel: data.papel,
+        },
+      }),
+    onSuccess: () => {
+      if (restauranteId) qc.invalidateQueries({ queryKey: queryKeys.membros(restauranteId) });
+    },
+  });
+}
+
+export function useReenviarConviteMembro(restauranteId: string | undefined) {
+  const fn = useServerFn(reenviarConviteMembroFn);
+  return useMutation({
+    mutationFn: (data: { membroId: string }) =>
+      fn({ data: { membroId: data.membroId, restauranteId: restauranteId! } }),
   });
 }
