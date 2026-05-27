@@ -87,7 +87,7 @@ export function ComissoesPanel({ restauranteId }: { restauranteId: string }) {
         fim: `${fim}T23:59:59.999Z`,
       });
       if (formato === "csv") exportarRelatorioCSV(rel);
-      else gerarRelatorioPDF(rel);
+      else await gerarRelatorioPDF(rel);
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Erro ao gerar relatório");
     }
