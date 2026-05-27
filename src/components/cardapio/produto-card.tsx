@@ -1,3 +1,4 @@
+import { memo } from "react";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Pencil, Trash2, Image as ImageIcon } from "lucide-react";
@@ -17,7 +18,7 @@ interface Produto {
   ordem: number;
 }
 
-export function ProdutoCard({
+function ProdutoCardComponent({
   produto,
   categorias,
   restauranteId,
@@ -104,3 +105,5 @@ export function ProdutoCard({
     </div>
   );
 }
+
+export const ProdutoCard = memo(ProdutoCardComponent);
