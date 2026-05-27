@@ -41,9 +41,10 @@ async function resolveDestination(userId: string, requested?: string) {
 }
 
 export const Route = createFileRoute("/login")({
-  validateSearch: (search: Record<string, unknown>) => ({
-    redirect: safeRedirect(search.redirect),
-  }),
+  validateSearch: (search: Record<string, unknown>) => {
+    const r = safeRedirect(search.redirect);
+    return r ? { redirect: r } : {};
+  },
   beforeLoad: async ({ search }) => {
     const { data } = await supabase.auth.getUser();
     if (!data.user) return;
