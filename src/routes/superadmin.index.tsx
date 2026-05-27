@@ -1,9 +1,12 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { lazy, Suspense } from "react";
 import { Building2, CheckCircle2, XCircle, Receipt, DollarSign, TrendingUp } from "lucide-react";
 import { useDashboardSuperadmin } from "@/hooks/use-dashboard";
 import { StatCard } from "@/components/superadmin/stat-card";
-import { FaturamentoChart } from "@/components/superadmin/faturamento-chart";
+import { Card } from "@/components/ui/card";
 import { TopRestaurantes } from "@/components/superadmin/top-restaurantes";
+
+const FaturamentoChart = lazy(() => import("@/components/superadmin/faturamento-chart"));
 
 export const Route = createFileRoute("/superadmin/")({
   component: Dashboard,
@@ -41,7 +44,14 @@ function Dashboard() {
         <StatCard label="Faturamento mês" value={fmt(stats.faturamentoMes)} icon={TrendingUp} />
       </div>
 
-      <FaturamentoChart data={chart} fmt={fmt} />
+      <Card className="p-4 sm:p-6">
+        <h2 className="mb-4 text-sm font-semibold">Faturamento — últimos 30 dias</h2>
+        <div className="h-72">
+          <Suspense fallback={null}>
+            <FaturamentoChart data={chart} fmt={fmt} />
+          </Suspense>
+        </div>
+      </Card>
       <TopRestaurantes itens={topRest} fmt={fmt} />
     </div>
   );
