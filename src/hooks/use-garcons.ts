@@ -15,6 +15,7 @@ import {
 import {
   redefinirSenhaGarcomFn,
   vincularUsuarioGarcomFn,
+  alterarEmailGarcomFn,
 } from "@/lib/garcom-usuario.functions";
 
 export function useGarcons(restauranteId: string | undefined, incluirInativos = true) {
@@ -198,5 +199,24 @@ export function useRedefinirSenhaGarcom(restauranteId: string | undefined) {
           novaSenha: data.novaSenha,
         },
       }),
+  });
+}
+
+export function useAlterarEmailGarcom(restauranteId: string | undefined) {
+  const fn = useServerFn(alterarEmailGarcomFn);
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (data: { garcomId: string; email: string }) =>
+      fn({
+        data: {
+          restauranteId: restauranteId!,
+          garcomId: data.garcomId,
+          email: data.email,
+        },
+      }),
+    onSuccess: () => {
+      if (restauranteId)
+        qc.invalidateQueries({ queryKey: queryKeys.garcons(restauranteId) });
+    },
   });
 }
