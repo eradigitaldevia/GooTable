@@ -24,14 +24,22 @@ export const listarPedidoGarconsFn = createServerFn({ method: "POST" })
     await assertAcessoRestaurante(supabase, userId, data.restauranteId);
     const { data: rows, error } = await supabase
       .from("pedido_garcons")
-      .select("garcom_id, peso, garcons:garcom_id(nome)")
+      .select("garcom_id, peso")
       .eq("pedido_id", data.pedidoId)
       .eq("restaurante_id", data.restauranteId);
     if (error) throw new Error(error.message);
+    const ids = Array.from(new Set((rows ?? []).map((r) => r.garcom_id as string)));
+    const nomes = new Map<string, string>();
+    if (ids.length) {
+      const { data: gs } = await supabase
+        .from("garcons")
+        .select("id, nome")
+        .in("id", ids);
+      for (const g of gs ?? []) nomes.set(g.id as string, g.nome as string);
+    }
     return (rows ?? []).map((r) => ({
       garcom_id: r.garcom_id as string,
-      garcom_nome:
-        (r as { garcons?: { nome: string } | null }).garcons?.nome ?? "—",
+      garcom_nome: nomes.get(r.garcom_id as string) ?? "—",
       peso: Number(r.peso),
     }));
   });
