@@ -9,6 +9,7 @@ import {
   getMeuPapelFn,
   listarMembrosEquipeFn,
   reenviarConviteMembroFn,
+  redefinirSenhaMembroFn,
   removerMembroEquipeFn,
   type PapelMembro,
 } from "@/lib/equipe.functions";
@@ -113,5 +114,19 @@ export function useReenviarConviteMembro(restauranteId: string | undefined) {
   return useMutation({
     mutationFn: (data: { membroId: string }) =>
       fn({ data: { membroId: data.membroId, restauranteId: restauranteId! } }),
+  });
+}
+
+export function useRedefinirSenhaMembro(restauranteId: string | undefined) {
+  const fn = useServerFn(redefinirSenhaMembroFn);
+  return useMutation({
+    mutationFn: (data: { membroId: string; novaSenha: string }) =>
+      fn({
+        data: {
+          membroId: data.membroId,
+          restauranteId: restauranteId!,
+          novaSenha: data.novaSenha,
+        },
+      }),
   });
 }
