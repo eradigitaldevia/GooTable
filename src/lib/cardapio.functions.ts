@@ -17,6 +17,8 @@ export interface Produto {
   disponivel: boolean;
   categoria_id: string | null;
   ordem: number;
+  percentual_comissao: number | null;
+  comissao_aplicavel: boolean;
 }
 
 const restauranteIdSchema = z.object({ restauranteId: z.string().uuid() });
@@ -102,6 +104,8 @@ const produtoPayloadSchema = z.object({
   preco: z.number().min(0),
   categoria_id: z.string().uuid().nullable(),
   imagem_url: z.string().nullable().optional(),
+  percentual_comissao: z.number().min(0).max(100).nullable().optional(),
+  comissao_aplicavel: z.boolean().optional(),
 });
 
 export const criarProdutoFn = createServerFn({ method: "POST" })
@@ -122,6 +126,8 @@ export const criarProdutoFn = createServerFn({ method: "POST" })
       preco: data.payload.preco,
       categoria_id: data.payload.categoria_id,
       imagem_url: data.payload.imagem_url ?? null,
+      percentual_comissao: data.payload.percentual_comissao ?? null,
+      comissao_aplicavel: data.payload.comissao_aplicavel ?? true,
     });
     if (error) throw new Error(error.message);
     return { ok: true };
@@ -147,6 +153,8 @@ export const atualizarProdutoFn = createServerFn({ method: "POST" })
         preco: data.payload.preco,
         categoria_id: data.payload.categoria_id,
         imagem_url: data.payload.imagem_url ?? null,
+        percentual_comissao: data.payload.percentual_comissao ?? null,
+        comissao_aplicavel: data.payload.comissao_aplicavel ?? true,
       })
       .eq("id", data.id)
       .eq("restaurante_id", data.restauranteId);
