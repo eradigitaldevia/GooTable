@@ -268,6 +268,7 @@ export function GarconsRoster({ restauranteId }: { restauranteId: string }) {
           ))}
         </tbody>
       </table>
+      </div>
 
       <Dialog open={!!edit} onOpenChange={(o) => !o && setEdit(null)}>
         <DialogContent>
