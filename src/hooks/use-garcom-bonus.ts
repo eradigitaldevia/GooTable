@@ -10,8 +10,21 @@ import {
   listarMetasFn,
   pagarBonusFn,
 } from "@/lib/garcom-bonus.functions";
+import type { GarcomMetaPeriodo, GarcomMetaTipo } from "@/lib/garcom-bonus.functions";
 
-type MetaInput = Omit<Parameters<typeof criarMetaFn>[0]["data"], "restauranteId">;
+export type MetaInput = {
+  garcomId: string;
+  nome: string;
+  tipo: GarcomMetaTipo;
+  periodo: GarcomMetaPeriodo;
+  alvo: number;
+  bonusValor: number;
+  bonusPercentual: number;
+  regras?: Record<string, unknown>;
+  ativo: boolean;
+  vigenciaInicio?: string | null;
+  vigenciaFim?: string | null;
+};
 
 export function useGarcomMetas(restauranteId: string | undefined) {
   const fn = useServerFn(listarMetasFn);
