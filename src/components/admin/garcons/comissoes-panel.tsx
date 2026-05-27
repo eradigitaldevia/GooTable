@@ -3,9 +3,6 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Download, FileText } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -17,8 +14,7 @@ import { toast } from "sonner";
 import { useComissoes, usePagarComissoes, useResumoComissoes } from "@/hooks/use-garcons";
 import { useAuth } from "@/hooks/use-auth";
 import { useMeuRestaurante } from "@/hooks/use-restaurante";
-import { useGerarRelatorioComissoes } from "@/hooks/use-relatorios";
-import { exportarRelatorioCSV, gerarRelatorioPDF } from "@/lib/relatorios-export";
+import { RelatorioExportarCard } from "./relatorio-exportar-card";
 
 const brl = (v: number) =>
   v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
@@ -26,14 +22,9 @@ const brl = (v: number) =>
 export function ComissoesPanel({ restauranteId }: { restauranteId: string }) {
   const [status, setStatus] = useState<"pendente" | "pago" | "todos">("pendente");
   const [selecionados, setSelecionados] = useState<Set<string>>(new Set());
-  const hoje = new Date();
-  const primeiroDia = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
-  const [inicio, setInicio] = useState(primeiroDia.toISOString().slice(0, 10));
-  const [fim, setFim] = useState(hoje.toISOString().slice(0, 10));
   const { data: resumo = [] } = useResumoComissoes(restauranteId);
   const { data: comissoes = [], isLoading } = useComissoes(restauranteId, { status });
   const pagar = usePagarComissoes(restauranteId);
-  const gerarRelatorio = useGerarRelatorioComissoes();
   const { user } = useAuth();
   const { data: restaurante } = useMeuRestaurante(user?.id);
   const modoItem = restaurante?.comissao_modo === "item";
@@ -79,20 +70,6 @@ export function ComissoesPanel({ restauranteId }: { restauranteId: string }) {
     }
   };
 
-  const handleExportar = async (formato: "csv" | "pdf") => {
-    try {
-      const rel = await gerarRelatorio.mutateAsync({
-        restauranteId,
-        inicio: `${inicio}T00:00:00.000Z`,
-        fim: `${fim}T23:59:59.999Z`,
-      });
-      if (formato === "csv") exportarRelatorioCSV(rel);
-      else await gerarRelatorioPDF(rel);
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Erro ao gerar relatório");
-    }
-  };
-
   return (
     <div className="space-y-4">
       <div className="grid gap-3 sm:grid-cols-3">
@@ -115,48 +92,7 @@ export function ComissoesPanel({ restauranteId }: { restauranteId: string }) {
         </Card>
       </div>
 
-      <Card className="p-4">
-        <div className="flex flex-wrap items-end gap-3">
-          <div>
-            <Label htmlFor="rel-inicio" className="text-xs">De</Label>
-            <Input
-              id="rel-inicio"
-              type="date"
-              value={inicio}
-              onChange={(e) => setInicio(e.target.value)}
-              className="w-[160px]"
-            />
-          </div>
-          <div>
-            <Label htmlFor="rel-fim" className="text-xs">Até</Label>
-            <Input
-              id="rel-fim"
-              type="date"
-              value={fim}
-              onChange={(e) => setFim(e.target.value)}
-              className="w-[160px]"
-            />
-          </div>
-          <div className="ml-auto flex gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={gerarRelatorio.isPending}
-              onClick={() => handleExportar("csv")}
-            >
-              <Download className="mr-1 h-4 w-4" /> Exportar CSV
-            </Button>
-            <Button
-              size="sm"
-              disabled={gerarRelatorio.isPending}
-              onClick={() => handleExportar("pdf")}
-            >
-              <FileText className="mr-1 h-4 w-4" />
-              {gerarRelatorio.isPending ? "Gerando…" : "Gerar PDF"}
-            </Button>
-          </div>
-        </div>
-      </Card>
+      <RelatorioExportarCard restauranteId={restauranteId} />
 
       <Card className="overflow-hidden">
         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border p-4">
