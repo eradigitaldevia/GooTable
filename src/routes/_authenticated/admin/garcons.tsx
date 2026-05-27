@@ -28,7 +28,7 @@ function GarconsPage() {
         </p>
       </div>
       <Tabs defaultValue="mesas">
-        <TabsList>
+        <TabsList className="grid w-full grid-cols-2 h-auto sm:inline-flex sm:w-auto sm:h-9 sm:grid-cols-none">
           <TabsTrigger value="mesas">Mesas</TabsTrigger>
           <TabsTrigger value="garcons">Garçons</TabsTrigger>
           <TabsTrigger value="comissoes">Comissões</TabsTrigger>
