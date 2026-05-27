@@ -13,7 +13,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Pencil, Plus, UserPlus, CheckCircle2 } from "lucide-react";
+import { Pencil, Plus, UserPlus, CheckCircle2, FileText } from "lucide-react";
 import { toast } from "sonner";
 import {
   useAtualizarGarcom,
@@ -22,6 +22,8 @@ import {
   useVincularUsuarioGarcom,
 } from "@/hooks/use-garcons";
 import type { Garcom } from "@/lib/garcons.functions";
+import { useGerarRelatorioComissoes } from "@/hooks/use-relatorios";
+import { exportarRelatorioCSV, gerarRelatorioPDF } from "@/lib/relatorios-export";
 
 function GarcomForm({
   initial,
@@ -113,6 +115,28 @@ export function GarconsRoster({ restauranteId }: { restauranteId: string }) {
   const [vincularAlvo, setVincularAlvo] = useState<Garcom | null>(null);
   const [vincEmail, setVincEmail] = useState("");
   const [vincSenha, setVincSenha] = useState("");
+  const [extratoAlvo, setExtratoAlvo] = useState<Garcom | null>(null);
+  const hoje = new Date();
+  const primeiroDia = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
+  const [extInicio, setExtInicio] = useState(primeiroDia.toISOString().slice(0, 10));
+  const [extFim, setExtFim] = useState(hoje.toISOString().slice(0, 10));
+  const gerarRelatorio = useGerarRelatorioComissoes();
+
+  const handleExtrato = async (formato: "csv" | "pdf") => {
+    if (!extratoAlvo) return;
+    try {
+      const rel = await gerarRelatorio.mutateAsync({
+        restauranteId,
+        garcomId: extratoAlvo.id,
+        inicio: `${extInicio}T00:00:00.000Z`,
+        fim: `${extFim}T23:59:59.999Z`,
+      });
+      if (formato === "csv") exportarRelatorioCSV(rel);
+      else gerarRelatorioPDF(rel);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Erro ao gerar extrato");
+    }
+  };
 
   return (
     <Card className="overflow-hidden">
@@ -213,9 +237,19 @@ export function GarconsRoster({ restauranteId }: { restauranteId: string }) {
                 )}
               </td>
               <td className="px-4 py-3 text-right">
-                <Button size="sm" variant="ghost" onClick={() => setEdit(g)}>
-                  <Pencil className="h-4 w-4" />
-                </Button>
+                <div className="flex justify-end gap-1">
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    title="Extrato"
+                    onClick={() => setExtratoAlvo(g)}
+                  >
+                    <FileText className="h-4 w-4" />
+                  </Button>
+                  <Button size="sm" variant="ghost" onClick={() => setEdit(g)}>
+                    <Pencil className="h-4 w-4" />
+                  </Button>
+                </div>
               </td>
             </tr>
           ))}
@@ -321,6 +355,53 @@ export function GarconsRoster({ restauranteId }: { restauranteId: string }) {
               </Button>
             </DialogFooter>
           </form>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!extratoAlvo} onOpenChange={(o) => !o && setExtratoAlvo(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>
+              Extrato {extratoAlvo ? `— ${extratoAlvo.nome}` : ""}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label htmlFor="ext-inicio">De</Label>
+                <Input
+                  id="ext-inicio"
+                  type="date"
+                  value={extInicio}
+                  onChange={(e) => setExtInicio(e.target.value)}
+                />
+              </div>
+              <div>
+                <Label htmlFor="ext-fim">Até</Label>
+                <Input
+                  id="ext-fim"
+                  type="date"
+                  value={extFim}
+                  onChange={(e) => setExtFim(e.target.value)}
+                />
+              </div>
+            </div>
+            <DialogFooter className="gap-2">
+              <Button
+                variant="outline"
+                disabled={gerarRelatorio.isPending}
+                onClick={() => handleExtrato("csv")}
+              >
+                Exportar CSV
+              </Button>
+              <Button
+                disabled={gerarRelatorio.isPending}
+                onClick={() => handleExtrato("pdf")}
+              >
+                {gerarRelatorio.isPending ? "Gerando…" : "Gerar PDF"}
+              </Button>
+            </DialogFooter>
+          </div>
         </DialogContent>
       </Dialog>
     </Card>
