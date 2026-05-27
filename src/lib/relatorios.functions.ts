@@ -95,7 +95,7 @@ export const gerarRelatorioComissoesFn = createServerFn({ method: "POST" })
     let qb = supabase
       .from("garcom_bonus")
       .select(
-        "id, garcom_id, meta_id, periodo_ref, valor, status, calculado_em, garcom_metas:meta_id(nome, tipo)",
+        "id, garcom_id, meta_id, periodo_ref, valor, status, calculado_em",
       )
       .eq("restaurante_id", data.restauranteId)
       .gte("calculado_em", data.inicio)
@@ -105,6 +105,20 @@ export const gerarRelatorioComissoesFn = createServerFn({ method: "POST" })
     if (data.garcomId) qb = qb.eq("garcom_id", data.garcomId);
     const { data: bonusRows, error: bErr } = await qb;
     if (bErr) throw new Error(bErr.message);
+
+    const metaIds = Array.from(
+      new Set((bonusRows ?? []).map((b) => b.meta_id).filter(Boolean) as string[]),
+    );
+    const metasMap = new Map<string, { nome: string; tipo: string }>();
+    if (metaIds.length > 0) {
+      const { data: metasRows } = await supabase
+        .from("garcom_metas")
+        .select("id, nome, tipo")
+        .in("id", metaIds);
+      for (const m of metasRows ?? []) {
+        metasMap.set(m.id, { nome: m.nome, tipo: m.tipo });
+      }
+    }
 
     const map = new Map<string, RelatorioGarcom>();
     for (const g of garcons ?? []) {
@@ -159,7 +173,7 @@ export const gerarRelatorioComissoesFn = createServerFn({ method: "POST" })
     for (const b of bonusRows ?? []) {
       const slot = map.get(b.garcom_id);
       if (!slot) continue;
-      const meta = (b as { garcom_metas?: { nome: string; tipo: string } | null }).garcom_metas;
+      const meta = b.meta_id ? metasMap.get(b.meta_id) : null;
       const valor = Number(b.valor);
       slot.bonus.push({
         id: b.id,
