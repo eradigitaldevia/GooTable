@@ -164,7 +164,8 @@ export function GarconsRoster({ restauranteId }: { restauranteId: string }) {
         </Dialog>
       </div>
 
-      <table className="w-full text-sm">
+      <div className="overflow-x-auto">
+      <table className="w-full min-w-[760px] text-sm">
         <thead className="bg-muted/40 text-left text-xs uppercase text-muted-foreground">
           <tr>
             <th className="px-4 py-3">Nome</th>
@@ -267,6 +268,7 @@ export function GarconsRoster({ restauranteId }: { restauranteId: string }) {
           ))}
         </tbody>
       </table>
+      </div>
 
       <Dialog open={!!edit} onOpenChange={(o) => !o && setEdit(null)}>
         <DialogContent>
