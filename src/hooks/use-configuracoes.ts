@@ -19,6 +19,7 @@ type ConfigPayload = {
   pix_habilitado: boolean;
   pix_chave: string | null;
   pix_nome_titular: string | null;
+  comissao_modo: "pedido" | "item";
 };
 
 export function useAtualizarConfiguracoes(userId: string | undefined) {
