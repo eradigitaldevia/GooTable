@@ -918,6 +918,7 @@ export type Database = {
       produtos: {
         Row: {
           categoria_id: string | null
+          comissao_aplicavel: boolean
           criado_em: string
           descricao: string | null
           disponivel: boolean
@@ -925,11 +926,13 @@ export type Database = {
           imagem_url: string | null
           nome: string
           ordem: number
+          percentual_comissao: number | null
           preco: number
           restaurante_id: string
         }
         Insert: {
           categoria_id?: string | null
+          comissao_aplicavel?: boolean
           criado_em?: string
           descricao?: string | null
           disponivel?: boolean
@@ -937,11 +940,13 @@ export type Database = {
           imagem_url?: string | null
           nome: string
           ordem?: number
+          percentual_comissao?: number | null
           preco: number
           restaurante_id: string
         }
         Update: {
           categoria_id?: string | null
+          comissao_aplicavel?: boolean
           criado_em?: string
           descricao?: string | null
           disponivel?: boolean
@@ -949,6 +954,7 @@ export type Database = {
           imagem_url?: string | null
           nome?: string
           ordem?: number
+          percentual_comissao?: number | null
           preco?: number
           restaurante_id?: string
         }
@@ -1043,6 +1049,7 @@ export type Database = {
       restaurantes: {
         Row: {
           ativo: boolean
+          comissao_modo: string
           cor_primaria: string | null
           criado_em: string
           id: string
@@ -1055,6 +1062,7 @@ export type Database = {
         }
         Insert: {
           ativo?: boolean
+          comissao_modo?: string
           cor_primaria?: string | null
           criado_em?: string
           id?: string
@@ -1067,6 +1075,7 @@ export type Database = {
         }
         Update: {
           ativo?: boolean
+          comissao_modo?: string
           cor_primaria?: string | null
           criado_em?: string
           id?: string
