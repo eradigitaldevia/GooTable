@@ -128,6 +128,7 @@ export function ComissoesPanel({ restauranteId }: { restauranteId: string }) {
               <th className="px-4 py-3">Garçom</th>
               <th className="px-4 py-3 text-right">Pedido</th>
               <th className="px-4 py-3 text-right">%</th>
+              <th className="px-4 py-3 text-right">Peso</th>
               <th className="px-4 py-3 text-right">Comissão</th>
               <th className="px-4 py-3">Status</th>
             </tr>
@@ -135,14 +136,14 @@ export function ComissoesPanel({ restauranteId }: { restauranteId: string }) {
           <tbody className="divide-y divide-border">
             {isLoading && (
               <tr>
-                <td colSpan={7} className="px-4 py-6 text-center text-muted-foreground">
+                <td colSpan={8} className="px-4 py-6 text-center text-muted-foreground">
                   Carregando…
                 </td>
               </tr>
             )}
             {!isLoading && comissoes.length === 0 && (
               <tr>
-                <td colSpan={7} className="px-4 py-6 text-center text-muted-foreground">
+                <td colSpan={8} className="px-4 py-6 text-center text-muted-foreground">
                   Nenhuma comissão neste filtro.
                 </td>
               </tr>
@@ -164,6 +165,9 @@ export function ComissoesPanel({ restauranteId }: { restauranteId: string }) {
                 <td className="px-4 py-3 text-right tabular-nums">{brl(c.valor_pedido)}</td>
                 <td className="px-4 py-3 text-right tabular-nums">
                   {Number(c.percentual).toFixed(2)}%
+                </td>
+                <td className="px-4 py-3 text-right tabular-nums">
+                  {Number(c.peso).toFixed(0)}%
                 </td>
                 <td className="px-4 py-3 text-right font-semibold tabular-nums">
                   {brl(c.valor_comissao)}
