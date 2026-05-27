@@ -25,7 +25,6 @@ import {
 import { Mail, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import {
-  useAdicionarMembroEquipe,
   useAlterarPapelMembro,
   useConvidarMembroEquipe,
   useCriarMembroEquipe,
@@ -56,15 +55,12 @@ interface Membro {
 
 export function EquipePanel({ restauranteId }: { restauranteId: string }) {
   const { data } = useEquipe(restauranteId);
-  const adicionar = useAdicionarMembroEquipe(restauranteId);
   const convidar = useConvidarMembroEquipe(restauranteId);
   const criar = useCriarMembroEquipe(restauranteId);
   const alterar = useAlterarPapelMembro(restauranteId);
   const remover = useRemoverMembroEquipe(restauranteId);
   const reenviar = useReenviarConviteMembro(restauranteId);
 
-  const [novoEmail, setNovoEmail] = useState("");
-  const [novoPapel, setNovoPapel] = useState<PapelMembro>("cozinheiro");
   const [convEmail, setConvEmail] = useState("");
   const [convPapel, setConvPapel] = useState<PapelMembro>("cozinheiro");
   const [criarEmail, setCriarEmail] = useState("");
@@ -78,18 +74,6 @@ export function EquipePanel({ restauranteId }: { restauranteId: string }) {
 
   const membros = (data?.membros ?? []) as Membro[];
   const meuUserId = data?.meuUserId;
-
-  const handleAdd = async () => {
-    if (!novoEmail) return;
-    try {
-      await adicionar.mutateAsync({ email: novoEmail, papel: novoPapel });
-      toast.success("Membro adicionado");
-      setNovoEmail("");
-      setNovoPapel("cozinheiro");
-    } catch (e: any) {
-      toast.error(e?.message ?? "Erro ao adicionar membro");
-    }
-  };
 
   const handleConvidar = async () => {
     if (!convEmail) return;
@@ -177,10 +161,9 @@ export function EquipePanel({ restauranteId }: { restauranteId: string }) {
         </div>
 
         <Tabs defaultValue="convidar" className="w-full">
-          <TabsList className="grid w-full grid-cols-3 sm:w-auto sm:inline-flex">
+          <TabsList className="grid w-full grid-cols-2 sm:w-auto sm:inline-flex">
             <TabsTrigger value="convidar">Convidar</TabsTrigger>
             <TabsTrigger value="criar">Criar direto</TabsTrigger>
-            <TabsTrigger value="existente">Existente</TabsTrigger>
           </TabsList>
 
           <TabsContent value="convidar" className="mt-4 space-y-3">
@@ -271,44 +254,6 @@ export function EquipePanel({ restauranteId }: { restauranteId: string }) {
             </div>
           </TabsContent>
 
-          <TabsContent value="existente" className="mt-4 space-y-3">
-            <p className="text-xs text-muted-foreground">
-              A pessoa precisa já ter uma conta criada com este email.
-            </p>
-            <div className="grid gap-3 sm:grid-cols-[1fr_180px_auto] sm:items-end">
-              <div>
-                <Label htmlFor="novo-email">Email</Label>
-                <Input
-                  id="novo-email"
-                  type="email"
-                  value={novoEmail}
-                  onChange={(e) => setNovoEmail(e.target.value)}
-                  placeholder="usuario@exemplo.com"
-                />
-              </div>
-              <div>
-                <Label>Papel</Label>
-                <Select value={novoPapel} onValueChange={(v) => setNovoPapel(v as PapelMembro)}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {(["admin", "staff", "cozinheiro"] as PapelMembro[]).map((p) => (
-                      <SelectItem key={p} value={p}>
-                        <div className="flex flex-col">
-                          <span className="font-medium">{PAPEL_LABEL[p]}</span>
-                          <span className="text-xs text-muted-foreground">{PAPEL_DESC[p]}</span>
-                        </div>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <Button onClick={handleAdd} disabled={!novoEmail || adicionar.isPending}>
-                Adicionar
-              </Button>
-            </div>
-          </TabsContent>
         </Tabs>
       </Card>
 
