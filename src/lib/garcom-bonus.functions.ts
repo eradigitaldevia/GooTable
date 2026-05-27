@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { assertAcessoRestaurante } from "./auth.server";
+import type { Json } from "@/integrations/supabase/types";
 
 export type GarcomMetaTipo = "faturamento" | "pedidos" | "horario";
 export type GarcomMetaPeriodo = "diario" | "semanal" | "mensal";
@@ -18,7 +19,7 @@ export interface GarcomMeta {
   alvo: number;
   bonus_valor: number;
   bonus_percentual: number;
-  regras_json: Record<string, unknown>;
+  regras_json: Json;
   ativo: boolean;
   vigencia_inicio: string | null;
   vigencia_fim: string | null;
@@ -36,7 +37,7 @@ export interface GarcomBonus {
   meta_tipo: GarcomMetaTipo;
   periodo_ref: string;
   valor: number;
-  detalhe_json: Record<string, unknown>;
+  detalhe_json: Json;
   status: GarcomBonusStatus;
   calculado_em: string;
   pago_em: string | null;
@@ -61,24 +62,32 @@ export const listarMetasFn = createServerFn({ method: "POST" })
     await assertAcessoRestaurante(supabase, userId, data.restauranteId);
     const { data: rows, error } = await supabase
       .from("garcom_metas")
-      .select("*, garcons:garcom_id(nome)")
+      .select("*")
       .eq("restaurante_id", data.restauranteId)
       .order("criado_em", { ascending: false });
     if (error) throw new Error(error.message);
+    const ids = Array.from(new Set((rows ?? []).map((r) => r.garcom_id)));
+    const nomes = new Map<string, string>();
+    if (ids.length > 0) {
+      const { data: gs } = await supabase
+        .from("garcons")
+        .select("id, nome")
+        .in("id", ids);
+      for (const g of gs ?? []) nomes.set(g.id, g.nome);
+    }
     return (rows ?? []).map((r) => {
-      const nome = (r as { garcons?: { nome: string } | null }).garcons?.nome ?? "—";
       return {
         id: r.id,
         restaurante_id: r.restaurante_id,
         garcom_id: r.garcom_id,
-        garcom_nome: nome,
+        garcom_nome: nomes.get(r.garcom_id) ?? "—",
         nome: r.nome,
         tipo: r.tipo as GarcomMetaTipo,
         periodo: r.periodo as GarcomMetaPeriodo,
         alvo: Number(r.alvo),
         bonus_valor: Number(r.bonus_valor),
         bonus_percentual: Number(r.bonus_percentual),
-        regras_json: (r.regras_json ?? {}) as Record<string, unknown>,
+        regras_json: (r.regras_json ?? {}) as Json,
         ativo: r.ativo,
         vigencia_inicio: r.vigencia_inicio,
         vigencia_fim: r.vigencia_fim,
@@ -128,7 +137,7 @@ export const criarMetaFn = createServerFn({ method: "POST" })
       .select()
       .single();
     if (error) throw new Error(error.message);
-    return row;
+    return { id: row.id };
   });
 
 export const atualizarMetaFn = createServerFn({ method: "POST" })
@@ -194,30 +203,41 @@ export const listarBonusFn = createServerFn({ method: "POST" })
     await assertAcessoRestaurante(supabase, userId, data.restauranteId);
     let q = supabase
       .from("garcom_bonus")
-      .select(
-        "id, restaurante_id, garcom_id, meta_id, periodo_ref, valor, detalhe_json, status, calculado_em, pago_em, garcons:garcom_id(nome), garcom_metas:meta_id(nome, tipo)",
-      )
+      .select("*")
       .eq("restaurante_id", data.restauranteId)
       .order("periodo_ref", { ascending: false })
       .limit(500);
     if (data.status !== "todos") q = q.eq("status", data.status);
     const { data: rows, error } = await q;
     if (error) throw new Error(error.message);
+    const garcomIds = Array.from(new Set((rows ?? []).map((r) => r.garcom_id)));
+    const metaIds = Array.from(new Set((rows ?? []).map((r) => r.meta_id)));
+    const gNomes = new Map<string, string>();
+    const metas = new Map<string, { nome: string; tipo: GarcomMetaTipo }>();
+    if (garcomIds.length > 0) {
+      const { data: gs } = await supabase.from("garcons").select("id, nome").in("id", garcomIds);
+      for (const g of gs ?? []) gNomes.set(g.id, g.nome);
+    }
+    if (metaIds.length > 0) {
+      const { data: ms } = await supabase
+        .from("garcom_metas")
+        .select("id, nome, tipo")
+        .in("id", metaIds);
+      for (const m of ms ?? []) metas.set(m.id, { nome: m.nome, tipo: m.tipo as GarcomMetaTipo });
+    }
     return (rows ?? []).map((r) => {
-      const gNome = (r as { garcons?: { nome: string } | null }).garcons?.nome ?? "—";
-      const meta = (r as { garcom_metas?: { nome: string; tipo: GarcomMetaTipo } | null })
-        .garcom_metas;
+      const meta = metas.get(r.meta_id);
       return {
         id: r.id,
         restaurante_id: r.restaurante_id,
         garcom_id: r.garcom_id,
-        garcom_nome: gNome,
+        garcom_nome: gNomes.get(r.garcom_id) ?? "—",
         meta_id: r.meta_id,
         meta_nome: meta?.nome ?? "—",
         meta_tipo: (meta?.tipo ?? "faturamento") as GarcomMetaTipo,
         periodo_ref: r.periodo_ref,
         valor: Number(r.valor),
-        detalhe_json: (r.detalhe_json ?? {}) as Record<string, unknown>,
+        detalhe_json: (r.detalhe_json ?? {}) as Json,
         status: r.status as GarcomBonusStatus,
         calculado_em: r.calculado_em,
         pago_em: r.pago_em,
