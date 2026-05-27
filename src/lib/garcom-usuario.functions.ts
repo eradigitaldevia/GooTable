@@ -82,3 +82,42 @@ export const vincularUsuarioGarcomFn = createServerFn({ method: "POST" })
 
     return { ok: true, userId: newUserId };
   });
+
+/**
+ * Redefine a senha do usuário vinculado a um garçom do restaurante.
+ */
+export const redefinirSenhaGarcomFn = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) =>
+    z
+      .object({
+        restauranteId: z.string().uuid(),
+        garcomId: z.string().uuid(),
+        novaSenha: z.string().min(6).max(72),
+      })
+      .parse(d),
+  )
+  .handler(async ({ context, data }) => {
+    const { supabase, userId } = context;
+    await assertAcessoRestaurante(supabase, userId, data.restauranteId);
+
+    const { data: garcom, error: gErr } = await supabase
+      .from("garcons")
+      .select("id, user_id, restaurante_id")
+      .eq("id", data.garcomId)
+      .eq("restaurante_id", data.restauranteId)
+      .maybeSingle();
+    if (gErr) throw new Error(gErr.message);
+    if (!garcom) throw new Error("Garçom não encontrado");
+    if (!garcom.user_id) {
+      throw new Error("Este garçom não possui usuário vinculado");
+    }
+
+    const { error: updErr } = await supabaseAdmin.auth.admin.updateUserById(
+      garcom.user_id,
+      { password: data.novaSenha },
+    );
+    if (updErr) throw new Error(updErr.message);
+
+    return { ok: true };
+  });
