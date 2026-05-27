@@ -340,6 +340,7 @@ export type Database = {
           pago_por: string | null
           pedido_id: string
           percentual: number
+          peso: number
           restaurante_id: string
           status: string
           valor_comissao: number
@@ -353,6 +354,7 @@ export type Database = {
           pago_por?: string | null
           pedido_id: string
           percentual: number
+          peso?: number
           restaurante_id: string
           status?: string
           valor_comissao: number
@@ -366,6 +368,7 @@ export type Database = {
           pago_por?: string | null
           pedido_id?: string
           percentual?: number
+          peso?: number
           restaurante_id?: string
           status?: string
           valor_comissao?: number
@@ -706,6 +709,30 @@ export type Database = {
           sessao_id?: string | null
           status?: Database["public"]["Enums"]["pagamento_status"]
           valor?: number
+        }
+        Relationships: []
+      }
+      pedido_garcons: {
+        Row: {
+          criado_em: string
+          garcom_id: string
+          pedido_id: string
+          peso: number
+          restaurante_id: string
+        }
+        Insert: {
+          criado_em?: string
+          garcom_id: string
+          pedido_id: string
+          peso: number
+          restaurante_id: string
+        }
+        Update: {
+          criado_em?: string
+          garcom_id?: string
+          pedido_id?: string
+          peso?: number
+          restaurante_id?: string
         }
         Relationships: []
       }
@@ -1128,6 +1155,10 @@ export type Database = {
         Returns: Json
       }
       dashboard_superadmin_resumo: { Args: never; Returns: Json }
+      definir_garcons_pedido: {
+        Args: { _items: Json; _pedido_id: string }
+        Returns: undefined
+      }
       derivar_status_pedido: {
         Args: { _pedido_id: string }
         Returns: undefined

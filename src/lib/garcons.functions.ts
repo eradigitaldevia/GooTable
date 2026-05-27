@@ -33,6 +33,7 @@ export interface Comissao {
   valor_pedido: number;
   percentual: number;
   valor_comissao: number;
+  peso: number;
   status: "pendente" | "pago";
   calculado_em: string;
   pago_em: string | null;
@@ -242,7 +243,7 @@ export const listarComissoesFn = createServerFn({ method: "POST" })
     let q = supabase
       .from("comissoes")
       .select(
-        "id, restaurante_id, garcom_id, pedido_id, valor_pedido, percentual, valor_comissao, status, calculado_em, pago_em, garcons:garcom_id(nome)",
+        "id, restaurante_id, garcom_id, pedido_id, valor_pedido, percentual, valor_comissao, peso, status, calculado_em, pago_em, garcons:garcom_id(nome)",
       )
       .eq("restaurante_id", data.restauranteId)
       .order("calculado_em", { ascending: false })
@@ -262,6 +263,7 @@ export const listarComissoesFn = createServerFn({ method: "POST" })
         valor_pedido: Number(r.valor_pedido),
         percentual: Number(r.percentual),
         valor_comissao: Number(r.valor_comissao),
+        peso: Number(r.peso ?? 100),
         status: r.status as "pendente" | "pago",
         calculado_em: r.calculado_em,
         pago_em: r.pago_em,
