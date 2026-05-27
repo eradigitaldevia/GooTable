@@ -1,6 +1,7 @@
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
 import {
   Select,
   SelectContent,
@@ -16,6 +17,8 @@ interface FormState {
   descricao: string;
   preco: string;
   categoria_id: string;
+  percentual_comissao: string;
+  comissao_aplicavel: boolean;
 }
 
 export function ProdutoFormFields({
@@ -67,6 +70,33 @@ export function ProdutoFormFields({
           onChange={(e) => onChange({ ...form, descricao: e.target.value })}
           placeholder="Ingredientes, porção, etc."
         />
+      </div>
+      <div className="grid grid-cols-2 gap-3">
+        <div className="space-y-2">
+          <Label>% comissão (opcional)</Label>
+          <Input
+            inputMode="decimal"
+            placeholder="Usa % do garçom"
+            value={form.percentual_comissao}
+            onChange={(e) =>
+              onChange({ ...form, percentual_comissao: e.target.value })
+            }
+          />
+        </div>
+        <div className="space-y-2">
+          <Label>Aplicável a comissão</Label>
+          <div className="flex h-10 items-center gap-2 rounded-md border px-3">
+            <Switch
+              checked={form.comissao_aplicavel}
+              onCheckedChange={(v) =>
+                onChange({ ...form, comissao_aplicavel: v })
+              }
+            />
+            <span className="text-sm text-muted-foreground">
+              {form.comissao_aplicavel ? "Sim" : "Não"}
+            </span>
+          </div>
+        </div>
       </div>
     </>
   );
