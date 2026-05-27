@@ -32,6 +32,7 @@ import {
 } from "@/components/ui/dialog";
 import { KeyRound, Mail, Trash2 } from "lucide-react";
 import { toast } from "sonner";
+import { Link } from "@tanstack/react-router";
 import {
   useAlterarPapelMembro,
   useConvidarMembroEquipe,
@@ -251,6 +252,13 @@ export function EquipePanel({ restauranteId }: { restauranteId: string }) {
           <TabsContent value="criar" className="mt-4 space-y-3">
             <p className="text-xs text-muted-foreground">
               Cria a conta com uma senha definida agora. Compartilhe a senha com a pessoa.
+            </p>
+            <p className="text-xs text-muted-foreground">
+              Para cadastrar garçons, use a{" "}
+              <Link to="/admin/garcons" className="underline">
+                página Garçons
+              </Link>
+              .
             </p>
             <div className="grid gap-3 sm:grid-cols-[1fr_1fr_160px_auto] sm:items-end">
               <div>
