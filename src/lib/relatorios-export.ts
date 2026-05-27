@@ -1,5 +1,3 @@
-import jsPDF from "jspdf";
-import autoTable from "jspdf-autotable";
 import type { RelatorioComissoes } from "./relatorios.functions";
 
 const brl = (v: number) =>
@@ -81,7 +79,11 @@ export function exportarRelatorioCSV(rel: RelatorioComissoes) {
   downloadBlob(new Blob([csv], { type: "text/csv;charset=utf-8" }), fname);
 }
 
-export function gerarRelatorioPDF(rel: RelatorioComissoes) {
+export async function gerarRelatorioPDF(rel: RelatorioComissoes) {
+  const [{ default: jsPDF }, { default: autoTable }] = await Promise.all([
+    import("jspdf"),
+    import("jspdf-autotable"),
+  ]);
   const doc = new jsPDF({ unit: "pt", format: "a4" });
   const pageWidth = doc.internal.pageSize.getWidth();
 
