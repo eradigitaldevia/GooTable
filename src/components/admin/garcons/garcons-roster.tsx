@@ -13,12 +13,13 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Pencil, Plus, UserPlus, CheckCircle2, FileText } from "lucide-react";
+import { Pencil, Plus, UserPlus, CheckCircle2, FileText, KeyRound } from "lucide-react";
 import { toast } from "sonner";
 import {
   useAtualizarGarcom,
   useCriarGarcom,
   useGarcons,
+  useRedefinirSenhaGarcom,
   useVincularUsuarioGarcom,
 } from "@/hooks/use-garcons";
 import type { Garcom } from "@/lib/garcons.functions";
@@ -109,12 +110,16 @@ export function GarconsRoster({ restauranteId }: { restauranteId: string }) {
   const criar = useCriarGarcom(restauranteId);
   const atualizar = useAtualizarGarcom(restauranteId);
   const vincular = useVincularUsuarioGarcom(restauranteId);
+  const redefinirSenha = useRedefinirSenhaGarcom(restauranteId);
   const [openNovo, setOpenNovo] = useState(false);
   const [edit, setEdit] = useState<Garcom | null>(null);
   const [vincularAlvo, setVincularAlvo] = useState<Garcom | null>(null);
   const [vincEmail, setVincEmail] = useState("");
   const [vincSenha, setVincSenha] = useState("");
   const [extratoAlvo, setExtratoAlvo] = useState<Garcom | null>(null);
+  const [senhaAlvo, setSenhaAlvo] = useState<Garcom | null>(null);
+  const [novaSenha, setNovaSenha] = useState("");
+  const [confirmarSenha, setConfirmarSenha] = useState("");
 
   return (
     <Card className="overflow-hidden">
@@ -197,9 +202,23 @@ export function GarconsRoster({ restauranteId }: { restauranteId: string }) {
               </td>
               <td className="px-4 py-3">
                 {g.user_id ? (
-                  <Badge variant="secondary" className="gap-1">
-                    <CheckCircle2 className="h-3 w-3" /> Vinculado
-                  </Badge>
+                  <div className="flex items-center gap-2">
+                    <Badge variant="secondary" className="gap-1">
+                      <CheckCircle2 className="h-3 w-3" /> Vinculado
+                    </Badge>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      title="Redefinir senha"
+                      onClick={() => {
+                        setSenhaAlvo(g);
+                        setNovaSenha("");
+                        setConfirmarSenha("");
+                      }}
+                    >
+                      <KeyRound className="h-4 w-4" />
+                    </Button>
+                  </div>
                 ) : (
                   <Button
                     size="sm"
@@ -314,7 +333,7 @@ export function GarconsRoster({ restauranteId }: { restauranteId: string }) {
               />
             </div>
             <div>
-              <Label htmlFor="vinc-senha">Senha temporária</Label>
+              <Label htmlFor="vinc-senha">Senha</Label>
               <Input
                 id="vinc-senha"
                 type="text"
@@ -324,7 +343,8 @@ export function GarconsRoster({ restauranteId }: { restauranteId: string }) {
                 autoComplete="off"
               />
               <p className="mt-1 text-xs text-muted-foreground">
-                O garçom poderá alterar a senha depois pelo próprio login.
+                Defina a senha que o garçom usará para fazer login. Ele poderá
+                alterá-la depois.
               </p>
             </div>
             <DialogFooter>
@@ -341,6 +361,89 @@ export function GarconsRoster({ restauranteId }: { restauranteId: string }) {
         garcom={extratoAlvo}
         onClose={() => setExtratoAlvo(null)}
       />
+
+      <Dialog
+        open={!!senhaAlvo}
+        onOpenChange={(o) => {
+          if (!o) {
+            setSenhaAlvo(null);
+            setNovaSenha("");
+            setConfirmarSenha("");
+          }
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>
+              Redefinir senha {senhaAlvo ? `— ${senhaAlvo.nome}` : ""}
+            </DialogTitle>
+          </DialogHeader>
+          <form
+            className="space-y-4"
+            onSubmit={async (e) => {
+              e.preventDefault();
+              if (!senhaAlvo) return;
+              if (novaSenha.length < 6) {
+                toast.error("A senha deve ter no mínimo 6 caracteres");
+                return;
+              }
+              if (novaSenha !== confirmarSenha) {
+                toast.error("As senhas não coincidem");
+                return;
+              }
+              try {
+                await redefinirSenha.mutateAsync({
+                  garcomId: senhaAlvo.id,
+                  novaSenha,
+                });
+                toast.success("Senha redefinida");
+                setSenhaAlvo(null);
+                setNovaSenha("");
+                setConfirmarSenha("");
+              } catch (err) {
+                toast.error(
+                  err instanceof Error ? err.message : "Erro ao redefinir senha",
+                );
+              }
+            }}
+          >
+            <div>
+              <Label htmlFor="garcom-nova-senha">Nova senha</Label>
+              <Input
+                id="garcom-nova-senha"
+                type="text"
+                value={novaSenha}
+                onChange={(e) => setNovaSenha(e.target.value)}
+                placeholder="mínimo 6 caracteres"
+                autoComplete="off"
+              />
+            </div>
+            <div>
+              <Label htmlFor="garcom-confirmar-senha">Confirmar senha</Label>
+              <Input
+                id="garcom-confirmar-senha"
+                type="text"
+                value={confirmarSenha}
+                onChange={(e) => setConfirmarSenha(e.target.value)}
+                placeholder="repita a senha"
+                autoComplete="off"
+              />
+            </div>
+            <DialogFooter>
+              <Button
+                type="submit"
+                disabled={
+                  novaSenha.length < 6 ||
+                  novaSenha !== confirmarSenha ||
+                  redefinirSenha.isPending
+                }
+              >
+                {redefinirSenha.isPending ? "Salvando…" : "Redefinir"}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
     </Card>
   );
 }
