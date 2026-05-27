@@ -12,7 +12,10 @@ import {
   pagarComissoesFn,
   resumoComissoesFn,
 } from "@/lib/garcons.functions";
-import { vincularUsuarioGarcomFn } from "@/lib/garcom-usuario.functions";
+import {
+  redefinirSenhaGarcomFn,
+  vincularUsuarioGarcomFn,
+} from "@/lib/garcom-usuario.functions";
 
 export function useGarcons(restauranteId: string | undefined, incluirInativos = true) {
   const fn = useServerFn(listarGarconsFn);
@@ -181,5 +184,19 @@ export function useVincularUsuarioGarcom(restauranteId: string | undefined) {
       if (restauranteId)
         qc.invalidateQueries({ queryKey: queryKeys.garcons(restauranteId) });
     },
+  });
+}
+
+export function useRedefinirSenhaGarcom(restauranteId: string | undefined) {
+  const fn = useServerFn(redefinirSenhaGarcomFn);
+  return useMutation({
+    mutationFn: (data: { garcomId: string; novaSenha: string }) =>
+      fn({
+        data: {
+          restauranteId: restauranteId!,
+          garcomId: data.garcomId,
+          novaSenha: data.novaSenha,
+        },
+      }),
   });
 }
