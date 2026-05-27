@@ -1,7 +1,6 @@
-import { Card } from "@/components/ui/card";
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, CartesianGrid } from "recharts";
 
-export function FaturamentoChart({
+export default function FaturamentoChart({
   data,
   fmt,
 }: {
@@ -9,9 +8,6 @@ export function FaturamentoChart({
   fmt: (n: number) => string;
 }) {
   return (
-    <Card className="p-4 sm:p-6">
-      <h2 className="mb-4 text-sm font-semibold">Faturamento — últimos 30 dias</h2>
-      <div className="h-72">
         <ResponsiveContainer width="100%" height="100%">
           <AreaChart data={data}>
             <defs>
@@ -30,7 +26,5 @@ export function FaturamentoChart({
             <Area type="monotone" dataKey="total" stroke="hsl(var(--primary))" fill="url(#g1)" />
           </AreaChart>
         </ResponsiveContainer>
-      </div>
-    </Card>
   );
 }
