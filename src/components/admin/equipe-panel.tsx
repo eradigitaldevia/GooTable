@@ -22,13 +22,22 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Mail, Trash2 } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { KeyRound, Mail, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import {
   useAlterarPapelMembro,
   useConvidarMembroEquipe,
   useCriarMembroEquipe,
   useEquipe,
+  useRedefinirSenhaMembro,
   useReenviarConviteMembro,
   useRemoverMembroEquipe,
 } from "@/hooks/use-equipe";
@@ -60,12 +69,16 @@ export function EquipePanel({ restauranteId }: { restauranteId: string }) {
   const alterar = useAlterarPapelMembro(restauranteId);
   const remover = useRemoverMembroEquipe(restauranteId);
   const reenviar = useReenviarConviteMembro(restauranteId);
+  const redefinirSenha = useRedefinirSenhaMembro(restauranteId);
 
   const [convEmail, setConvEmail] = useState("");
   const [convPapel, setConvPapel] = useState<PapelMembro>("cozinheiro");
   const [criarEmail, setCriarEmail] = useState("");
   const [criarSenha, setCriarSenha] = useState("");
   const [criarPapel, setCriarPapel] = useState<PapelMembro>("cozinheiro");
+  const [senhaDialog, setSenhaDialog] = useState<Membro | null>(null);
+  const [novaSenha, setNovaSenha] = useState("");
+  const [confirmarSenha, setConfirmarSenha] = useState("");
   const [confirmacao, setConfirmacao] = useState<
     | { tipo: "papel"; membro: Membro; novoPapel: PapelMembro }
     | { tipo: "remover"; membro: Membro }
@@ -118,6 +131,36 @@ export function EquipePanel({ restauranteId }: { restauranteId: string }) {
       );
     } catch (e: any) {
       toast.error(e?.message ?? "Erro ao reenviar");
+    }
+  };
+
+  const abrirRedefinirSenha = (membro: Membro) => {
+    setSenhaDialog(membro);
+    setNovaSenha("");
+    setConfirmarSenha("");
+  };
+
+  const handleRedefinirSenha = async () => {
+    if (!senhaDialog) return;
+    if (novaSenha.length < 6) {
+      toast.error("A senha deve ter no mínimo 6 caracteres");
+      return;
+    }
+    if (novaSenha !== confirmarSenha) {
+      toast.error("As senhas não coincidem");
+      return;
+    }
+    try {
+      await redefinirSenha.mutateAsync({
+        membroId: senhaDialog.id,
+        novaSenha,
+      });
+      toast.success("Senha redefinida");
+      setSenhaDialog(null);
+      setNovaSenha("");
+      setConfirmarSenha("");
+    } catch (e: any) {
+      toast.error(e?.message ?? "Erro ao redefinir senha");
     }
   };
 
@@ -207,7 +250,7 @@ export function EquipePanel({ restauranteId }: { restauranteId: string }) {
 
           <TabsContent value="criar" className="mt-4 space-y-3">
             <p className="text-xs text-muted-foreground">
-              Cria a conta com uma senha temporária. Compartilhe a senha com a pessoa.
+              Cria a conta com uma senha definida agora. Compartilhe a senha com a pessoa.
             </p>
             <div className="grid gap-3 sm:grid-cols-[1fr_1fr_160px_auto] sm:items-end">
               <div>
@@ -221,7 +264,7 @@ export function EquipePanel({ restauranteId }: { restauranteId: string }) {
                 />
               </div>
               <div>
-                <Label htmlFor="criar-senha">Senha temporária</Label>
+                <Label htmlFor="criar-senha">Senha</Label>
                 <Input
                   id="criar-senha"
                   type="text"
@@ -309,6 +352,14 @@ export function EquipePanel({ restauranteId }: { restauranteId: string }) {
                     <Button
                       size="sm"
                       variant="ghost"
+                      title="Redefinir senha"
+                      onClick={() => abrirRedefinirSenha(m)}
+                    >
+                      <KeyRound className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
                       title="Reenviar convite / redefinir senha"
                       onClick={() => handleReenviar(m.id)}
                       disabled={reenviar.isPending}
@@ -385,6 +436,64 @@ export function EquipePanel({ restauranteId }: { restauranteId: string }) {
           )}
         </AlertDialogContent>
       </AlertDialog>
+
+      <Dialog
+        open={!!senhaDialog}
+        onOpenChange={(open) => {
+          if (!open) {
+            setSenhaDialog(null);
+            setNovaSenha("");
+            setConfirmarSenha("");
+          }
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Redefinir senha</DialogTitle>
+            <DialogDescription>
+              Defina uma nova senha para "{senhaDialog?.email}". A pessoa poderá entrar
+              imediatamente com a nova senha.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div>
+              <Label htmlFor="nova-senha">Nova senha</Label>
+              <Input
+                id="nova-senha"
+                type="text"
+                value={novaSenha}
+                onChange={(e) => setNovaSenha(e.target.value)}
+                placeholder="mínimo 6 caracteres"
+              />
+            </div>
+            <div>
+              <Label htmlFor="confirmar-senha">Confirmar senha</Label>
+              <Input
+                id="confirmar-senha"
+                type="text"
+                value={confirmarSenha}
+                onChange={(e) => setConfirmarSenha(e.target.value)}
+                placeholder="repita a senha"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setSenhaDialog(null)}>
+              Cancelar
+            </Button>
+            <Button
+              onClick={handleRedefinirSenha}
+              disabled={
+                novaSenha.length < 6 ||
+                novaSenha !== confirmarSenha ||
+                redefinirSenha.isPending
+              }
+            >
+              Redefinir
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
