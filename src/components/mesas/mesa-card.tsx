@@ -1,7 +1,9 @@
-import { useCallback } from "react";
+import { memo, useCallback, lazy, Suspense } from "react";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
-import { QRCodeSVG } from "qrcode.react";
+const QRCodeSVG = lazy(() =>
+  import("qrcode.react").then((m) => ({ default: m.QRCodeSVG })),
+);
 import { Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { useAlterarMesaAtiva, useExcluirMesa } from "@/hooks/use-mesas";
@@ -14,7 +16,7 @@ interface Mesa {
   ativa: boolean;
 }
 
-export function MesaCard({
+function MesaCardComponent({
   mesa,
   origin,
   restauranteId,
@@ -60,7 +62,9 @@ export function MesaCard({
         </div>
       )}
       <div className="mt-4 flex items-center justify-center rounded-2xl bg-white p-3">
-        <QRCodeSVG value={url} size={180} level="M" />
+        <Suspense fallback={<div style={{ width: 180, height: 180 }} />}>
+          <QRCodeSVG value={url} size={180} level="M" />
+        </Suspense>
       </div>
       <div className="mt-3 break-all text-[11px] text-muted-foreground">{url}</div>
 
@@ -76,3 +80,5 @@ export function MesaCard({
     </div>
   );
 }
+
+export const MesaCard = memo(MesaCardComponent);

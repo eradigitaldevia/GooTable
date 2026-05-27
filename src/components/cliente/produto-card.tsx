@@ -1,3 +1,4 @@
+import { memo } from "react";
 import { formatBRL } from "@/lib/cart";
 
 interface Produto {
@@ -11,7 +12,7 @@ interface Produto {
   ordem: number;
 }
 
-export function ProdutoCard({
+function ProdutoCardComponent({
   produto,
   onClick,
   readOnly = false,
@@ -50,3 +51,5 @@ export function ProdutoCard({
     </button>
   );
 }
+
+export const ProdutoCard = memo(ProdutoCardComponent);
