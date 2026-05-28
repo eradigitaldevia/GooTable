@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/hooks/use-auth";
 import { useMeuRestaurante } from "@/hooks/use-restaurante";
@@ -14,6 +14,10 @@ export const Route = createFileRoute("/_authenticated/admin/garcons")({
 function GarconsPage() {
   const { user } = useAuth();
   const { data: restaurante, isLoading } = useMeuRestaurante(user?.id);
+  const search = Route.useSearch() as { tab?: string };
+  const navigate = useNavigate({ from: Route.fullPath });
+
+  const tab = search.tab ?? "mesas";
 
   if (isLoading || !restaurante) {
     return <div className="text-sm text-muted-foreground">Carregando…</div>;
@@ -27,7 +31,12 @@ function GarconsPage() {
           Cadastro de garçons, atribuição por mesa e gestão de comissões.
         </p>
       </div>
-      <Tabs defaultValue="mesas">
+      <Tabs
+        value={tab}
+        onValueChange={(v) =>
+          navigate({ search: (prev: Record<string, unknown>) => ({ ...prev, tab: v }) })
+        }
+      >
         <TabsList className="grid w-full grid-cols-2 h-auto sm:inline-flex sm:w-auto sm:h-9 sm:grid-cols-none">
           <TabsTrigger value="mesas">Mesas</TabsTrigger>
           <TabsTrigger value="garcons">Garçons</TabsTrigger>
