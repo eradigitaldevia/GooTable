@@ -8,11 +8,13 @@ export function SalaHeader({
   mesas,
   chamadosPendentes,
   onIrChamados,
+  readOnly = false,
 }: {
   nome: string;
   mesas: { id: string; numero: string }[];
   chamadosPendentes: number;
   onIrChamados: () => void;
+  readOnly?: boolean;
 }) {
   const inicial = (nome.trim()[0] ?? "?").toUpperCase();
   const [agora, setAgora] = useState(() => new Date());
@@ -56,18 +58,20 @@ export function SalaHeader({
             </span>
           )}
         </Button>
-        <Button
-          size="icon"
-          variant="ghost"
-          aria-label="Sair"
-          onClick={() => {
-            void supabase.auth.signOut().then(() => {
-              window.location.assign("/login");
-            });
-          }}
-        >
-          <LogOut className="h-4 w-4" />
-        </Button>
+        {!readOnly && (
+          <Button
+            size="icon"
+            variant="ghost"
+            aria-label="Sair"
+            onClick={() => {
+              void supabase.auth.signOut().then(() => {
+                window.location.assign("/login");
+              });
+            }}
+          >
+            <LogOut className="h-4 w-4" />
+          </Button>
+        )}
       </div>
     </header>
   );
