@@ -12,7 +12,7 @@ export function ChamadosList({
   pendingId,
 }: {
   chamados: SalaChamado[];
-  onAtender: (chamadoId: string) => void;
+  onAtender?: (chamadoId: string) => void;
   pendingId?: string | null;
 }) {
   if (chamados.length === 0) {
@@ -47,13 +47,15 @@ export function ChamadosList({
                 {c.tipo_nome} · há {min} min
               </div>
             </div>
-            <Button
-              size="sm"
-              disabled={pendingId === c.id}
-              onClick={() => onAtender(c.id)}
-            >
-              <Check className="mr-1 h-4 w-4" /> Atendido
-            </Button>
+            {onAtender && (
+              <Button
+                size="sm"
+                disabled={pendingId === c.id}
+                onClick={() => onAtender(c.id)}
+              >
+                <Check className="mr-1 h-4 w-4" /> Atendido
+              </Button>
+            )}
           </li>
         );
       })}
