@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "@tanstack/react-router";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,7 +14,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Pencil, Plus, UserPlus, CheckCircle2, FileText, KeyRound, Mail } from "lucide-react";
+import { Pencil, Plus, UserPlus, CheckCircle2, FileText, KeyRound, Mail, Eye } from "lucide-react";
 import { toast } from "sonner";
 import {
   useAtualizarGarcom,
@@ -251,6 +252,19 @@ export function GarconsRoster({ restauranteId }: { restauranteId: string }) {
               </td>
               <td className="px-4 py-3 text-right">
                 <div className="flex justify-end gap-1">
+                  <Button
+                    asChild
+                    size="sm"
+                    variant="ghost"
+                    title="Visualizar área do garçom (somente leitura)"
+                  >
+                    <Link
+                      to="/admin/garcons/$garcomId/sala"
+                      params={{ garcomId: g.id }}
+                    >
+                      <Eye className="h-4 w-4" />
+                    </Link>
+                  </Button>
                   <Button
                     size="sm"
                     variant="ghost"
