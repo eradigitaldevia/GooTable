@@ -1,3 +1,5 @@
+import { Link } from "@tanstack/react-router";
+import { Plus } from "lucide-react";
 import type { SalaMesa } from "@/lib/sala.functions";
 
 export function MinhasMesasGrid({
@@ -24,8 +26,16 @@ export function MinhasMesasGrid({
         return (
           <div
             key={m.id}
-            className="rounded-xl border border-border bg-card p-4 text-center shadow-sm"
+            className="relative rounded-xl border border-border bg-card p-4 text-center shadow-sm"
           >
+            <Link
+              to="/sala/nova-comanda/$mesaId"
+              params={{ mesaId: m.id }}
+              aria-label={`Novo pedido na mesa ${m.numero}`}
+              className="absolute right-2 top-2 flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground shadow hover:opacity-90"
+            >
+              <Plus className="h-4 w-4" />
+            </Link>
             <div className="text-xs uppercase tracking-wide text-muted-foreground">
               Mesa
             </div>

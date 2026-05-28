@@ -40,6 +40,7 @@ import { Route as AuthenticatedAdminChamadosRouteImport } from './routes/_authen
 import { Route as AuthenticatedAdminCardapioPreviewRouteImport } from './routes/_authenticated/admin/cardapio-preview'
 import { Route as AuthenticatedAdminCardapioRouteImport } from './routes/_authenticated/admin/cardapio'
 import { Route as MQrTokenStatusPedidoIdRouteImport } from './routes/m.$qrToken.status.$pedidoId'
+import { Route as AuthenticatedSalaNovaComandaMesaIdRouteImport } from './routes/_authenticated/sala.nova-comanda.$mesaId'
 import { Route as AuthenticatedAdminClientesIdRouteImport } from './routes/_authenticated/admin/clientes.$id'
 
 const SuperadminRoute = SuperadminRouteImport.update({
@@ -207,6 +208,12 @@ const MQrTokenStatusPedidoIdRoute = MQrTokenStatusPedidoIdRouteImport.update({
   path: '/status/$pedidoId',
   getParentRoute: () => MQrTokenRoute,
 } as any)
+const AuthenticatedSalaNovaComandaMesaIdRoute =
+  AuthenticatedSalaNovaComandaMesaIdRouteImport.update({
+    id: '/nova-comanda/$mesaId',
+    path: '/nova-comanda/$mesaId',
+    getParentRoute: () => AuthenticatedSalaRoute,
+  } as any)
 const AuthenticatedAdminClientesIdRoute =
   AuthenticatedAdminClientesIdRouteImport.update({
     id: '/$id',
@@ -223,7 +230,7 @@ export interface FileRoutesByFullPath {
   '/superadmin': typeof SuperadminRouteWithChildren
   '/admin': typeof AuthenticatedAdminRouteWithChildren
   '/cozinha': typeof AuthenticatedCozinhaRoute
-  '/sala': typeof AuthenticatedSalaRoute
+  '/sala': typeof AuthenticatedSalaRouteWithChildren
   '/m/$qrToken': typeof MQrTokenRouteWithChildren
   '/superadmin/logs': typeof SuperadminLogsRoute
   '/superadmin/restaurantes': typeof SuperadminRestaurantesRouteWithChildren
@@ -245,6 +252,7 @@ export interface FileRoutesByFullPath {
   '/superadmin/restaurantes/$id': typeof SuperadminRestaurantesIdRoute
   '/admin/': typeof AuthenticatedAdminIndexRoute
   '/admin/clientes/$id': typeof AuthenticatedAdminClientesIdRoute
+  '/sala/nova-comanda/$mesaId': typeof AuthenticatedSalaNovaComandaMesaIdRoute
   '/m/$qrToken/status/$pedidoId': typeof MQrTokenStatusPedidoIdRoute
 }
 export interface FileRoutesByTo {
@@ -254,7 +262,7 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/reset-password': typeof ResetPasswordRoute
   '/cozinha': typeof AuthenticatedCozinhaRoute
-  '/sala': typeof AuthenticatedSalaRoute
+  '/sala': typeof AuthenticatedSalaRouteWithChildren
   '/m/$qrToken': typeof MQrTokenRouteWithChildren
   '/superadmin/logs': typeof SuperadminLogsRoute
   '/superadmin/restaurantes': typeof SuperadminRestaurantesRouteWithChildren
@@ -276,6 +284,7 @@ export interface FileRoutesByTo {
   '/superadmin/restaurantes/$id': typeof SuperadminRestaurantesIdRoute
   '/admin': typeof AuthenticatedAdminIndexRoute
   '/admin/clientes/$id': typeof AuthenticatedAdminClientesIdRoute
+  '/sala/nova-comanda/$mesaId': typeof AuthenticatedSalaNovaComandaMesaIdRoute
   '/m/$qrToken/status/$pedidoId': typeof MQrTokenStatusPedidoIdRoute
 }
 export interface FileRoutesById {
@@ -289,7 +298,7 @@ export interface FileRoutesById {
   '/superadmin': typeof SuperadminRouteWithChildren
   '/_authenticated/admin': typeof AuthenticatedAdminRouteWithChildren
   '/_authenticated/cozinha': typeof AuthenticatedCozinhaRoute
-  '/_authenticated/sala': typeof AuthenticatedSalaRoute
+  '/_authenticated/sala': typeof AuthenticatedSalaRouteWithChildren
   '/m/$qrToken': typeof MQrTokenRouteWithChildren
   '/superadmin/logs': typeof SuperadminLogsRoute
   '/superadmin/restaurantes': typeof SuperadminRestaurantesRouteWithChildren
@@ -311,6 +320,7 @@ export interface FileRoutesById {
   '/superadmin/restaurantes/$id': typeof SuperadminRestaurantesIdRoute
   '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
   '/_authenticated/admin/clientes/$id': typeof AuthenticatedAdminClientesIdRoute
+  '/_authenticated/sala/nova-comanda/$mesaId': typeof AuthenticatedSalaNovaComandaMesaIdRoute
   '/m/$qrToken/status/$pedidoId': typeof MQrTokenStatusPedidoIdRoute
 }
 export interface FileRouteTypes {
@@ -346,6 +356,7 @@ export interface FileRouteTypes {
     | '/superadmin/restaurantes/$id'
     | '/admin/'
     | '/admin/clientes/$id'
+    | '/sala/nova-comanda/$mesaId'
     | '/m/$qrToken/status/$pedidoId'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -377,6 +388,7 @@ export interface FileRouteTypes {
     | '/superadmin/restaurantes/$id'
     | '/admin'
     | '/admin/clientes/$id'
+    | '/sala/nova-comanda/$mesaId'
     | '/m/$qrToken/status/$pedidoId'
   id:
     | '__root__'
@@ -411,6 +423,7 @@ export interface FileRouteTypes {
     | '/superadmin/restaurantes/$id'
     | '/_authenticated/admin/'
     | '/_authenticated/admin/clientes/$id'
+    | '/_authenticated/sala/nova-comanda/$mesaId'
     | '/m/$qrToken/status/$pedidoId'
   fileRoutesById: FileRoutesById
 }
@@ -644,6 +657,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof MQrTokenStatusPedidoIdRouteImport
       parentRoute: typeof MQrTokenRoute
     }
+    '/_authenticated/sala/nova-comanda/$mesaId': {
+      id: '/_authenticated/sala/nova-comanda/$mesaId'
+      path: '/nova-comanda/$mesaId'
+      fullPath: '/sala/nova-comanda/$mesaId'
+      preLoaderRoute: typeof AuthenticatedSalaNovaComandaMesaIdRouteImport
+      parentRoute: typeof AuthenticatedSalaRoute
+    }
     '/_authenticated/admin/clientes/$id': {
       id: '/_authenticated/admin/clientes/$id'
       path: '/$id'
@@ -702,16 +722,28 @@ const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
 const AuthenticatedAdminRouteWithChildren =
   AuthenticatedAdminRoute._addFileChildren(AuthenticatedAdminRouteChildren)
 
+interface AuthenticatedSalaRouteChildren {
+  AuthenticatedSalaNovaComandaMesaIdRoute: typeof AuthenticatedSalaNovaComandaMesaIdRoute
+}
+
+const AuthenticatedSalaRouteChildren: AuthenticatedSalaRouteChildren = {
+  AuthenticatedSalaNovaComandaMesaIdRoute:
+    AuthenticatedSalaNovaComandaMesaIdRoute,
+}
+
+const AuthenticatedSalaRouteWithChildren =
+  AuthenticatedSalaRoute._addFileChildren(AuthenticatedSalaRouteChildren)
+
 interface AuthenticatedRouteChildren {
   AuthenticatedAdminRoute: typeof AuthenticatedAdminRouteWithChildren
   AuthenticatedCozinhaRoute: typeof AuthenticatedCozinhaRoute
-  AuthenticatedSalaRoute: typeof AuthenticatedSalaRoute
+  AuthenticatedSalaRoute: typeof AuthenticatedSalaRouteWithChildren
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedAdminRoute: AuthenticatedAdminRouteWithChildren,
   AuthenticatedCozinhaRoute: AuthenticatedCozinhaRoute,
-  AuthenticatedSalaRoute: AuthenticatedSalaRoute,
+  AuthenticatedSalaRoute: AuthenticatedSalaRouteWithChildren,
 }
 
 const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
@@ -779,13 +811,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

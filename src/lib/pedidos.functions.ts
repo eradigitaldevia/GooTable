@@ -459,3 +459,220 @@ export const carregarStatusPedidoFn = createServerFn({ method: "POST" })
       restaurante: (r ?? null) as RestaurantePix | null,
     };
   });
+
+/* ---------- Garçom: criar pedido verbal na mesa ---------- */
+
+const itemGarcomSchema = z.object({
+  produto_id: z.string().uuid(),
+  quantidade: z.number().int().min(1).max(99),
+  observacao: z.string().max(300).optional(),
+});
+
+export type CriarPedidoGarcomResultado =
+  | {
+      ok: true;
+      pedido_id: string;
+      sessao_id: string;
+      comanda_id: string;
+    }
+  | {
+      ok: false;
+      erro: "multiplas_comandas_abertas";
+    };
+
+/** Cria pedido lançado pelo garçom (cliente pediu verbalmente). */
+export const criarPedidoGarcomFn = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) =>
+    z
+      .object({
+        restauranteId: z.string().uuid(),
+        mesaId: z.string().uuid(),
+        garcomId: z.string().uuid().nullable().optional(),
+        clienteId: z.string().uuid().nullable().optional(),
+        comandaId: z.string().uuid().nullable().optional(),
+        observacao: z.string().max(300).optional(),
+        itens: z.array(itemGarcomSchema).min(1).max(60),
+      })
+      .parse(d),
+  )
+  .handler(async ({ context, data }): Promise<CriarPedidoGarcomResultado> => {
+    const { supabase, userId } = context;
+    await assertAcessoRestaurante(supabase, userId, data.restauranteId);
+
+    // Carrega produtos e calcula total no servidor (anti-tampering)
+    const ids = Array.from(new Set(data.itens.map((i) => i.produto_id)));
+    const { data: prods, error: pErr } = await supabaseAdmin
+      .from("produtos")
+      .select("id, preco, disponivel, restaurante_id, nome")
+      .in("id", ids);
+    if (pErr) throw new Error(pErr.message);
+
+    const precoMap = new Map<
+      string,
+      { preco: number; disponivel: boolean; nome: string }
+    >();
+    for (const p of prods ?? []) {
+      if (p.restaurante_id !== data.restauranteId) {
+        throw new Error("Produto não pertence a este restaurante");
+      }
+      precoMap.set(p.id, {
+        preco: Number(p.preco),
+        disponivel: p.disponivel,
+        nome: p.nome,
+      });
+    }
+
+    let total = 0;
+    const itensPayload = data.itens.map((it) => {
+      const real = precoMap.get(it.produto_id);
+      if (!real) throw new Error("Produto indisponível");
+      if (!real.disponivel) throw new Error(`Produto ${real.nome} indisponível`);
+      total += real.preco * it.quantidade;
+      return {
+        produto_id: it.produto_id,
+        nome_produto: real.nome,
+        quantidade: it.quantidade,
+        preco_unit: real.preco,
+        observacao: it.observacao ?? "",
+        cliente_nome: "",
+        cliente_id: data.clienteId ?? "",
+      };
+    });
+
+    const { data: rpcData, error: rpcErr } = await supabase.rpc(
+      "criar_pedido_garcom",
+      {
+        _restaurante_id: data.restauranteId,
+        _mesa_id: data.mesaId,
+        _garcom_id: (data.garcomId ?? null) as unknown as string,
+        _cliente_id: (data.clienteId ?? null) as unknown as string,
+        _comanda_id: (data.comandaId ?? null) as unknown as string,
+        _observacao: data.observacao ?? "",
+        _total: total,
+        _itens: itensPayload,
+      },
+    );
+    if (rpcErr) {
+      if (rpcErr.message.includes("multiplas_comandas_abertas")) {
+        return { ok: false, erro: "multiplas_comandas_abertas" };
+      }
+      throw new Error(rpcErr.message);
+    }
+    const res = rpcData as {
+      pedido_id: string;
+      sessao_id: string;
+      comanda_id: string;
+    };
+    return {
+      ok: true,
+      pedido_id: res.pedido_id,
+      sessao_id: res.sessao_id,
+      comanda_id: res.comanda_id,
+    };
+  });
+
+/* ---------- Garçom: lookup de cliente por telefone (sem QR) ---------- */
+
+export interface ClienteLookupResultado {
+  encontrado: boolean;
+  cliente?: { id: string; nome: string; telefone: string };
+}
+
+export const buscarClienteRestaurantePorTelefoneFn = createServerFn({
+  method: "POST",
+})
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) =>
+    z
+      .object({
+        restauranteId: z.string().uuid(),
+        telefone: z
+          .string()
+          .transform((s) => s.replace(/\D/g, ""))
+          .pipe(z.string().min(10).max(15)),
+      })
+      .parse(d),
+  )
+  .handler(async ({ context, data }): Promise<ClienteLookupResultado> => {
+    const { supabase, userId } = context;
+    await assertAcessoRestaurante(supabase, userId, data.restauranteId);
+    const { data: cli, error } = await supabaseAdmin
+      .from("clientes")
+      .select("id, nome, telefone")
+      .eq("restaurante_id", data.restauranteId)
+      .eq("telefone", data.telefone)
+      .maybeSingle();
+    if (error) throw new Error(error.message);
+    if (!cli) return { encontrado: false };
+    return {
+      encontrado: true,
+      cliente: {
+        id: cli.id as string,
+        nome: cli.nome as string,
+        telefone: cli.telefone as string,
+      },
+    };
+  });
+
+/* ---------- Garçom: comandas abertas da mesa (para seletor) ---------- */
+
+export interface ComandaAbertaInfo {
+  id: string;
+  tipo: "individual" | "compartilhada";
+  titular_nome: string | null;
+}
+
+export const listarComandasAbertasMesaFn = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) =>
+    z
+      .object({
+        restauranteId: z.string().uuid(),
+        mesaId: z.string().uuid(),
+      })
+      .parse(d),
+  )
+  .handler(async ({ context, data }): Promise<ComandaAbertaInfo[]> => {
+    const { supabase, userId } = context;
+    await assertAcessoRestaurante(supabase, userId, data.restauranteId);
+
+    const { data: sessao } = await supabaseAdmin
+      .from("mesa_sessoes")
+      .select("id")
+      .eq("mesa_id", data.mesaId)
+      .eq("status", "aberta")
+      .maybeSingle();
+    if (!sessao) return [];
+
+    const { data: comandas, error } = await supabaseAdmin
+      .from("comandas")
+      .select("id, tipo, titular_cliente_id")
+      .eq("sessao_id", sessao.id)
+      .eq("status", "aberta")
+      .order("criado_em", { ascending: true });
+    if (error) throw new Error(error.message);
+    const lista = (comandas ?? []) as Array<{
+      id: string;
+      tipo: "individual" | "compartilhada";
+      titular_cliente_id: string | null;
+    }>;
+    if (lista.length === 0) return [];
+
+    const titularIds = lista
+      .map((c) => c.titular_cliente_id)
+      .filter((v): v is string => !!v);
+    const nomes = new Map<string, string>();
+    if (titularIds.length) {
+      const { data: cs } = await supabaseAdmin
+        .from("clientes")
+        .select("id, nome")
+        .in("id", titularIds);
+      for (const c of cs ?? []) nomes.set(c.id as string, c.nome as string);
+    }
+    return lista.map((c) => ({
+      id: c.id,
+      tipo: c.tipo,
+      titular_nome: c.titular_cliente_id ? nomes.get(c.titular_cliente_id) ?? null : null,
+    }));
+  });
