@@ -12,6 +12,11 @@ import { PageHeaderSkeleton } from "@/components/admin/skeletons/page-header-ske
 import { CardsGridSkeleton } from "@/components/admin/skeletons/cards-grid-skeleton";
 
 const DashboardChart = lazy(() => import("@/components/admin/dashboard-chart"));
+const MetricasOperacionaisSection = lazy(() =>
+  import("@/components/admin/metricas/metricas-operacionais-section").then((m) => ({
+    default: m.MetricasOperacionaisSection,
+  })),
+);
 
 export const Route = createFileRoute("/_authenticated/admin/")({
   loader: ({ context }) => {
@@ -133,6 +138,10 @@ function Dashboard() {
           </Suspense>
         </div>
       </div>
+
+      <Suspense fallback={<div className="h-32 w-full animate-pulse rounded-xl bg-muted/40" />}>
+        <MetricasOperacionaisSection restauranteId={restauranteId} />
+      </Suspense>
     </div>
   );
 }
