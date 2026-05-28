@@ -48,6 +48,7 @@ function Dashboard() {
       if (timeout) clearTimeout(timeout);
       timeout = setTimeout(() => {
         qc.invalidateQueries({ queryKey: ["dashboard-admin", restauranteId] });
+        qc.invalidateQueries({ queryKey: ["dashboard-metricas", restauranteId] });
         timeout = null;
       }, 1500);
     };
