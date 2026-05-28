@@ -83,7 +83,7 @@ export function ProdutoFormFields({
             }
           />
           <p className="text-xs text-muted-foreground">
-            Substitui o % do garçom apenas no modo “comissão por item”. E, se vazio usa o % do garçom
+            Substitui o % do garçom apenas no modo “comissão por item”. E, se vazio usa o % do garçom.
           </p>
         </div>
         <div className="space-y-2">
@@ -100,7 +100,7 @@ export function ProdutoFormFields({
             </span>
           </div>
           <p className="text-xs text-muted-foreground">
-            Desligue para itens isentos de comissão
+            Desligue para itens isentos de comissão.
           </p>
         </div>
       </div>
