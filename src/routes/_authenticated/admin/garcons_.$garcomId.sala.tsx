@@ -62,7 +62,7 @@ function VisualizarSalaPage() {
             </span>
           </div>
           <Button asChild size="sm" variant="outline">
-            <Link to="/admin/garcons">
+            <Link to="/admin/garcons" search={{ tab: "garcons" }}>
               <ArrowLeft className="mr-1 h-4 w-4" /> Voltar
             </Link>
           </Button>
