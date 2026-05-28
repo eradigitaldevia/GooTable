@@ -4,8 +4,11 @@ import { queryKeys } from "@/lib/query-keys";
 import {
   atualizarStatusPedidoFn,
   buscarItensPedidoFn,
+  buscarClienteRestaurantePorTelefoneFn,
   carregarStatusPedidoFn,
+  criarPedidoGarcomFn,
   criarPedidoPublicoFn,
+  listarComandasAbertasMesaFn,
   listarPedidosDoDiaFn,
   resumoContaFn,
   type StatusPedido,
@@ -100,5 +103,42 @@ export function useResumoConta(input: {
         },
       }),
     enabled,
+  });
+}
+
+/* ---------- Garçom: criar pedido verbal ---------- */
+
+export function useCriarPedidoGarcom() {
+  const fn = useServerFn(criarPedidoGarcomFn);
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (data: {
+      restauranteId: string;
+      mesaId: string;
+      garcomId?: string | null;
+      clienteId?: string | null;
+      comandaId?: string | null;
+      observacao?: string;
+      itens: { produto_id: string; quantidade: number; observacao?: string }[];
+    }) => fn({ data }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["sala-dados"] });
+    },
+  });
+}
+
+export function useBuscarClienteRestaurantePorTelefone() {
+  const fn = useServerFn(buscarClienteRestaurantePorTelefoneFn);
+  return useMutation({
+    mutationFn: (data: { restauranteId: string; telefone: string }) =>
+      fn({ data }),
+  });
+}
+
+export function useListarComandasAbertasMesa() {
+  const fn = useServerFn(listarComandasAbertasMesaFn);
+  return useMutation({
+    mutationFn: (data: { restauranteId: string; mesaId: string }) =>
+      fn({ data }),
   });
 }
