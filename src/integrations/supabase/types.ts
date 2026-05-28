@@ -899,6 +899,33 @@ export type Database = {
           },
         ]
       }
+      pedido_status_historico: {
+        Row: {
+          id: string
+          mudou_em: string
+          pedido_id: string
+          restaurante_id: string
+          status_anterior: Database["public"]["Enums"]["pedido_status"] | null
+          status_novo: Database["public"]["Enums"]["pedido_status"]
+        }
+        Insert: {
+          id?: string
+          mudou_em?: string
+          pedido_id: string
+          restaurante_id: string
+          status_anterior?: Database["public"]["Enums"]["pedido_status"] | null
+          status_novo: Database["public"]["Enums"]["pedido_status"]
+        }
+        Update: {
+          id?: string
+          mudou_em?: string
+          pedido_id?: string
+          restaurante_id?: string
+          status_anterior?: Database["public"]["Enums"]["pedido_status"] | null
+          status_novo?: Database["public"]["Enums"]["pedido_status"]
+        }
+        Relationships: []
+      }
       pedidos: {
         Row: {
           atualizado_em: string
@@ -1265,6 +1292,10 @@ export type Database = {
       }
       dashboard_admin_resumo: {
         Args: { _restaurante_id: string }
+        Returns: Json
+      }
+      dashboard_metricas_operacionais: {
+        Args: { _periodo?: string; _restaurante_id: string }
         Returns: Json
       }
       dashboard_superadmin_resumo: { Args: never; Returns: Json }

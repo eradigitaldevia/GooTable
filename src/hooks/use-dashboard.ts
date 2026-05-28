@@ -4,6 +4,8 @@ import { queryKeys } from "@/lib/query-keys";
 import {
   atualizarRestauranteAdminFn,
   dashboardAdminFn,
+  dashboardMetricasOperacionaisFn,
+  type DashboardMetricasPeriodo,
   dashboardSuperadminFn,
   detalheRestauranteAdminFn,
   listarLogsFn,
@@ -17,6 +19,20 @@ export function useDashboardAdmin(restauranteId: string | undefined) {
       ? ["dashboard-admin", restauranteId]
       : ["dashboard-admin", "none"],
     queryFn: () => fn({ data: { restauranteId: restauranteId! } }),
+    enabled: !!restauranteId,
+  });
+}
+
+export function useDashboardMetricasOperacionais(
+  restauranteId: string | undefined,
+  periodo: DashboardMetricasPeriodo,
+) {
+  const fn = useServerFn(dashboardMetricasOperacionaisFn);
+  return useQuery({
+    queryKey: restauranteId
+      ? ["dashboard-metricas", restauranteId, periodo]
+      : ["dashboard-metricas", "none", periodo],
+    queryFn: () => fn({ data: { restauranteId: restauranteId!, periodo } }),
     enabled: !!restauranteId,
   });
 }
