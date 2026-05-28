@@ -82,6 +82,9 @@ export function ProdutoFormFields({
               onChange({ ...form, percentual_comissao: e.target.value })
             }
           />
+          <p className="text-xs text-muted-foreground">
+            Substitui o % do garçom apenas no modo “comissão por item”.
+          </p>
         </div>
         <div className="space-y-2">
           <Label>Aplicável a comissão</Label>
@@ -96,6 +99,9 @@ export function ProdutoFormFields({
               {form.comissao_aplicavel ? "Sim" : "Não"}
             </span>
           </div>
+          <p className="text-xs text-muted-foreground">
+            Desligue para itens isentos (taxa de serviço, revenda etc.).
+          </p>
         </div>
       </div>
     </>
