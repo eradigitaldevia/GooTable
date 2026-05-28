@@ -1,5 +1,4 @@
 import { X } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import type { ComandaAbertaInfo } from "@/lib/pedidos.functions";
 
 export function EscolherComandaModal({
