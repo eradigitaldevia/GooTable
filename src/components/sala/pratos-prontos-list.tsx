@@ -12,7 +12,7 @@ export function PratosProntosList({
   pendingId,
 }: {
   pedidos: SalaPedidoPronto[];
-  onConfirmarEntrega: (pedidoId: string) => void;
+  onConfirmarEntrega?: (pedidoId: string) => void;
   pendingId?: string | null;
 }) {
   if (pedidos.length === 0) {
@@ -74,14 +74,16 @@ export function PratosProntosList({
                 {p.observacao}
               </p>
             )}
-            <Button
-              className="mt-3 w-full"
-              size="lg"
-              disabled={pendingId === p.id}
-              onClick={() => onConfirmarEntrega(p.id)}
-            >
-              <Check className="mr-1 h-4 w-4" /> Confirmar entrega
-            </Button>
+            {onConfirmarEntrega && (
+              <Button
+                className="mt-3 w-full"
+                size="lg"
+                disabled={pendingId === p.id}
+                onClick={() => onConfirmarEntrega(p.id)}
+              >
+                <Check className="mr-1 h-4 w-4" /> Confirmar entrega
+              </Button>
+            )}
           </li>
         );
       })}
