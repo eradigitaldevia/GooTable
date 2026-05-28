@@ -34,7 +34,7 @@ function GarconsPage() {
       <Tabs
         value={tab}
         onValueChange={(v) =>
-          navigate({ search: (prev) => ({ ...prev, tab: v }) })
+          navigate({ search: (prev: Record<string, unknown>) => ({ ...prev, tab: v }) })
         }
       >
         <TabsList className="grid w-full grid-cols-2 h-auto sm:inline-flex sm:w-auto sm:h-9 sm:grid-cols-none">
