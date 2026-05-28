@@ -74,6 +74,7 @@ export const listarMembrosEquipeFn = createServerFn({ method: "POST" })
       .from("restaurante_membros")
       .select("id, user_id, papel, criado_em")
       .eq("restaurante_id", data.restauranteId)
+      .in("papel", PAPEIS)
       .order("criado_em", { ascending: true });
     if (error) throw new Error(error.message);
 
