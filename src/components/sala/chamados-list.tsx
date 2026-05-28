@@ -10,10 +10,12 @@ export function ChamadosList({
   chamados,
   onAtender,
   pendingId,
+  readOnly,
 }: {
   chamados: SalaChamado[];
   onAtender?: (chamadoId: string) => void;
   pendingId?: string | null;
+  readOnly?: boolean;
 }) {
   if (chamados.length === 0) {
     return (
@@ -47,7 +49,11 @@ export function ChamadosList({
                 {c.tipo_nome} · há {min} min
               </div>
             </div>
-            {onAtender && (
+            {readOnly ? (
+              <Button size="sm" disabled>
+                <Check className="mr-1 h-4 w-4" /> Atendido
+              </Button>
+            ) : onAtender && (
               <Button
                 size="sm"
                 disabled={pendingId === c.id}

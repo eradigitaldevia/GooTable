@@ -98,17 +98,18 @@ function VisualizarSalaPage() {
               </TabsTrigger>
             </TabsList>
             <TabsContent value="prontos" className="mt-4">
-              <PratosProntosList pedidos={data.pedidos_prontos} />
+              <PratosProntosList pedidos={data.pedidos_prontos} readOnly />
             </TabsContent>
             <TabsContent value="mesas" className="mt-4">
               <MinhasMesasGrid
                 mesas={mesas}
                 prontosPorMesa={prontosPorMesa}
                 chamadosPorMesa={chamadosPorMesa}
+                readOnly
               />
             </TabsContent>
             <TabsContent value="chamados" className="mt-4">
-              <ChamadosList chamados={data.chamados_pendentes} />
+              <ChamadosList chamados={data.chamados_pendentes} readOnly />
             </TabsContent>
           </Tabs>
         )}

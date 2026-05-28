@@ -6,10 +6,12 @@ export function MinhasMesasGrid({
   mesas,
   prontosPorMesa,
   chamadosPorMesa,
+  readOnly,
 }: {
   mesas: SalaMesa[];
   prontosPorMesa: Map<string, number>;
   chamadosPorMesa: Map<string, number>;
+  readOnly?: boolean;
 }) {
   if (mesas.length === 0) {
     return (
@@ -28,14 +30,25 @@ export function MinhasMesasGrid({
             key={m.id}
             className="relative rounded-xl border border-border bg-card p-4 text-center shadow-sm"
           >
-            <Link
-              to="/sala/nova-comanda/$mesaId"
-              params={{ mesaId: m.id }}
-              aria-label={`Novo pedido na mesa ${m.numero}`}
-              className="absolute right-2 top-2 flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground shadow hover:opacity-90"
-            >
-              <Plus className="h-4 w-4" />
-            </Link>
+            {readOnly ? (
+              <button
+                type="button"
+                disabled
+                aria-label={`Novo pedido na mesa ${m.numero}`}
+                className="absolute right-2 top-2 flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground shadow opacity-50 cursor-not-allowed"
+              >
+                <Plus className="h-4 w-4" />
+              </button>
+            ) : (
+              <Link
+                to="/sala/nova-comanda/$mesaId"
+                params={{ mesaId: m.id }}
+                aria-label={`Novo pedido na mesa ${m.numero}`}
+                className="absolute right-2 top-2 flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground shadow hover:opacity-90"
+              >
+                <Plus className="h-4 w-4" />
+              </Link>
+            )}
             <div className="text-xs uppercase tracking-wide text-muted-foreground">
               Mesa
             </div>

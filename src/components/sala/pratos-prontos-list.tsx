@@ -10,10 +10,12 @@ export function PratosProntosList({
   pedidos,
   onConfirmarEntrega,
   pendingId,
+  readOnly,
 }: {
   pedidos: SalaPedidoPronto[];
   onConfirmarEntrega?: (pedidoId: string) => void;
   pendingId?: string | null;
+  readOnly?: boolean;
 }) {
   if (pedidos.length === 0) {
     return (
@@ -74,7 +76,11 @@ export function PratosProntosList({
                 {p.observacao}
               </p>
             )}
-            {onConfirmarEntrega && (
+            {readOnly ? (
+              <Button className="mt-3 w-full" size="lg" disabled>
+                <Check className="mr-1 h-4 w-4" /> Confirmar entrega
+              </Button>
+            ) : onConfirmarEntrega && (
               <Button
                 className="mt-3 w-full"
                 size="lg"
