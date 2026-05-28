@@ -1294,6 +1294,10 @@ export type Database = {
         Args: { _restaurante_id: string }
         Returns: Json
       }
+      dashboard_metricas_operacionais: {
+        Args: { _periodo?: string; _restaurante_id: string }
+        Returns: Json
+      }
       dashboard_superadmin_resumo: { Args: never; Returns: Json }
       definir_garcons_pedido: {
         Args: { _items: Json; _pedido_id: string }
