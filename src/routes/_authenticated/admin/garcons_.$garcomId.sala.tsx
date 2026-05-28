@@ -14,7 +14,7 @@ import {
 } from "@/hooks/use-sala";
 
 export const Route = createFileRoute(
-  "/_authenticated/admin/garcons/$garcomId/sala",
+  "/_authenticated/admin/garcons_/$garcomId/sala",
 )({
   component: VisualizarSalaPage,
 });
