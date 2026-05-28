@@ -1,18 +1,34 @@
 import { useEffect, useId, useRef } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import type { QueryKey } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
-import { carregarSalaFn, type SalaDados } from "@/lib/sala.functions";
+import {
+  carregarSalaFn,
+  carregarSalaAdminFn,
+  type SalaDados,
+} from "@/lib/sala.functions";
 import { atualizarStatusPedidoFn } from "@/lib/pedidos.functions";
 import { atenderChamadoFn } from "@/lib/chamados.functions";
 
 export const SALA_KEY = ["sala-dados"] as const;
+export const SALA_ADMIN_KEY = (garcomId: string) =>
+  ["sala-admin", garcomId] as const;
 
 export function useSalaDados() {
   const fn = useServerFn(carregarSalaFn);
   return useQuery<SalaDados | null>({
     queryKey: SALA_KEY,
     queryFn: () => fn({} as never),
+  });
+}
+
+export function useSalaAdmin(garcomId: string) {
+  const fn = useServerFn(carregarSalaAdminFn);
+  return useQuery<SalaDados | null>({
+    queryKey: SALA_ADMIN_KEY(garcomId),
+    queryFn: () => fn({ data: { garcomId } }),
+    enabled: !!garcomId,
   });
 }
 
@@ -67,10 +83,18 @@ function playBeep(freq: number) {
 }
 
 /** Realtime: invalida sala + toca sons quando entra pedido pronto ou chamado novo. */
-export function useRealtimeSala(restauranteId: string | undefined, mesaIds: string[]) {
+export function useRealtimeSala(
+  restauranteId: string | undefined,
+  mesaIds: string[],
+  queryKey: QueryKey = SALA_KEY,
+) {
   const qc = useQueryClient();
   const instanceId = useId();
   const mesaSetRef = useRef<Set<string>>(new Set());
+  const keyRef = useRef<QueryKey>(queryKey);
+  useEffect(() => {
+    keyRef.current = queryKey;
+  }, [queryKey]);
   useEffect(() => {
     mesaSetRef.current = new Set(mesaIds);
   }, [mesaIds]);
@@ -100,7 +124,7 @@ export function useRealtimeSala(restauranteId: string | undefined, mesaIds: stri
           ) {
             playBeep(880);
           }
-          qc.invalidateQueries({ queryKey: SALA_KEY });
+          qc.invalidateQueries({ queryKey: keyRef.current });
         },
       )
       .on(
@@ -119,7 +143,7 @@ export function useRealtimeSala(restauranteId: string | undefined, mesaIds: stri
           if (payload.eventType === "INSERT") {
             playBeep(660);
           }
-          qc.invalidateQueries({ queryKey: SALA_KEY });
+          qc.invalidateQueries({ queryKey: keyRef.current });
         },
       )
       .subscribe();
