@@ -100,7 +100,7 @@ export function ProdutoFormFields({
             </span>
           </div>
           <p className="text-xs text-muted-foreground">
-            Desligue para itens isentos de comissão
+            Desligue para itens isentos de comissão.
           </p>
         </div>
       </div>
