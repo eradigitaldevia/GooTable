@@ -43,6 +43,64 @@ export const dashboardAdminFn = createServerFn({ method: "POST" })
     };
   });
 
+/* ---------- Admin: métricas operacionais ---------- */
+
+export type DashboardMetricasPeriodo = "hoje" | "7d" | "30d";
+
+export interface DashboardMetricasOperacionais {
+  fila: {
+    recebido: number;
+    em_preparo: number;
+    pronto: number;
+    mais_antigo_min: number;
+  };
+  tempoFases: {
+    recebidoParaPreparoMin: number;
+    preparoParaProntoMin: number;
+    prontoParaEntregueMin: number;
+    cicloTotalMin: number;
+  };
+  throughput24h: { hora: number; total: number }[];
+}
+
+export const dashboardMetricasOperacionaisFn = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) =>
+    z.object({
+      restauranteId: z.string().uuid(),
+      periodo: z.enum(["hoje", "7d", "30d"]).default("hoje"),
+    }).parse(d),
+  )
+  .handler(async ({ context, data }): Promise<DashboardMetricasOperacionais> => {
+    const { supabase, userId } = context;
+    await assertAcessoRestaurante(supabase, userId, data.restauranteId);
+
+    const { data: row, error } = await supabase.rpc("dashboard_metricas_operacionais", {
+      _restaurante_id: data.restauranteId,
+      _periodo: data.periodo,
+    });
+    if (error) throw new Error(error.message);
+    const r = (row ?? {}) as Record<string, unknown>;
+    const fila = (r.fila ?? {}) as Record<string, unknown>;
+    const tf = (r.tempo_fases ?? {}) as Record<string, unknown>;
+    const tp = (r.throughput_24h ?? []) as { hora: number | string; total: number | string }[];
+    return {
+      fila: {
+        recebido: Number(fila.recebido ?? 0),
+        em_preparo: Number(fila.em_preparo ?? 0),
+        pronto: Number(fila.pronto ?? 0),
+        mais_antigo_min: Number(fila.mais_antigo_min ?? 0),
+      },
+      tempoFases: {
+        recebidoParaPreparoMin: Number(tf.recebido_para_preparo_min ?? 0),
+        preparoParaProntoMin: Number(tf.preparo_para_pronto_min ?? 0),
+        prontoParaEntregueMin: Number(tf.pronto_para_entregue_min ?? 0),
+        cicloTotalMin: Number(tf.ciclo_total_min ?? 0),
+      },
+      throughput24h: tp.map((b) => ({ hora: Number(b.hora), total: Number(b.total) })),
+    };
+  });
+
 /* ---------- Super-admin: resumo via RPC ---------- */
 
 export interface SuperadminResumo {
