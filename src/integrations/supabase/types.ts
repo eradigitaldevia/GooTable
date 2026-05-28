@@ -1277,6 +1277,19 @@ export type Database = {
         Args: { _pedido_id: string }
         Returns: number
       }
+      criar_pedido_garcom: {
+        Args: {
+          _cliente_id: string
+          _comanda_id: string
+          _garcom_id: string
+          _itens: Json
+          _mesa_id: string
+          _observacao: string
+          _restaurante_id: string
+          _total: number
+        }
+        Returns: Json
+      }
       criar_pedido_publico: {
         Args: {
           _cliente_id: string
