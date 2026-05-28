@@ -545,9 +545,9 @@ export const criarPedidoGarcomFn = createServerFn({ method: "POST" })
       {
         _restaurante_id: data.restauranteId,
         _mesa_id: data.mesaId,
-        _garcom_id: data.garcomId ?? null,
-        _cliente_id: data.clienteId ?? null,
-        _comanda_id: data.comandaId ?? null,
+        _garcom_id: (data.garcomId ?? null) as unknown as string,
+        _cliente_id: (data.clienteId ?? null) as unknown as string,
+        _comanda_id: (data.comandaId ?? null) as unknown as string,
         _observacao: data.observacao ?? "",
         _total: total,
         _itens: itensPayload,
