@@ -42,6 +42,7 @@ import { Route as AuthenticatedAdminCardapioRouteImport } from './routes/_authen
 import { Route as MQrTokenStatusPedidoIdRouteImport } from './routes/m.$qrToken.status.$pedidoId'
 import { Route as AuthenticatedSalaNovaComandaMesaIdRouteImport } from './routes/_authenticated/sala.nova-comanda.$mesaId'
 import { Route as AuthenticatedAdminClientesIdRouteImport } from './routes/_authenticated/admin/clientes.$id'
+import { Route as AuthenticatedAdminGarconsGarcomIdSalaRouteImport } from './routes/_authenticated/admin/garcons.$garcomId.sala'
 
 const SuperadminRoute = SuperadminRouteImport.update({
   id: '/superadmin',
@@ -220,6 +221,12 @@ const AuthenticatedAdminClientesIdRoute =
     path: '/$id',
     getParentRoute: () => AuthenticatedAdminClientesRoute,
   } as any)
+const AuthenticatedAdminGarconsGarcomIdSalaRoute =
+  AuthenticatedAdminGarconsGarcomIdSalaRouteImport.update({
+    id: '/$garcomId/sala',
+    path: '/$garcomId/sala',
+    getParentRoute: () => AuthenticatedAdminGarconsRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -243,7 +250,7 @@ export interface FileRoutesByFullPath {
   '/admin/cupons': typeof AuthenticatedAdminCuponsRoute
   '/admin/equipe': typeof AuthenticatedAdminEquipeRoute
   '/admin/fidelidade': typeof AuthenticatedAdminFidelidadeRoute
-  '/admin/garcons': typeof AuthenticatedAdminGarconsRoute
+  '/admin/garcons': typeof AuthenticatedAdminGarconsRouteWithChildren
   '/admin/mesas': typeof AuthenticatedAdminMesasRoute
   '/admin/pedidos': typeof AuthenticatedAdminPedidosRoute
   '/m/$qrToken/carrinho': typeof MQrTokenCarrinhoRoute
@@ -254,6 +261,7 @@ export interface FileRoutesByFullPath {
   '/admin/clientes/$id': typeof AuthenticatedAdminClientesIdRoute
   '/sala/nova-comanda/$mesaId': typeof AuthenticatedSalaNovaComandaMesaIdRoute
   '/m/$qrToken/status/$pedidoId': typeof MQrTokenStatusPedidoIdRoute
+  '/admin/garcons/$garcomId/sala': typeof AuthenticatedAdminGarconsGarcomIdSalaRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -275,7 +283,7 @@ export interface FileRoutesByTo {
   '/admin/cupons': typeof AuthenticatedAdminCuponsRoute
   '/admin/equipe': typeof AuthenticatedAdminEquipeRoute
   '/admin/fidelidade': typeof AuthenticatedAdminFidelidadeRoute
-  '/admin/garcons': typeof AuthenticatedAdminGarconsRoute
+  '/admin/garcons': typeof AuthenticatedAdminGarconsRouteWithChildren
   '/admin/mesas': typeof AuthenticatedAdminMesasRoute
   '/admin/pedidos': typeof AuthenticatedAdminPedidosRoute
   '/m/$qrToken/carrinho': typeof MQrTokenCarrinhoRoute
@@ -286,6 +294,7 @@ export interface FileRoutesByTo {
   '/admin/clientes/$id': typeof AuthenticatedAdminClientesIdRoute
   '/sala/nova-comanda/$mesaId': typeof AuthenticatedSalaNovaComandaMesaIdRoute
   '/m/$qrToken/status/$pedidoId': typeof MQrTokenStatusPedidoIdRoute
+  '/admin/garcons/$garcomId/sala': typeof AuthenticatedAdminGarconsGarcomIdSalaRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -311,7 +320,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/cupons': typeof AuthenticatedAdminCuponsRoute
   '/_authenticated/admin/equipe': typeof AuthenticatedAdminEquipeRoute
   '/_authenticated/admin/fidelidade': typeof AuthenticatedAdminFidelidadeRoute
-  '/_authenticated/admin/garcons': typeof AuthenticatedAdminGarconsRoute
+  '/_authenticated/admin/garcons': typeof AuthenticatedAdminGarconsRouteWithChildren
   '/_authenticated/admin/mesas': typeof AuthenticatedAdminMesasRoute
   '/_authenticated/admin/pedidos': typeof AuthenticatedAdminPedidosRoute
   '/m/$qrToken/carrinho': typeof MQrTokenCarrinhoRoute
@@ -322,6 +331,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/clientes/$id': typeof AuthenticatedAdminClientesIdRoute
   '/_authenticated/sala/nova-comanda/$mesaId': typeof AuthenticatedSalaNovaComandaMesaIdRoute
   '/m/$qrToken/status/$pedidoId': typeof MQrTokenStatusPedidoIdRoute
+  '/_authenticated/admin/garcons/$garcomId/sala': typeof AuthenticatedAdminGarconsGarcomIdSalaRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -358,6 +368,7 @@ export interface FileRouteTypes {
     | '/admin/clientes/$id'
     | '/sala/nova-comanda/$mesaId'
     | '/m/$qrToken/status/$pedidoId'
+    | '/admin/garcons/$garcomId/sala'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -390,6 +401,7 @@ export interface FileRouteTypes {
     | '/admin/clientes/$id'
     | '/sala/nova-comanda/$mesaId'
     | '/m/$qrToken/status/$pedidoId'
+    | '/admin/garcons/$garcomId/sala'
   id:
     | '__root__'
     | '/'
@@ -425,6 +437,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/clientes/$id'
     | '/_authenticated/sala/nova-comanda/$mesaId'
     | '/m/$qrToken/status/$pedidoId'
+    | '/_authenticated/admin/garcons/$garcomId/sala'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -671,6 +684,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminClientesIdRouteImport
       parentRoute: typeof AuthenticatedAdminClientesRoute
     }
+    '/_authenticated/admin/garcons/$garcomId/sala': {
+      id: '/_authenticated/admin/garcons/$garcomId/sala'
+      path: '/$garcomId/sala'
+      fullPath: '/admin/garcons/$garcomId/sala'
+      preLoaderRoute: typeof AuthenticatedAdminGarconsGarcomIdSalaRouteImport
+      parentRoute: typeof AuthenticatedAdminGarconsRoute
+    }
   }
 }
 
@@ -688,6 +708,21 @@ const AuthenticatedAdminClientesRouteWithChildren =
     AuthenticatedAdminClientesRouteChildren,
   )
 
+interface AuthenticatedAdminGarconsRouteChildren {
+  AuthenticatedAdminGarconsGarcomIdSalaRoute: typeof AuthenticatedAdminGarconsGarcomIdSalaRoute
+}
+
+const AuthenticatedAdminGarconsRouteChildren: AuthenticatedAdminGarconsRouteChildren =
+  {
+    AuthenticatedAdminGarconsGarcomIdSalaRoute:
+      AuthenticatedAdminGarconsGarcomIdSalaRoute,
+  }
+
+const AuthenticatedAdminGarconsRouteWithChildren =
+  AuthenticatedAdminGarconsRoute._addFileChildren(
+    AuthenticatedAdminGarconsRouteChildren,
+  )
+
 interface AuthenticatedAdminRouteChildren {
   AuthenticatedAdminCardapioRoute: typeof AuthenticatedAdminCardapioRoute
   AuthenticatedAdminCardapioPreviewRoute: typeof AuthenticatedAdminCardapioPreviewRoute
@@ -697,7 +732,7 @@ interface AuthenticatedAdminRouteChildren {
   AuthenticatedAdminCuponsRoute: typeof AuthenticatedAdminCuponsRoute
   AuthenticatedAdminEquipeRoute: typeof AuthenticatedAdminEquipeRoute
   AuthenticatedAdminFidelidadeRoute: typeof AuthenticatedAdminFidelidadeRoute
-  AuthenticatedAdminGarconsRoute: typeof AuthenticatedAdminGarconsRoute
+  AuthenticatedAdminGarconsRoute: typeof AuthenticatedAdminGarconsRouteWithChildren
   AuthenticatedAdminMesasRoute: typeof AuthenticatedAdminMesasRoute
   AuthenticatedAdminPedidosRoute: typeof AuthenticatedAdminPedidosRoute
   AuthenticatedAdminIndexRoute: typeof AuthenticatedAdminIndexRoute
@@ -713,7 +748,7 @@ const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
   AuthenticatedAdminCuponsRoute: AuthenticatedAdminCuponsRoute,
   AuthenticatedAdminEquipeRoute: AuthenticatedAdminEquipeRoute,
   AuthenticatedAdminFidelidadeRoute: AuthenticatedAdminFidelidadeRoute,
-  AuthenticatedAdminGarconsRoute: AuthenticatedAdminGarconsRoute,
+  AuthenticatedAdminGarconsRoute: AuthenticatedAdminGarconsRouteWithChildren,
   AuthenticatedAdminMesasRoute: AuthenticatedAdminMesasRoute,
   AuthenticatedAdminPedidosRoute: AuthenticatedAdminPedidosRoute,
   AuthenticatedAdminIndexRoute: AuthenticatedAdminIndexRoute,
