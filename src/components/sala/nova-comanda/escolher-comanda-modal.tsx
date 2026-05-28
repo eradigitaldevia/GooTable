@@ -5,12 +5,10 @@ import type { ComandaAbertaInfo } from "@/lib/pedidos.functions";
 export function EscolherComandaModal({
   comandas,
   onSelecionar,
-  onNovaIndividual,
   onClose,
 }: {
   comandas: ComandaAbertaInfo[];
   onSelecionar: (comandaId: string) => void;
-  onNovaIndividual: () => void;
   onClose: () => void;
 }) {
   return (
@@ -52,16 +50,6 @@ export function EscolherComandaModal({
             </button>
           ))}
         </div>
-
-        <Button
-          type="button"
-          variant="outline"
-          size="lg"
-          className="mt-4 h-12 w-full rounded-2xl"
-          onClick={onNovaIndividual}
-        >
-          + Nova comanda individual
-        </Button>
       </div>
     </div>
   );
