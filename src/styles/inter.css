@@ -7,6 +7,15 @@
   src: url(/fonts/inter/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa2JL7SUc.woff2) format('woff2');
   unicode-range: U+0460-052F, U+1C80-1C8A, U+20B4, U+2DE0-2DFF, U+A640-A69F, U+FE2E-FE2F;
 }
+/* Adjusted fallback to match Inter metrics and prevent visible reflow during font swap (FOUT) */
+@font-face {
+  font-family: 'Inter Fallback';
+  src: local('Arial');
+  size-adjust: 107.40%;
+  ascent-override: 90.49%;
+  descent-override: 22.56%;
+  line-gap-override: 0%;
+}
 /* cyrillic */
 @font-face {
   font-family: 'Inter';
