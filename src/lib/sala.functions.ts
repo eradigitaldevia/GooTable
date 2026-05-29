@@ -74,6 +74,14 @@ export const carregarSalaFn = createServerFn({ method: "POST" })
 
     const restauranteId = garcom.restaurante_id as string;
 
+    const { data: rest } = await supabase
+      .from("restaurantes")
+      .select("permitir_atendimento_cruzado")
+      .eq("id", restauranteId)
+      .maybeSingle();
+    const permitirCruzado =
+      (rest?.permitir_atendimento_cruzado as boolean | undefined) ?? true;
+
     const { data: atribs, error: aErr } = await supabase
       .from("mesa_garcom")
       .select("mesa_id, atribuido_em")
@@ -117,6 +125,7 @@ export const carregarSalaFn = createServerFn({ method: "POST" })
         mesas,
         pedidos_prontos: [],
         chamados_pendentes: [],
+        permitir_atendimento_cruzado: permitirCruzado,
       };
     }
 
