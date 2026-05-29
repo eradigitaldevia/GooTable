@@ -14,21 +14,55 @@ function safeRedirect(value: unknown): string | undefined {
   return value;
 }
 
+const DEST_CACHE_KEY = "auth:dest";
+
+function getCachedDestination(userId: string): string | undefined {
+  if (typeof sessionStorage === "undefined") return undefined;
+  try {
+    const raw = sessionStorage.getItem(DEST_CACHE_KEY);
+    if (!raw) return undefined;
+    const parsed = JSON.parse(raw) as { userId?: string; dest?: string };
+    if (parsed.userId === userId && typeof parsed.dest === "string") {
+      return parsed.dest;
+    }
+  } catch {
+    // ignore
+  }
+  return undefined;
+}
+
+function setCachedDestination(userId: string, dest: string) {
+  if (typeof sessionStorage === "undefined") return;
+  try {
+    sessionStorage.setItem(DEST_CACHE_KEY, JSON.stringify({ userId, dest }));
+  } catch {
+    // ignore
+  }
+}
+
 async function resolveDestination(userId: string, requested?: string) {
   if (requested) return requested;
+  const cached = getCachedDestination(userId);
+  if (cached) return cached;
   const { data: pa } = await supabase
     .from("platform_admins")
     .select("user_id")
     .eq("user_id", userId)
     .maybeSingle();
-  if (pa) return "/superadmin";
+  if (pa) {
+    setCachedDestination(userId, "/superadmin");
+    return "/superadmin";
+  }
   const { data: garcom } = await supabase
     .from("garcons")
     .select("id")
     .eq("user_id", userId)
     .eq("ativo", true)
     .maybeSingle();
-  if (garcom) return "/sala";
+  if (garcom) {
+    setCachedDestination(userId, "/sala");
+    return "/sala";
+  }
   const { data: membro } = await supabase
     .from("restaurante_membros")
     .select("papel")
@@ -36,8 +70,9 @@ async function resolveDestination(userId: string, requested?: string) {
     .order("criado_em", { ascending: true })
     .limit(1)
     .maybeSingle();
-  if (membro?.papel === "cozinheiro") return "/cozinha";
-  return "/admin";
+  const dest = membro?.papel === "cozinheiro" ? "/cozinha" : "/admin";
+  setCachedDestination(userId, dest);
+  return dest;
 }
 
 export const Route = createFileRoute("/login")({
@@ -46,9 +81,10 @@ export const Route = createFileRoute("/login")({
     return r ? { redirect: r } : {};
   },
   beforeLoad: async ({ search }) => {
-    const { data } = await supabase.auth.getUser();
-    if (!data.user) return;
-    const dest = await resolveDestination(data.user.id, search.redirect);
+    const { data } = await supabase.auth.getSession();
+    const user = data.session?.user;
+    if (!user) return;
+    const dest = await resolveDestination(user.id, search.redirect);
     throw redirect({ to: dest, replace: true });
   },
   component: Login,
