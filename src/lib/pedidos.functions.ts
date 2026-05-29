@@ -141,7 +141,7 @@ export const cancelarPedidoFn = createServerFn({ method: "POST" })
     await assertAcessoRestaurante(supabase, userId, data.restauranteId);
     const { error } = await supabase.rpc("cancelar_pedido", {
       _pedido_id: data.pedidoId,
-      _motivo: data.motivo ?? null,
+      _motivo: data.motivo ?? undefined,
     });
     if (error) throw new Error(error.message);
     return { ok: true };
@@ -161,7 +161,7 @@ export const cancelarItemPedidoFn = createServerFn({ method: "POST" })
     await assertAcessoRestaurante(supabase, userId, data.restauranteId);
     const { error } = await supabase.rpc("cancelar_item_pedido", {
       _item_id: data.itemId,
-      _motivo: data.motivo ?? null,
+      _motivo: data.motivo ?? undefined,
     });
     if (error) throw new Error(error.message);
     return { ok: true };
