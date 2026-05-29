@@ -7,6 +7,7 @@ export interface Categoria {
   id: string;
   nome: string;
   ordem: number;
+  destino: "cozinha" | "bar";
 }
 export interface Produto {
   id: string;
@@ -19,6 +20,7 @@ export interface Produto {
   ordem: number;
   percentual_comissao: number | null;
   comissao_aplicavel: boolean;
+  destino_override: "cozinha" | "bar" | null;
 }
 
 const restauranteIdSchema = z.object({ restauranteId: z.string().uuid() });
@@ -50,6 +52,7 @@ export const criarCategoriaFn = createServerFn({ method: "POST" })
     z.object({
       restauranteId: z.string().uuid(),
       nome: z.string().trim().min(2).max(60),
+      destino: z.enum(["cozinha", "bar"]).optional(),
     }).parse(d),
   )
   .handler(async ({ context, data }) => {
@@ -57,7 +60,11 @@ export const criarCategoriaFn = createServerFn({ method: "POST" })
     await assertAcessoRestaurante(supabase, userId, data.restauranteId);
     const { error } = await supabase
       .from("categorias")
-      .insert({ restaurante_id: data.restauranteId, nome: data.nome });
+      .insert({
+        restaurante_id: data.restauranteId,
+        nome: data.nome,
+        destino: data.destino ?? "cozinha",
+      });
     if (error) throw new Error(error.message);
     return { ok: true };
   });
@@ -69,14 +76,17 @@ export const atualizarCategoriaFn = createServerFn({ method: "POST" })
       id: z.string().uuid(),
       restauranteId: z.string().uuid(),
       nome: z.string().trim().min(2).max(60),
+      destino: z.enum(["cozinha", "bar"]).optional(),
     }).parse(d),
   )
   .handler(async ({ context, data }) => {
     const { supabase, userId } = context;
     await assertAcessoRestaurante(supabase, userId, data.restauranteId);
+    const update: { nome: string; destino?: "cozinha" | "bar" } = { nome: data.nome };
+    if (data.destino) update.destino = data.destino;
     const { error } = await supabase
       .from("categorias")
-      .update({ nome: data.nome })
+      .update(update)
       .eq("id", data.id)
       .eq("restaurante_id", data.restauranteId);
     if (error) throw new Error(error.message);
@@ -106,6 +116,7 @@ const produtoPayloadSchema = z.object({
   imagem_url: z.string().nullable().optional(),
   percentual_comissao: z.number().min(0).max(100).nullable().optional(),
   comissao_aplicavel: z.boolean().optional(),
+  destino_override: z.enum(["cozinha", "bar"]).nullable().optional(),
 });
 
 export const criarProdutoFn = createServerFn({ method: "POST" })
@@ -128,6 +139,7 @@ export const criarProdutoFn = createServerFn({ method: "POST" })
       imagem_url: data.payload.imagem_url ?? null,
       percentual_comissao: data.payload.percentual_comissao ?? null,
       comissao_aplicavel: data.payload.comissao_aplicavel ?? true,
+      destino_override: data.payload.destino_override ?? null,
     });
     if (error) throw new Error(error.message);
     return { ok: true };
@@ -155,6 +167,7 @@ export const atualizarProdutoFn = createServerFn({ method: "POST" })
         imagem_url: data.payload.imagem_url ?? null,
         percentual_comissao: data.payload.percentual_comissao ?? null,
         comissao_aplicavel: data.payload.comissao_aplicavel ?? true,
+        destino_override: data.payload.destino_override ?? null,
       })
       .eq("id", data.id)
       .eq("restaurante_id", data.restauranteId);

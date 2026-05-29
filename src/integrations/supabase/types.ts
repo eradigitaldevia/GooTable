@@ -143,6 +143,7 @@ export type Database = {
       categorias: {
         Row: {
           criado_em: string
+          destino: Database["public"]["Enums"]["destino_preparo"]
           id: string
           nome: string
           ordem: number
@@ -150,6 +151,7 @@ export type Database = {
         }
         Insert: {
           criado_em?: string
+          destino?: Database["public"]["Enums"]["destino_preparo"]
           id?: string
           nome: string
           ordem?: number
@@ -157,6 +159,7 @@ export type Database = {
         }
         Update: {
           criado_em?: string
+          destino?: Database["public"]["Enums"]["destino_preparo"]
           id?: string
           nome?: string
           ordem?: number
@@ -808,6 +811,27 @@ export type Database = {
         }
         Relationships: []
       }
+      pedido_destino_status: {
+        Row: {
+          atualizado_em: string
+          destino: Database["public"]["Enums"]["destino_preparo"]
+          pedido_id: string
+          status: Database["public"]["Enums"]["pedido_status"]
+        }
+        Insert: {
+          atualizado_em?: string
+          destino: Database["public"]["Enums"]["destino_preparo"]
+          pedido_id: string
+          status?: Database["public"]["Enums"]["pedido_status"]
+        }
+        Update: {
+          atualizado_em?: string
+          destino?: Database["public"]["Enums"]["destino_preparo"]
+          pedido_id?: string
+          status?: Database["public"]["Enums"]["pedido_status"]
+        }
+        Relationships: []
+      }
       pedido_garcons: {
         Row: {
           criado_em: string
@@ -837,6 +861,7 @@ export type Database = {
           cliente_id: string | null
           cliente_nome: string | null
           criado_em: string
+          destino: Database["public"]["Enums"]["destino_preparo"]
           id: string
           nome_produto: string
           observacao: string | null
@@ -851,6 +876,7 @@ export type Database = {
           cliente_id?: string | null
           cliente_nome?: string | null
           criado_em?: string
+          destino?: Database["public"]["Enums"]["destino_preparo"]
           id?: string
           nome_produto: string
           observacao?: string | null
@@ -865,6 +891,7 @@ export type Database = {
           cliente_id?: string | null
           cliente_nome?: string | null
           criado_em?: string
+          destino?: Database["public"]["Enums"]["destino_preparo"]
           id?: string
           nome_produto?: string
           observacao?: string | null
@@ -1044,6 +1071,9 @@ export type Database = {
           comissao_aplicavel: boolean
           criado_em: string
           descricao: string | null
+          destino_override:
+            | Database["public"]["Enums"]["destino_preparo"]
+            | null
           disponivel: boolean
           id: string
           imagem_url: string | null
@@ -1058,6 +1088,9 @@ export type Database = {
           comissao_aplicavel?: boolean
           criado_em?: string
           descricao?: string | null
+          destino_override?:
+            | Database["public"]["Enums"]["destino_preparo"]
+            | null
           disponivel?: boolean
           id?: string
           imagem_url?: string | null
@@ -1072,6 +1105,9 @@ export type Database = {
           comissao_aplicavel?: boolean
           criado_em?: string
           descricao?: string | null
+          destino_override?:
+            | Database["public"]["Enums"]["destino_preparo"]
+            | null
           disponivel?: boolean
           id?: string
           imagem_url?: string | null
@@ -1264,6 +1300,14 @@ export type Database = {
         Args: { _garcom_id: string; _mesa_id: string; _sessao_id?: string }
         Returns: string
       }
+      atualizar_status_destino: {
+        Args: {
+          _destino: Database["public"]["Enums"]["destino_preparo"]
+          _pedido_id: string
+          _status: Database["public"]["Enums"]["pedido_status"]
+        }
+        Returns: undefined
+      }
       calcular_bonus_garcom: {
         Args: { _meta_id: string; _periodo_ref: string }
         Returns: number
@@ -1327,6 +1371,10 @@ export type Database = {
         Args: { _items: Json; _pedido_id: string }
         Returns: undefined
       }
+      derivar_pedido_status: {
+        Args: { _pedido_id: string }
+        Returns: undefined
+      }
       derivar_status_pedido: {
         Args: { _pedido_id: string }
         Returns: undefined
@@ -1349,6 +1397,13 @@ export type Database = {
           fim: string
           inicio: string
         }[]
+      }
+      recomputar_destino_status: {
+        Args: {
+          _destino: Database["public"]["Enums"]["destino_preparo"]
+          _pedido_id: string
+        }
+        Returns: undefined
       }
       registrar_pagamento: {
         Args: {
@@ -1375,7 +1430,7 @@ export type Database = {
       }
     }
     Enums: {
-      app_role: "admin" | "staff" | "cozinheiro" | "garcom"
+      app_role: "admin" | "staff" | "cozinheiro" | "garcom" | "bar"
       campanha_canal: "whatsapp" | "email" | "sms"
       campanha_status:
         | "rascunho"
@@ -1387,6 +1442,7 @@ export type Database = {
       chamado_status: "pendente" | "atendido" | "cancelado"
       comanda_status: "aberta" | "fechada"
       comanda_tipo: "individual" | "compartilhada"
+      destino_preparo: "cozinha" | "bar"
       garcom_bonus_status: "pendente" | "pago"
       garcom_meta_periodo: "diario" | "semanal" | "mensal"
       garcom_meta_tipo: "faturamento" | "pedidos" | "horario"
@@ -1527,7 +1583,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["admin", "staff", "cozinheiro", "garcom"],
+      app_role: ["admin", "staff", "cozinheiro", "garcom", "bar"],
       campanha_canal: ["whatsapp", "email", "sms"],
       campanha_status: [
         "rascunho",
@@ -1540,6 +1596,7 @@ export const Constants = {
       chamado_status: ["pendente", "atendido", "cancelado"],
       comanda_status: ["aberta", "fechada"],
       comanda_tipo: ["individual", "compartilhada"],
+      destino_preparo: ["cozinha", "bar"],
       garcom_bonus_status: ["pendente", "pago"],
       garcom_meta_periodo: ["diario", "semanal", "mensal"],
       garcom_meta_tipo: ["faturamento", "pedidos", "horario"],

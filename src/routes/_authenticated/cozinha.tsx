@@ -137,7 +137,10 @@ function CozinhaKDS() {
   });
 
   const pedidos = (data?.pedidos ?? []) as Pedido[];
-  const itens = (data?.itens ?? []) as Item[];
+  const itensRaw = (data?.itens ?? []) as (Item & { destino?: "cozinha" | "bar" })[];
+  // Apenas itens destinados à Cozinha
+  const itens = itensRaw.filter((it) => (it.destino ?? "cozinha") === "cozinha") as Item[];
+  const pedidosComCozinha = new Set(itens.map((it) => it.pedido_id));
   const mesas = useMemo(() => {
     const m = new Map<string, Mesa>();
     for (const x of (data?.mesas ?? []) as Mesa[]) m.set(x.id, x);
@@ -175,7 +178,11 @@ function CozinhaKDS() {
     } catch { /* ignore */ }
   }, [rtStatus]);
 
-  const ativos = pedidos.filter((p) => p.status === "recebido" || p.status === "em_preparo");
+  const ativos = pedidos.filter(
+    (p) =>
+      (p.status === "recebido" || p.status === "em_preparo") &&
+      pedidosComCozinha.has(p.id),
+  );
   const recebidos = ativos.filter((p) => p.status === "recebido");
   const emPreparo = ativos.filter((p) => p.status === "em_preparo");
 

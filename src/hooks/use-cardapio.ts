@@ -37,8 +37,8 @@ export function useCriarCategoria(restauranteId: string | undefined) {
   const fn = useServerFn(criarCategoriaFn);
   const invalidate = useInvalidateCardapio(restauranteId);
   return useMutation({
-    mutationFn: (data: { nome: string }) =>
-      fn({ data: { restauranteId: restauranteId!, nome: data.nome } }),
+    mutationFn: (data: { nome: string; destino?: "cozinha" | "bar" }) =>
+      fn({ data: { restauranteId: restauranteId!, nome: data.nome, destino: data.destino } }),
     onSuccess: invalidate,
   });
 }
@@ -47,8 +47,8 @@ export function useAtualizarCategoria(restauranteId: string | undefined) {
   const fn = useServerFn(atualizarCategoriaFn);
   const invalidate = useInvalidateCardapio(restauranteId);
   return useMutation({
-    mutationFn: (data: { id: string; nome: string }) =>
-      fn({ data: { id: data.id, nome: data.nome, restauranteId: restauranteId! } }),
+    mutationFn: (data: { id: string; nome: string; destino?: "cozinha" | "bar" }) =>
+      fn({ data: { id: data.id, nome: data.nome, destino: data.destino, restauranteId: restauranteId! } }),
     onSuccess: invalidate,
   });
 }
@@ -69,6 +69,9 @@ type ProdutoPayload = {
   preco: number;
   categoria_id: string | null;
   imagem_url?: string | null;
+  percentual_comissao?: number | null;
+  comissao_aplicavel?: boolean;
+  destino_override?: "cozinha" | "bar" | null;
 };
 
 export function useCriarProduto(restauranteId: string | undefined) {

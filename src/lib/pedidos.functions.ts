@@ -32,6 +32,7 @@ export interface PedidoItem {
   cliente_nome: string | null;
   status: "pendente" | "em_preparo" | "pronto";
   quantidade_pronta: number;
+  destino?: "cozinha" | "bar";
 }
 export interface MesaResumo {
   id: string;
@@ -64,7 +65,7 @@ export const listarPedidosDoDiaFn = createServerFn({ method: "POST" })
     if (ids.length) {
       const { data: its, error: iErr } = await supabase
         .from("pedido_itens")
-        .select("id, pedido_id, nome_produto, quantidade, preco_unit, observacao, cliente_nome, status, quantidade_pronta")
+        .select("id, pedido_id, nome_produto, quantidade, preco_unit, observacao, cliente_nome, status, quantidade_pronta, destino")
         .in("pedido_id", ids);
       if (iErr) throw new Error(iErr.message);
       itens = (its ?? []) as PedidoItem[];

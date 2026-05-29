@@ -70,7 +70,12 @@ async function resolveDestination(userId: string, requested?: string) {
     .order("criado_em", { ascending: true })
     .limit(1)
     .maybeSingle();
-  const dest = membro?.papel === "cozinheiro" ? "/cozinha" : "/admin";
+  const dest =
+    membro?.papel === "cozinheiro"
+      ? "/cozinha"
+      : membro?.papel === "bar"
+        ? "/bar"
+        : "/admin";
   setCachedDestination(userId, dest);
   return dest;
 }

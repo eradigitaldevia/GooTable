@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   DialogContent,
   DialogFooter,
@@ -22,6 +23,7 @@ export default function CategoriaDialogBody({
   onClose: () => void;
 }) {
   const [nome, setNome] = useState("");
+  const [destino, setDestino] = useState<"cozinha" | "bar">("cozinha");
   const criar = useCriarCategoria(restauranteId);
 
   async function save() {
@@ -30,7 +32,7 @@ export default function CategoriaDialogBody({
       return;
     }
     try {
-      await criar.mutateAsync({ nome: nome.trim() });
+      await criar.mutateAsync({ nome: nome.trim(), destino });
       toast.success("Categoria criada");
       setNome("");
       onClose();
@@ -48,6 +50,19 @@ export default function CategoriaDialogBody({
       <div className="space-y-2">
         <Label>Nome</Label>
         <Input value={nome} onChange={(e) => setNome(e.target.value)} placeholder="Ex: Entradas" />
+      </div>
+      <div className="space-y-2">
+        <Label>Destino padrão</Label>
+        <Select value={destino} onValueChange={(v) => setDestino(v as "cozinha" | "bar")}>
+          <SelectTrigger><SelectValue /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="cozinha">Cozinha</SelectItem>
+            <SelectItem value="bar">Bar</SelectItem>
+          </SelectContent>
+        </Select>
+        <p className="text-xs text-muted-foreground">
+          Os produtos dessa categoria vão para esse display por padrão.
+        </p>
       </div>
       <DialogFooter>
         <Button onClick={save} disabled={criar.isPending}>

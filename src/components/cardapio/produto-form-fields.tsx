@@ -10,7 +10,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-interface Categoria { id: string; nome: string; ordem: number; }
+interface Categoria { id: string; nome: string; ordem: number; destino?: "cozinha" | "bar"; }
 
 interface FormState {
   nome: string;
@@ -19,6 +19,7 @@ interface FormState {
   categoria_id: string;
   percentual_comissao: string;
   comissao_aplicavel: boolean;
+  destino_override: "" | "cozinha" | "bar";
 }
 
 export function ProdutoFormFields({
@@ -61,6 +62,25 @@ export function ProdutoFormFields({
             </SelectContent>
           </Select>
         </div>
+      </div>
+      <div className="space-y-2">
+        <Label>Destino do preparo</Label>
+        <Select
+          value={form.destino_override || "__cat"}
+          onValueChange={(v) =>
+            onChange({ ...form, destino_override: v === "__cat" ? "" : (v as "cozinha" | "bar") })
+          }
+        >
+          <SelectTrigger><SelectValue /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="__cat">Padrão da categoria</SelectItem>
+            <SelectItem value="cozinha">Cozinha</SelectItem>
+            <SelectItem value="bar">Bar</SelectItem>
+          </SelectContent>
+        </Select>
+        <p className="text-xs text-muted-foreground">
+          Define para qual display o item vai. Sobrescreve a categoria quando preenchido.
+        </p>
       </div>
       <div className="space-y-2">
         <Label>Descrição</Label>
