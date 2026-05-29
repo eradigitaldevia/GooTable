@@ -14,7 +14,7 @@ import { ImagemUploader } from "./imagem-uploader";
 import { ProdutoFormFields } from "./produto-form-fields";
 import { useAtualizarProduto, useCriarProduto } from "@/hooks/use-cardapio";
 
-interface Categoria { id: string; nome: string; ordem: number; }
+interface Categoria { id: string; nome: string; ordem: number; destino?: "cozinha" | "bar"; }
 interface Produto {
   id: string;
   nome: string;
@@ -26,6 +26,7 @@ interface Produto {
   ordem: number;
   percentual_comissao?: number | null;
   comissao_aplicavel?: boolean;
+  destino_override?: "cozinha" | "bar" | null;
 }
 
 const produtoSchema = z.object({
@@ -35,6 +36,7 @@ const produtoSchema = z.object({
   categoria_id: z.string().uuid().nullable(),
   percentual_comissao: z.number().min(0).max(100).nullable(),
   comissao_aplicavel: z.boolean(),
+  destino_override: z.enum(["cozinha", "bar"]).nullable(),
 });
 
 export default function ProdutoDialogBody({
@@ -58,6 +60,7 @@ export default function ProdutoDialogBody({
     percentual_comissao:
       produto?.percentual_comissao != null ? String(produto.percentual_comissao) : "",
     comissao_aplicavel: produto?.comissao_aplicavel ?? true,
+    destino_override: (produto?.destino_override ?? "") as "" | "cozinha" | "bar",
   });
   const [imagemUrl, setImagemUrl] = useState<string | null>(produto?.imagem_url ?? null);
   const [uploading, setUploading] = useState(false);
@@ -94,6 +97,7 @@ export default function ProdutoDialogBody({
       categoria_id: form.categoria_id || null,
       percentual_comissao: pctNum,
       comissao_aplicavel: form.comissao_aplicavel,
+      destino_override: form.destino_override || null,
     });
     if (!parsed.success) {
       toast.error(parsed.error.issues[0].message);
@@ -108,6 +112,7 @@ export default function ProdutoDialogBody({
       imagem_url: imagemUrl,
       percentual_comissao: parsed.data.percentual_comissao,
       comissao_aplicavel: parsed.data.comissao_aplicavel,
+      destino_override: parsed.data.destino_override,
     };
     try {
       if (produto) {
