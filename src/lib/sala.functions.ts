@@ -46,6 +46,16 @@ export interface SalaDados {
   mesas: SalaMesa[];
   pedidos_prontos: SalaPedidoPronto[];
   chamados_pendentes: SalaChamado[];
+  permitir_atendimento_cruzado: boolean;
+}
+
+export interface MesaRestauranteInfo {
+  id: string;
+  numero: string;
+  garcom_id: string | null;
+  garcom_nome: string | null;
+  sessao_aberta: boolean;
+  pedidos_abertos: number;
 }
 
 export const carregarSalaFn = createServerFn({ method: "POST" })
