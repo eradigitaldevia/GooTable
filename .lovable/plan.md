@@ -1,111 +1,96 @@
-## Cenário C — Exclusão/Cancelamento de itens (pré e pós-envio)
+## Contexto atual
 
-Cobre exclusão no carrinho antes do envio e cancelamento depois do envio, com regras diferenciadas por ator (cliente vs. garçom/admin).
+- `src/routes/_authenticated/sala.tsx` mostra **apenas** as mesas atribuídas ao garçom logado (consulta em `mesa_garcom` por `garcom_id`).
+- Não existe nenhum caminho na UI para o garçom abrir uma mesa que não seja dele — para lançar pedido, ele depende de a mesa estar na sua lista.
+- O backend (`criarPedidoGarcomFn` → RPC `criar_pedido_garcom`) já aceita qualquer `mesa_id` do restaurante. A comissão é registrada via `_garcom_id`, ou seja, **vai para quem lançou**, não para o "dono" da mesa. Isso é o comportamento desejado para atendimento cruzado.
+- Não há flag no admin para habilitar/desabilitar esse comportamento.
 
----
+## Cenário real
 
-### Parte A — Carrinho do garçom (pré-envio)
+Garçom A precisa atender mesa atribuída ao garçom B (B está no banheiro, ocupado em outra mesa, saiu, etc.). O sistema precisa:
 
-**1. `src/components/sala/nova-comanda/cardapio-denso-list.tsx`**
-- Adicionar prop opcional `onRemoveAll?: (produtoId: string) => void`.
-- Quando `qtd > 0`, exibir um terceiro botão `Trash2` (lixeira) ao lado dos botões `-` / `+`, que chama `onRemoveAll(p.id)`.
-- Sem `onRemoveAll`, o componente continua funcionando como hoje (não quebra outros call sites).
+1. Permitir que A **encontre** a mesa de B.
+2. Deixar claro que a mesa **não é sua** (evitar lançamento errado).
+3. Registrar corretamente a comissão de A pelo pedido.
+4. Permitir que o admin **ative ou desative** esse comportamento por restaurante.
 
-**2. `src/routes/_authenticated/sala.nova-comanda.$mesaId.tsx`**
-- Criar `handleRemoveAll(produtoId)` que remove todas as ocorrências daquele produto do carrinho local (`itensCarrinho.filter(i => i.produto_id !== produtoId)`).
-- Passar `onRemoveAll={handleRemoveAll}` para `<CardapioDensoList>`.
+## Proposta
 
-> Carrinho do cliente (`/m/$qrToken/carrinho`) já tem lixeira por item — nada a fazer.
+### 1. Toggle no admin
 
----
+Adicionar campo `permitir_atendimento_cruzado` (boolean, default `true`) em `restaurantes`.
 
-### Parte B — Pós-envio: cancelar pedido inteiro (garçom/admin)
+- `true` → garçom pode lançar em qualquer mesa do restaurante.
+- `false` → garçom só vê/atende suas próprias mesas (comportamento atual).
 
-Hoje `atualizarStatusPedidoFn("cancelado")` apenas troca status, sem reverter `comandas.subtotal/total`. Substituir por RPC dedicada.
+UI: novo switch em `src/routes/_authenticated/admin/configuracoes.tsx` (seção "Operação da sala" ou similar), com texto explicativo.
 
-**1. Migration: criar função `cancelar_pedido(_pedido_id, _motivo)`**
-- `SECURITY DEFINER`, `search_path = public`.
-- Valida `is_restaurante_membro(auth.uid(), pedido.restaurante_id)`.
-- Bloqueia se `pedido.status IN ('entregue','cancelado')`.
-- Se `quantidade_pronta > 0` em algum item OU `pedido.status IN ('em_preparo','pronto')`, exige `_motivo` não vazio (`RAISE EXCEPTION` se faltar).
-- Subtrai `pedido.total` de `comandas.subtotal`; recalcula `comandas.total = GREATEST(subtotal - cashback_resgatado - desconto_cupom, 0)`.
-- Atualiza `pedidos.status = 'cancelado'`.
-- Insere em `audit_logs` (`entidade='pedido'`, `acao='cancelar'`, metadata com motivo, total revertido, status anterior).
-- Trigger de comissão já é seguro (só dispara em `entregue`).
+### 2. Localizar mesa que não é sua (na sala do garçom)
 
-**2. `src/lib/pedidos.functions.ts`**
-- Nova serverFn `cancelarPedidoFn({ pedidoId, restauranteId, motivo? })` que chama a RPC via `supabase.rpc('cancelar_pedido', ...)`.
-- Manter `atualizarStatusPedidoFn` apenas para transições não-cancelamento (recebido → em_preparo → pronto → entregue).
+Quando o toggle está ativo, adicionar no `src/components/sala/sala-header.tsx` (ou logo abaixo dele) um botão **"Outra mesa"** que abre um modal:
 
-**3. `src/hooks/use-pedidos.ts`**
-- Novo hook `useCancelarPedido(restauranteId)` que invalida `queryKeys.pedidos(restauranteId)`.
+```text
+┌─ Outra mesa ──────────────────┐
+│  🔍 [ Buscar nº da mesa... ]  │
+│                               │
+│  Mesa 3 · João  (livre)       │
+│  Mesa 5 · Maria (2 abertos)   │
+│  Mesa 7 · — (sem garçom)      │
+│  ...                          │
+└───────────────────────────────┘
+```
 
-**4. `src/components/pedidos/detalhe-pedido.tsx`**
-- Substituir `onCancelar` direto por fluxo com `AlertDialog`:
-  - Se `pedido.status === 'recebido'` e todos itens com `quantidade_pronta === 0`: confirmação simples.
-  - Caso contrário (em preparo / pronto / algum item já pronto parcialmente): exigir campo `Textarea` com motivo (obrigatório, min 3 chars) antes de confirmar.
-- Bloquear botão quando `status IN ('entregue','cancelado')`.
+- Lista todas as mesas ativas do restaurante.
+- Mostra o garçom responsável (ou "—").
+- Indicador leve quando há sessão aberta / pedidos pendentes.
+- Filtro por número (input).
+- Clicar → navega para `/sala/nova-comanda/$mesaId` (rota já existe e é agnóstica do "dono").
 
-**5. `src/routes/_authenticated/admin/pedidos.tsx`**
-- Trocar `onCancelar` para usar `useCancelarPedido` em vez de `atualizarStatus(aberto, "cancelado")`.
+Quando o toggle está desativado: o botão não aparece.
 
----
+### 3. Aviso visual ao lançar em mesa de outro garçom
 
-### Parte C — Pós-envio: cancelar item individual (garçom/admin)
+Em `src/routes/_authenticated/sala.nova-comanda.$mesaId.tsx`, se a mesa **não pertence** ao garçom logado, mostrar uma faixa discreta no topo:
 
-Hoje não existe. `pedido_itens` não tem DELETE em RLS e `pedido_item_status` não tem `'cancelado'`.
+> ⚠ Mesa de **Maria**. A comissão deste pedido será sua.
 
-**1. Migration: criar função `cancelar_item_pedido(_item_id, _motivo)`**
-- `SECURITY DEFINER`, valida membro do restaurante via `pedido.restaurante_id`.
-- Bloqueia se pedido pai estiver `entregue`/`cancelado`.
-- Se `item.quantidade_pronta > 0` OU `pedido.status IN ('em_preparo','pronto')`, exige `_motivo` não vazio.
-- Calcula `valor_item = preco_unit * quantidade`.
-- `DELETE FROM pedido_itens WHERE id = _item_id`.
-- Subtrai `valor_item` de `pedidos.total` e `comandas.subtotal`; recalcula `comandas.total`.
-- Se foi o último item do pedido → marca `pedidos.status = 'cancelado'`.
-- Insere em `audit_logs` (`entidade='pedido_item'`, `acao='cancelar'`, metadata com produto, qtd, valor, motivo).
+Sem bloquear o fluxo — apenas para evitar engano.
 
-**2. `src/lib/pedidos.functions.ts`**
-- Nova serverFn `cancelarItemPedidoFn({ itemId, pedidoId, restauranteId, motivo? })`.
+### 4. Backend / regras de comissão
 
-**3. `src/hooks/use-pedidos.ts`**
-- Novo hook `useCancelarItemPedido(restauranteId)` que invalida `queryKeys.pedidos(restauranteId)` e `queryKeys.pedido(pedidoId)`.
+- Nenhuma mudança na RPC `criar_pedido_garcom`: já usa `_garcom_id` do payload, que é o garçom logado (`sala.garcom.id`). Comissão vai para quem lançou. ✅
+- Acrescentar **validação server-side** em `criarPedidoGarcomFn`: se `restaurantes.permitir_atendimento_cruzado = false` **e** a mesa não está atribuída a `garcomId`, recusar com erro claro (`mesa_nao_atribuida`). Isso fecha a porta caso o front seja contornado.
+- Auditoria: quando o pedido é lançado em mesa de outro garçom, registrar em `audit_logs` (`entidade='pedido'`, `acao='atendimento_cruzado'`, metadata com `garcom_dono_id` e `garcom_atendente_id`). Útil para o admin auditar abusos.
 
-**4. `src/components/pedidos/detalhe-pedido.tsx`**
-- Em cada linha de item, adicionar botão `Trash2` (apenas para garçom/admin, ou seja sempre dentro deste componente — ele já é admin-only):
-  - Desabilitado se `pedido.status IN ('entregue','cancelado')`.
-  - Ao clicar: abre `AlertDialog` inline. Se item já tem `quantidade_pronta > 0` ou pedido está `em_preparo/pronto`, exige motivo.
-- Tradução: confirmação tipo "Cancelar este item? Motivo é obrigatório porque a cozinha já começou a preparar."
+### 5. Realtime / pratos prontos / chamados
 
----
+**Não** incluir mesas "alheias" nas abas **Prontos** e **Chamados** do garçom A. Isso continua escopo do dono — caso contrário, dois garçons disputariam a mesma entrega e os chamados ficariam ruidosos. O atendimento cruzado é **sob demanda** (A vai abrir a mesa de B explicitamente).
 
-### Parte D — Cliente NÃO pode cancelar pós-envio
+## Mudanças técnicas
 
-- Nenhuma mudança na rota `/m/$qrToken/status/$pedidoId` nem em componentes do cliente.
-- Cliente continua tendo apenas o FAB "Chamar garçom" (`chamar-garcom-fab.tsx`) — canal já existente para solicitar cancelamento.
-- Nenhuma RPC chamável publicamente (todas as novas RPCs validam `is_restaurante_membro`).
+**Banco:**
 
----
+- Migration: `ALTER TABLE restaurantes ADD COLUMN permitir_atendimento_cruzado boolean NOT NULL DEFAULT true;`
+- Atualização da RPC `criar_pedido_garcom` para validar o flag quando `_garcom_id` é passado.
 
-### Resumo de regras
+**Server functions:**
 
-| Cenário | Quem | Como |
-|---|---|---|
-| Item no carrinho (cliente, QR) | Cliente | Lixeira já existente — OK |
-| Item no carrinho (garçom) | Garçom | **Nova lixeira** (Parte A) |
-| Cancelar pedido enviado, cozinha não viu (`quantidade_pronta=0`) | Garçom/Admin | Confirmação simples (Parte B) |
-| Cancelar pedido `em_preparo`/`pronto` | Garçom/Admin | Motivo obrigatório (Parte B) |
-| Cancelar item individual enviado | Garçom/Admin | Lixeira por item, motivo se cozinha começou (Parte C) |
-| Cancelar pedido `entregue` | — | **Bloqueado** (fluxo de estorno é fora de escopo) |
-| Cliente cancela pós-envio | — | **Bloqueado** — usa FAB de garçom |
+- `src/lib/sala.functions.ts`: nova `listarMesasRestauranteFn` (retorna todas as mesas ativas + garçom responsável + flag de sessão aberta). Respeita o toggle (retorna vazio/erro se desativado).
+- `src/lib/configuracoes.functions.ts`: incluir `permitir_atendimento_cruzado` nos getters/setters do restaurante.
 
----
+**Frontend:**
 
-### Detalhes técnicos
+- `src/components/sala/sala-header.tsx`: botão "Outra mesa" (condicional ao toggle).
+- Novo `src/components/sala/outra-mesa-modal.tsx`: modal de busca/seleção.
+- `src/hooks/use-sala.ts`: hook `useListarMesasRestaurante` + expor `permitir_atendimento_cruzado` em `useSalaDados`.
+- `src/routes/_authenticated/sala.nova-comanda.$mesaId.tsx`: faixa de aviso quando mesa não é do garçom logado.
+- `src/routes/_authenticated/admin/configuracoes.tsx`: switch do toggle.
 
-- **Cashback gerado**: só é creditado quando pedido atinge `entregue`, então cancelamentos antes disso não precisam estornar. Cashback **resgatado** fica preservado na comanda (não é por pedido).
-- **Comissões**: trigger só dispara em `entregue`, então cancelar antes não gera comissão fantasma.
-- **Auditoria**: toda cancelamento (pedido ou item) registra em `audit_logs` com `actor_user_id = auth.uid()`, motivo e valores revertidos — rastreável no superadmin.
-- **Concorrência**: RPCs usam `SELECT ... FOR UPDATE` em `pedidos` e `comandas` para evitar race com outras atualizações de total.
+## Pontos para confirmar antes de implementar
 
-Confirma que posso aplicar?
+1. **Default do toggle**: começar como `true` (permissivo, alinhado ao mundo real) ou `false` (restritivo, exige ativação consciente)?  
+Resposta: começar como `true`
+2. **Comissão**: confirmar regra "quem lança recebe" — alternativa seria dividir 50/50 com o dono da mesa, mas isso adiciona complexidade. Recomendo manter "quem lança".  
+Resposta: confirmo a regra "quem lança recebe" 
+3. **Escopo**: também adicionar visualização das outras mesas dentro da aba "Mesas" (somente leitura) ou manter apenas via modal de busca? Recomendo só modal, para não poluir a tela principal.  
+Resposta: manter apenas via modal de busca  
