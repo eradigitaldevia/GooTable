@@ -52,6 +52,7 @@ interface Item {
   preco_unit: number;
   observacao: string | null;
   cliente_nome: string | null;
+  quantidade_pronta?: number;
 }
 interface Mesa { id: string; numero: string; }
 
