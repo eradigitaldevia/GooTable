@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import { IdentidadeForm } from "@/components/configuracoes/identidade-form";
 import { PixForm } from "@/components/configuracoes/pix-form";
 import { ComissaoModoForm } from "@/components/configuracoes/comissao-modo-form";
+import { Switch } from "@/components/ui/switch";
 
 export const Route = createFileRoute("/_authenticated/admin/configuracoes")({
   component: Configuracoes,
@@ -28,6 +29,7 @@ function Configuracoes() {
     pix_chave: "",
     pix_nome_titular: "",
     comissao_modo: "pedido" as "pedido" | "item",
+    permitir_atendimento_cruzado: true,
   });
 
   useEffect(() => {
@@ -40,6 +42,8 @@ function Configuracoes() {
       pix_chave: restaurante.pix_chave ?? "",
       pix_nome_titular: restaurante.pix_nome_titular ?? "",
       comissao_modo: restaurante.comissao_modo ?? "pedido",
+      permitir_atendimento_cruzado:
+        restaurante.permitir_atendimento_cruzado ?? true,
     });
   }, [restaurante]);
 
@@ -73,6 +77,7 @@ function Configuracoes() {
         pix_chave: form.pix_chave.trim() || null,
         pix_nome_titular: form.pix_nome_titular.trim() || null,
         comissao_modo: form.comissao_modo,
+        permitir_atendimento_cruzado: form.permitir_atendimento_cruzado,
       });
       toast.success("Configurações salvas");
     } catch (e: any) {
@@ -107,6 +112,29 @@ function Configuracoes() {
       />
 
       <ComissaoModoForm modo={form.comissao_modo} onChange={patch} />
+
+      <section className="rounded-lg border border-border bg-card p-4">
+        <div className="flex items-start justify-between gap-4">
+          <div className="min-w-0">
+            <h2 className="text-base font-semibold">
+              Atendimento cruzado entre garçons
+            </h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Permite que um garçom lance pedidos em mesas que não foram
+              atribuídas a ele. A comissão sempre vai para quem lançou o
+              pedido. Quando desligado, cada garçom só atende suas próprias
+              mesas.
+            </p>
+          </div>
+          <Switch
+            checked={form.permitir_atendimento_cruzado}
+            onCheckedChange={(v) =>
+              patch({ permitir_atendimento_cruzado: v })
+            }
+            aria-label="Permitir atendimento cruzado"
+          />
+        </div>
+      </section>
 
       <div className="flex justify-end">
         <Button onClick={save} disabled={atualizar.isPending} className="h-11 px-6">

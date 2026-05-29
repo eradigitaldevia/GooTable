@@ -1,4 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
+import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 export interface SalaGarcom {
@@ -45,6 +46,16 @@ export interface SalaDados {
   mesas: SalaMesa[];
   pedidos_prontos: SalaPedidoPronto[];
   chamados_pendentes: SalaChamado[];
+  permitir_atendimento_cruzado: boolean;
+}
+
+export interface MesaRestauranteInfo {
+  id: string;
+  numero: string;
+  garcom_id: string | null;
+  garcom_nome: string | null;
+  sessao_aberta: boolean;
+  pedidos_abertos: number;
 }
 
 export const carregarSalaFn = createServerFn({ method: "POST" })
@@ -62,6 +73,14 @@ export const carregarSalaFn = createServerFn({ method: "POST" })
     if (!garcom) return null;
 
     const restauranteId = garcom.restaurante_id as string;
+
+    const { data: rest } = await supabase
+      .from("restaurantes")
+      .select("permitir_atendimento_cruzado")
+      .eq("id", restauranteId)
+      .maybeSingle();
+    const permitirCruzado =
+      (rest?.permitir_atendimento_cruzado as boolean | undefined) ?? true;
 
     const { data: atribs, error: aErr } = await supabase
       .from("mesa_garcom")
@@ -106,6 +125,7 @@ export const carregarSalaFn = createServerFn({ method: "POST" })
         mesas,
         pedidos_prontos: [],
         chamados_pendentes: [],
+        permitir_atendimento_cruzado: permitirCruzado,
       };
     }
 
@@ -194,6 +214,7 @@ export const carregarSalaFn = createServerFn({ method: "POST" })
       mesas,
       pedidos_prontos,
       chamados_pendentes,
+      permitir_atendimento_cruzado: permitirCruzado,
     };
   });
 
@@ -212,6 +233,14 @@ export const carregarSalaAdminFn = createServerFn({ method: "POST" })
     if (!garcom) return null;
 
     const restauranteId = garcom.restaurante_id as string;
+
+    const { data: restAdmin } = await supabase
+      .from("restaurantes")
+      .select("permitir_atendimento_cruzado")
+      .eq("id", restauranteId)
+      .maybeSingle();
+    const permitirCruzadoAdmin =
+      (restAdmin?.permitir_atendimento_cruzado as boolean | undefined) ?? true;
 
     const { data: atribs, error: aErr } = await supabase
       .from("mesa_garcom")
@@ -256,6 +285,7 @@ export const carregarSalaAdminFn = createServerFn({ method: "POST" })
         mesas,
         pedidos_prontos: [],
         chamados_pendentes: [],
+        permitir_atendimento_cruzado: permitirCruzadoAdmin,
       };
     }
 
@@ -344,5 +374,123 @@ export const carregarSalaAdminFn = createServerFn({ method: "POST" })
       mesas,
       pedidos_prontos,
       chamados_pendentes,
+      permitir_atendimento_cruzado: permitirCruzadoAdmin,
     };
   });
+
+/**
+ * Lista todas as mesas ativas do restaurante para o garçom escolher uma
+ * mesa que não é dele (atendimento cruzado). Só retorna se a configuração
+ * permitir_atendimento_cruzado estiver ativa e o usuário for garçom do
+ * restaurante.
+ */
+export const listarMesasRestauranteFn = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) =>
+    z.object({ restauranteId: z.string().uuid() }).parse(d),
+  )
+  .handler(
+    async ({ data, context }): Promise<MesaRestauranteInfo[]> => {
+      const { supabase, userId } = context;
+
+      const { data: garcom } = await supabase
+        .from("garcons")
+        .select("id")
+        .eq("user_id", userId)
+        .eq("restaurante_id", data.restauranteId)
+        .eq("ativo", true)
+        .maybeSingle();
+      if (!garcom) throw new Error("Garçom não encontrado");
+
+      const { data: rest } = await supabase
+        .from("restaurantes")
+        .select("permitir_atendimento_cruzado")
+        .eq("id", data.restauranteId)
+        .maybeSingle();
+      if (rest?.permitir_atendimento_cruzado !== true) {
+        throw new Error("Atendimento cruzado desativado");
+      }
+
+      const { data: mesas, error: mErr } = await supabase
+        .from("mesas")
+        .select("id, numero")
+        .eq("restaurante_id", data.restauranteId)
+        .eq("ativa", true);
+      if (mErr) throw new Error(mErr.message);
+
+      const mesaIds = (mesas ?? []).map((m) => m.id as string);
+      if (mesaIds.length === 0) return [];
+
+      const { data: atribs } = await supabase
+        .from("mesa_garcom")
+        .select("mesa_id, garcom_id, atribuido_em")
+        .eq("restaurante_id", data.restauranteId)
+        .in("mesa_id", mesaIds)
+        .is("liberado_em", null);
+
+      const garcomIdByMesa = new Map<string, string>();
+      const atribOrdemByMesa = new Map<string, string>();
+      for (const a of atribs ?? []) {
+        const mid = a.mesa_id as string;
+        const at = (a.atribuido_em as string) ?? "";
+        const prev = atribOrdemByMesa.get(mid);
+        if (!prev || at > prev) {
+          atribOrdemByMesa.set(mid, at);
+          garcomIdByMesa.set(mid, a.garcom_id as string);
+        }
+      }
+
+      const garcomIds = Array.from(new Set(garcomIdByMesa.values()));
+      const nomeByGarcom = new Map<string, string>();
+      if (garcomIds.length) {
+        const { data: gs } = await supabase
+          .from("garcons")
+          .select("id, nome")
+          .in("id", garcomIds);
+        for (const g of gs ?? []) {
+          nomeByGarcom.set(g.id as string, g.nome as string);
+        }
+      }
+
+      const { data: sess } = await supabase
+        .from("mesa_sessoes")
+        .select("mesa_id")
+        .eq("restaurante_id", data.restauranteId)
+        .eq("status", "aberta")
+        .in("mesa_id", mesaIds);
+      const sessaoAberta = new Set(
+        (sess ?? []).map((s) => s.mesa_id as string),
+      );
+
+      const { data: peds } = await supabase
+        .from("pedidos")
+        .select("mesa_id, status")
+        .eq("restaurante_id", data.restauranteId)
+        .in("mesa_id", mesaIds)
+        .in("status", ["recebido", "em_preparo", "pronto"]);
+      const pedidosAbertosPorMesa = new Map<string, number>();
+      for (const p of peds ?? []) {
+        const mid = p.mesa_id as string;
+        pedidosAbertosPorMesa.set(mid, (pedidosAbertosPorMesa.get(mid) ?? 0) + 1);
+      }
+
+      const result: MesaRestauranteInfo[] = (mesas ?? [])
+        .map((m) => {
+          const id = m.id as string;
+          const gid = garcomIdByMesa.get(id) ?? null;
+          return {
+            id,
+            numero: m.numero as string,
+            garcom_id: gid,
+            garcom_nome: gid ? (nomeByGarcom.get(gid) ?? null) : null,
+            sessao_aberta: sessaoAberta.has(id),
+            pedidos_abertos: pedidosAbertosPorMesa.get(id) ?? 0,
+          };
+        })
+        .sort((x, y) =>
+          x.numero.localeCompare(y.numero, "pt-BR", { numeric: true }),
+        );
+
+      return result;
+    },
+  );

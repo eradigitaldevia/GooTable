@@ -1178,6 +1178,7 @@ export type Database = {
           id: string
           logo_url: string | null
           nome: string
+          permitir_atendimento_cruzado: boolean
           pix_chave: string | null
           pix_habilitado: boolean
           pix_nome_titular: string | null
@@ -1191,6 +1192,7 @@ export type Database = {
           id?: string
           logo_url?: string | null
           nome: string
+          permitir_atendimento_cruzado?: boolean
           pix_chave?: string | null
           pix_habilitado?: boolean
           pix_nome_titular?: string | null
@@ -1204,6 +1206,7 @@ export type Database = {
           id?: string
           logo_url?: string | null
           nome?: string
+          permitir_atendimento_cruzado?: boolean
           pix_chave?: string | null
           pix_habilitado?: boolean
           pix_nome_titular?: string | null

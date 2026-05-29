@@ -10,6 +10,7 @@ import {
   useListarComandasAbertasMesa,
 } from "@/hooks/use-pedidos";
 import { useSalaDados } from "@/hooks/use-sala";
+import { useMesasRestaurante } from "@/hooks/use-sala";
 import { formatBRL } from "@/lib/cart";
 import { CardapioDensoList } from "@/components/sala/nova-comanda/cardapio-denso-list";
 import { IdentificarClienteModal } from "@/components/sala/nova-comanda/identificar-cliente-modal";
@@ -41,6 +42,18 @@ function NovaComandaPage() {
   const restauranteId = sala?.garcom.restaurante_id;
   const garcomId = sala?.garcom.id;
   const mesa = sala?.mesas.find((m) => m.id === mesaId);
+  const ehMinhaMesa = !!mesa;
+  const permitirCruzado = sala?.permitir_atendimento_cruzado ?? false;
+  const { data: mesasRest } = useMesasRestaurante(
+    restauranteId,
+    permitirCruzado && !ehMinhaMesa,
+  );
+  const mesaInfo = mesasRest?.find((m) => m.id === mesaId);
+  const donoOutro =
+    !ehMinhaMesa && mesaInfo && mesaInfo.garcom_id && mesaInfo.garcom_id !== garcomId
+      ? mesaInfo.garcom_nome
+      : null;
+  const numeroExibido = mesa?.numero ?? mesaInfo?.numero ?? "—";
 
   const { data: cardapio, isLoading: loadingCardapio } = useCardapio(restauranteId);
   const criar = useCriarPedidoGarcom();
@@ -146,7 +159,7 @@ function NovaComandaPage() {
             className="flex items-center gap-1 rounded-lg p-1 text-sm text-muted-foreground hover:bg-muted"
           >
             <ArrowLeft className="h-5 w-5" />
-            <span>Mesa {mesa?.numero ?? "—"}</span>
+            <span>Mesa {numeroExibido}</span>
           </button>
           {cliente ? (
             <button
@@ -171,6 +184,12 @@ function NovaComandaPage() {
       </header>
 
       <main className="mx-auto max-w-3xl px-4 py-4">
+        {donoOutro && (
+          <div className="mb-3 rounded-xl border border-amber-300/50 bg-amber-50 px-3 py-2 text-xs text-amber-900 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-200">
+            ⚠ Mesa de <strong>{donoOutro}</strong>. A comissão deste pedido
+            será sua.
+          </div>
+        )}
         {loadingCardapio || !cardapio ? (
           <p className="py-10 text-center text-sm text-muted-foreground">
             Carregando cardápio…

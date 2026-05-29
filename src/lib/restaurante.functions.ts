@@ -15,6 +15,7 @@ export interface Restaurante {
   pix_nome_titular: string | null;
   ativo: boolean;
   comissao_modo: "pedido" | "item";
+  permitir_atendimento_cruzado: boolean;
 }
 
 /** Restaurante do usuário autenticado (primeiro vínculo). */

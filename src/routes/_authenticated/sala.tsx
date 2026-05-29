@@ -6,6 +6,10 @@ import { SalaHeader } from "@/components/sala/sala-header";
 import { PratosProntosList } from "@/components/sala/pratos-prontos-list";
 import { MinhasMesasGrid } from "@/components/sala/minhas-mesas-grid";
 import { ChamadosList } from "@/components/sala/chamados-list";
+import { OutraMesaModal } from "@/components/sala/outra-mesa-modal";
+import { Button } from "@/components/ui/button";
+import { Search } from "lucide-react";
+import { useNavigate } from "@tanstack/react-router";
 import {
   useSalaDados,
   useRealtimeSala,
@@ -42,6 +46,8 @@ function SalaPage() {
   const [tab, setTab] = useState<"prontos" | "mesas" | "chamados">("prontos");
   const [pendingPedidoId, setPendingPedidoId] = useState<string | null>(null);
   const [pendingChamadoId, setPendingChamadoId] = useState<string | null>(null);
+  const [outraMesaOpen, setOutraMesaOpen] = useState(false);
+  const navigate = useNavigate();
 
   const restauranteId = data?.garcom.restaurante_id;
   const mesas = data?.mesas ?? [];
@@ -72,6 +78,7 @@ function SalaPage() {
   const totalProntos = data?.pedidos_prontos.length ?? 0;
 
   const nome = data?.garcom.nome ?? garcomCtx.nome;
+  const permitirCruzado = data?.permitir_atendimento_cruzado ?? false;
 
   return (
     <div className="min-h-screen bg-background">
@@ -82,6 +89,19 @@ function SalaPage() {
         onIrChamados={() => setTab("chamados")}
       />
       <main className="mx-auto max-w-3xl px-4 py-4">
+        {permitirCruzado && restauranteId && (
+          <div className="mb-3 flex justify-end">
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              onClick={() => setOutraMesaOpen(true)}
+            >
+              <Search className="mr-1 h-4 w-4" />
+              Outra mesa
+            </Button>
+          </div>
+        )}
         {isLoading && !data ? (
           <p className="py-10 text-center text-sm text-muted-foreground">
             Carregando…
@@ -133,6 +153,20 @@ function SalaPage() {
           </Tabs>
         )}
       </main>
+      {outraMesaOpen && restauranteId && data?.garcom.id && (
+        <OutraMesaModal
+          restauranteId={restauranteId}
+          meuGarcomId={data.garcom.id}
+          onClose={() => setOutraMesaOpen(false)}
+          onSelecionar={(mesaId) => {
+            setOutraMesaOpen(false);
+            navigate({
+              to: "/sala/nova-comanda/$mesaId",
+              params: { mesaId },
+            });
+          }}
+        />
+      )}
     </div>
   );
 }
