@@ -3,6 +3,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { queryKeys } from "@/lib/query-keys";
 import {
   atualizarStatusPedidoFn,
+  atualizarStatusDestinoFn,
   buscarItensPedidoFn,
   buscarClienteRestaurantePorTelefoneFn,
   cancelarItemPedidoFn,
@@ -44,6 +45,28 @@ export function useAtualizarStatusPedido(restauranteId: string | undefined) {
   return useMutation({
     mutationFn: (data: { id: string; status: StatusPedido }) =>
       fn({ data: { id: data.id, status: data.status, restauranteId: restauranteId! } }),
+    onSuccess: () => {
+      if (restauranteId) qc.invalidateQueries({ queryKey: queryKeys.pedidos(restauranteId) });
+    },
+  });
+}
+
+export function useAtualizarStatusDestino(restauranteId: string | undefined) {
+  const fn = useServerFn(atualizarStatusDestinoFn);
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (data: {
+      pedidoId: string;
+      destino: "cozinha" | "bar";
+      status: "recebido" | "em_preparo" | "pronto";
+    }) =>
+      fn({
+        data: {
+          pedidoId: data.pedidoId,
+          destino: data.destino,
+          status: data.status,
+        },
+      }),
     onSuccess: () => {
       if (restauranteId) qc.invalidateQueries({ queryKey: queryKeys.pedidos(restauranteId) });
     },
