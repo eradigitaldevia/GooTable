@@ -181,11 +181,6 @@ function PedidosPainel() {
         mesa={aberto ? mesas.get(aberto.mesa_id)?.numero : undefined}
         garcomNome={aberto ? nomeDoPedido(aberto) : null}
         onClose={() => setAberto(null)}
-        onCancelar={async () => {
-          if (!aberto) return;
-          await atualizarStatus(aberto, "cancelado");
-          setAberto(null);
-        }}
       />
     </div>
   );
