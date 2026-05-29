@@ -125,6 +125,48 @@ export const atualizarStatusPedidoFn = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
+/* ---------- Cancelamento (garçom/admin): pedido inteiro ou item individual ---------- */
+
+export const cancelarPedidoFn = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) =>
+    z.object({
+      pedidoId: z.string().uuid(),
+      restauranteId: z.string().uuid(),
+      motivo: z.string().max(300).optional(),
+    }).parse(d),
+  )
+  .handler(async ({ context, data }) => {
+    const { supabase, userId } = context;
+    await assertAcessoRestaurante(supabase, userId, data.restauranteId);
+    const { error } = await supabase.rpc("cancelar_pedido", {
+      _pedido_id: data.pedidoId,
+      _motivo: data.motivo ?? null,
+    });
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+export const cancelarItemPedidoFn = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) =>
+    z.object({
+      itemId: z.string().uuid(),
+      restauranteId: z.string().uuid(),
+      motivo: z.string().max(300).optional(),
+    }).parse(d),
+  )
+  .handler(async ({ context, data }) => {
+    const { supabase, userId } = context;
+    await assertAcessoRestaurante(supabase, userId, data.restauranteId);
+    const { error } = await supabase.rpc("cancelar_item_pedido", {
+      _item_id: data.itemId,
+      _motivo: data.motivo ?? null,
+    });
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
 /* ---------- Público (cliente via QR): criar pedido + status ---------- */
 
 const itemSchema = z.object({
