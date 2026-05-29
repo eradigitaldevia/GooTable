@@ -5,13 +5,26 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { X, Wallet, CheckCircle2, Users } from "lucide-react";
+import { X, Wallet, CheckCircle2, Users, Trash2 } from "lucide-react";
 import { formatBRL } from "@/lib/cart";
 import { usePagamentosComanda } from "@/hooks/use-pagamentos";
 import { ConfirmarPagamentoDialog } from "@/components/admin/confirmar-pagamento-dialog";
 import { GarcomBadge } from "@/components/garcons/garcom-badge";
 import { DividirComissaoDialog } from "@/components/pedidos/dividir-comissao-dialog";
+import { useCancelarPedido, useCancelarItemPedido } from "@/hooks/use-pedidos";
+import { toast } from "sonner";
 
 type StatusPedido = "recebido" | "em_preparo" | "pronto" | "entregue" | "cancelado";
 
@@ -33,6 +46,7 @@ interface Item {
   preco_unit: number;
   observacao: string | null;
   cliente_nome: string | null;
+  quantidade_pronta?: number;
 }
 
 const METODO_LABEL: Record<string, string> = {
@@ -46,18 +60,23 @@ export function DetalhePedido({
   itens,
   mesa,
   onClose,
-  onCancelar,
   garcomNome,
 }: {
   pedido: Pedido | null;
   itens: Item[];
   mesa: string | undefined;
   onClose: () => void;
-  onCancelar: () => void;
   garcomNome?: string | null;
 }) {
   const [pagOpen, setPagOpen] = useState(false);
   const [divOpen, setDivOpen] = useState(false);
+  const [cancelarPedidoOpen, setCancelarPedidoOpen] = useState(false);
+  const [motivoPedido, setMotivoPedido] = useState("");
+  const [itemCancelar, setItemCancelar] = useState<Item | null>(null);
+  const [motivoItem, setMotivoItem] = useState("");
+
+  const cancelarPedidoMut = useCancelarPedido(pedido?.restaurante_id);
+  const cancelarItemMut = useCancelarItemPedido(pedido?.restaurante_id);
 
   const { data: pagInfo } = usePagamentosComanda(
     pedido?.restaurante_id,
@@ -77,6 +96,59 @@ export function DetalhePedido({
   const totalPago = pagInfo?.total_pago ?? 0;
   const saldo = pagInfo?.saldo ?? 0;
   const quitada = totalComanda > 0 && totalPago >= totalComanda;
+
+  const algumItemPronto = itens.some((it) => (it.quantidade_pronta ?? 0) > 0);
+  const pedidoEmAndamento = pedido.status === "em_preparo" || pedido.status === "pronto";
+  const exigeMotivoPedido = pedidoEmAndamento || algumItemPronto;
+  const podeCancelarItem = pedido.status !== "entregue" && pedido.status !== "cancelado";
+
+  const handleConfirmarCancelarPedido = () => {
+    if (exigeMotivoPedido && motivoPedido.trim().length < 3) {
+      toast.error("Informe um motivo (mínimo 3 caracteres)");
+      return;
+    }
+    cancelarPedidoMut.mutate(
+      { pedidoId: pedido.id, motivo: motivoPedido.trim() || undefined },
+      {
+        onSuccess: () => {
+          toast.success("Pedido cancelado");
+          setCancelarPedidoOpen(false);
+          setMotivoPedido("");
+          onClose();
+        },
+        onError: (e) =>
+          toast.error(e instanceof Error ? e.message : "Erro ao cancelar pedido"),
+      },
+    );
+  };
+
+  const exigeMotivoItem =
+    !!itemCancelar &&
+    (pedidoEmAndamento || (itemCancelar.quantidade_pronta ?? 0) > 0);
+
+  const handleConfirmarCancelarItem = () => {
+    if (!itemCancelar) return;
+    if (exigeMotivoItem && motivoItem.trim().length < 3) {
+      toast.error("Informe um motivo (mínimo 3 caracteres)");
+      return;
+    }
+    cancelarItemMut.mutate(
+      {
+        itemId: itemCancelar.id,
+        pedidoId: pedido.id,
+        motivo: motivoItem.trim() || undefined,
+      },
+      {
+        onSuccess: () => {
+          toast.success("Item cancelado");
+          setItemCancelar(null);
+          setMotivoItem("");
+        },
+        onError: (e) =>
+          toast.error(e instanceof Error ? e.message : "Erro ao cancelar item"),
+      },
+    );
+  };
 
   return (
     <Dialog open={!!pedido} onOpenChange={(o) => !o && onClose()}>
@@ -106,12 +178,25 @@ export function DetalhePedido({
                 </div>
                 <ul className="space-y-1 text-sm">
                   {lista.map((it) => (
-                    <li key={it.id} className="flex justify-between">
-                      <span>
+                    <li key={it.id} className="flex items-start justify-between gap-2">
+                      <span className="flex-1">
                         {it.quantidade}× {it.nome_produto}
                         {it.observacao && <span className="block text-xs text-muted-foreground">↳ {it.observacao}</span>}
                       </span>
                       <span className="text-muted-foreground">{formatBRL(Number(it.preco_unit) * it.quantidade)}</span>
+                      {podeCancelarItem && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setItemCancelar(it);
+                            setMotivoItem("");
+                          }}
+                          className="text-muted-foreground hover:text-destructive"
+                          aria-label="Cancelar item"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                      )}
                     </li>
                   ))}
                 </ul>
@@ -169,7 +254,14 @@ export function DetalhePedido({
         )}
 
         {pedido.status !== "cancelado" && pedido.status !== "entregue" && (
-          <Button variant="outline" className="text-destructive" onClick={onCancelar}>
+          <Button
+            variant="outline"
+            className="text-destructive"
+            onClick={() => {
+              setMotivoPedido("");
+              setCancelarPedidoOpen(true);
+            }}
+          >
             <X className="mr-2 h-4 w-4" /> Cancelar pedido
           </Button>
         )}
@@ -196,6 +288,77 @@ export function DetalhePedido({
           restauranteId={pedido.restaurante_id}
           pedidoId={pedido.id}
         />
+
+        <AlertDialog open={cancelarPedidoOpen} onOpenChange={setCancelarPedidoOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Cancelar pedido?</AlertDialogTitle>
+              <AlertDialogDescription>
+                {exigeMotivoPedido
+                  ? "A cozinha já começou a preparar. Informe o motivo do cancelamento."
+                  : "Esta ação reverte o valor do pedido na comanda."}
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            {exigeMotivoPedido && (
+              <Textarea
+                placeholder="Motivo do cancelamento (mínimo 3 caracteres)"
+                value={motivoPedido}
+                onChange={(e) => setMotivoPedido(e.target.value)}
+                rows={3}
+              />
+            )}
+            <AlertDialogFooter>
+              <AlertDialogCancel disabled={cancelarPedidoMut.isPending}>Voltar</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={(e) => {
+                  e.preventDefault();
+                  handleConfirmarCancelarPedido();
+                }}
+                disabled={cancelarPedidoMut.isPending}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              >
+                Confirmar cancelamento
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
+        <AlertDialog open={!!itemCancelar} onOpenChange={(o) => !o && setItemCancelar(null)}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Cancelar item?</AlertDialogTitle>
+              <AlertDialogDescription>
+                {itemCancelar
+                  ? `${itemCancelar.quantidade}× ${itemCancelar.nome_produto}`
+                  : ""}
+                {exigeMotivoItem
+                  ? " — a cozinha já começou a preparar. Informe o motivo."
+                  : ""}
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            {exigeMotivoItem && (
+              <Textarea
+                placeholder="Motivo do cancelamento (mínimo 3 caracteres)"
+                value={motivoItem}
+                onChange={(e) => setMotivoItem(e.target.value)}
+                rows={3}
+              />
+            )}
+            <AlertDialogFooter>
+              <AlertDialogCancel disabled={cancelarItemMut.isPending}>Voltar</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={(e) => {
+                  e.preventDefault();
+                  handleConfirmarCancelarItem();
+                }}
+                disabled={cancelarItemMut.isPending}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              >
+                Confirmar cancelamento
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </DialogContent>
     </Dialog>
   );
