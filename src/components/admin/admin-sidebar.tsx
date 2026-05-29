@@ -41,6 +41,7 @@ const NAV = [
   { to: "/admin/mesas", label: "Mesas", icon: QrCode, exact: false },
   { to: "/admin/chamados", label: "Chamados", icon: Bell, exact: false },
   { to: "/cozinha", label: "Display de cozinha", icon: ChefHat, exact: false, target: "_blank" as const },
+  { to: "/bar", label: "Display do bar", icon: ChefHat, exact: false, target: "_blank" as const },
   { to: "/admin/clientes", label: "Clientes", icon: Users, exact: false },
   { to: "/admin/fidelidade", label: "Fidelidade", icon: Gift, exact: false },
   { to: "/admin/cupons", label: "Cupons", icon: Ticket, exact: false },
