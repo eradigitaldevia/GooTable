@@ -22,6 +22,7 @@ import { Route as SuperadminLogsRouteImport } from './routes/superadmin.logs'
 import { Route as MQrTokenRouteImport } from './routes/m.$qrToken'
 import { Route as AuthenticatedSalaRouteImport } from './routes/_authenticated/sala'
 import { Route as AuthenticatedCozinhaRouteImport } from './routes/_authenticated/cozinha'
+import { Route as AuthenticatedBarRouteImport } from './routes/_authenticated/bar'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
 import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin/index'
 import { Route as SuperadminRestaurantesIdRouteImport } from './routes/superadmin.restaurantes.$id'
@@ -106,6 +107,11 @@ const AuthenticatedSalaRoute = AuthenticatedSalaRouteImport.update({
 const AuthenticatedCozinhaRoute = AuthenticatedCozinhaRouteImport.update({
   id: '/cozinha',
   path: '/cozinha',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedBarRoute = AuthenticatedBarRouteImport.update({
+  id: '/bar',
+  path: '/bar',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
 const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
@@ -236,6 +242,7 @@ export interface FileRoutesByFullPath {
   '/reset-password': typeof ResetPasswordRoute
   '/superadmin': typeof SuperadminRouteWithChildren
   '/admin': typeof AuthenticatedAdminRouteWithChildren
+  '/bar': typeof AuthenticatedBarRoute
   '/cozinha': typeof AuthenticatedCozinhaRoute
   '/sala': typeof AuthenticatedSalaRouteWithChildren
   '/m/$qrToken': typeof MQrTokenRouteWithChildren
@@ -269,6 +276,7 @@ export interface FileRoutesByTo {
   '/forgot-password': typeof ForgotPasswordRoute
   '/login': typeof LoginRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/bar': typeof AuthenticatedBarRoute
   '/cozinha': typeof AuthenticatedCozinhaRoute
   '/sala': typeof AuthenticatedSalaRouteWithChildren
   '/m/$qrToken': typeof MQrTokenRouteWithChildren
@@ -306,6 +314,7 @@ export interface FileRoutesById {
   '/reset-password': typeof ResetPasswordRoute
   '/superadmin': typeof SuperadminRouteWithChildren
   '/_authenticated/admin': typeof AuthenticatedAdminRouteWithChildren
+  '/_authenticated/bar': typeof AuthenticatedBarRoute
   '/_authenticated/cozinha': typeof AuthenticatedCozinhaRoute
   '/_authenticated/sala': typeof AuthenticatedSalaRouteWithChildren
   '/m/$qrToken': typeof MQrTokenRouteWithChildren
@@ -343,6 +352,7 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/superadmin'
     | '/admin'
+    | '/bar'
     | '/cozinha'
     | '/sala'
     | '/m/$qrToken'
@@ -376,6 +386,7 @@ export interface FileRouteTypes {
     | '/forgot-password'
     | '/login'
     | '/reset-password'
+    | '/bar'
     | '/cozinha'
     | '/sala'
     | '/m/$qrToken'
@@ -412,6 +423,7 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/superadmin'
     | '/_authenticated/admin'
+    | '/_authenticated/bar'
     | '/_authenticated/cozinha'
     | '/_authenticated/sala'
     | '/m/$qrToken'
@@ -542,6 +554,13 @@ declare module '@tanstack/react-router' {
       path: '/cozinha'
       fullPath: '/cozinha'
       preLoaderRoute: typeof AuthenticatedCozinhaRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/bar': {
+      id: '/_authenticated/bar'
+      path: '/bar'
+      fullPath: '/bar'
+      preLoaderRoute: typeof AuthenticatedBarRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/admin': {
@@ -759,12 +778,14 @@ const AuthenticatedSalaRouteWithChildren =
 
 interface AuthenticatedRouteChildren {
   AuthenticatedAdminRoute: typeof AuthenticatedAdminRouteWithChildren
+  AuthenticatedBarRoute: typeof AuthenticatedBarRoute
   AuthenticatedCozinhaRoute: typeof AuthenticatedCozinhaRoute
   AuthenticatedSalaRoute: typeof AuthenticatedSalaRouteWithChildren
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedAdminRoute: AuthenticatedAdminRouteWithChildren,
+  AuthenticatedBarRoute: AuthenticatedBarRoute,
   AuthenticatedCozinhaRoute: AuthenticatedCozinhaRoute,
   AuthenticatedSalaRoute: AuthenticatedSalaRouteWithChildren,
 }
