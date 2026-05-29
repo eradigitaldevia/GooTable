@@ -38,6 +38,7 @@ const NAV = [
   { to: "/admin/pedidos", label: "Pedidos", icon: ClipboardList, exact: false },
   { to: "/admin/cardapio", label: "Cardápio", icon: UtensilsCrossed, exact: true },
   { to: "/admin/cardapio-preview", label: "Prévia do cardápio", icon: Eye, exact: false },
+  { to: "/admin/destinos-preparo", label: "Destinos de preparo", icon: ChefHat, exact: false },
   { to: "/admin/mesas", label: "Mesas", icon: QrCode, exact: false },
   { to: "/admin/chamados", label: "Chamados", icon: Bell, exact: false },
   { to: "/cozinha", label: "Display de cozinha", icon: ChefHat, exact: false, target: "_blank" as const },
