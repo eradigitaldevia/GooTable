@@ -34,6 +34,7 @@ import { Route as AuthenticatedAdminMesasRouteImport } from './routes/_authentic
 import { Route as AuthenticatedAdminGarconsRouteImport } from './routes/_authenticated/admin/garcons'
 import { Route as AuthenticatedAdminFidelidadeRouteImport } from './routes/_authenticated/admin/fidelidade'
 import { Route as AuthenticatedAdminEquipeRouteImport } from './routes/_authenticated/admin/equipe'
+import { Route as AuthenticatedAdminDestinosPreparoRouteImport } from './routes/_authenticated/admin/destinos-preparo'
 import { Route as AuthenticatedAdminCuponsRouteImport } from './routes/_authenticated/admin/cupons'
 import { Route as AuthenticatedAdminConfiguracoesRouteImport } from './routes/_authenticated/admin/configuracoes'
 import { Route as AuthenticatedAdminClientesRouteImport } from './routes/_authenticated/admin/clientes'
@@ -174,6 +175,12 @@ const AuthenticatedAdminEquipeRoute =
     path: '/equipe',
     getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
+const AuthenticatedAdminDestinosPreparoRoute =
+  AuthenticatedAdminDestinosPreparoRouteImport.update({
+    id: '/destinos-preparo',
+    path: '/destinos-preparo',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
 const AuthenticatedAdminCuponsRoute =
   AuthenticatedAdminCuponsRouteImport.update({
     id: '/cupons',
@@ -255,6 +262,7 @@ export interface FileRoutesByFullPath {
   '/admin/clientes': typeof AuthenticatedAdminClientesRouteWithChildren
   '/admin/configuracoes': typeof AuthenticatedAdminConfiguracoesRoute
   '/admin/cupons': typeof AuthenticatedAdminCuponsRoute
+  '/admin/destinos-preparo': typeof AuthenticatedAdminDestinosPreparoRoute
   '/admin/equipe': typeof AuthenticatedAdminEquipeRoute
   '/admin/fidelidade': typeof AuthenticatedAdminFidelidadeRoute
   '/admin/garcons': typeof AuthenticatedAdminGarconsRoute
@@ -289,6 +297,7 @@ export interface FileRoutesByTo {
   '/admin/clientes': typeof AuthenticatedAdminClientesRouteWithChildren
   '/admin/configuracoes': typeof AuthenticatedAdminConfiguracoesRoute
   '/admin/cupons': typeof AuthenticatedAdminCuponsRoute
+  '/admin/destinos-preparo': typeof AuthenticatedAdminDestinosPreparoRoute
   '/admin/equipe': typeof AuthenticatedAdminEquipeRoute
   '/admin/fidelidade': typeof AuthenticatedAdminFidelidadeRoute
   '/admin/garcons': typeof AuthenticatedAdminGarconsRoute
@@ -327,6 +336,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/clientes': typeof AuthenticatedAdminClientesRouteWithChildren
   '/_authenticated/admin/configuracoes': typeof AuthenticatedAdminConfiguracoesRoute
   '/_authenticated/admin/cupons': typeof AuthenticatedAdminCuponsRoute
+  '/_authenticated/admin/destinos-preparo': typeof AuthenticatedAdminDestinosPreparoRoute
   '/_authenticated/admin/equipe': typeof AuthenticatedAdminEquipeRoute
   '/_authenticated/admin/fidelidade': typeof AuthenticatedAdminFidelidadeRoute
   '/_authenticated/admin/garcons': typeof AuthenticatedAdminGarconsRoute
@@ -365,6 +375,7 @@ export interface FileRouteTypes {
     | '/admin/clientes'
     | '/admin/configuracoes'
     | '/admin/cupons'
+    | '/admin/destinos-preparo'
     | '/admin/equipe'
     | '/admin/fidelidade'
     | '/admin/garcons'
@@ -399,6 +410,7 @@ export interface FileRouteTypes {
     | '/admin/clientes'
     | '/admin/configuracoes'
     | '/admin/cupons'
+    | '/admin/destinos-preparo'
     | '/admin/equipe'
     | '/admin/fidelidade'
     | '/admin/garcons'
@@ -436,6 +448,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/clientes'
     | '/_authenticated/admin/configuracoes'
     | '/_authenticated/admin/cupons'
+    | '/_authenticated/admin/destinos-preparo'
     | '/_authenticated/admin/equipe'
     | '/_authenticated/admin/fidelidade'
     | '/_authenticated/admin/garcons'
@@ -640,6 +653,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminEquipeRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
+    '/_authenticated/admin/destinos-preparo': {
+      id: '/_authenticated/admin/destinos-preparo'
+      path: '/destinos-preparo'
+      fullPath: '/admin/destinos-preparo'
+      preLoaderRoute: typeof AuthenticatedAdminDestinosPreparoRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
     '/_authenticated/admin/cupons': {
       id: '/_authenticated/admin/cupons'
       path: '/cupons'
@@ -734,6 +754,7 @@ interface AuthenticatedAdminRouteChildren {
   AuthenticatedAdminClientesRoute: typeof AuthenticatedAdminClientesRouteWithChildren
   AuthenticatedAdminConfiguracoesRoute: typeof AuthenticatedAdminConfiguracoesRoute
   AuthenticatedAdminCuponsRoute: typeof AuthenticatedAdminCuponsRoute
+  AuthenticatedAdminDestinosPreparoRoute: typeof AuthenticatedAdminDestinosPreparoRoute
   AuthenticatedAdminEquipeRoute: typeof AuthenticatedAdminEquipeRoute
   AuthenticatedAdminFidelidadeRoute: typeof AuthenticatedAdminFidelidadeRoute
   AuthenticatedAdminGarconsRoute: typeof AuthenticatedAdminGarconsRoute
@@ -751,6 +772,8 @@ const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
   AuthenticatedAdminClientesRoute: AuthenticatedAdminClientesRouteWithChildren,
   AuthenticatedAdminConfiguracoesRoute: AuthenticatedAdminConfiguracoesRoute,
   AuthenticatedAdminCuponsRoute: AuthenticatedAdminCuponsRoute,
+  AuthenticatedAdminDestinosPreparoRoute:
+    AuthenticatedAdminDestinosPreparoRoute,
   AuthenticatedAdminEquipeRoute: AuthenticatedAdminEquipeRoute,
   AuthenticatedAdminFidelidadeRoute: AuthenticatedAdminFidelidadeRoute,
   AuthenticatedAdminGarconsRoute: AuthenticatedAdminGarconsRoute,
@@ -855,3 +878,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
