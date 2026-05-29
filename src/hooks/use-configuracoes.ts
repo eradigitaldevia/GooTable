@@ -20,6 +20,7 @@ type ConfigPayload = {
   pix_chave: string | null;
   pix_nome_titular: string | null;
   comissao_modo: "pedido" | "item";
+  permitir_atendimento_cruzado: boolean;
 };
 
 export function useAtualizarConfiguracoes(userId: string | undefined) {
