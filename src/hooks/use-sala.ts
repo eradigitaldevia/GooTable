@@ -6,7 +6,9 @@ import { supabase } from "@/integrations/supabase/client";
 import {
   carregarSalaFn,
   carregarSalaAdminFn,
+  listarMesasRestauranteFn,
   type SalaDados,
+  type MesaRestauranteInfo,
 } from "@/lib/sala.functions";
 import { atualizarStatusPedidoFn } from "@/lib/pedidos.functions";
 import { atenderChamadoFn } from "@/lib/chamados.functions";
@@ -29,6 +31,18 @@ export function useSalaAdmin(garcomId: string) {
     queryKey: SALA_ADMIN_KEY(garcomId),
     queryFn: () => fn({ data: { garcomId } }),
     enabled: !!garcomId,
+  });
+}
+
+export function useMesasRestaurante(
+  restauranteId: string | undefined,
+  enabled: boolean,
+) {
+  const fn = useServerFn(listarMesasRestauranteFn);
+  return useQuery<MesaRestauranteInfo[]>({
+    queryKey: ["sala-mesas-restaurante", restauranteId ?? "none"],
+    queryFn: () => fn({ data: { restauranteId: restauranteId! } }),
+    enabled: !!restauranteId && enabled,
   });
 }
 
