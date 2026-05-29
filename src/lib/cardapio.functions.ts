@@ -208,3 +208,43 @@ export const alterarDisponibilidadeProdutoFn = createServerFn({ method: "POST" }
     if (error) throw new Error(error.message);
     return { ok: true };
   });
+
+/* ---------- Migração assistida de destinos ---------- */
+
+export const salvarDestinosPreparoFn = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) =>
+    z.object({
+      restauranteId: z.string().uuid(),
+      categorias: z.array(
+        z.object({ id: z.string().uuid(), destino: z.enum(["cozinha", "bar"]) }),
+      ).max(500),
+      produtos: z.array(
+        z.object({
+          id: z.string().uuid(),
+          destino_override: z.enum(["cozinha", "bar"]).nullable(),
+        }),
+      ).max(2000),
+    }).parse(d),
+  )
+  .handler(async ({ context, data }) => {
+    const { supabase, userId } = context;
+    await assertAcessoRestaurante(supabase, userId, data.restauranteId);
+    for (const c of data.categorias) {
+      const { error } = await supabase
+        .from("categorias")
+        .update({ destino: c.destino })
+        .eq("id", c.id)
+        .eq("restaurante_id", data.restauranteId);
+      if (error) throw new Error(error.message);
+    }
+    for (const p of data.produtos) {
+      const { error } = await supabase
+        .from("produtos")
+        .update({ destino_override: p.destino_override })
+        .eq("id", p.id)
+        .eq("restaurante_id", data.restauranteId);
+      if (error) throw new Error(error.message);
+    }
+    return { ok: true };
+  });
