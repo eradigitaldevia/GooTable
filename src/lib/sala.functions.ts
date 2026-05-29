@@ -374,5 +374,6 @@ export const carregarSalaAdminFn = createServerFn({ method: "POST" })
       mesas,
       pedidos_prontos,
       chamados_pendentes,
+      permitir_atendimento_cruzado: permitirCruzadoAdmin,
     };
   });
