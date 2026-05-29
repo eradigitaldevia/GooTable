@@ -17,7 +17,8 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { X, Wallet, CheckCircle2, Users, Trash2 } from "lucide-react";
+import { X, Wallet, CheckCircle2, Users, Trash2, ChefHat, Wine } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import { formatBRL } from "@/lib/cart";
 import { usePagamentosComanda } from "@/hooks/use-pagamentos";
 import { ConfirmarPagamentoDialog } from "@/components/admin/confirmar-pagamento-dialog";
@@ -47,7 +48,21 @@ interface Item {
   observacao: string | null;
   cliente_nome: string | null;
   quantidade_pronta?: number;
+  destino?: "cozinha" | "bar";
 }
+
+interface DestinoStatusInfo {
+  destino: "cozinha" | "bar";
+  status: StatusPedido;
+}
+
+const DESTINO_STATUS_LABEL: Record<StatusPedido, string> = {
+  recebido: "Recebido",
+  em_preparo: "Em preparo",
+  pronto: "Pronto",
+  entregue: "Entregue",
+  cancelado: "Cancelado",
+};
 
 const METODO_LABEL: Record<string, string> = {
   pix: "PIX",
@@ -61,12 +76,14 @@ export function DetalhePedido({
   mesa,
   onClose,
   garcomNome,
+  destinoStatus,
 }: {
   pedido: Pedido | null;
   itens: Item[];
   mesa: string | undefined;
   onClose: () => void;
   garcomNome?: string | null;
+  destinoStatus?: DestinoStatusInfo[];
 }) {
   const [pagOpen, setPagOpen] = useState(false);
   const [divOpen, setDivOpen] = useState(false);
@@ -161,6 +178,20 @@ export function DetalhePedido({
             <GarcomBadge nome={garcomNome} />
           </div>
         )}
+        {destinoStatus && destinoStatus.length > 0 && (
+          <div className="flex flex-wrap gap-2">
+            {destinoStatus.map((d) => (
+              <Badge key={d.destino} variant="secondary" className="gap-1">
+                {d.destino === "bar" ? (
+                  <Wine className="h-3 w-3" />
+                ) : (
+                  <ChefHat className="h-3 w-3" />
+                )}
+                {d.destino === "bar" ? "Bar" : "Cozinha"}: {DESTINO_STATUS_LABEL[d.status]}
+              </Badge>
+            ))}
+          </div>
+        )}
         {pedido.observacao && (
           <div className="rounded-xl bg-warning/10 p-3 text-sm">
             <span className="font-semibold">Observação: </span>
@@ -181,6 +212,11 @@ export function DetalhePedido({
                     <li key={it.id} className="flex items-start justify-between gap-2">
                       <span className="flex-1">
                         {it.quantidade}× {it.nome_produto}
+                        {it.destino === "bar" ? (
+                          <Wine className="ml-1 inline h-3 w-3 text-muted-foreground" />
+                        ) : it.destino === "cozinha" ? (
+                          <ChefHat className="ml-1 inline h-3 w-3 text-muted-foreground" />
+                        ) : null}
                         {it.observacao && <span className="block text-xs text-muted-foreground">↳ {it.observacao}</span>}
                       </span>
                       <span className="text-muted-foreground">{formatBRL(Number(it.preco_unit) * it.quantidade)}</span>
