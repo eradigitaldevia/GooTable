@@ -1,146 +1,79 @@
-# Plano: Papel "Bar" e separação Cozinha × Bar
+# Plano — Finalização do papel "Bar" e separação Cozinha × Bar
 
-## Visão geral
+Continuação direta da implementação já aprovada. A base (enum `bar`, `destino_preparo`, `pedido_destino_status`, triggers e RPC `atualizar_status_destino`) já está no banco. Falta a camada de UI/UX e a integração dos botões do KDS com o novo RPC.
 
-Hoje todos os itens de pedido vão para `/cozinha` (KDS único). Vamos:
+## 1. Painel do Bar (`/bar`) — layout customizado
 
-1. Classificar itens como **cozinha** ou **bar** (híbrido: categoria define, produto pode sobrescrever).
-2. Criar painel `/bar` customizado para o ritmo de bar.
-3. Cada destino tem status próprio (`recebido | em_preparo | pronto`), independente do outro.
-4. Novo papel `bar` na equipe, com acesso restrito ao painel do Bar.
-5. Tela de migração assistida para classificar o cardápio existente antes de ativar o Bar.
+Rota nova: `src/routes/_authenticated/bar.tsx` (acessível por papéis `bar`, `admin`, `owner`).
 
----
+Layout intencionalmente diferente da Cozinha (decisão já tomada: "Customizado para bar"):
 
-## 1. Banco de dados (migração única)
+- Sem kanban de colunas. Lista vertical compacta agrupada por mesa.
+- Cada linha = 1 item de bebida com: quantidade, nome, observação, mesa, tempo desde o pedido, botão único "Pronto" (marca todas as unidades) + botão secundário "−1" para marcar unidade a unidade.
+- Cabeçalho fixo com: contagem de pendentes, contagem de prontos hoje, filtro rápido (Pendentes | Em preparo | Todos).
+- Som curto opcional ao chegar novo item (reaproveitar hook de som da cozinha se existir; senão, deixar como follow-up).
 
-### 1.1 Enum de papéis
+Arquivos novos:
+- `src/routes/_authenticated/bar.tsx`
+- `src/components/bar/bar-header.tsx`
+- `src/components/bar/bar-item-row.tsx`
+- `src/components/bar/bar-empty-state.tsx`
+- `src/lib/bar.functions.ts` — `listarItensBar({ restauranteId })` filtrando `destino = 'bar'` e status do destino ≠ `pronto`.
+- `src/hooks/use-bar.ts` — query + realtime em `pedido_itens` e `pedido_destino_status` filtrados por restaurante.
 
-- `ALTER TYPE app_role ADD VALUE 'bar';`
+## 2. Migração assistida — `/admin/destinos-preparo`
 
-### 1.2 Classificação do cardápio
+Rota nova para classificar o que existe hoje antes de operar o bar.
 
-- `categorias.destino` — enum `destino_preparo` (`cozinha` | `bar`), default `cozinha`.
-- `produtos.destino_override` — enum `destino_preparo` nullable (sobrescreve a categoria quando preenchido).
-- Coluna derivada `pedido_itens.destino` (`cozinha` | `bar`), preenchida no insert por trigger a partir de `produto.destino_override` ?? `categoria.destino`. Congelar no item evita inconsistências quando o admin reclassificar depois.
+- `src/routes/_authenticated/admin/destinos-preparo.tsx`
+- Tabela 1: Categorias → seletor `cozinha | bar` por linha.
+- Tabela 2: Produtos sem categoria OU com override → seletor `(herdar) | cozinha | bar`.
+- Botão "Salvar" em lote (uma chamada por linha alterada via funções já existentes em `cardapio.functions.ts`).
+- Banner no topo do painel `/bar` quando 0 categorias/produtos estão marcados como `bar`, com link para essa rota.
+- Item no `admin-sidebar.tsx`: "Destinos de preparo" (logo abaixo de Cardápio).
 
-### 1.3 Status por destino
+Sem bloqueio rígido: convite de membro `bar` continua permitido, apenas com aviso visual.
 
-- Nova tabela `pedido_destino_status`:
-  - `pedido_id` (fk), `destino` (enum), `status` (`recebido|em_preparo|pronto`), `atualizado_em`.
-  - PK composta `(pedido_id, destino)`.
-  - GRANTs para `authenticated` + `service_role`. RLS via membro do restaurante (join em `pedidos`).
-- Trigger no insert de `pedido_itens`: garante linha em `pedido_destino_status` para cada destino presente no pedido (status inicial `recebido`).
-- `pedidos.status` continua existindo e passa a ser **derivado**: vira `pronto` quando todos os destinos do pedido estão `pronto`; vira `em_preparo` se qualquer destino sair de `recebido`. Atualizado por trigger em `pedido_destino_status`.
+## 3. Detalhe do pedido — agrupar por destino
 
-### 1.4 RPCs novas / ajustadas
+Editar `src/components/pedidos/detalhe-pedido.tsx`:
 
-- `atualizar_status_destino(_pedido_id, _destino, _status)` — SECURITY DEFINER, valida transição e que o usuário tem papel compatível (`cozinheiro|admin|staff` para destino cozinha; `bar|admin|staff` para destino bar).
-- `cancelar_item_pedido` / `cancelar_pedido` existentes: continuam funcionando; quando último item de um destino for cancelado, remove a linha de `pedido_destino_status` correspondente.
-- `marcar_item_unidades` (KDS por unidade) já existe; passa a respeitar o destino do item.
+- Agrupar `itens` em duas seções: "Cozinha" e "Bar" (ocultar seção vazia).
+- Para cada seção, exibir o status atual vindo de `pedido_destino_status` (badge: Recebido / Em preparo / Pronto).
+- Status geral do pedido (já derivado pelo trigger) permanece no header — apenas leitura.
 
----
+## 4. KDS Cozinha — usar novo RPC por destino
 
-## 2. Frontend
+Editar `src/routes/_authenticated/cozinha.tsx` e `src/components/cozinha/kds-card.tsx` (ou equivalente):
 
-### 2.1 Tipos e hooks
+- Botões "Iniciar preparo" / "Marcar pronto" passam a chamar `atualizar_status_destino({ pedido_id, destino: 'cozinha', novo_status })` em vez de atualizar `pedidos.status` diretamente.
+- Manter marcação por unidade (`quantidade_pronta`) como está — o trigger já recomputa o destino.
 
-- `src/lib/equipe.functions.ts`: adicionar `"bar"` em `PAPEIS`.
-- Atualizar `PAPEL_LABEL` em `equipe-panel.tsx` (rótulo "Bar").
-- Novo helper em `src/lib/auth.server.ts`: `assertPapelBar` / `assertPapelCozinha`.
+## 5. Realtime
 
-### 2.2 Cardápio (admin)
+- `/bar` e `/cozinha` se inscrevem em `pedido_itens` (filtro client-side por `destino`) e em `pedido_destino_status`.
+- Invalidar queries de pedidos no admin quando `pedido_destino_status` mudar (status geral é derivado).
 
-- `produto-form-fields.tsx`: adicionar select "Destino" (Padrão da categoria / Cozinha / Bar).
-- `categoria-dialog-body.tsx`: adicionar select "Destino padrão" (Cozinha / Bar).
-- Badge visual nas listas indicando destino efetivo do produto.
+## Arquivos afetados
 
-### 2.3 Migração assistida
-
-- Nova rota `/_authenticated/admin/destinos-preparo.tsx` (link no admin sidebar quando houver categorias/produtos sem classificação explícita ou quando o papel Bar for criado pela primeira vez).
-- Tabela editável: cada categoria com select de destino + lista de produtos com override.
-- Banner em `/_authenticated/admin/equipe.tsx` quando admin tenta convidar alguém como Bar mas nenhum produto está marcado como bar: "Configure os destinos antes de ativar o painel do Bar."
-
-### 2.4 Painel do Bar (novo, customizado)
-
-- Nova rota `/_authenticated/bar.tsx`.
-- Layout pensado para bebidas (rápido, alto volume, prep curto):
-  - **Lista única em fluxo** (não kanban por status). Cards compactos horizontais ordenados por chegada.
-  - Cada card mostra: mesa, garçom, bebidas (nome + qtd + observação), tempo decorrido. Sem categorização por status — apenas botão "✓ Pronto" por item ou "Tudo pronto" no card.
-  - Sem coluna "Em preparo" separada: bebidas geralmente vão direto de "recebido" → "pronto". Status `em_preparo` é opcional (atalho para drinks que demoram).
-  - Cabeçalho enxuto: contador de pendentes, toggle de som, badge de conexão.
-  - Reaproveita `useRealtimeStatus`, `KdsConnectionBanner` e `useTick`.
-- Novos componentes em `src/components/bar/`:
-  - `bar-header.tsx`
-  - `bar-card.tsx` (compacto, horizontal)
-  - `bar-empty-state.tsx`
-
-### 2.5 Cozinha (ajustes)
-
-- `src/routes/_authenticated/cozinha.tsx` e `kds-card.tsx`: filtrar `pedido_itens` para `destino = 'cozinha'`. Pedidos com apenas itens de bar não aparecem mais. Pedidos mistos aparecem só com os itens de cozinha; status mostrado vem de `pedido_destino_status` (destino cozinha).
-- Botão "Avançar" passa a chamar `atualizar_status_destino` em vez de `atualizar_status_pedido`.
-
-### 2.6 Roteamento e acesso
-
-- `_authenticated.tsx`: redirecionar usuário com papel `bar` para `/bar` por padrão (igual ao que hoje acontece com `cozinheiro` → `/cozinha`, conferir e seguir o mesmo padrão).
-- Sidebar admin: novo item "Bar" para admin/staff visualizarem o painel.
-- Equipe: papel "Bar" aparece no select de convite e alteração.
-
-### 2.7 Detalhe do pedido (admin)
-
-- `detalhe-pedido.tsx`: agrupar itens por destino (seção "Cozinha" e seção "Bar"), cada uma com seu status próprio vindo de `pedido_destino_status`.
-
----
-
-## 3. Realtime
-
-- Bar e Cozinha assinam mudanças em `pedido_itens` + `pedido_destino_status` filtradas pelo restaurante. Banner de conexão idêntico ao KDS.
-
----
-
-## 4. Áreas explicitamente fora do escopo
-
-- Sem mudanças em comissões, pagamentos, fidelidade, cupons.
-- Sem mudanças no fluxo do garçom/cliente (eles continuam vendo um pedido único; a separação cozinha/bar é interna).
-- Sem alteração visual no card do cliente (status timeline continua usando `pedidos.status` derivado).
-
----
-
-## 5. Arquivos afetados
-
-**Criar**
-
-- `supabase/migrations/<timestamp>_papel_bar_destino_preparo.sql`
+Novos:
 - `src/routes/_authenticated/bar.tsx`
 - `src/routes/_authenticated/admin/destinos-preparo.tsx`
 - `src/components/bar/bar-header.tsx`
-- `src/components/bar/bar-card.tsx`
+- `src/components/bar/bar-item-row.tsx`
 - `src/components/bar/bar-empty-state.tsx`
 - `src/lib/bar.functions.ts`
 - `src/hooks/use-bar.ts`
 
-**Editar**
+Editados (mínimo necessário):
+- `src/components/admin/admin-sidebar.tsx` — item "Destinos de preparo"
+- `src/components/pedidos/detalhe-pedido.tsx` — agrupar por destino + badges
+- `src/routes/_authenticated/cozinha.tsx` — usar RPC por destino
+- `src/components/cozinha/kds-card.tsx` (ou caminho real do card) — idem
+- `src/hooks/use-pedidos.ts` — incluir `destino_status` na query do detalhe
 
-- `src/lib/equipe.functions.ts` (PAPEIS)
-- `src/components/admin/equipe-panel.tsx` (label + select)
-- `src/lib/cardapio.functions.ts` (destino em categoria/produto)
-- `src/components/cardapio/produto-form-fields.tsx`
-- `src/components/cardapio/categoria-dialog-body.tsx`
-- `src/lib/pedidos.functions.ts` (filtro destino + RPC nova)
-- `src/hooks/use-pedidos.ts`
-- `src/routes/_authenticated/cozinha.tsx` (filtro cozinha + novo RPC)
-- `src/components/cozinha/kds-card.tsx` (consumir status do destino)
-- `src/components/pedidos/detalhe-pedido.tsx` (agrupar por destino)
-- `src/components/admin/admin-sidebar.tsx` (link Bar)
-- `src/routes/_authenticated.tsx` (redirect por papel)
+## Fora de escopo
 
----
-
-## 6. Confirmação solicitada antes de implementar
-
-1. OK manter os papéis existentes intactos e apenas **adicionar** `bar` (sem renomear `cozinheiro`)?  
-Resposta: Sim, manter os papéis existentes intactos e apenas **adicionar** `bar.`
-2. O painel do Bar pode começar **sem coluna "em_preparo"** (apenas pendente → pronto, com `em_preparo` como atalho opcional)? Ou prefere as duas colunas iguais à cozinha mesmo sendo "customizado"?  
-Resposta: Sim, painel do Bar pode começar **sem coluna "em_preparo"** (apenas pendente → pronto, com `em_preparo` como atalho opcional)
-3. Migração assistida: posso bloquear o convite de membro `bar` até existir pelo menos 1 produto/categoria marcado como destino bar, ou prefere apenas avisar com banner sem bloquear?  
-Resposta: Prefiro apenas avisar com banner sem bloquear.
+- Som no painel do Bar (decidir depois).
+- Bloqueio rígido de convite `bar` antes da classificação.
+- Métricas/relatórios por destino.

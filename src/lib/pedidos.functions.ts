@@ -39,6 +39,12 @@ export interface MesaResumo {
   numero: string;
 }
 
+export interface DestinoStatus {
+  pedido_id: string;
+  destino: "cozinha" | "bar";
+  status: StatusPedido;
+}
+
 /* ---------- Admin: pedidos do dia + itens + mesas ---------- */
 
 export const listarPedidosDoDiaFn = createServerFn({ method: "POST" })
@@ -77,10 +83,21 @@ export const listarPedidosDoDiaFn = createServerFn({ method: "POST" })
       .eq("restaurante_id", data.restauranteId);
     if (mErr) throw new Error(mErr.message);
 
+    let destinoStatus: DestinoStatus[] = [];
+    if (ids.length) {
+      const { data: ds, error: dErr } = await supabase
+        .from("pedido_destino_status")
+        .select("pedido_id, destino, status")
+        .in("pedido_id", ids);
+      if (dErr) throw new Error(dErr.message);
+      destinoStatus = (ds ?? []) as DestinoStatus[];
+    }
+
     return {
       pedidos,
       itens,
       mesas: (ms ?? []) as MesaResumo[],
+      destinoStatus,
     };
   });
 
@@ -91,7 +108,7 @@ export const buscarItensPedidoFn = createServerFn({ method: "POST" })
     const { supabase } = context;
     const { data: its, error } = await supabase
       .from("pedido_itens")
-      .select("id, pedido_id, nome_produto, quantidade, preco_unit, observacao, cliente_nome, status, quantidade_pronta")
+      .select("id, pedido_id, nome_produto, quantidade, preco_unit, observacao, cliente_nome, status, quantidade_pronta, destino")
       .eq("pedido_id", data.pedidoId);
     if (error) throw new Error(error.message);
     return (its ?? []) as PedidoItem[];
@@ -123,6 +140,30 @@ export const atualizarStatusPedidoFn = createServerFn({ method: "POST" })
       if (rpcErr) throw new Error(rpcErr.message);
     }
 
+    return { ok: true };
+  });
+
+/* ---------- KDS por destino (cozinha/bar) ---------- */
+
+export const atualizarStatusDestinoFn = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) =>
+    z
+      .object({
+        pedidoId: z.string().uuid(),
+        destino: z.enum(["cozinha", "bar"]),
+        status: z.enum(["recebido", "em_preparo", "pronto"]),
+      })
+      .parse(d),
+  )
+  .handler(async ({ context, data }) => {
+    const { supabase } = context;
+    const { error } = await supabase.rpc("atualizar_status_destino", {
+      _pedido_id: data.pedidoId,
+      _destino: data.destino,
+      _status: data.status,
+    });
+    if (error) throw new Error(error.message);
     return { ok: true };
   });
 

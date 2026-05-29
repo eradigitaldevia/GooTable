@@ -8,7 +8,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { useMeuRestaurante } from "@/hooks/use-restaurante";
 import { useTick } from "@/hooks/use-tick";
 import { queryKeys } from "@/lib/query-keys";
-import { usePedidosDoDia, useAtualizarStatusPedido } from "@/hooks/use-pedidos";
+import { usePedidosDoDia, useAtualizarStatusDestino } from "@/hooks/use-pedidos";
 import { useMarcarItemUnidades } from "@/hooks/use-kds-item";
 import { useRealtimeStatus } from "@/hooks/use-realtime-status";
 import { useGarcomLookup } from "@/hooks/use-garcom-lookup";
@@ -60,7 +60,7 @@ function CozinhaKDS() {
   // Re-render timers a cada 30s
   useTick(30_000);
 
-  const atualizarStatusMut = useAtualizarStatusPedido(restauranteId ?? undefined);
+  const atualizarDestinoMut = useAtualizarStatusDestino(restauranteId ?? undefined);
   const marcarItemMut = useMarcarItemUnidades(restauranteId ?? undefined);
 
   const { nomeDoPedido } = useGarcomLookup(restauranteId ?? undefined);
@@ -114,6 +114,11 @@ function CozinhaKDS() {
           "postgres_changes",
           { event: "*", schema: "public", table: "pedido_itens" },
           () => scheduleInvalidate(),
+        )
+        .on(
+          "postgres_changes",
+          { event: "*", schema: "public", table: "pedido_destino_status" },
+          () => scheduleInvalidate(),
         ),
     [restauranteId, scheduleInvalidate],
   );
@@ -141,6 +146,17 @@ function CozinhaKDS() {
   // Apenas itens destinados à Cozinha
   const itens = itensRaw.filter((it) => (it.destino ?? "cozinha") === "cozinha") as Item[];
   const pedidosComCozinha = new Set(itens.map((it) => it.pedido_id));
+
+  type DestStatus = { pedido_id: string; destino: "cozinha" | "bar"; status: StatusPedido };
+  const destinoStatusList = (data?.destinoStatus ?? []) as DestStatus[];
+  const cozinhaStatusMap = useMemo(() => {
+    const m = new Map<string, StatusPedido>();
+    for (const d of destinoStatusList) {
+      if (d.destino === "cozinha") m.set(d.pedido_id, d.status);
+    }
+    return m;
+  }, [destinoStatusList]);
+
   const mesas = useMemo(() => {
     const m = new Map<string, Mesa>();
     for (const x of (data?.mesas ?? []) as Mesa[]) m.set(x.id, x);
@@ -180,20 +196,31 @@ function CozinhaKDS() {
 
   const ativos = pedidos.filter(
     (p) =>
-      (p.status === "recebido" || p.status === "em_preparo") &&
-      pedidosComCozinha.has(p.id),
+      p.status !== "cancelado" &&
+      p.status !== "entregue" &&
+      pedidosComCozinha.has(p.id) &&
+      (cozinhaStatusMap.get(p.id) ?? "recebido") !== "pronto",
   );
-  const recebidos = ativos.filter((p) => p.status === "recebido");
-  const emPreparo = ativos.filter((p) => p.status === "em_preparo");
+  const recebidos = ativos.filter(
+    (p) => (cozinhaStatusMap.get(p.id) ?? "recebido") === "recebido",
+  );
+  const emPreparo = ativos.filter(
+    (p) => (cozinhaStatusMap.get(p.id) ?? "recebido") === "em_preparo",
+  );
 
   const algumAtrasado = ativos.some(
     (p) => (Date.now() - new Date(p.criado_em).getTime()) / 60000 >= 15,
   );
 
   const avancar = async (p: Pedido) => {
-    const next: StatusPedido = p.status === "recebido" ? "em_preparo" : "pronto";
+    const atual = cozinhaStatusMap.get(p.id) ?? "recebido";
+    const next: "em_preparo" | "pronto" = atual === "recebido" ? "em_preparo" : "pronto";
     try {
-      await atualizarStatusMut.mutateAsync({ id: p.id, status: next });
+      await atualizarDestinoMut.mutateAsync({
+        pedidoId: p.id,
+        destino: "cozinha",
+        status: next,
+      });
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Erro ao atualizar pedido");
     }
@@ -258,12 +285,12 @@ function CozinhaKDS() {
                 <KdsCard
                   key={p.id}
                   mesa={mesas.get(p.mesa_id)?.numero ?? "?"}
-                  status={p.status}
+                  status={cozinhaStatusMap.get(p.id) ?? "recebido"}
                   criadoEm={p.criado_em}
                   itens={itensPorPedido.get(p.id) ?? []}
                   observacao={p.observacao}
                   onAvancar={() => avancar(p)}
-                  loading={atualizarStatusMut.isPending}
+                  loading={atualizarDestinoMut.isPending}
                   onMarcarItem={marcarItem}
                   itemPendingId={itemPendingId}
                   garcomNome={nomeDoPedido(p)}
@@ -280,12 +307,12 @@ function CozinhaKDS() {
                 <KdsCard
                   key={p.id}
                   mesa={mesas.get(p.mesa_id)?.numero ?? "?"}
-                  status={p.status}
+                  status={cozinhaStatusMap.get(p.id) ?? "em_preparo"}
                   criadoEm={p.criado_em}
                   itens={itensPorPedido.get(p.id) ?? []}
                   observacao={p.observacao}
                   onAvancar={() => avancar(p)}
-                  loading={atualizarStatusMut.isPending}
+                  loading={atualizarDestinoMut.isPending}
                   onMarcarItem={marcarItem}
                   itemPendingId={itemPendingId}
                   garcomNome={nomeDoPedido(p)}
