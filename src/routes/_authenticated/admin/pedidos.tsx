@@ -76,6 +76,11 @@ function PedidosPainel() {
 
   const pedidos = (data?.pedidos ?? []) as Pedido[];
   const itens = (data?.itens ?? []) as Item[];
+  const destinoStatusList = (data?.destinoStatus ?? []) as Array<{
+    pedido_id: string;
+    destino: "cozinha" | "bar";
+    status: StatusPedido;
+  }>;
   const mesas = useMemo(() => {
     const m = new Map<string, Mesa>();
     for (const x of (data?.mesas ?? []) as Mesa[]) m.set(x.id, x);
@@ -181,6 +186,13 @@ function PedidosPainel() {
         itens={aberto ? itensPorPedido.get(aberto.id) ?? [] : []}
         mesa={aberto ? mesas.get(aberto.mesa_id)?.numero : undefined}
         garcomNome={aberto ? nomeDoPedido(aberto) : null}
+        destinoStatus={
+          aberto
+            ? destinoStatusList
+                .filter((d) => d.pedido_id === aberto.id)
+                .map((d) => ({ destino: d.destino, status: d.status }))
+            : []
+        }
         onClose={() => setAberto(null)}
       />
     </div>
