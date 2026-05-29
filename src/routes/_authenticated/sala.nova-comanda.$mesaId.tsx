@@ -94,6 +94,10 @@ function NovaComandaPage() {
     });
   };
 
+  const handleRemoveAll = (produtoId: string) => {
+    setCarrinho((prev) => prev.filter((it) => it.produto_id !== produtoId));
+  };
+
   const enviar = (comandaId?: string) => {
     if (!restauranteId || !mesaId || carrinho.length === 0) return;
     criar.mutate(
@@ -178,6 +182,7 @@ function NovaComandaPage() {
             qtdNoCarrinho={qtdNoCarrinho}
             onAdd={handleAdd}
             onRemove={handleRemove}
+            onRemoveAll={handleRemoveAll}
           />
         )}
       </main>
