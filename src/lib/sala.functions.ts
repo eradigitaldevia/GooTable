@@ -214,6 +214,7 @@ export const carregarSalaFn = createServerFn({ method: "POST" })
       mesas,
       pedidos_prontos,
       chamados_pendentes,
+      permitir_atendimento_cruzado: permitirCruzado,
     };
   });
 
@@ -232,6 +233,14 @@ export const carregarSalaAdminFn = createServerFn({ method: "POST" })
     if (!garcom) return null;
 
     const restauranteId = garcom.restaurante_id as string;
+
+    const { data: restAdmin } = await supabase
+      .from("restaurantes")
+      .select("permitir_atendimento_cruzado")
+      .eq("id", restauranteId)
+      .maybeSingle();
+    const permitirCruzadoAdmin =
+      (restAdmin?.permitir_atendimento_cruzado as boolean | undefined) ?? true;
 
     const { data: atribs, error: aErr } = await supabase
       .from("mesa_garcom")
@@ -276,6 +285,7 @@ export const carregarSalaAdminFn = createServerFn({ method: "POST" })
         mesas,
         pedidos_prontos: [],
         chamados_pendentes: [],
+        permitir_atendimento_cruzado: permitirCruzadoAdmin,
       };
     }
 
