@@ -5,6 +5,8 @@ import {
   atualizarStatusPedidoFn,
   buscarItensPedidoFn,
   buscarClienteRestaurantePorTelefoneFn,
+  cancelarItemPedidoFn,
+  cancelarPedidoFn,
   carregarStatusPedidoFn,
   criarPedidoGarcomFn,
   criarPedidoPublicoFn,
@@ -44,6 +46,32 @@ export function useAtualizarStatusPedido(restauranteId: string | undefined) {
       fn({ data: { id: data.id, status: data.status, restauranteId: restauranteId! } }),
     onSuccess: () => {
       if (restauranteId) qc.invalidateQueries({ queryKey: queryKeys.pedidos(restauranteId) });
+    },
+  });
+}
+
+export function useCancelarPedido(restauranteId: string | undefined) {
+  const fn = useServerFn(cancelarPedidoFn);
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (data: { pedidoId: string; motivo?: string }) =>
+      fn({ data: { pedidoId: data.pedidoId, restauranteId: restauranteId!, motivo: data.motivo } }),
+    onSuccess: (_d, vars) => {
+      if (restauranteId) qc.invalidateQueries({ queryKey: queryKeys.pedidos(restauranteId) });
+      qc.invalidateQueries({ queryKey: queryKeys.pedido(vars.pedidoId) });
+    },
+  });
+}
+
+export function useCancelarItemPedido(restauranteId: string | undefined) {
+  const fn = useServerFn(cancelarItemPedidoFn);
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (data: { itemId: string; pedidoId: string; motivo?: string }) =>
+      fn({ data: { itemId: data.itemId, restauranteId: restauranteId!, motivo: data.motivo } }),
+    onSuccess: (_d, vars) => {
+      if (restauranteId) qc.invalidateQueries({ queryKey: queryKeys.pedidos(restauranteId) });
+      qc.invalidateQueries({ queryKey: queryKeys.pedido(vars.pedidoId) });
     },
   });
 }

@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Minus, Plus, Search } from "lucide-react";
+import { Minus, Plus, Search, Trash2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { formatBRL } from "@/lib/cart";
 import type { Categoria, Produto } from "@/lib/cardapio.functions";
@@ -10,12 +10,14 @@ export function CardapioDensoList({
   qtdNoCarrinho,
   onAdd,
   onRemove,
+  onRemoveAll,
 }: {
   categorias: Categoria[];
   produtos: Produto[];
   qtdNoCarrinho: Map<string, number>;
   onAdd: (produtoId: string) => void;
   onRemove: (produtoId: string) => void;
+  onRemoveAll?: (produtoId: string) => void;
 }) {
   const [busca, setBusca] = useState("");
   const [categoriaId, setCategoriaId] = useState<string | "todas">("todas");
@@ -79,6 +81,16 @@ export function CardapioDensoList({
                 </div>
                 {qtd > 0 ? (
                   <div className="flex items-center gap-1">
+                    {onRemoveAll && (
+                      <button
+                        type="button"
+                        onClick={() => onRemoveAll(p.id)}
+                        className="flex h-9 w-9 items-center justify-center rounded-full border border-border bg-background text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+                        aria-label="Remover todos"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    )}
                     <button
                       type="button"
                       onClick={() => onRemove(p.id)}

@@ -1269,6 +1269,14 @@ export type Database = {
         Args: { _periodo_ref?: string; _restaurante_id: string }
         Returns: number
       }
+      cancelar_item_pedido: {
+        Args: { _item_id: string; _motivo?: string }
+        Returns: undefined
+      }
+      cancelar_pedido: {
+        Args: { _motivo?: string; _pedido_id: string }
+        Returns: undefined
+      }
       confirmar_pagamento: {
         Args: { _pagamento_id: string }
         Returns: undefined
