@@ -48,12 +48,14 @@ const PAPEL_LABEL: Record<PapelMembro, string> = {
   admin: "Admin",
   staff: "Staff",
   cozinheiro: "Cozinheiro",
+  bar: "Bar",
 };
 
 const PAPEL_DESC: Record<PapelMembro, string> = {
   admin: "Acesso total ao painel administrativo",
   staff: "Acesso ao painel (exceto equipe)",
   cozinheiro: "Apenas o Display de cozinha",
+  bar: "Apenas o Display do bar",
 };
 
 interface Membro {
@@ -232,7 +234,7 @@ export function EquipePanel({ restauranteId }: { restauranteId: string }) {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {(["admin", "staff", "cozinheiro"] as PapelMembro[]).map((p) => (
+                    {(["admin", "staff", "cozinheiro", "bar"] as PapelMembro[]).map((p) => (
                       <SelectItem key={p} value={p}>
                         <div className="flex flex-col">
                           <span className="font-medium">{PAPEL_LABEL[p]}</span>
@@ -288,7 +290,7 @@ export function EquipePanel({ restauranteId }: { restauranteId: string }) {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {(["admin", "staff", "cozinheiro"] as PapelMembro[]).map((p) => (
+                    {(["admin", "staff", "cozinheiro", "bar"] as PapelMembro[]).map((p) => (
                       <SelectItem key={p} value={p}>
                         {PAPEL_LABEL[p]}
                       </SelectItem>
@@ -348,7 +350,7 @@ export function EquipePanel({ restauranteId }: { restauranteId: string }) {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      {(["admin", "staff", "cozinheiro"] as PapelMembro[]).map((p) => (
+                      {(["admin", "staff", "cozinheiro", "bar"] as PapelMembro[]).map((p) => (
                         <SelectItem key={p} value={p}>
                           {PAPEL_LABEL[p]}
                         </SelectItem>
