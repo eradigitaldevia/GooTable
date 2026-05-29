@@ -17,8 +17,8 @@ export const Route = createFileRoute("/_authenticated/sala")({
   ssr: false,
   beforeLoad: async () => {
     if (typeof window === "undefined") return;
-    const { data: userData } = await supabase.auth.getUser();
-    const uid = userData.user?.id;
+    const { data: sessionData } = await supabase.auth.getSession();
+    const uid = sessionData.session?.user?.id;
     if (!uid) throw redirect({ to: "/login" });
     const { data: garcom } = await supabase
       .from("garcons")
