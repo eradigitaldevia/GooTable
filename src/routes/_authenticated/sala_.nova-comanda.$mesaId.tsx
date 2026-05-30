@@ -17,7 +17,7 @@ import { IdentificarClienteModal } from "@/components/sala/nova-comanda/identifi
 import { EscolherComandaModal } from "@/components/sala/nova-comanda/escolher-comanda-modal";
 import type { ComandaAbertaInfo } from "@/lib/pedidos.functions";
 
-export const Route = createFileRoute("/_authenticated/sala/nova-comanda/$mesaId")({
+export const Route = createFileRoute("/_authenticated/sala_/nova-comanda/$mesaId")({
   ssr: false,
   beforeLoad: async () => {
     if (typeof window === "undefined") return;
