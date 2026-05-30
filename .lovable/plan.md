@@ -1,79 +1,37 @@
-# Plano — Finalização do papel "Bar" e separação Cozinha × Bar
+# Diagnóstico: botão "+" da mesa não abre nada
 
-Continuação direta da implementação já aprovada. A base (enum `bar`, `destino_preparo`, `pedido_destino_status`, triggers e RPC `atualizar_status_destino`) já está no banco. Falta a camada de UI/UX e a integração dos botões do KDS com o novo RPC.
+## Causa raiz
 
-## 1. Painel do Bar (`/bar`) — layout customizado
+No TanStack Router (convenção de pontos), o arquivo `src/routes/_authenticated/sala.nova-comanda.$mesaId.tsx` é tratado como **rota filha** de `src/routes/_authenticated/sala.tsx`, porque o nome começa com `sala.`.
 
-Rota nova: `src/routes/_authenticated/bar.tsx` (acessível por papéis `bar`, `admin`, `owner`).
+Para que uma rota pai renderize seus filhos, ela precisa ter um `<Outlet />` no componente. O `SalaPage` em `sala.tsx` renderiza a UI da sala diretamente (header + tabs) e **não tem `<Outlet />`**.
 
-Layout intencionalmente diferente da Cozinha (decisão já tomada: "Customizado para bar"):
+Resultado quando o garçom clica no "+":
+- A URL muda corretamente para `/sala/nova-comanda/<mesaId>`.
+- A rota filha "casa", mas não há onde ser renderizada.
+- Visualmente o garçom continua vendo a tela da sala — parece que "nada acontece".
 
-- Sem kanban de colunas. Lista vertical compacta agrupada por mesa.
-- Cada linha = 1 item de bebida com: quantidade, nome, observação, mesa, tempo desde o pedido, botão único "Pronto" (marca todas as unidades) + botão secundário "−1" para marcar unidade a unidade.
-- Cabeçalho fixo com: contagem de pendentes, contagem de prontos hoje, filtro rápido (Pendentes | Em preparo | Todos).
-- Som curto opcional ao chegar novo item (reaproveitar hook de som da cozinha se existir; senão, deixar como follow-up).
+Isso bate exatamente com o sintoma descrito ("nada foi exibido").
 
-Arquivos novos:
-- `src/routes/_authenticated/bar.tsx`
-- `src/components/bar/bar-header.tsx`
-- `src/components/bar/bar-item-row.tsx`
-- `src/components/bar/bar-empty-state.tsx`
-- `src/lib/bar.functions.ts` — `listarItensBar({ restauranteId })` filtrando `destino = 'bar'` e status do destino ≠ `pronto`.
-- `src/hooks/use-bar.ts` — query + realtime em `pedido_itens` e `pedido_destino_status` filtrados por restaurante.
+## Solução proposta
 
-## 2. Migração assistida — `/admin/destinos-preparo`
+A página de nova comanda é uma tela cheia, com header próprio e botão "voltar". Ela **não deve** herdar o layout da sala. A correção mais limpa é desacoplar a rota filha do layout pai usando o sufixo `_` do TanStack:
 
-Rota nova para classificar o que existe hoje antes de operar o bar.
+- Renomear `src/routes/_authenticated/sala.nova-comanda.$mesaId.tsx` para `src/routes/_authenticated/sala_.nova-comanda.$mesaId.tsx`.
+- O `_` final em `sala_` mantém o mesmo path (`/sala/nova-comanda/:mesaId`) mas remove o aninhamento de layout — a rota passa a renderizar fora de `sala.tsx`.
+- Não é preciso mexer no `beforeLoad`, no componente, nem nos `Link`s existentes.
 
-- `src/routes/_authenticated/admin/destinos-preparo.tsx`
-- Tabela 1: Categorias → seletor `cozinha | bar` por linha.
-- Tabela 2: Produtos sem categoria OU com override → seletor `(herdar) | cozinha | bar`.
-- Botão "Salvar" em lote (uma chamada por linha alterada via funções já existentes em `cardapio.functions.ts`).
-- Banner no topo do painel `/bar` quando 0 categorias/produtos estão marcados como `bar`, com link para essa rota.
-- Item no `admin-sidebar.tsx`: "Destinos de preparo" (logo abaixo de Cardápio).
+Após renomear, o `routeTree.gen.ts` será regenerado automaticamente pelo plugin do Vite.
 
-Sem bloqueio rígido: convite de membro `bar` continua permitido, apenas com aviso visual.
+## Verificação
 
-## 3. Detalhe do pedido — agrupar por destino
-
-Editar `src/components/pedidos/detalhe-pedido.tsx`:
-
-- Agrupar `itens` em duas seções: "Cozinha" e "Bar" (ocultar seção vazia).
-- Para cada seção, exibir o status atual vindo de `pedido_destino_status` (badge: Recebido / Em preparo / Pronto).
-- Status geral do pedido (já derivado pelo trigger) permanece no header — apenas leitura.
-
-## 4. KDS Cozinha — usar novo RPC por destino
-
-Editar `src/routes/_authenticated/cozinha.tsx` e `src/components/cozinha/kds-card.tsx` (ou equivalente):
-
-- Botões "Iniciar preparo" / "Marcar pronto" passam a chamar `atualizar_status_destino({ pedido_id, destino: 'cozinha', novo_status })` em vez de atualizar `pedidos.status` diretamente.
-- Manter marcação por unidade (`quantidade_pronta`) como está — o trigger já recomputa o destino.
-
-## 5. Realtime
-
-- `/bar` e `/cozinha` se inscrevem em `pedido_itens` (filtro client-side por `destino`) e em `pedido_destino_status`.
-- Invalidar queries de pedidos no admin quando `pedido_destino_status` mudar (status geral é derivado).
-
-## Arquivos afetados
-
-Novos:
-- `src/routes/_authenticated/bar.tsx`
-- `src/routes/_authenticated/admin/destinos-preparo.tsx`
-- `src/components/bar/bar-header.tsx`
-- `src/components/bar/bar-item-row.tsx`
-- `src/components/bar/bar-empty-state.tsx`
-- `src/lib/bar.functions.ts`
-- `src/hooks/use-bar.ts`
-
-Editados (mínimo necessário):
-- `src/components/admin/admin-sidebar.tsx` — item "Destinos de preparo"
-- `src/components/pedidos/detalhe-pedido.tsx` — agrupar por destino + badges
-- `src/routes/_authenticated/cozinha.tsx` — usar RPC por destino
-- `src/components/cozinha/kds-card.tsx` (ou caminho real do card) — idem
-- `src/hooks/use-pedidos.ts` — incluir `destino_status` na query do detalhe
+1. Login como garçom.
+2. Em "Mesas", clicar no botão "+" de uma mesa.
+3. A tela de nova comanda (cardápio denso + carrinho) deve abrir em tela cheia.
+4. Voltar pela seta deve retornar para `/sala`.
 
 ## Fora de escopo
 
-- Som no painel do Bar (decidir depois).
-- Bloqueio rígido de convite `bar` antes da classificação.
-- Métricas/relatórios por destino.
+- Não mexer no layout/UI da nova comanda.
+- Não alterar `sala.tsx` (continua sem `<Outlet />` por design).
+- Outras rotas que usem padrão similar (ex.: `sala_.$garcomId.sala.tsx` em admin) já estão corretas.

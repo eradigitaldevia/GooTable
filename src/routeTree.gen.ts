@@ -42,7 +42,7 @@ import { Route as AuthenticatedAdminChamadosRouteImport } from './routes/_authen
 import { Route as AuthenticatedAdminCardapioPreviewRouteImport } from './routes/_authenticated/admin/cardapio-preview'
 import { Route as AuthenticatedAdminCardapioRouteImport } from './routes/_authenticated/admin/cardapio'
 import { Route as MQrTokenStatusPedidoIdRouteImport } from './routes/m.$qrToken.status.$pedidoId'
-import { Route as AuthenticatedSalaNovaComandaMesaIdRouteImport } from './routes/_authenticated/sala.nova-comanda.$mesaId'
+import { Route as AuthenticatedSalaNovaComandaMesaIdRouteImport } from './routes/_authenticated/sala_.nova-comanda.$mesaId'
 import { Route as AuthenticatedAdminClientesIdRouteImport } from './routes/_authenticated/admin/clientes.$id'
 import { Route as AuthenticatedAdminGarconsGarcomIdSalaRouteImport } from './routes/_authenticated/admin/garcons_.$garcomId.sala'
 
@@ -224,9 +224,9 @@ const MQrTokenStatusPedidoIdRoute = MQrTokenStatusPedidoIdRouteImport.update({
 } as any)
 const AuthenticatedSalaNovaComandaMesaIdRoute =
   AuthenticatedSalaNovaComandaMesaIdRouteImport.update({
-    id: '/nova-comanda/$mesaId',
-    path: '/nova-comanda/$mesaId',
-    getParentRoute: () => AuthenticatedSalaRoute,
+    id: '/sala_/nova-comanda/$mesaId',
+    path: '/sala/nova-comanda/$mesaId',
+    getParentRoute: () => AuthenticatedRoute,
   } as any)
 const AuthenticatedAdminClientesIdRoute =
   AuthenticatedAdminClientesIdRouteImport.update({
@@ -251,7 +251,7 @@ export interface FileRoutesByFullPath {
   '/admin': typeof AuthenticatedAdminRouteWithChildren
   '/bar': typeof AuthenticatedBarRoute
   '/cozinha': typeof AuthenticatedCozinhaRoute
-  '/sala': typeof AuthenticatedSalaRouteWithChildren
+  '/sala': typeof AuthenticatedSalaRoute
   '/m/$qrToken': typeof MQrTokenRouteWithChildren
   '/superadmin/logs': typeof SuperadminLogsRoute
   '/superadmin/restaurantes': typeof SuperadminRestaurantesRouteWithChildren
@@ -286,7 +286,7 @@ export interface FileRoutesByTo {
   '/reset-password': typeof ResetPasswordRoute
   '/bar': typeof AuthenticatedBarRoute
   '/cozinha': typeof AuthenticatedCozinhaRoute
-  '/sala': typeof AuthenticatedSalaRouteWithChildren
+  '/sala': typeof AuthenticatedSalaRoute
   '/m/$qrToken': typeof MQrTokenRouteWithChildren
   '/superadmin/logs': typeof SuperadminLogsRoute
   '/superadmin/restaurantes': typeof SuperadminRestaurantesRouteWithChildren
@@ -325,7 +325,7 @@ export interface FileRoutesById {
   '/_authenticated/admin': typeof AuthenticatedAdminRouteWithChildren
   '/_authenticated/bar': typeof AuthenticatedBarRoute
   '/_authenticated/cozinha': typeof AuthenticatedCozinhaRoute
-  '/_authenticated/sala': typeof AuthenticatedSalaRouteWithChildren
+  '/_authenticated/sala': typeof AuthenticatedSalaRoute
   '/m/$qrToken': typeof MQrTokenRouteWithChildren
   '/superadmin/logs': typeof SuperadminLogsRoute
   '/superadmin/restaurantes': typeof SuperadminRestaurantesRouteWithChildren
@@ -348,7 +348,7 @@ export interface FileRoutesById {
   '/superadmin/restaurantes/$id': typeof SuperadminRestaurantesIdRoute
   '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
   '/_authenticated/admin/clientes/$id': typeof AuthenticatedAdminClientesIdRoute
-  '/_authenticated/sala/nova-comanda/$mesaId': typeof AuthenticatedSalaNovaComandaMesaIdRoute
+  '/_authenticated/sala_/nova-comanda/$mesaId': typeof AuthenticatedSalaNovaComandaMesaIdRoute
   '/m/$qrToken/status/$pedidoId': typeof MQrTokenStatusPedidoIdRoute
   '/_authenticated/admin/garcons_/$garcomId/sala': typeof AuthenticatedAdminGarconsGarcomIdSalaRoute
 }
@@ -460,7 +460,7 @@ export interface FileRouteTypes {
     | '/superadmin/restaurantes/$id'
     | '/_authenticated/admin/'
     | '/_authenticated/admin/clientes/$id'
-    | '/_authenticated/sala/nova-comanda/$mesaId'
+    | '/_authenticated/sala_/nova-comanda/$mesaId'
     | '/m/$qrToken/status/$pedidoId'
     | '/_authenticated/admin/garcons_/$garcomId/sala'
   fileRoutesById: FileRoutesById
@@ -709,12 +709,12 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof MQrTokenStatusPedidoIdRouteImport
       parentRoute: typeof MQrTokenRoute
     }
-    '/_authenticated/sala/nova-comanda/$mesaId': {
-      id: '/_authenticated/sala/nova-comanda/$mesaId'
-      path: '/nova-comanda/$mesaId'
+    '/_authenticated/sala_/nova-comanda/$mesaId': {
+      id: '/_authenticated/sala_/nova-comanda/$mesaId'
+      path: '/sala/nova-comanda/$mesaId'
       fullPath: '/sala/nova-comanda/$mesaId'
       preLoaderRoute: typeof AuthenticatedSalaNovaComandaMesaIdRouteImport
-      parentRoute: typeof AuthenticatedSalaRoute
+      parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/admin/clientes/$id': {
       id: '/_authenticated/admin/clientes/$id'
@@ -787,30 +787,21 @@ const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
 const AuthenticatedAdminRouteWithChildren =
   AuthenticatedAdminRoute._addFileChildren(AuthenticatedAdminRouteChildren)
 
-interface AuthenticatedSalaRouteChildren {
-  AuthenticatedSalaNovaComandaMesaIdRoute: typeof AuthenticatedSalaNovaComandaMesaIdRoute
-}
-
-const AuthenticatedSalaRouteChildren: AuthenticatedSalaRouteChildren = {
-  AuthenticatedSalaNovaComandaMesaIdRoute:
-    AuthenticatedSalaNovaComandaMesaIdRoute,
-}
-
-const AuthenticatedSalaRouteWithChildren =
-  AuthenticatedSalaRoute._addFileChildren(AuthenticatedSalaRouteChildren)
-
 interface AuthenticatedRouteChildren {
   AuthenticatedAdminRoute: typeof AuthenticatedAdminRouteWithChildren
   AuthenticatedBarRoute: typeof AuthenticatedBarRoute
   AuthenticatedCozinhaRoute: typeof AuthenticatedCozinhaRoute
-  AuthenticatedSalaRoute: typeof AuthenticatedSalaRouteWithChildren
+  AuthenticatedSalaRoute: typeof AuthenticatedSalaRoute
+  AuthenticatedSalaNovaComandaMesaIdRoute: typeof AuthenticatedSalaNovaComandaMesaIdRoute
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedAdminRoute: AuthenticatedAdminRouteWithChildren,
   AuthenticatedBarRoute: AuthenticatedBarRoute,
   AuthenticatedCozinhaRoute: AuthenticatedCozinhaRoute,
-  AuthenticatedSalaRoute: AuthenticatedSalaRouteWithChildren,
+  AuthenticatedSalaRoute: AuthenticatedSalaRoute,
+  AuthenticatedSalaNovaComandaMesaIdRoute:
+    AuthenticatedSalaNovaComandaMesaIdRoute,
 }
 
 const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
