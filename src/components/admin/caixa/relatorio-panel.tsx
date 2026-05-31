@@ -31,11 +31,29 @@ export function RelatorioPanel({ restauranteId }: { restauranteId: string }) {
     () => (hist ?? []).filter((t) => t.status === "fechado"),
     [hist],
   );
+  const [opFiltro, setOpFiltro] = useState<string>("todos");
   const [selId, setSelId] = useState<string | undefined>(undefined);
-  const turno: TurnoCaixa | undefined =
-    fechados.find((t) => t.id === selId) ?? fechados[0];
 
-  if (!turno) {
+  const operadores = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const t of fechados) {
+      if (t.operador_user_id) map.set(t.operador_user_id, t.operador_nome);
+    }
+    return Array.from(map.entries()).map(([id, nome]) => ({ id, nome }));
+  }, [fechados]);
+
+  const fechadosFiltrados = useMemo(
+    () =>
+      opFiltro === "todos"
+        ? fechados
+        : fechados.filter((t) => t.operador_user_id === opFiltro),
+    [fechados, opFiltro],
+  );
+
+  const turno: TurnoCaixa | undefined =
+    fechadosFiltrados.find((t) => t.id === selId) ?? fechadosFiltrados[0];
+
+  if (fechados.length === 0) {
     return (
       <Card className="p-5 text-sm text-muted-foreground">
         Nenhum turno fechado ainda. Feche um caixa para gerar o primeiro relatório.
@@ -60,22 +78,66 @@ export function RelatorioPanel({ restauranteId }: { restauranteId: string }) {
   return (
     <div className="space-y-4">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="text-sm text-muted-foreground">
-          {fmtDateTime(turno.aberto_em)} → {fmtDateTime(turno.fechado_em)} · Operador:{" "}
-          <strong className="text-foreground">{turno.operador_nome}</strong>
-        </div>
-        <Select value={turno.id} onValueChange={setSelId}>
-          <SelectTrigger className="sm:w-72">
-            <SelectValue />
+        <Select value={opFiltro} onValueChange={(v) => { setOpFiltro(v); setSelId(undefined); }}>
+          <SelectTrigger className="sm:w-56">
+            <SelectValue placeholder="Filtrar operador" />
           </SelectTrigger>
           <SelectContent>
-            {fechados.map((t) => (
-              <SelectItem key={t.id} value={t.id}>
-                {fmtDateTime(t.aberto_em)} — {t.operador_nome}
+            <SelectItem value="todos">Todos operadores</SelectItem>
+            {operadores.map((o) => (
+              <SelectItem key={o.id} value={o.id}>
+                {o.nome}
               </SelectItem>
             ))}
           </SelectContent>
         </Select>
+        {turno && (
+          <Select value={turno.id} onValueChange={setSelId}>
+            <SelectTrigger className="sm:w-72">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {fechadosFiltrados.map((t) => (
+                <SelectItem key={t.id} value={t.id}>
+                  {fmtDateTime(t.aberto_em)} — {t.operador_nome}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        )}
+      </div>
+
+      {!turno ? (
+        <Card className="p-5 text-sm text-muted-foreground">
+          Nenhum turno fechado para o operador selecionado.
+        </Card>
+      ) : (
+        <TurnoDetalhes turno={turno} />
+      )}
+    </div>
+  );
+}
+
+function TurnoDetalhes({ turno }: { turno: TurnoCaixa }) {
+  const vendas = Number(turno.snapshot_total_vendas ?? 0);
+  const qtd = Number(turno.snapshot_qtd_pedidos ?? 0);
+  const ticket = qtd > 0 ? vendas / qtd : 0;
+  const dif = Number(turno.diferenca ?? 0);
+
+  const linhas: Array<{ label: string; valor: number }> = [
+    { label: "Dinheiro", valor: Number(turno.snapshot_total_dinheiro ?? 0) },
+    { label: "Cartão", valor: Number(turno.snapshot_total_cartao ?? 0) },
+    { label: "PIX", valor: Number(turno.snapshot_total_pix ?? 0) },
+    { label: "Fiado", valor: Number(turno.snapshot_total_fiado ?? 0) },
+    { label: "Outro", valor: Number(turno.snapshot_total_outro ?? 0) },
+  ];
+  const max = Math.max(1, ...linhas.map((l) => l.valor));
+
+  return (
+    <div className="space-y-4">
+      <div className="text-sm text-muted-foreground">
+          {fmtDateTime(turno.aberto_em)} → {fmtDateTime(turno.fechado_em)} · Operador:{" "}
+          <strong className="text-foreground">{turno.operador_nome}</strong>
       </div>
 
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
