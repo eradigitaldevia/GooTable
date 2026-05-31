@@ -313,7 +313,7 @@ function ClienteMenu() {
             cliente_id: item.cliente_id ?? identidade.clienteId,
             cliente_nome: item.cliente_nome ?? identidade.nome,
           });
-          toast.success("Adicionado ao carrinho");
+          requestAnimationFrame(() => toast.success("Adicionado ao carrinho"));
         }}
       />
     </div>
