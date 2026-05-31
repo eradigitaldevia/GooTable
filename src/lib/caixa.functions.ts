@@ -180,7 +180,7 @@ export const registrarMovimentoCaixaFn = createServerFn({ method: "POST" })
       _turno_id: data.turnoId,
       _tipo: data.tipo,
       _valor: data.valor,
-      _motivo: data.motivo ?? null,
+      _motivo: data.motivo ?? "",
     });
     if (error) throw new Error(error.message);
     return { id: id as unknown as string };
@@ -204,8 +204,8 @@ export const fecharCaixaFn = createServerFn({ method: "POST" })
       _turno_id: data.turnoId,
       _contagem_fisica: data.contagemFisica,
       _fundo_final: data.fundoFinal,
-      _obs: data.obsFechamento ?? null,
+      _obs: data.obsFechamento ?? "",
     });
     if (error) throw new Error(error.message);
-    return res as { diferenca: number; totais: TotaisTurno };
+    return res as unknown as { diferenca: number; totais: TotaisTurno };
   });
