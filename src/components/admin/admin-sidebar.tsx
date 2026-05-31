@@ -37,7 +37,7 @@ import type { PapelMembro } from "@/lib/equipe.functions";
 const NAV = [
   { to: "/admin", label: "Dashboard", icon: LayoutDashboard, exact: true },
   { to: "/admin/pedidos", label: "Pedidos", icon: ClipboardList, exact: false },
-  { to: "/caixa", label: "Caixa", icon: Wallet, exact: false },
+  { to: "/caixa", label: "Caixa", icon: Wallet, exact: false, target: "_blank" as const },
   { to: "/admin/cardapio", label: "Cardápio", icon: UtensilsCrossed, exact: true },
   { to: "/admin/cardapio-preview", label: "Prévia do cardápio", icon: Eye, exact: false },
   { to: "/admin/destinos-preparo", label: "Destinos de preparo", icon: ChefHat, exact: false },
@@ -102,9 +102,12 @@ export function AdminSidebar({
   const path = useRouterState({ select: (s) => s.location.pathname });
   const pendentes = useChamadosPendentesCount(restaurante.id);
   const podeVerEquipe = isPlatformAdmin || papel === "admin";
+  const podeAcessarCaixa =
+    isPlatformAdmin || papel === "admin" || papel === "caixa";
   const navItems = NAV.filter(
     (item) => {
       if (item.to === "/admin/equipe" && !podeVerEquipe) return false;
+      if (item.to === "/caixa" && !podeAcessarCaixa) return false;
       return true;
     },
   );

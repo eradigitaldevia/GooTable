@@ -2,6 +2,9 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { assertAcessoRestaurante } from "./auth.server";
+import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import type { SupabaseClient } from "@supabase/supabase-js";
+import type { Database } from "@/integrations/supabase/types";
 
 export type TurnoCaixaStatus = "aberto" | "fechado";
 export type MovimentoCaixaTipo = "abertura" | "sangria" | "suprimento" | "fechamento";
@@ -57,6 +60,76 @@ export interface TotaisTurno {
 
 const SELECT_TURNO =
   "id, restaurante_id, operador_user_id, operador_nome, aberto_em, fechado_em, fundo_inicial, fundo_final, contagem_fisica, diferenca, obs_fechamento, status, snapshot_total_vendas, snapshot_total_dinheiro, snapshot_total_cartao, snapshot_total_pix, snapshot_total_fiado, snapshot_total_outro, snapshot_total_sangrias, snapshot_total_suprimentos, snapshot_qtd_pedidos";
+
+/**
+ * Carrega o papel do usuário no restaurante e se ele é platform admin.
+ * Usado para os gates de mutação do caixa.
+ */
+async function getContextoPermissaoCaixa(
+  supabase: SupabaseClient<Database>,
+  userId: string,
+  restauranteId: string,
+) {
+  const [{ data: membro }, { data: pa }] = await Promise.all([
+    supabase
+      .from("restaurante_membros")
+      .select("papel")
+      .eq("user_id", userId)
+      .eq("restaurante_id", restauranteId)
+      .maybeSingle(),
+    supabase
+      .from("platform_admins")
+      .select("user_id")
+      .eq("user_id", userId)
+      .maybeSingle(),
+  ]);
+  return {
+    papel: (membro?.papel ?? null) as
+      | "admin"
+      | "caixa"
+      | "staff"
+      | "cozinheiro"
+      | "bar"
+      | null,
+    isPlatformAdmin: !!pa,
+  };
+}
+
+async function getOperadorNome(userId: string): Promise<string | null> {
+  try {
+    const { data } = await supabaseAdmin.auth.admin.getUserById(userId);
+    return data.user?.email ?? null;
+  } catch {
+    return null;
+  }
+}
+
+type CaixaEventoTipo =
+  | "abrir"
+  | "sangria"
+  | "suprimento"
+  | "pagamento_confirmado"
+  | "fechar"
+  | "assumir"
+  | "aviso_teto";
+
+async function gravarEventoCaixa(args: {
+  restauranteId: string;
+  turnoId: string;
+  tipo: CaixaEventoTipo;
+  atorUserId: string;
+  atorNome: string | null;
+  payload?: Record<string, unknown>;
+}) {
+  await supabaseAdmin.from("caixa_eventos").insert({
+    restaurante_id: args.restauranteId,
+    turno_id: args.turnoId,
+    tipo: args.tipo,
+    payload: (args.payload ?? {}) as never,
+    ator_user_id: args.atorUserId,
+    ator_nome: args.atorNome,
+  });
+}
 
 export const obterTurnoAtivoFn = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -153,13 +226,39 @@ export const abrirCaixaFn = createServerFn({ method: "POST" })
   .handler(async ({ context, data }) => {
     const { supabase, userId } = context;
     await assertAcessoRestaurante(supabase, userId, data.restauranteId);
+    const ctx = await getContextoPermissaoCaixa(supabase, userId, data.restauranteId);
+    if (ctx.isPlatformAdmin && ctx.papel !== "admin" && ctx.papel !== "caixa") {
+      throw new Error("Super-admin não pode abrir caixa.");
+    }
+    if (ctx.papel !== "admin" && ctx.papel !== "caixa") {
+      throw new Error("Apenas usuários com papel admin ou caixa podem abrir o caixa.");
+    }
+    // Bloqueio de turno duplicado (Bloco 5)
+    const { data: aberto } = await supabase
+      .from("turnos_caixa")
+      .select("id")
+      .eq("restaurante_id", data.restauranteId)
+      .eq("status", "aberto")
+      .maybeSingle();
+    if (aberto) {
+      throw new Error("Já existe um turno aberto para este restaurante.");
+    }
     const { data: id, error } = await supabase.rpc("abrir_turno_caixa", {
       _restaurante_id: data.restauranteId,
       _operador_nome: data.operadorNome,
       _fundo_inicial: data.fundoInicial,
     });
     if (error) throw new Error(error.message);
-    return { id: id as unknown as string };
+    const turnoId = id as unknown as string;
+    await gravarEventoCaixa({
+      restauranteId: data.restauranteId,
+      turnoId,
+      tipo: "abrir",
+      atorUserId: userId,
+      atorNome: data.operadorNome,
+      payload: { fundo_inicial: data.fundoInicial },
+    });
+    return { id: turnoId };
   });
 
 export const registrarMovimentoCaixaFn = createServerFn({ method: "POST" })
@@ -176,6 +275,18 @@ export const registrarMovimentoCaixaFn = createServerFn({ method: "POST" })
   .handler(async ({ context, data }) => {
     const { supabase, userId } = context;
     await assertAcessoRestaurante(supabase, userId, data.restauranteId);
+    // Gate "dono do turno" (Bloco 3)
+    const { data: turno } = await supabase
+      .from("turnos_caixa")
+      .select("operador_user_id, status")
+      .eq("id", data.turnoId)
+      .maybeSingle();
+    if (!turno || turno.status !== "aberto") {
+      throw new Error("Turno não está aberto.");
+    }
+    if (turno.operador_user_id !== userId) {
+      throw new Error("Apenas o operador do turno pode realizar esta ação.");
+    }
     const { data: id, error } = await supabase.rpc("registrar_movimento_caixa", {
       _turno_id: data.turnoId,
       _tipo: data.tipo,
@@ -183,6 +294,15 @@ export const registrarMovimentoCaixaFn = createServerFn({ method: "POST" })
       _motivo: data.motivo ?? "",
     });
     if (error) throw new Error(error.message);
+    const nome = await getOperadorNome(userId);
+    await gravarEventoCaixa({
+      restauranteId: data.restauranteId,
+      turnoId: data.turnoId,
+      tipo: data.tipo,
+      atorUserId: userId,
+      atorNome: nome,
+      payload: { valor: data.valor, motivo: data.motivo ?? null },
+    });
     return { id: id as unknown as string };
   });
 
@@ -200,6 +320,18 @@ export const fecharCaixaFn = createServerFn({ method: "POST" })
   .handler(async ({ context, data }) => {
     const { supabase, userId } = context;
     await assertAcessoRestaurante(supabase, userId, data.restauranteId);
+    // Gate "dono do turno" (Bloco 3)
+    const { data: turno } = await supabase
+      .from("turnos_caixa")
+      .select("operador_user_id, status")
+      .eq("id", data.turnoId)
+      .maybeSingle();
+    if (!turno || turno.status !== "aberto") {
+      throw new Error("Turno não está aberto.");
+    }
+    if (turno.operador_user_id !== userId) {
+      throw new Error("Apenas o operador do turno pode fechar o caixa.");
+    }
     const { data: res, error } = await supabase.rpc("fechar_turno_caixa", {
       _turno_id: data.turnoId,
       _contagem_fisica: data.contagemFisica,
@@ -207,5 +339,95 @@ export const fecharCaixaFn = createServerFn({ method: "POST" })
       _obs: data.obsFechamento ?? "",
     });
     if (error) throw new Error(error.message);
+    const nome = await getOperadorNome(userId);
+    await gravarEventoCaixa({
+      restauranteId: data.restauranteId,
+      turnoId: data.turnoId,
+      tipo: "fechar",
+      atorUserId: userId,
+      atorNome: nome,
+      payload: {
+        contagem_fisica: data.contagemFisica,
+        fundo_final: data.fundoFinal,
+      },
+    });
     return res as unknown as { diferenca: number; totais: TotaisTurno };
+  });
+
+/**
+ * Assume a propriedade de um turno aberto.
+ * Restrito a usuários com papel "admin" do restaurante (não super-admin, não caixa).
+ */
+export const assumirTurnoFn = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) =>
+    z
+      .object({
+        restauranteId: z.string().uuid(),
+        turnoId: z.string().uuid(),
+        novoOperadorNome: z.string().trim().min(1).max(120),
+      })
+      .parse(d),
+  )
+  .handler(async ({ context, data }) => {
+    const { supabase, userId } = context;
+    await assertAcessoRestaurante(supabase, userId, data.restauranteId);
+
+    const ctx = await getContextoPermissaoCaixa(supabase, userId, data.restauranteId);
+    if (ctx.papel !== "admin") {
+      throw new Error("Apenas um admin do restaurante pode assumir o turno.");
+    }
+
+    const { data: turno, error: tErr } = await supabase
+      .from("turnos_caixa")
+      .select("operador_user_id, operador_nome, status")
+      .eq("id", data.turnoId)
+      .eq("restaurante_id", data.restauranteId)
+      .maybeSingle();
+    if (tErr) throw new Error(tErr.message);
+    if (!turno || turno.status !== "aberto") {
+      throw new Error("Turno não está aberto.");
+    }
+    if (turno.operador_user_id === userId) {
+      return { ok: true, already: true };
+    }
+
+    const operadorAnteriorNome = turno.operador_nome;
+    const operadorAnteriorUserId = turno.operador_user_id;
+
+    const { error: uErr } = await supabaseAdmin
+      .from("turnos_caixa")
+      .update({
+        operador_user_id: userId,
+        operador_nome: data.novoOperadorNome,
+      })
+      .eq("id", data.turnoId);
+    if (uErr) throw new Error(uErr.message);
+
+    await gravarEventoCaixa({
+      restauranteId: data.restauranteId,
+      turnoId: data.turnoId,
+      tipo: "assumir",
+      atorUserId: userId,
+      atorNome: data.novoOperadorNome,
+      payload: {
+        operador_anterior_user_id: operadorAnteriorUserId,
+        operador_anterior_nome: operadorAnteriorNome,
+      },
+    });
+
+    await supabaseAdmin.from("audit_logs").insert({
+      actor_user_id: userId,
+      acao: "assumir_turno_caixa",
+      entidade: "turno_caixa",
+      entidade_id: data.turnoId,
+      metadata: {
+        restaurante_id: data.restauranteId,
+        operador_anterior_user_id: operadorAnteriorUserId,
+        operador_anterior_nome: operadorAnteriorNome,
+        novo_operador_nome: data.novoOperadorNome,
+      } as never,
+    });
+
+    return { ok: true, already: false };
   });

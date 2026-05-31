@@ -7,7 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Loader2, Lock } from "lucide-react";
 import { toast } from "sonner";
 import { formatBRL } from "@/lib/cart";
-import { useFecharCaixa, useTotaisTurno } from "@/hooks/use-caixa";
+import { useAssumirTurno, useFecharCaixa, useTotaisTurno } from "@/hooks/use-caixa";
 import type { TurnoCaixa } from "@/lib/caixa.functions";
 
 function formatHora(iso: string) {
@@ -24,12 +24,19 @@ function formatHora(iso: string) {
 export function TurnoAbertoPainel({
   restauranteId,
   turno,
+  souDono = true,
+  podeAssumir = false,
+  meuNomeSugerido,
 }: {
   restauranteId: string;
   turno: TurnoCaixa;
+  souDono?: boolean;
+  podeAssumir?: boolean;
+  meuNomeSugerido?: string | null;
 }) {
   const { data: totais } = useTotaisTurno(restauranteId, turno.id);
   const fechar = useFecharCaixa(restauranteId);
+  const assumir = useAssumirTurno(restauranteId);
 
   const [contagem, setContagem] = useState("");
   const [fundoProx, setFundoProx] = useState(Number(turno.fundo_inicial).toFixed(2));
@@ -42,6 +49,10 @@ export function TurnoAbertoPainel({
   }, [contagem, totais]);
 
   const submit = async () => {
+    if (!souDono) {
+      toast.error("Apenas o operador do turno pode fechar o caixa.");
+      return;
+    }
     const cf = Number(contagem.replace(",", "."));
     const ff = Number(fundoProx.replace(",", "."));
     if (!Number.isFinite(cf) || cf < 0) {
@@ -65,6 +76,23 @@ export function TurnoAbertoPainel({
     }
   };
 
+  const handleAssumir = async () => {
+    const nome = (meuNomeSugerido ?? "").trim();
+    if (!nome) {
+      toast.error("Não foi possível identificar seu nome de operador.");
+      return;
+    }
+    if (!window.confirm(
+      `Você vai assumir o turno aberto por ${turno.operador_nome}. Esta ação fica registrada na auditoria.`,
+    )) return;
+    try {
+      await assumir.mutateAsync({ turnoId: turno.id, novoOperadorNome: nome });
+      toast.success("Turno assumido");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Erro ao assumir turno");
+    }
+  };
+
   const metric = (label: string, value: string, sub?: string, tone?: "pos" | "neg") => (
     <Card className="p-4">
       <div className="text-[11px] uppercase tracking-wide text-muted-foreground">{label}</div>
@@ -85,6 +113,20 @@ export function TurnoAbertoPainel({
         Caixa aberto · Iniciado às <strong>{formatHora(turno.aberto_em)}</strong> · Operador:{" "}
         <strong>{turno.operador_nome}</strong>
       </div>
+
+      {!souDono && podeAssumir && (
+        <div className="flex items-center justify-between rounded-lg border border-border bg-card px-4 py-3 text-sm">
+          <div className="text-muted-foreground">
+            Você é admin e não é o operador deste turno. Assuma para operar o caixa.
+          </div>
+          <Button size="sm" onClick={handleAssumir} disabled={assumir.isPending}>
+            {assumir.isPending ? (
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            ) : null}
+            Assumir turno
+          </Button>
+        </div>
+      )}
 
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         {metric("Fundo inicial", formatBRL(Number(turno.fundo_inicial)), "Informado na abertura")}
@@ -189,7 +231,8 @@ export function TurnoAbertoPainel({
           variant="destructive"
           className="mt-4 w-full"
           onClick={submit}
-          disabled={fechar.isPending}
+          disabled={fechar.isPending || !souDono}
+          title={!souDono ? "Apenas o operador do turno pode fechar o caixa" : undefined}
         >
           {fechar.isPending ? (
             <Loader2 className="mr-2 h-4 w-4 animate-spin" />

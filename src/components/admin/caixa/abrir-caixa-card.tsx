@@ -10,9 +10,11 @@ import { useAbrirCaixa, useHistoricoTurnos } from "@/hooks/use-caixa";
 export function AbrirCaixaCard({
   restauranteId,
   operadorPadrao,
+  bloquearOperador = false,
 }: {
   restauranteId: string;
   operadorPadrao?: string;
+  bloquearOperador?: boolean;
 }) {
   const { data: hist } = useHistoricoTurnos(restauranteId);
   const ultimo = hist?.find((t) => t.status === "fechado");
@@ -57,6 +59,8 @@ export function AbrirCaixaCard({
             value={operador}
             onChange={(e) => setOperador(e.target.value)}
             placeholder="Nome do operador"
+            disabled={bloquearOperador && !!operadorPadrao}
+            readOnly={bloquearOperador && !!operadorPadrao}
           />
         </div>
         <div className="space-y-1">

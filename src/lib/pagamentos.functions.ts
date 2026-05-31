@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { assertAcessoRestaurante } from "./auth.server";
+import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
 export type PagamentoMetodo = "pix" | "dinheiro" | "cartao" | "fiado" | "outro";
 export type PagamentoStatus = "pendente" | "confirmado" | "cancelado";
@@ -80,6 +81,17 @@ export const registrarPagamentoFn = createServerFn({ method: "POST" })
     const { supabase, userId } = context;
     await assertAcessoRestaurante(supabase, userId, data.restauranteId);
 
+    // Gate de "dono do turno" quando há turno aberto (Bloco 3)
+    const { data: turno } = await supabase
+      .from("turnos_caixa")
+      .select("id, operador_user_id")
+      .eq("restaurante_id", data.restauranteId)
+      .eq("status", "aberto")
+      .maybeSingle();
+    if (turno && turno.operador_user_id !== userId) {
+      throw new Error("Apenas o operador do turno pode confirmar pagamentos.");
+    }
+
     const { data: id, error } = await supabase.rpc("registrar_pagamento", {
       _comanda_id: data.comandaId,
       _metodo: data.metodo,
@@ -87,6 +99,25 @@ export const registrarPagamentoFn = createServerFn({ method: "POST" })
       _observacao: data.observacao ?? undefined,
     });
     if (error) throw new Error(error.message);
+
+    if (turno?.id) {
+      try {
+        await supabaseAdmin.from("caixa_eventos").insert({
+          restaurante_id: data.restauranteId,
+          turno_id: turno.id,
+          tipo: "pagamento_confirmado",
+          payload: {
+            comanda_id: data.comandaId,
+            metodo: data.metodo,
+            valor: data.valor,
+          } as never,
+          ator_user_id: userId,
+        });
+      } catch {
+        // não falhar a operação por erro na auditoria
+      }
+    }
+
     return { id: id as unknown as string };
   });
 

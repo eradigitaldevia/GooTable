@@ -5,6 +5,7 @@ import { LogOut, Wallet, ArrowLeftRight, FileText, Receipt } from "lucide-react"
 import { cn } from "@/lib/utils";
 import type { Restaurante } from "@/lib/restaurante.functions";
 import type { TurnoCaixa } from "@/lib/caixa.functions";
+import type { PapelMembro } from "@/lib/equipe.functions";
 
 const ITENS = [
   { to: "/caixa", label: "Caixa", icon: Wallet, exact: true },
@@ -18,15 +19,29 @@ export function CaixaShell({
   operadorNome,
   turno,
   onSignOut,
+  userId,
+  papel,
+  isPlatformAdmin,
   children,
 }: {
   restaurante: Restaurante;
   operadorNome: string | null | undefined;
   turno: TurnoCaixa | null;
   onSignOut: () => Promise<void>;
+  userId?: string | null;
+  papel?: PapelMembro | null;
+  isPlatformAdmin?: boolean;
   children: React.ReactNode;
 }) {
   const path = useRouterState({ select: (s) => s.location.pathname });
+
+  const souDono = !!(turno && userId && turno.operador_user_id === userId);
+  const modoLeitura = !!turno && (isPlatformAdmin || !souDono);
+  const badgeModo = isPlatformAdmin
+    ? { label: "Modo suporte (leitura)", variant: "outline" as const }
+    : turno && !souDono
+      ? { label: `Leitura · operador ${turno.operador_nome}`, variant: "outline" as const }
+      : null;
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
@@ -46,6 +61,11 @@ export function CaixaShell({
             <Badge className="bg-emerald-600 hover:bg-emerald-600">Turno aberto</Badge>
           ) : (
             <Badge variant="secondary">Sem turno</Badge>
+          )}
+          {badgeModo && (
+            <Badge variant={badgeModo.variant} className="hidden sm:inline-flex">
+              {badgeModo.label}
+            </Badge>
           )}
           <Button variant="ghost" size="sm" onClick={onSignOut} className="gap-2">
             <LogOut className="h-4 w-4" />
@@ -75,7 +95,16 @@ export function CaixaShell({
         </nav>
       </header>
 
-      <main className="mx-auto w-full max-w-6xl flex-1 p-4 sm:p-6">{children}</main>
+      <main className="mx-auto w-full max-w-6xl flex-1 p-4 sm:p-6">
+        {modoLeitura && (
+          <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-2 text-xs text-amber-900 dark:border-amber-900/40 dark:bg-amber-950/30 dark:text-amber-200">
+            {isPlatformAdmin
+              ? "Super-admin opera o caixa em modo somente leitura. Para destravar uma situação, promova um admin do restaurante."
+              : `Turno em uso por ${turno?.operador_nome}. Você está em modo leitura.`}
+          </div>
+        )}
+        {children}
+      </main>
     </div>
   );
 }

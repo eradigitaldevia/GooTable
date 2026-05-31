@@ -44,6 +44,39 @@ export type Database = {
         }
         Relationships: []
       }
+      caixa_eventos: {
+        Row: {
+          ator_nome: string | null
+          ator_user_id: string | null
+          criado_em: string
+          id: string
+          payload: Json
+          restaurante_id: string
+          tipo: string
+          turno_id: string
+        }
+        Insert: {
+          ator_nome?: string | null
+          ator_user_id?: string | null
+          criado_em?: string
+          id?: string
+          payload?: Json
+          restaurante_id: string
+          tipo: string
+          turno_id: string
+        }
+        Update: {
+          ator_nome?: string | null
+          ator_user_id?: string | null
+          criado_em?: string
+          id?: string
+          payload?: Json
+          restaurante_id?: string
+          tipo?: string
+          turno_id?: string
+        }
+        Relationships: []
+      }
       campanhas: {
         Row: {
           agendada_para: string | null
