@@ -42,6 +42,7 @@ function CaixaIndexPage() {
           souDono={souDono}
           podeAssumir={podeAssumir}
           meuNomeSugerido={user?.email ?? null}
+          conferenciaCega={!!restaurante.caixa_conferencia_cega}
         />
       ) : (
         <AbrirCaixaCard

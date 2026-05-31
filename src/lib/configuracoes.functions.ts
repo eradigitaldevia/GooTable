@@ -32,6 +32,10 @@ const configSchema = z.object({
   pix_nome_titular: z.string().trim().max(80).nullable(),
   comissao_modo: z.enum(["pedido", "item"]),
   permitir_atendimento_cruzado: z.boolean(),
+  caixa_alerta_horas: z.number().int().min(1).max(72),
+  caixa_teto_dinheiro: z.number().min(0).max(10_000_000).nullable(),
+  caixa_conferencia_cega: z.boolean(),
+  caixa_obrigatorio_para_pagamento: z.boolean(),
 });
 
 export const atualizarConfiguracoesFn = createServerFn({ method: "POST" })
@@ -57,6 +61,10 @@ export const atualizarConfiguracoesFn = createServerFn({ method: "POST" })
         pix_nome_titular: data.pix_nome_titular || null,
         comissao_modo: data.comissao_modo,
         permitir_atendimento_cruzado: data.permitir_atendimento_cruzado,
+        caixa_alerta_horas: data.caixa_alerta_horas,
+        caixa_teto_dinheiro: data.caixa_teto_dinheiro,
+        caixa_conferencia_cega: data.caixa_conferencia_cega,
+        caixa_obrigatorio_para_pagamento: data.caixa_obrigatorio_para_pagamento,
       })
       .eq("id", data.restauranteId);
     if (error) throw new Error(error.message);

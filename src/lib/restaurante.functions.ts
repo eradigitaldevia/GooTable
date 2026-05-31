@@ -16,6 +16,10 @@ export interface Restaurante {
   ativo: boolean;
   comissao_modo: "pedido" | "item";
   permitir_atendimento_cruzado: boolean;
+  caixa_alerta_horas: number;
+  caixa_teto_dinheiro: number | null;
+  caixa_conferencia_cega: boolean;
+  caixa_obrigatorio_para_pagamento: boolean;
 }
 
 /** Restaurante do usuário autenticado (primeiro vínculo). */
