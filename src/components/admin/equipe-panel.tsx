@@ -42,7 +42,7 @@ import {
   useReenviarConviteMembro,
   useRemoverMembroEquipe,
 } from "@/hooks/use-equipe";
-import type { PapelMembro } from "@/lib/equipe.functions";
+import { PAPEIS, type PapelMembro } from "@/lib/equipe.functions";
 
 const PAPEL_LABEL: Record<PapelMembro, string> = {
   admin: "Admin",
@@ -236,7 +236,7 @@ export function EquipePanel({ restauranteId }: { restauranteId: string }) {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {(["admin", "staff", "cozinheiro", "bar"] as PapelMembro[]).map((p) => (
+                    {PAPEIS.map((p) => (
                       <SelectItem key={p} value={p}>
                         <div className="flex flex-col">
                           <span className="font-medium">{PAPEL_LABEL[p]}</span>
@@ -292,7 +292,7 @@ export function EquipePanel({ restauranteId }: { restauranteId: string }) {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {(["admin", "staff", "cozinheiro", "bar"] as PapelMembro[]).map((p) => (
+                    {PAPEIS.map((p) => (
                       <SelectItem key={p} value={p}>
                         {PAPEL_LABEL[p]}
                       </SelectItem>
@@ -352,7 +352,7 @@ export function EquipePanel({ restauranteId }: { restauranteId: string }) {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      {(["admin", "staff", "cozinheiro", "bar"] as PapelMembro[]).map((p) => (
+                      {PAPEIS.map((p) => (
                         <SelectItem key={p} value={p}>
                           {PAPEL_LABEL[p]}
                         </SelectItem>
