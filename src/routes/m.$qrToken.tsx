@@ -307,13 +307,13 @@ function ClienteMenu() {
         produto={selecionado}
         onClose={() => setSelecionado(null)}
         onAdd={(item) => {
+          setSelecionado(null);
           addToCart(qrToken, {
             ...item,
             cliente_id: item.cliente_id ?? identidade.clienteId,
             cliente_nome: item.cliente_nome ?? identidade.nome,
           });
           toast.success("Adicionado ao carrinho");
-          setSelecionado(null);
         }}
       />
     </div>
