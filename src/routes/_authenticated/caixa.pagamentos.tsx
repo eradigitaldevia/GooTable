@@ -51,7 +51,8 @@ function CaixaPagamentosPage() {
   const isPlatformAdmin = !!paData?.isPlatformAdmin;
   const souDono = !!(turno && user?.id && turno.operador_user_id === user.id);
   const podeConfirmar = souDono && !isPlatformAdmin;
-  const now = useTick(30_000);
+  useTick(30_000);
+  const now = Date.now();
 
   const [selecionada, setSelecionada] = useState<
     { comandaId: string; restante: number } | null
