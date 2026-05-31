@@ -49,6 +49,9 @@ export const Route = createFileRoute("/_authenticated/admin")({
       if (papelData?.papel === "bar") {
         throw redirect({ to: "/bar" });
       }
+      if (papelData?.papel === "caixa") {
+        throw redirect({ to: "/caixa" });
+      }
     }
 
     return {

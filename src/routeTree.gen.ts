@@ -22,13 +22,18 @@ import { Route as SuperadminLogsRouteImport } from './routes/superadmin.logs'
 import { Route as MQrTokenRouteImport } from './routes/m.$qrToken'
 import { Route as AuthenticatedSalaRouteImport } from './routes/_authenticated/sala'
 import { Route as AuthenticatedCozinhaRouteImport } from './routes/_authenticated/cozinha'
+import { Route as AuthenticatedCaixaRouteImport } from './routes/_authenticated/caixa'
 import { Route as AuthenticatedBarRouteImport } from './routes/_authenticated/bar'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
+import { Route as AuthenticatedCaixaIndexRouteImport } from './routes/_authenticated/caixa.index'
 import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin/index'
 import { Route as SuperadminRestaurantesIdRouteImport } from './routes/superadmin.restaurantes.$id'
 import { Route as MQrTokenMinhaContaRouteImport } from './routes/m.$qrToken.minha-conta'
 import { Route as MQrTokenContaRouteImport } from './routes/m.$qrToken.conta'
 import { Route as MQrTokenCarrinhoRouteImport } from './routes/m.$qrToken.carrinho'
+import { Route as AuthenticatedCaixaRelatorioRouteImport } from './routes/_authenticated/caixa.relatorio'
+import { Route as AuthenticatedCaixaPagamentosRouteImport } from './routes/_authenticated/caixa.pagamentos'
+import { Route as AuthenticatedCaixaMovimentosRouteImport } from './routes/_authenticated/caixa.movimentos'
 import { Route as AuthenticatedAdminPedidosRouteImport } from './routes/_authenticated/admin/pedidos'
 import { Route as AuthenticatedAdminMesasRouteImport } from './routes/_authenticated/admin/mesas'
 import { Route as AuthenticatedAdminGarconsRouteImport } from './routes/_authenticated/admin/garcons'
@@ -111,6 +116,11 @@ const AuthenticatedCozinhaRoute = AuthenticatedCozinhaRouteImport.update({
   path: '/cozinha',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthenticatedCaixaRoute = AuthenticatedCaixaRouteImport.update({
+  id: '/caixa',
+  path: '/caixa',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
 const AuthenticatedBarRoute = AuthenticatedBarRouteImport.update({
   id: '/bar',
   path: '/bar',
@@ -120,6 +130,11 @@ const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
   id: '/admin',
   path: '/admin',
   getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedCaixaIndexRoute = AuthenticatedCaixaIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AuthenticatedCaixaRoute,
 } as any)
 const AuthenticatedAdminIndexRoute = AuthenticatedAdminIndexRouteImport.update({
   id: '/',
@@ -147,6 +162,24 @@ const MQrTokenCarrinhoRoute = MQrTokenCarrinhoRouteImport.update({
   path: '/carrinho',
   getParentRoute: () => MQrTokenRoute,
 } as any)
+const AuthenticatedCaixaRelatorioRoute =
+  AuthenticatedCaixaRelatorioRouteImport.update({
+    id: '/relatorio',
+    path: '/relatorio',
+    getParentRoute: () => AuthenticatedCaixaRoute,
+  } as any)
+const AuthenticatedCaixaPagamentosRoute =
+  AuthenticatedCaixaPagamentosRouteImport.update({
+    id: '/pagamentos',
+    path: '/pagamentos',
+    getParentRoute: () => AuthenticatedCaixaRoute,
+  } as any)
+const AuthenticatedCaixaMovimentosRoute =
+  AuthenticatedCaixaMovimentosRouteImport.update({
+    id: '/movimentos',
+    path: '/movimentos',
+    getParentRoute: () => AuthenticatedCaixaRoute,
+  } as any)
 const AuthenticatedAdminPedidosRoute =
   AuthenticatedAdminPedidosRouteImport.update({
     id: '/pedidos',
@@ -256,6 +289,7 @@ export interface FileRoutesByFullPath {
   '/superadmin': typeof SuperadminRouteWithChildren
   '/admin': typeof AuthenticatedAdminRouteWithChildren
   '/bar': typeof AuthenticatedBarRoute
+  '/caixa': typeof AuthenticatedCaixaRouteWithChildren
   '/cozinha': typeof AuthenticatedCozinhaRoute
   '/sala': typeof AuthenticatedSalaRoute
   '/m/$qrToken': typeof MQrTokenRouteWithChildren
@@ -275,11 +309,15 @@ export interface FileRoutesByFullPath {
   '/admin/garcons': typeof AuthenticatedAdminGarconsRoute
   '/admin/mesas': typeof AuthenticatedAdminMesasRoute
   '/admin/pedidos': typeof AuthenticatedAdminPedidosRoute
+  '/caixa/movimentos': typeof AuthenticatedCaixaMovimentosRoute
+  '/caixa/pagamentos': typeof AuthenticatedCaixaPagamentosRoute
+  '/caixa/relatorio': typeof AuthenticatedCaixaRelatorioRoute
   '/m/$qrToken/carrinho': typeof MQrTokenCarrinhoRoute
   '/m/$qrToken/conta': typeof MQrTokenContaRoute
   '/m/$qrToken/minha-conta': typeof MQrTokenMinhaContaRoute
   '/superadmin/restaurantes/$id': typeof SuperadminRestaurantesIdRoute
   '/admin/': typeof AuthenticatedAdminIndexRoute
+  '/caixa/': typeof AuthenticatedCaixaIndexRoute
   '/admin/clientes/$id': typeof AuthenticatedAdminClientesIdRoute
   '/sala/nova-comanda/$mesaId': typeof AuthenticatedSalaNovaComandaMesaIdRoute
   '/m/$qrToken/status/$pedidoId': typeof MQrTokenStatusPedidoIdRoute
@@ -311,11 +349,15 @@ export interface FileRoutesByTo {
   '/admin/garcons': typeof AuthenticatedAdminGarconsRoute
   '/admin/mesas': typeof AuthenticatedAdminMesasRoute
   '/admin/pedidos': typeof AuthenticatedAdminPedidosRoute
+  '/caixa/movimentos': typeof AuthenticatedCaixaMovimentosRoute
+  '/caixa/pagamentos': typeof AuthenticatedCaixaPagamentosRoute
+  '/caixa/relatorio': typeof AuthenticatedCaixaRelatorioRoute
   '/m/$qrToken/carrinho': typeof MQrTokenCarrinhoRoute
   '/m/$qrToken/conta': typeof MQrTokenContaRoute
   '/m/$qrToken/minha-conta': typeof MQrTokenMinhaContaRoute
   '/superadmin/restaurantes/$id': typeof SuperadminRestaurantesIdRoute
   '/admin': typeof AuthenticatedAdminIndexRoute
+  '/caixa': typeof AuthenticatedCaixaIndexRoute
   '/admin/clientes/$id': typeof AuthenticatedAdminClientesIdRoute
   '/sala/nova-comanda/$mesaId': typeof AuthenticatedSalaNovaComandaMesaIdRoute
   '/m/$qrToken/status/$pedidoId': typeof MQrTokenStatusPedidoIdRoute
@@ -332,6 +374,7 @@ export interface FileRoutesById {
   '/superadmin': typeof SuperadminRouteWithChildren
   '/_authenticated/admin': typeof AuthenticatedAdminRouteWithChildren
   '/_authenticated/bar': typeof AuthenticatedBarRoute
+  '/_authenticated/caixa': typeof AuthenticatedCaixaRouteWithChildren
   '/_authenticated/cozinha': typeof AuthenticatedCozinhaRoute
   '/_authenticated/sala': typeof AuthenticatedSalaRoute
   '/m/$qrToken': typeof MQrTokenRouteWithChildren
@@ -351,11 +394,15 @@ export interface FileRoutesById {
   '/_authenticated/admin/garcons': typeof AuthenticatedAdminGarconsRoute
   '/_authenticated/admin/mesas': typeof AuthenticatedAdminMesasRoute
   '/_authenticated/admin/pedidos': typeof AuthenticatedAdminPedidosRoute
+  '/_authenticated/caixa/movimentos': typeof AuthenticatedCaixaMovimentosRoute
+  '/_authenticated/caixa/pagamentos': typeof AuthenticatedCaixaPagamentosRoute
+  '/_authenticated/caixa/relatorio': typeof AuthenticatedCaixaRelatorioRoute
   '/m/$qrToken/carrinho': typeof MQrTokenCarrinhoRoute
   '/m/$qrToken/conta': typeof MQrTokenContaRoute
   '/m/$qrToken/minha-conta': typeof MQrTokenMinhaContaRoute
   '/superadmin/restaurantes/$id': typeof SuperadminRestaurantesIdRoute
   '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
+  '/_authenticated/caixa/': typeof AuthenticatedCaixaIndexRoute
   '/_authenticated/admin/clientes/$id': typeof AuthenticatedAdminClientesIdRoute
   '/_authenticated/sala_/nova-comanda/$mesaId': typeof AuthenticatedSalaNovaComandaMesaIdRoute
   '/m/$qrToken/status/$pedidoId': typeof MQrTokenStatusPedidoIdRoute
@@ -372,6 +419,7 @@ export interface FileRouteTypes {
     | '/superadmin'
     | '/admin'
     | '/bar'
+    | '/caixa'
     | '/cozinha'
     | '/sala'
     | '/m/$qrToken'
@@ -391,11 +439,15 @@ export interface FileRouteTypes {
     | '/admin/garcons'
     | '/admin/mesas'
     | '/admin/pedidos'
+    | '/caixa/movimentos'
+    | '/caixa/pagamentos'
+    | '/caixa/relatorio'
     | '/m/$qrToken/carrinho'
     | '/m/$qrToken/conta'
     | '/m/$qrToken/minha-conta'
     | '/superadmin/restaurantes/$id'
     | '/admin/'
+    | '/caixa/'
     | '/admin/clientes/$id'
     | '/sala/nova-comanda/$mesaId'
     | '/m/$qrToken/status/$pedidoId'
@@ -427,11 +479,15 @@ export interface FileRouteTypes {
     | '/admin/garcons'
     | '/admin/mesas'
     | '/admin/pedidos'
+    | '/caixa/movimentos'
+    | '/caixa/pagamentos'
+    | '/caixa/relatorio'
     | '/m/$qrToken/carrinho'
     | '/m/$qrToken/conta'
     | '/m/$qrToken/minha-conta'
     | '/superadmin/restaurantes/$id'
     | '/admin'
+    | '/caixa'
     | '/admin/clientes/$id'
     | '/sala/nova-comanda/$mesaId'
     | '/m/$qrToken/status/$pedidoId'
@@ -447,6 +503,7 @@ export interface FileRouteTypes {
     | '/superadmin'
     | '/_authenticated/admin'
     | '/_authenticated/bar'
+    | '/_authenticated/caixa'
     | '/_authenticated/cozinha'
     | '/_authenticated/sala'
     | '/m/$qrToken'
@@ -466,11 +523,15 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/garcons'
     | '/_authenticated/admin/mesas'
     | '/_authenticated/admin/pedidos'
+    | '/_authenticated/caixa/movimentos'
+    | '/_authenticated/caixa/pagamentos'
+    | '/_authenticated/caixa/relatorio'
     | '/m/$qrToken/carrinho'
     | '/m/$qrToken/conta'
     | '/m/$qrToken/minha-conta'
     | '/superadmin/restaurantes/$id'
     | '/_authenticated/admin/'
+    | '/_authenticated/caixa/'
     | '/_authenticated/admin/clientes/$id'
     | '/_authenticated/sala_/nova-comanda/$mesaId'
     | '/m/$qrToken/status/$pedidoId'
@@ -581,6 +642,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedCozinhaRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/caixa': {
+      id: '/_authenticated/caixa'
+      path: '/caixa'
+      fullPath: '/caixa'
+      preLoaderRoute: typeof AuthenticatedCaixaRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/bar': {
       id: '/_authenticated/bar'
       path: '/bar'
@@ -594,6 +662,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/admin'
       preLoaderRoute: typeof AuthenticatedAdminRouteImport
       parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/caixa/': {
+      id: '/_authenticated/caixa/'
+      path: '/'
+      fullPath: '/caixa/'
+      preLoaderRoute: typeof AuthenticatedCaixaIndexRouteImport
+      parentRoute: typeof AuthenticatedCaixaRoute
     }
     '/_authenticated/admin/': {
       id: '/_authenticated/admin/'
@@ -629,6 +704,27 @@ declare module '@tanstack/react-router' {
       fullPath: '/m/$qrToken/carrinho'
       preLoaderRoute: typeof MQrTokenCarrinhoRouteImport
       parentRoute: typeof MQrTokenRoute
+    }
+    '/_authenticated/caixa/relatorio': {
+      id: '/_authenticated/caixa/relatorio'
+      path: '/relatorio'
+      fullPath: '/caixa/relatorio'
+      preLoaderRoute: typeof AuthenticatedCaixaRelatorioRouteImport
+      parentRoute: typeof AuthenticatedCaixaRoute
+    }
+    '/_authenticated/caixa/pagamentos': {
+      id: '/_authenticated/caixa/pagamentos'
+      path: '/pagamentos'
+      fullPath: '/caixa/pagamentos'
+      preLoaderRoute: typeof AuthenticatedCaixaPagamentosRouteImport
+      parentRoute: typeof AuthenticatedCaixaRoute
+    }
+    '/_authenticated/caixa/movimentos': {
+      id: '/_authenticated/caixa/movimentos'
+      path: '/movimentos'
+      fullPath: '/caixa/movimentos'
+      preLoaderRoute: typeof AuthenticatedCaixaMovimentosRouteImport
+      parentRoute: typeof AuthenticatedCaixaRoute
     }
     '/_authenticated/admin/pedidos': {
       id: '/_authenticated/admin/pedidos'
@@ -808,9 +904,27 @@ const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
 const AuthenticatedAdminRouteWithChildren =
   AuthenticatedAdminRoute._addFileChildren(AuthenticatedAdminRouteChildren)
 
+interface AuthenticatedCaixaRouteChildren {
+  AuthenticatedCaixaMovimentosRoute: typeof AuthenticatedCaixaMovimentosRoute
+  AuthenticatedCaixaPagamentosRoute: typeof AuthenticatedCaixaPagamentosRoute
+  AuthenticatedCaixaRelatorioRoute: typeof AuthenticatedCaixaRelatorioRoute
+  AuthenticatedCaixaIndexRoute: typeof AuthenticatedCaixaIndexRoute
+}
+
+const AuthenticatedCaixaRouteChildren: AuthenticatedCaixaRouteChildren = {
+  AuthenticatedCaixaMovimentosRoute: AuthenticatedCaixaMovimentosRoute,
+  AuthenticatedCaixaPagamentosRoute: AuthenticatedCaixaPagamentosRoute,
+  AuthenticatedCaixaRelatorioRoute: AuthenticatedCaixaRelatorioRoute,
+  AuthenticatedCaixaIndexRoute: AuthenticatedCaixaIndexRoute,
+}
+
+const AuthenticatedCaixaRouteWithChildren =
+  AuthenticatedCaixaRoute._addFileChildren(AuthenticatedCaixaRouteChildren)
+
 interface AuthenticatedRouteChildren {
   AuthenticatedAdminRoute: typeof AuthenticatedAdminRouteWithChildren
   AuthenticatedBarRoute: typeof AuthenticatedBarRoute
+  AuthenticatedCaixaRoute: typeof AuthenticatedCaixaRouteWithChildren
   AuthenticatedCozinhaRoute: typeof AuthenticatedCozinhaRoute
   AuthenticatedSalaRoute: typeof AuthenticatedSalaRoute
   AuthenticatedSalaNovaComandaMesaIdRoute: typeof AuthenticatedSalaNovaComandaMesaIdRoute
@@ -819,6 +933,7 @@ interface AuthenticatedRouteChildren {
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedAdminRoute: AuthenticatedAdminRouteWithChildren,
   AuthenticatedBarRoute: AuthenticatedBarRoute,
+  AuthenticatedCaixaRoute: AuthenticatedCaixaRouteWithChildren,
   AuthenticatedCozinhaRoute: AuthenticatedCozinhaRoute,
   AuthenticatedSalaRoute: AuthenticatedSalaRoute,
   AuthenticatedSalaNovaComandaMesaIdRoute:
