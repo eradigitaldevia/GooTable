@@ -61,8 +61,6 @@ function CaixaPagamentosPage() {
   const [garcomFiltro, setGarcomFiltro] = useState<string>("todos");
   const [modoTv, setModoTv] = useState(false);
 
-  if (!restaurante) return null;
-
   const todas = comandas ?? [];
   const garcons = useMemo(() => {
     const map = new Map<string, string>();
@@ -86,6 +84,8 @@ function CaixaPagamentosPage() {
       return mesa.includes(q) || titular.includes(q) || garcom.includes(q);
     });
   }, [todas, busca, garcomFiltro]);
+
+  if (!restaurante) return null;
 
   const motivoBloqueio = isPlatformAdmin
     ? "Super-admin opera apenas em modo leitura."
