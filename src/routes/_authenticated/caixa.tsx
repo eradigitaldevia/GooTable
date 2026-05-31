@@ -2,6 +2,8 @@ import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
 import { useAuth } from "@/hooks/use-auth";
 import { useMeuRestaurante } from "@/hooks/use-restaurante";
 import { useTurnoAtivo } from "@/hooks/use-caixa";
+import { useMeuPapel } from "@/hooks/use-equipe";
+import { useVerificarPlatformAdmin } from "@/hooks/use-superadmin";
 import { CaixaShell } from "@/components/caixa/caixa-shell";
 import { queryKeys } from "@/lib/query-keys";
 import { getMeuRestauranteFn } from "@/lib/restaurante.functions";
@@ -51,6 +53,8 @@ function CaixaLayout() {
   const { user, signOut } = useAuth();
   const { data: restaurante, isLoading } = useMeuRestaurante(user?.id);
   const { data: turno } = useTurnoAtivo(restaurante?.id);
+  const { data: papelData } = useMeuPapel();
+  const { data: paData } = useVerificarPlatformAdmin();
 
   if (isLoading || !restaurante) {
     return (
@@ -66,6 +70,9 @@ function CaixaLayout() {
       operadorNome={user?.email ?? null}
       turno={turno ?? null}
       onSignOut={signOut}
+      userId={user?.id ?? null}
+      papel={papelData?.papel ?? null}
+      isPlatformAdmin={!!paData?.isPlatformAdmin}
     >
       <Outlet />
     </CaixaShell>
