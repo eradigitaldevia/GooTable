@@ -186,6 +186,9 @@ export interface ComandaPagamentoPendente {
   pagamentos_pendentes: number;
   fechada_em: string | null;
   atualizado_em: string;
+  aberta_em: string;
+  garcom_id: string | null;
+  garcom_nome: string | null;
 }
 
 export const listarComandasPagamentoPendenteFn = createServerFn({ method: "POST" })
@@ -200,7 +203,7 @@ export const listarComandasPagamentoPendenteFn = createServerFn({ method: "POST"
     const { data: rows, error } = await supabase
       .from("comandas")
       .select(
-        "id, sessao_id, subtotal, total, total_pago, fechada_em, atualizado_em, titular_cliente_id, sessao:mesa_sessoes!inner(mesa_id), titular:clientes(nome)",
+        "id, sessao_id, subtotal, total, total_pago, fechada_em, atualizado_em, criado_em, titular_cliente_id, sessao:mesa_sessoes!inner(mesa_id), titular:clientes(nome)",
       )
       .eq("restaurante_id", data.restauranteId)
       .eq("status", "aberta")
@@ -214,6 +217,7 @@ export const listarComandasPagamentoPendenteFn = createServerFn({ method: "POST"
       total_pago: number | string | null;
       fechada_em: string | null;
       atualizado_em: string;
+      criado_em: string;
       sessao: { mesa_id: string } | null;
       titular: { nome: string | null } | null;
     };
@@ -236,6 +240,9 @@ export const listarComandasPagamentoPendenteFn = createServerFn({ method: "POST"
           pagamentos_pendentes: 0,
           fechada_em: r.fechada_em,
           atualizado_em: r.atualizado_em,
+          aberta_em: r.criado_em,
+          garcom_id: null as string | null,
+          garcom_nome: null as string | null,
         } satisfies ComandaPagamentoPendente;
       })
       .filter((c) => c.restante > 0.0001);
@@ -245,7 +252,7 @@ export const listarComandasPagamentoPendenteFn = createServerFn({ method: "POST"
     const mesaIds = Array.from(new Set(comComSaldo.map((c) => c.mesa_id).filter(Boolean)));
     const comandaIds = comComSaldo.map((c) => c.comanda_id);
 
-    const [{ data: mesas }, { data: pags }] = await Promise.all([
+    const [{ data: mesas }, { data: pags }, { data: atribs }] = await Promise.all([
       mesaIds.length
         ? supabase.from("mesas").select("id, numero").in("id", mesaIds)
         : Promise.resolve({ data: [] as Array<{ id: string; numero: string | null }> }),
@@ -254,6 +261,21 @@ export const listarComandasPagamentoPendenteFn = createServerFn({ method: "POST"
         .select("comanda_id, status")
         .in("comanda_id", comandaIds)
         .eq("status", "pendente"),
+      mesaIds.length
+        ? supabase
+            .from("mesa_garcom")
+            .select("mesa_id, garcom_id, atribuido_em, garcom:garcons(nome)")
+            .in("mesa_id", mesaIds)
+            .is("liberado_em", null)
+            .order("atribuido_em", { ascending: false })
+        : Promise.resolve({
+            data: [] as Array<{
+              mesa_id: string;
+              garcom_id: string;
+              atribuido_em: string;
+              garcom: { nome: string | null } | null;
+            }>,
+          }),
     ]);
 
     const mesaMap = new Map((mesas ?? []).map((m) => [m.id, m.numero ?? null]));
@@ -261,10 +283,22 @@ export const listarComandasPagamentoPendenteFn = createServerFn({ method: "POST"
     for (const p of (pags ?? []) as Array<{ comanda_id: string }>) {
       pendMap.set(p.comanda_id, (pendMap.get(p.comanda_id) ?? 0) + 1);
     }
+    const garcomMap = new Map<string, { id: string; nome: string | null }>();
+    for (const a of (atribs ?? []) as Array<{
+      mesa_id: string;
+      garcom_id: string;
+      garcom: { nome: string | null } | null;
+    }>) {
+      if (!garcomMap.has(a.mesa_id)) {
+        garcomMap.set(a.mesa_id, { id: a.garcom_id, nome: a.garcom?.nome ?? null });
+      }
+    }
 
     return comComSaldo.map((c) => ({
       ...c,
       mesa_numero: c.mesa_id ? (mesaMap.get(c.mesa_id) ?? null) : null,
       pagamentos_pendentes: pendMap.get(c.comanda_id) ?? 0,
+      garcom_id: c.mesa_id ? (garcomMap.get(c.mesa_id)?.id ?? null) : null,
+      garcom_nome: c.mesa_id ? (garcomMap.get(c.mesa_id)?.nome ?? null) : null,
     }));
   });
