@@ -75,7 +75,9 @@ async function resolveDestination(userId: string, requested?: string) {
       ? "/cozinha"
       : membro?.papel === "bar"
         ? "/bar"
-        : "/admin";
+        : membro?.papel === "caixa"
+          ? "/caixa"
+          : "/admin";
   setCachedDestination(userId, dest);
   return dest;
 }
