@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import {
   abrirCaixaFn,
+  assumirTurnoFn,
   fecharCaixaFn,
   listarMovimentosTurnoFn,
   listarTurnosFn,
@@ -109,6 +110,20 @@ export function useFecharCaixa(restauranteId: string | undefined) {
       qc.invalidateQueries({ queryKey: kHist(restauranteId) });
       qc.invalidateQueries({ queryKey: kMov(restauranteId, vars.turnoId) });
       qc.invalidateQueries({ queryKey: kTotais(restauranteId, vars.turnoId) });
+    },
+  });
+}
+
+export function useAssumirTurno(restauranteId: string | undefined) {
+  const fn = useServerFn(assumirTurnoFn);
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (data: { turnoId: string; novoOperadorNome: string }) =>
+      fn({ data: { restauranteId: restauranteId!, ...data } }),
+    onSuccess: () => {
+      if (!restauranteId) return;
+      qc.invalidateQueries({ queryKey: kAtivo(restauranteId) });
+      qc.invalidateQueries({ queryKey: kHist(restauranteId) });
     },
   });
 }
