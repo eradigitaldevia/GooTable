@@ -1,7 +1,8 @@
 import { Link, useRouterState } from "@tanstack/react-router";
+import { useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { LogOut, Wallet, ArrowLeftRight, FileText, Receipt } from "lucide-react";
+import { LogOut, Wallet, ArrowLeftRight, FileText, Receipt, AlertTriangle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { Restaurante } from "@/lib/restaurante.functions";
 import type { TurnoCaixa } from "@/lib/caixa.functions";
@@ -42,6 +43,14 @@ export function CaixaShell({
     : turno && !souDono
       ? { label: `Leitura · operador ${turno.operador_nome}`, variant: "outline" as const }
       : null;
+
+  const alertaHoras = restaurante.caixa_alerta_horas ?? 12;
+  const horasAberto = useMemo(() => {
+    if (!turno?.aberto_em) return 0;
+    const ms = Date.now() - new Date(turno.aberto_em).getTime();
+    return ms / 1000 / 60 / 60;
+  }, [turno?.aberto_em]);
+  const turnoLongo = !!turno && horasAberto >= alertaHoras;
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
@@ -96,6 +105,16 @@ export function CaixaShell({
       </header>
 
       <main className="mx-auto w-full max-w-6xl flex-1 p-4 sm:p-6">
+        {turnoLongo && (
+          <div className="mb-3 flex items-start gap-2 rounded-lg border border-amber-300 bg-amber-50 px-4 py-2 text-xs text-amber-900 dark:border-amber-900/40 dark:bg-amber-950/30 dark:text-amber-200">
+            <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+            <div>
+              Este turno está aberto há mais de {alertaHoras}h
+              ({Math.floor(horasAberto)}h). Verifique se o caixa anterior foi
+              corretamente fechado.
+            </div>
+          </div>
+        )}
         {modoLeitura && (
           <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-2 text-xs text-amber-900 dark:border-amber-900/40 dark:bg-amber-950/30 dark:text-amber-200">
             {isPlatformAdmin
