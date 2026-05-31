@@ -116,7 +116,7 @@ export const listarComandasPagamentoPendenteFn = createServerFn({ method: "POST"
     const { data: rows, error } = await supabase
       .from("comandas")
       .select(
-        "id, mesa_id:sessao_id, subtotal, total, total_pago, fechada_em, atualizado_em, titular_cliente_id, sessao:mesa_sessoes!inner(mesa_id, mesa:mesas(numero)), titular:clientes(nome), pagamentos(id, status)",
+        "id, sessao_id, subtotal, total, total_pago, fechada_em, atualizado_em, titular_cliente_id, sessao:mesa_sessoes!inner(mesa_id), titular:clientes(nome)",
       )
       .eq("restaurante_id", data.restauranteId)
       .eq("status", "aberta")
@@ -130,13 +130,12 @@ export const listarComandasPagamentoPendenteFn = createServerFn({ method: "POST"
       total_pago: number | string | null;
       fechada_em: string | null;
       atualizado_em: string;
-      sessao: { mesa_id: string; mesa: { numero: string | null } | null } | null;
+      sessao: { mesa_id: string } | null;
       titular: { nome: string | null } | null;
-      pagamentos: Array<{ id: string; status: string }> | null;
     };
 
     const list = (rows ?? []) as unknown as Row[];
-    return list
+    const comComSaldo = list
       .map((r) => {
         const total = Number(r.total ?? 0);
         const total_pago = Number(r.total_pago ?? 0);
@@ -144,17 +143,44 @@ export const listarComandasPagamentoPendenteFn = createServerFn({ method: "POST"
         return {
           comanda_id: r.id,
           mesa_id: r.sessao?.mesa_id ?? "",
-          mesa_numero: r.sessao?.mesa?.numero ?? null,
+          mesa_numero: null as string | null,
           titular_nome: r.titular?.nome ?? null,
           subtotal: Number(r.subtotal ?? 0),
           total,
           total_pago,
           restante,
-          pagamentos_pendentes:
-            (r.pagamentos ?? []).filter((p) => p.status === "pendente").length,
+          pagamentos_pendentes: 0,
           fechada_em: r.fechada_em,
           atualizado_em: r.atualizado_em,
         } satisfies ComandaPagamentoPendente;
       })
       .filter((c) => c.restante > 0.0001);
+
+    if (comComSaldo.length === 0) return comComSaldo;
+
+    const mesaIds = Array.from(new Set(comComSaldo.map((c) => c.mesa_id).filter(Boolean)));
+    const comandaIds = comComSaldo.map((c) => c.comanda_id);
+
+    const [{ data: mesas }, { data: pags }] = await Promise.all([
+      mesaIds.length
+        ? supabase.from("mesas").select("id, numero").in("id", mesaIds)
+        : Promise.resolve({ data: [] as Array<{ id: string; numero: string | null }> }),
+      supabase
+        .from("pagamentos")
+        .select("comanda_id, status")
+        .in("comanda_id", comandaIds)
+        .eq("status", "pendente"),
+    ]);
+
+    const mesaMap = new Map((mesas ?? []).map((m) => [m.id, m.numero ?? null]));
+    const pendMap = new Map<string, number>();
+    for (const p of (pags ?? []) as Array<{ comanda_id: string }>) {
+      pendMap.set(p.comanda_id, (pendMap.get(p.comanda_id) ?? 0) + 1);
+    }
+
+    return comComSaldo.map((c) => ({
+      ...c,
+      mesa_numero: c.mesa_id ? (mesaMap.get(c.mesa_id) ?? null) : null,
+      pagamentos_pendentes: pendMap.get(c.comanda_id) ?? 0,
+    }));
   });
