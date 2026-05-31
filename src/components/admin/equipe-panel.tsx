@@ -49,6 +49,7 @@ const PAPEL_LABEL: Record<PapelMembro, string> = {
   staff: "Staff",
   cozinheiro: "Cozinheiro",
   bar: "Bar",
+  caixa: "Caixa",
 };
 
 const PAPEL_DESC: Record<PapelMembro, string> = {
@@ -56,6 +57,7 @@ const PAPEL_DESC: Record<PapelMembro, string> = {
   staff: "Acesso ao painel (exceto equipe)",
   cozinheiro: "Apenas o Display de cozinha",
   bar: "Apenas o Display do bar",
+  caixa: "Apenas o painel de Caixa",
 };
 
 interface Membro {

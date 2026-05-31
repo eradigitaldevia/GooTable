@@ -4,7 +4,7 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
-export const PAPEIS = ["admin", "staff", "cozinheiro", "bar"] as const;
+export const PAPEIS = ["admin", "staff", "cozinheiro", "bar", "caixa"] as const;
 export type PapelMembro = (typeof PAPEIS)[number];
 
 async function assertAdminDoRestaurante(
