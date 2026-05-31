@@ -21,6 +21,10 @@ type ConfigPayload = {
   pix_nome_titular: string | null;
   comissao_modo: "pedido" | "item";
   permitir_atendimento_cruzado: boolean;
+  caixa_alerta_horas: number;
+  caixa_teto_dinheiro: number | null;
+  caixa_conferencia_cega: boolean;
+  caixa_obrigatorio_para_pagamento: boolean;
 };
 
 export function useAtualizarConfiguracoes(userId: string | undefined) {
