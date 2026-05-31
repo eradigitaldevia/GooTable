@@ -763,6 +763,47 @@ export type Database = {
           },
         ]
       }
+      movimentos_caixa: {
+        Row: {
+          criado_em: string
+          id: string
+          motivo: string | null
+          operador_user_id: string
+          restaurante_id: string
+          tipo: Database["public"]["Enums"]["movimento_caixa_tipo"]
+          turno_id: string
+          valor: number
+        }
+        Insert: {
+          criado_em?: string
+          id?: string
+          motivo?: string | null
+          operador_user_id: string
+          restaurante_id: string
+          tipo: Database["public"]["Enums"]["movimento_caixa_tipo"]
+          turno_id: string
+          valor: number
+        }
+        Update: {
+          criado_em?: string
+          id?: string
+          motivo?: string | null
+          operador_user_id?: string
+          restaurante_id?: string
+          tipo?: Database["public"]["Enums"]["movimento_caixa_tipo"]
+          turno_id?: string
+          valor?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "movimentos_caixa_turno_id_fkey"
+            columns: ["turno_id"]
+            isOneToOne: false
+            referencedRelation: "turnos_caixa"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       pagamentos: {
         Row: {
           atualizado_em: string
@@ -1283,11 +1324,97 @@ export type Database = {
         }
         Relationships: []
       }
+      turnos_caixa: {
+        Row: {
+          aberto_em: string
+          atualizado_em: string
+          contagem_fisica: number | null
+          criado_em: string
+          diferenca: number | null
+          fechado_em: string | null
+          fundo_final: number | null
+          fundo_inicial: number
+          id: string
+          obs_fechamento: string | null
+          operador_nome: string
+          operador_user_id: string
+          restaurante_id: string
+          snapshot_qtd_pedidos: number | null
+          snapshot_total_cartao: number | null
+          snapshot_total_dinheiro: number | null
+          snapshot_total_fiado: number | null
+          snapshot_total_outro: number | null
+          snapshot_total_pix: number | null
+          snapshot_total_sangrias: number | null
+          snapshot_total_suprimentos: number | null
+          snapshot_total_vendas: number | null
+          status: Database["public"]["Enums"]["turno_caixa_status"]
+        }
+        Insert: {
+          aberto_em?: string
+          atualizado_em?: string
+          contagem_fisica?: number | null
+          criado_em?: string
+          diferenca?: number | null
+          fechado_em?: string | null
+          fundo_final?: number | null
+          fundo_inicial?: number
+          id?: string
+          obs_fechamento?: string | null
+          operador_nome: string
+          operador_user_id: string
+          restaurante_id: string
+          snapshot_qtd_pedidos?: number | null
+          snapshot_total_cartao?: number | null
+          snapshot_total_dinheiro?: number | null
+          snapshot_total_fiado?: number | null
+          snapshot_total_outro?: number | null
+          snapshot_total_pix?: number | null
+          snapshot_total_sangrias?: number | null
+          snapshot_total_suprimentos?: number | null
+          snapshot_total_vendas?: number | null
+          status?: Database["public"]["Enums"]["turno_caixa_status"]
+        }
+        Update: {
+          aberto_em?: string
+          atualizado_em?: string
+          contagem_fisica?: number | null
+          criado_em?: string
+          diferenca?: number | null
+          fechado_em?: string | null
+          fundo_final?: number | null
+          fundo_inicial?: number
+          id?: string
+          obs_fechamento?: string | null
+          operador_nome?: string
+          operador_user_id?: string
+          restaurante_id?: string
+          snapshot_qtd_pedidos?: number | null
+          snapshot_total_cartao?: number | null
+          snapshot_total_dinheiro?: number | null
+          snapshot_total_fiado?: number | null
+          snapshot_total_outro?: number | null
+          snapshot_total_pix?: number | null
+          snapshot_total_sangrias?: number | null
+          snapshot_total_suprimentos?: number | null
+          snapshot_total_vendas?: number | null
+          status?: Database["public"]["Enums"]["turno_caixa_status"]
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
+      abrir_turno_caixa: {
+        Args: {
+          _fundo_inicial: number
+          _operador_nome: string
+          _restaurante_id: string
+        }
+        Returns: string
+      }
       aplicar_cashback: {
         Args: { _cliente_id: string; _comanda_id: string; _valor: number }
         Returns: Json
@@ -1379,6 +1506,15 @@ export type Database = {
         Args: { _pedido_id: string }
         Returns: undefined
       }
+      fechar_turno_caixa: {
+        Args: {
+          _contagem_fisica: number
+          _fundo_final: number
+          _obs: string
+          _turno_id: string
+        }
+        Returns: Json
+      }
       is_platform_admin: { Args: { _user_id: string }; Returns: boolean }
       is_restaurante_membro: {
         Args: { _restaurante_id: string; _user_id: string }
@@ -1398,12 +1534,25 @@ export type Database = {
           inicio: string
         }[]
       }
+      pode_operar_caixa: {
+        Args: { _restaurante_id: string; _user_id: string }
+        Returns: boolean
+      }
       recomputar_destino_status: {
         Args: {
           _destino: Database["public"]["Enums"]["destino_preparo"]
           _pedido_id: string
         }
         Returns: undefined
+      }
+      registrar_movimento_caixa: {
+        Args: {
+          _motivo: string
+          _tipo: Database["public"]["Enums"]["movimento_caixa_tipo"]
+          _turno_id: string
+          _valor: number
+        }
+        Returns: string
       }
       registrar_pagamento: {
         Args: {
@@ -1419,6 +1568,7 @@ export type Database = {
         Returns: undefined
       }
       resumo_comissoes: { Args: { _restaurante_id: string }; Returns: Json }
+      totais_turno_caixa: { Args: { _turno_id: string }; Returns: Json }
       validar_cupom: {
         Args: {
           _cliente_id?: string
@@ -1430,7 +1580,7 @@ export type Database = {
       }
     }
     Enums: {
-      app_role: "admin" | "staff" | "cozinheiro" | "garcom" | "bar"
+      app_role: "admin" | "staff" | "cozinheiro" | "garcom" | "bar" | "caixa"
       campanha_canal: "whatsapp" | "email" | "sms"
       campanha_status:
         | "rascunho"
@@ -1447,7 +1597,8 @@ export type Database = {
       garcom_meta_periodo: "diario" | "semanal" | "mensal"
       garcom_meta_tipo: "faturamento" | "pedidos" | "horario"
       mesa_sessao_status: "aberta" | "fechada"
-      pagamento_metodo: "pix" | "dinheiro" | "outro"
+      movimento_caixa_tipo: "abertura" | "sangria" | "suprimento" | "fechamento"
+      pagamento_metodo: "pix" | "dinheiro" | "outro" | "cartao" | "fiado"
       pagamento_status: "pendente" | "confirmado" | "cancelado"
       pedido_item_status: "pendente" | "em_preparo" | "pronto"
       pedido_status:
@@ -1456,6 +1607,7 @@ export type Database = {
         | "pronto"
         | "entregue"
         | "cancelado"
+      turno_caixa_status: "aberto" | "fechado"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1583,7 +1735,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["admin", "staff", "cozinheiro", "garcom", "bar"],
+      app_role: ["admin", "staff", "cozinheiro", "garcom", "bar", "caixa"],
       campanha_canal: ["whatsapp", "email", "sms"],
       campanha_status: [
         "rascunho",
@@ -1601,7 +1753,8 @@ export const Constants = {
       garcom_meta_periodo: ["diario", "semanal", "mensal"],
       garcom_meta_tipo: ["faturamento", "pedidos", "horario"],
       mesa_sessao_status: ["aberta", "fechada"],
-      pagamento_metodo: ["pix", "dinheiro", "outro"],
+      movimento_caixa_tipo: ["abertura", "sangria", "suprimento", "fechamento"],
+      pagamento_metodo: ["pix", "dinheiro", "outro", "cartao", "fiado"],
       pagamento_status: ["pendente", "confirmado", "cancelado"],
       pedido_item_status: ["pendente", "em_preparo", "pronto"],
       pedido_status: [
@@ -1611,6 +1764,7 @@ export const Constants = {
         "entregue",
         "cancelado",
       ],
+      turno_caixa_status: ["aberto", "fechado"],
     },
   },
 } as const
