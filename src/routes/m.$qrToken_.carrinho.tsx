@@ -10,7 +10,7 @@ import { CarrinhoItemRow } from "@/components/cliente/carrinho-item-row";
 import { useCriarPedidoPublico } from "@/hooks/use-pedidos";
 import { useClienteMesa } from "@/hooks/use-cliente-mesa";
 
-export const Route = createFileRoute("/m/$qrToken/carrinho")({
+export const Route = createFileRoute("/m/$qrToken_/carrinho")({
   component: Carrinho,
 });
 

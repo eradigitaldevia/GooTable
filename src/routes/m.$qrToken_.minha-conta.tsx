@@ -9,7 +9,7 @@ import { useAplicarCashback, useMinhaConta } from "@/hooks/use-minha-conta";
 import { useRealtimeMesa } from "@/hooks/use-realtime";
 import { formatBRL } from "@/lib/cart";
 
-export const Route = createFileRoute("/m/$qrToken/minha-conta")({
+export const Route = createFileRoute("/m/$qrToken_/minha-conta")({
   component: MinhaConta,
 });
 
