@@ -89,3 +89,72 @@ export const registrarPagamentoFn = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { id: id as unknown as string };
   });
+
+export interface ComandaPagamentoPendente {
+  comanda_id: string;
+  mesa_id: string;
+  mesa_numero: string | null;
+  titular_nome: string | null;
+  subtotal: number;
+  total: number;
+  total_pago: number;
+  restante: number;
+  pagamentos_pendentes: number;
+  fechada_em: string | null;
+  atualizado_em: string;
+}
+
+export const listarComandasPagamentoPendenteFn = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) =>
+    z.object({ restauranteId: z.string().uuid() }).parse(d),
+  )
+  .handler(async ({ context, data }): Promise<ComandaPagamentoPendente[]> => {
+    const { supabase, userId } = context;
+    await assertAcessoRestaurante(supabase, userId, data.restauranteId);
+
+    const { data: rows, error } = await supabase
+      .from("comandas")
+      .select(
+        "id, mesa_id:sessao_id, subtotal, total, total_pago, fechada_em, atualizado_em, titular_cliente_id, sessao:mesa_sessoes!inner(mesa_id, mesa:mesas(numero)), titular:clientes(nome), pagamentos(id, status)",
+      )
+      .eq("restaurante_id", data.restauranteId)
+      .eq("status", "aberta")
+      .order("atualizado_em", { ascending: false });
+    if (error) throw new Error(error.message);
+
+    type Row = {
+      id: string;
+      subtotal: number | string | null;
+      total: number | string | null;
+      total_pago: number | string | null;
+      fechada_em: string | null;
+      atualizado_em: string;
+      sessao: { mesa_id: string; mesa: { numero: string | null } | null } | null;
+      titular: { nome: string | null } | null;
+      pagamentos: Array<{ id: string; status: string }> | null;
+    };
+
+    const list = (rows ?? []) as unknown as Row[];
+    return list
+      .map((r) => {
+        const total = Number(r.total ?? 0);
+        const total_pago = Number(r.total_pago ?? 0);
+        const restante = Math.max(0, total - total_pago);
+        return {
+          comanda_id: r.id,
+          mesa_id: r.sessao?.mesa_id ?? "",
+          mesa_numero: r.sessao?.mesa?.numero ?? null,
+          titular_nome: r.titular?.nome ?? null,
+          subtotal: Number(r.subtotal ?? 0),
+          total,
+          total_pago,
+          restante,
+          pagamentos_pendentes:
+            (r.pagamentos ?? []).filter((p) => p.status === "pendente").length,
+          fechada_em: r.fechada_em,
+          atualizado_em: r.atualizado_em,
+        } satisfies ComandaPagamentoPendente;
+      })
+      .filter((c) => c.restante > 0.0001);
+  });
