@@ -1,112 +1,38 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { useQuery } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 import { Button } from "@/components/ui/button";
 import { StatusTimeline } from "@/components/cliente/status-timeline";
 import { StatusTimelineSkeleton } from "@/components/cliente/skeletons/status-timeline-skeleton";
 import { ItensPedido } from "@/components/cliente/itens-pedido";
 import { PixPanel } from "@/components/cliente/pix-panel";
+import { carregarStatusPedidoPublicoFn } from "@/lib/status-pedido-publico.functions";
 
 export const Route = createFileRoute("/m/$qrToken/status/$pedidoId")({
   component: Status,
 });
 
-type StatusPedido = "recebido" | "em_preparo" | "pronto" | "entregue" | "cancelado";
-
-interface Pedido {
-  id: string;
-  status: StatusPedido;
-  total: number;
-  observacao: string | null;
-  criado_em: string;
-  restaurante_id: string;
-}
-interface Item {
-  id: string;
-  nome_produto: string;
-  quantidade: number;
-  preco_unit: number;
-  observacao: string | null;
-  cliente_nome: string | null;
-  status: "pendente" | "em_preparo" | "pronto";
-  quantidade_pronta: number;
-}
-interface RestaurantePix {
-  nome: string;
-  pix_habilitado: boolean;
-  pix_chave: string | null;
-  pix_nome_titular: string | null;
-}
-
 function Status() {
   const { qrToken, pedidoId } = Route.useParams();
-  const [pedido, setPedido] = useState<Pedido | null>(null);
-  const [itens, setItens] = useState<Item[]>([]);
-  const [restaurante, setRestaurante] = useState<RestaurantePix | null>(null);
-  const [loading, setLoading] = useState(true);
+  const fn = useServerFn(carregarStatusPedidoPublicoFn);
+  const { data, isLoading } = useQuery({
+    queryKey: ["status-pedido-publico", qrToken, pedidoId],
+    queryFn: () => fn({ data: { qrToken, pedidoId } }),
+    refetchInterval: 5000,
+    refetchIntervalInBackground: false,
+  });
 
-  useEffect(() => {
-    let mounted = true;
-    const carregar = async () => {
-      const [{ data: p }, { data: its }] = await Promise.all([
-        supabase
-          .from("pedidos")
-          .select("id, status, total, observacao, criado_em, restaurante_id")
-          .eq("id", pedidoId)
-          .maybeSingle(),
-        supabase
-          .from("pedido_itens")
-          .select("id, nome_produto, quantidade, preco_unit, observacao, cliente_nome, status, quantidade_pronta")
-          .eq("pedido_id", pedidoId),
-      ]);
-      if (!mounted) return;
-      setPedido(p as Pedido);
-      setItens((its as Item[]) ?? []);
-      if (p?.restaurante_id) {
-        const { data: r } = await supabase
-          .from("restaurantes")
-          .select("nome, pix_habilitado, pix_chave, pix_nome_titular")
-          .eq("id", p.restaurante_id)
-          .maybeSingle();
-        if (mounted) setRestaurante(r as RestaurantePix);
-      }
-      setLoading(false);
-    };
-    carregar();
-
-    const channel = supabase
-      .channel(`pedido-${pedidoId}`)
-      .on(
-        "postgres_changes",
-        { event: "UPDATE", schema: "public", table: "pedidos", filter: `id=eq.${pedidoId}` },
-        (payload) => {
-          setPedido((prev) => (prev ? { ...prev, ...(payload.new as Pedido) } : (payload.new as Pedido)));
-        },
-      )
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "pedido_itens", filter: `pedido_id=eq.${pedidoId}` },
-        async () => {
-          const { data: its } = await supabase
-            .from("pedido_itens")
-            .select("id, nome_produto, quantidade, preco_unit, observacao, cliente_nome, status, quantidade_pronta")
-            .eq("pedido_id", pedidoId);
-          setItens((its as Item[]) ?? []);
-        },
-      )
-      .subscribe();
-
-    return () => {
-      mounted = false;
-      supabase.removeChannel(channel);
-    };
-  }, [pedidoId]);
-
-  if (loading) {
+  if (isLoading) {
     return <StatusTimelineSkeleton />;
   }
 
-  if (!pedido) return <div className="p-8 text-center">Pedido não encontrado.</div>;
+  if (!data || data.erro || !data.pedido) {
+    return (
+      <div className="p-8 text-center">{data?.erro ?? "Pedido não encontrado."}</div>
+    );
+  }
+
+  const { pedido, itens, restaurante } = data;
 
   if (pedido.status === "cancelado") {
     return (
@@ -119,7 +45,7 @@ function Status() {
     );
   }
 
-  const pixOn = !!restaurante?.pix_habilitado && !!restaurante.pix_chave;
+  const pixOn = !!restaurante.pix_habilitado && !!restaurante.pix_chave;
 
   return (
     <div className="min-h-screen bg-background pb-12">
@@ -137,8 +63,8 @@ function Status() {
 
         {pixOn && (
           <PixPanel
-            chave={restaurante!.pix_chave!}
-            titular={restaurante!.pix_nome_titular || restaurante!.nome}
+            chave={restaurante.pix_chave!}
+            titular={restaurante.pix_nome_titular || restaurante.nome}
             valor={Number(pedido.total)}
             descricao={`Pedido ${pedido.id.slice(0, 8)}`}
           />
