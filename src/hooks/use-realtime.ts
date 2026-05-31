@@ -1,20 +1,56 @@
 import { useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import { queryKeys } from "@/lib/query-keys";
 
 /**
- * Polling: invalida queries de pedidos do restaurante em intervalo fixo.
- * (Substitui Realtime para evitar exposição da tabela realtime.messages.)
+ * Realtime: pedidos + pedido_itens de um restaurante.
+ * Invalida cache do React Query quando algo muda.
  */
 export function useRealtimePedidos(restauranteId: string | undefined) {
   const qc = useQueryClient();
 
   useEffect(() => {
     if (!restauranteId) return;
-    const id = setInterval(() => {
-      qc.invalidateQueries({ queryKey: queryKeys.pedidos(restauranteId) });
-    }, 5000);
-    return () => clearInterval(id);
+
+    const channel = supabase
+      .channel(`rt-pedidos-${restauranteId}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "pedidos",
+          filter: `restaurante_id=eq.${restauranteId}`,
+        },
+        (payload) => {
+          qc.invalidateQueries({ queryKey: queryKeys.pedidos(restauranteId) });
+          const id =
+            (payload.new as { id?: string } | null)?.id ??
+            (payload.old as { id?: string } | null)?.id;
+          if (id) qc.invalidateQueries({ queryKey: queryKeys.pedido(id) });
+        },
+      )
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "pedido_itens",
+        },
+        (payload) => {
+          const id =
+            (payload.new as { pedido_id?: string } | null)?.pedido_id ??
+            (payload.old as { pedido_id?: string } | null)?.pedido_id;
+          qc.invalidateQueries({ queryKey: queryKeys.pedidos(restauranteId) });
+          if (id) qc.invalidateQueries({ queryKey: queryKeys.pedido(id) });
+        },
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [restauranteId, qc]);
 }
 
@@ -50,16 +86,38 @@ export function useRealtimeMesa(qrToken: string | undefined, sessaoId: string | 
 }
 
 /**
- * Polling da lista de clientes do admin.
+ * Realtime da lista de clientes do admin.
  */
 export function useRealtimeClientes(restauranteId: string | undefined) {
   const qc = useQueryClient();
 
   useEffect(() => {
     if (!restauranteId) return;
-    const id = setInterval(() => {
-      qc.invalidateQueries({ queryKey: ["admin-clientes", restauranteId] });
-    }, 10000);
-    return () => clearInterval(id);
+
+    const channel = supabase
+      .channel(`rt-clientes-${restauranteId}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "clientes",
+          filter: `restaurante_id=eq.${restauranteId}`,
+        },
+        (payload) => {
+          qc.invalidateQueries({ queryKey: ["admin-clientes", restauranteId] });
+          const id =
+            (payload.new as { id?: string } | null)?.id ??
+            (payload.old as { id?: string } | null)?.id;
+          if (id) {
+            qc.invalidateQueries({ queryKey: ["admin-cliente", restauranteId, id] });
+          }
+        },
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [restauranteId, qc]);
 }
