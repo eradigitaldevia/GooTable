@@ -81,6 +81,13 @@ export const registrarPagamentoFn = createServerFn({ method: "POST" })
     const { supabase, userId } = context;
     await assertAcessoRestaurante(supabase, userId, data.restauranteId);
 
+    // Carrega configurações de caixa do restaurante (Blocos 6 e 9)
+    const { data: rest } = await supabase
+      .from("restaurantes")
+      .select("caixa_obrigatorio_para_pagamento, caixa_teto_dinheiro")
+      .eq("id", data.restauranteId)
+      .maybeSingle();
+
     // Gate de "dono do turno" quando há turno aberto (Bloco 3)
     const { data: turno } = await supabase
       .from("turnos_caixa")
@@ -88,6 +95,14 @@ export const registrarPagamentoFn = createServerFn({ method: "POST" })
       .eq("restaurante_id", data.restauranteId)
       .eq("status", "aberto")
       .maybeSingle();
+
+    // Bloco 9: caixa obrigatório para pagamento
+    if (rest?.caixa_obrigatorio_para_pagamento && !turno) {
+      throw new Error(
+        "É necessário abrir o caixa antes de confirmar pagamentos.",
+      );
+    }
+
     if (turno && turno.operador_user_id !== userId) {
       throw new Error("Apenas o operador do turno pode confirmar pagamentos.");
     }
@@ -99,6 +114,44 @@ export const registrarPagamentoFn = createServerFn({ method: "POST" })
       _observacao: data.observacao ?? undefined,
     });
     if (error) throw new Error(error.message);
+
+    // Bloco 6: aviso de teto de dinheiro excedido
+    let aviso_teto_excedido = false;
+    if (
+      turno?.id &&
+      data.metodo === "dinheiro" &&
+      rest?.caixa_teto_dinheiro != null &&
+      Number(rest.caixa_teto_dinheiro) > 0
+    ) {
+      try {
+        const { data: totais } = await supabase.rpc("totais_turno_caixa", {
+          _turno_id: turno.id,
+        });
+        const saldoDinheiro = Number(
+          (totais as Record<string, unknown> | null)?.["saldo_esperado"] ?? 0,
+        );
+        if (saldoDinheiro > Number(rest.caixa_teto_dinheiro)) {
+          aviso_teto_excedido = true;
+          try {
+            await supabaseAdmin.from("caixa_eventos").insert({
+              restaurante_id: data.restauranteId,
+              turno_id: turno.id,
+              tipo: "aviso_teto",
+              payload: {
+                saldo_dinheiro: saldoDinheiro,
+                teto: Number(rest.caixa_teto_dinheiro),
+                pagamento_id: id as unknown as string,
+              } as never,
+              ator_user_id: userId,
+            });
+          } catch {
+            // não falhar a operação por erro na auditoria
+          }
+        }
+      } catch {
+        // ignora falha de cálculo do teto
+      }
+    }
 
     if (turno?.id) {
       try {
@@ -118,7 +171,7 @@ export const registrarPagamentoFn = createServerFn({ method: "POST" })
       }
     }
 
-    return { id: id as unknown as string };
+    return { id: id as unknown as string, aviso_teto_excedido };
   });
 
 export interface ComandaPagamentoPendente {
