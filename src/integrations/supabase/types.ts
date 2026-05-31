@@ -1282,6 +1282,10 @@ export type Database = {
       restaurantes: {
         Row: {
           ativo: boolean
+          caixa_alerta_horas: number
+          caixa_conferencia_cega: boolean
+          caixa_obrigatorio_para_pagamento: boolean
+          caixa_teto_dinheiro: number | null
           comissao_modo: string
           cor_primaria: string | null
           criado_em: string
@@ -1296,6 +1300,10 @@ export type Database = {
         }
         Insert: {
           ativo?: boolean
+          caixa_alerta_horas?: number
+          caixa_conferencia_cega?: boolean
+          caixa_obrigatorio_para_pagamento?: boolean
+          caixa_teto_dinheiro?: number | null
           comissao_modo?: string
           cor_primaria?: string | null
           criado_em?: string
@@ -1310,6 +1318,10 @@ export type Database = {
         }
         Update: {
           ativo?: boolean
+          caixa_alerta_horas?: number
+          caixa_conferencia_cega?: boolean
+          caixa_obrigatorio_para_pagamento?: boolean
+          caixa_teto_dinheiro?: number | null
           comissao_modo?: string
           cor_primaria?: string | null
           criado_em?: string
