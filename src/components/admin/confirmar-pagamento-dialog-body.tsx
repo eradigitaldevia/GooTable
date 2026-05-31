@@ -47,13 +47,18 @@ export default function ConfirmarPagamentoDialogBody({
       return;
     }
     try {
-      await registrar.mutateAsync({
+      const res = await registrar.mutateAsync({
         comandaId,
         metodo,
         valor: v,
         observacao: observacao.trim() || undefined,
       });
       toast.success("Pagamento registrado");
+      if (res?.aviso_teto_excedido) {
+        toast.warning(
+          "Atenção: o dinheiro acumulado no caixa ultrapassou o teto configurado. Considere fazer uma sangria.",
+        );
+      }
       onOpenChange(false);
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Erro ao registrar pagamento");
