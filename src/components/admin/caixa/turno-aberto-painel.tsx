@@ -27,12 +27,14 @@ export function TurnoAbertoPainel({
   souDono = true,
   podeAssumir = false,
   meuNomeSugerido,
+  conferenciaCega = false,
 }: {
   restauranteId: string;
   turno: TurnoCaixa;
   souDono?: boolean;
   podeAssumir?: boolean;
   meuNomeSugerido?: string | null;
+  conferenciaCega?: boolean;
 }) {
   const { data: totais } = useTotaisTurno(restauranteId, turno.id);
   const fechar = useFecharCaixa(restauranteId);
@@ -47,6 +49,10 @@ export function TurnoAbertoPainel({
     if (!Number.isFinite(v) || !totais) return null;
     return v - totais.saldo_esperado;
   }, [contagem, totais]);
+
+  // Bloco 7: na conferência cega o operador conta sem ver o saldo esperado;
+  // a diferença só aparece após o fechamento.
+  const mostrarDiferencaAntes = !conferenciaCega;
 
   const submit = async () => {
     if (!souDono) {
@@ -163,6 +169,12 @@ export function TurnoAbertoPainel({
 
       <Card className="p-5">
         <h3 className="text-sm font-semibold">Fechar caixa</h3>
+        {conferenciaCega && (
+          <p className="mt-1 text-xs text-muted-foreground">
+            Conferência cega ativada: conte o dinheiro sem consultar o sistema.
+            A diferença será exibida apenas após o fechamento.
+          </p>
+        )}
         <div className="mt-3 grid gap-3 sm:grid-cols-2">
           <div className="space-y-1">
             <Label>Dinheiro contado fisicamente (R$)</Label>
@@ -184,7 +196,7 @@ export function TurnoAbertoPainel({
           </div>
         </div>
 
-        {diferenca !== null && totais && (
+        {mostrarDiferencaAntes && diferenca !== null && totais && (
           <div className="mt-3 rounded-lg bg-muted p-3 text-sm">
             <div className="flex justify-between">
               <span className="text-muted-foreground">Esperado em caixa</span>
