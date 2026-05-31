@@ -7,7 +7,7 @@ import { useRealtimeMesa } from "@/hooks/use-realtime";
 import { formatBRL } from "@/lib/cart";
 import { CupomInput } from "@/components/cliente/cupom-input";
 
-export const Route = createFileRoute("/m/$qrToken/conta")({
+export const Route = createFileRoute("/m/$qrToken_/conta")({
   component: ContaMesa,
 });
 

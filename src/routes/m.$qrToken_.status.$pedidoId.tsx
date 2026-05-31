@@ -8,7 +8,7 @@ import { ItensPedido } from "@/components/cliente/itens-pedido";
 import { PixPanel } from "@/components/cliente/pix-panel";
 import { carregarStatusPedidoPublicoFn } from "@/lib/status-pedido-publico.functions";
 
-export const Route = createFileRoute("/m/$qrToken/status/$pedidoId")({
+export const Route = createFileRoute("/m/$qrToken_/status/$pedidoId")({
   component: Status,
 });
 
