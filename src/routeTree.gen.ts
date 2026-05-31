@@ -41,6 +41,7 @@ import { Route as AuthenticatedAdminClientesRouteImport } from './routes/_authen
 import { Route as AuthenticatedAdminChamadosRouteImport } from './routes/_authenticated/admin/chamados'
 import { Route as AuthenticatedAdminCardapioPreviewRouteImport } from './routes/_authenticated/admin/cardapio-preview'
 import { Route as AuthenticatedAdminCardapioRouteImport } from './routes/_authenticated/admin/cardapio'
+import { Route as AuthenticatedAdminCaixaRouteImport } from './routes/_authenticated/admin/caixa'
 import { Route as MQrTokenStatusPedidoIdRouteImport } from './routes/m.$qrToken.status.$pedidoId'
 import { Route as AuthenticatedSalaNovaComandaMesaIdRouteImport } from './routes/_authenticated/sala_.nova-comanda.$mesaId'
 import { Route as AuthenticatedAdminClientesIdRouteImport } from './routes/_authenticated/admin/clientes.$id'
@@ -217,6 +218,11 @@ const AuthenticatedAdminCardapioRoute =
     path: '/cardapio',
     getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
+const AuthenticatedAdminCaixaRoute = AuthenticatedAdminCaixaRouteImport.update({
+  id: '/caixa',
+  path: '/caixa',
+  getParentRoute: () => AuthenticatedAdminRoute,
+} as any)
 const MQrTokenStatusPedidoIdRoute = MQrTokenStatusPedidoIdRouteImport.update({
   id: '/status/$pedidoId',
   path: '/status/$pedidoId',
@@ -256,6 +262,7 @@ export interface FileRoutesByFullPath {
   '/superadmin/logs': typeof SuperadminLogsRoute
   '/superadmin/restaurantes': typeof SuperadminRestaurantesRouteWithChildren
   '/superadmin/': typeof SuperadminIndexRoute
+  '/admin/caixa': typeof AuthenticatedAdminCaixaRoute
   '/admin/cardapio': typeof AuthenticatedAdminCardapioRoute
   '/admin/cardapio-preview': typeof AuthenticatedAdminCardapioPreviewRoute
   '/admin/chamados': typeof AuthenticatedAdminChamadosRoute
@@ -291,6 +298,7 @@ export interface FileRoutesByTo {
   '/superadmin/logs': typeof SuperadminLogsRoute
   '/superadmin/restaurantes': typeof SuperadminRestaurantesRouteWithChildren
   '/superadmin': typeof SuperadminIndexRoute
+  '/admin/caixa': typeof AuthenticatedAdminCaixaRoute
   '/admin/cardapio': typeof AuthenticatedAdminCardapioRoute
   '/admin/cardapio-preview': typeof AuthenticatedAdminCardapioPreviewRoute
   '/admin/chamados': typeof AuthenticatedAdminChamadosRoute
@@ -330,6 +338,7 @@ export interface FileRoutesById {
   '/superadmin/logs': typeof SuperadminLogsRoute
   '/superadmin/restaurantes': typeof SuperadminRestaurantesRouteWithChildren
   '/superadmin/': typeof SuperadminIndexRoute
+  '/_authenticated/admin/caixa': typeof AuthenticatedAdminCaixaRoute
   '/_authenticated/admin/cardapio': typeof AuthenticatedAdminCardapioRoute
   '/_authenticated/admin/cardapio-preview': typeof AuthenticatedAdminCardapioPreviewRoute
   '/_authenticated/admin/chamados': typeof AuthenticatedAdminChamadosRoute
@@ -369,6 +378,7 @@ export interface FileRouteTypes {
     | '/superadmin/logs'
     | '/superadmin/restaurantes'
     | '/superadmin/'
+    | '/admin/caixa'
     | '/admin/cardapio'
     | '/admin/cardapio-preview'
     | '/admin/chamados'
@@ -404,6 +414,7 @@ export interface FileRouteTypes {
     | '/superadmin/logs'
     | '/superadmin/restaurantes'
     | '/superadmin'
+    | '/admin/caixa'
     | '/admin/cardapio'
     | '/admin/cardapio-preview'
     | '/admin/chamados'
@@ -442,6 +453,7 @@ export interface FileRouteTypes {
     | '/superadmin/logs'
     | '/superadmin/restaurantes'
     | '/superadmin/'
+    | '/_authenticated/admin/caixa'
     | '/_authenticated/admin/cardapio'
     | '/_authenticated/admin/cardapio-preview'
     | '/_authenticated/admin/chamados'
@@ -702,6 +714,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminCardapioRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
+    '/_authenticated/admin/caixa': {
+      id: '/_authenticated/admin/caixa'
+      path: '/caixa'
+      fullPath: '/admin/caixa'
+      preLoaderRoute: typeof AuthenticatedAdminCaixaRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
     '/m/$qrToken/status/$pedidoId': {
       id: '/m/$qrToken/status/$pedidoId'
       path: '/status/$pedidoId'
@@ -748,6 +767,7 @@ const AuthenticatedAdminClientesRouteWithChildren =
   )
 
 interface AuthenticatedAdminRouteChildren {
+  AuthenticatedAdminCaixaRoute: typeof AuthenticatedAdminCaixaRoute
   AuthenticatedAdminCardapioRoute: typeof AuthenticatedAdminCardapioRoute
   AuthenticatedAdminCardapioPreviewRoute: typeof AuthenticatedAdminCardapioPreviewRoute
   AuthenticatedAdminChamadosRoute: typeof AuthenticatedAdminChamadosRoute
@@ -765,6 +785,7 @@ interface AuthenticatedAdminRouteChildren {
 }
 
 const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
+  AuthenticatedAdminCaixaRoute: AuthenticatedAdminCaixaRoute,
   AuthenticatedAdminCardapioRoute: AuthenticatedAdminCardapioRoute,
   AuthenticatedAdminCardapioPreviewRoute:
     AuthenticatedAdminCardapioPreviewRoute,

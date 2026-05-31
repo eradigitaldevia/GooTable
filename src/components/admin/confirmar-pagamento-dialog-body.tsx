@@ -77,6 +77,8 @@ export default function ConfirmarPagamentoDialogBody({
             <SelectContent>
               <SelectItem value="pix">PIX</SelectItem>
               <SelectItem value="dinheiro">Dinheiro</SelectItem>
+              <SelectItem value="cartao">Cartão</SelectItem>
+              <SelectItem value="fiado">Fiado</SelectItem>
               <SelectItem value="outro">Outro</SelectItem>
             </SelectContent>
           </Select>

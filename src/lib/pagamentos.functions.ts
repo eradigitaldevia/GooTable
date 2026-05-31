@@ -3,7 +3,7 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { assertAcessoRestaurante } from "./auth.server";
 
-export type PagamentoMetodo = "pix" | "dinheiro" | "outro";
+export type PagamentoMetodo = "pix" | "dinheiro" | "cartao" | "fiado" | "outro";
 export type PagamentoStatus = "pendente" | "confirmado" | "cancelado";
 
 export interface Pagamento {
@@ -71,7 +71,7 @@ export const registrarPagamentoFn = createServerFn({ method: "POST" })
     z.object({
       restauranteId: z.string().uuid(),
       comandaId: z.string().uuid(),
-      metodo: z.enum(["pix", "dinheiro", "outro"]),
+      metodo: z.enum(["pix", "dinheiro", "cartao", "fiado", "outro"]),
       valor: z.number().positive(),
       observacao: z.string().max(300).optional(),
     }).parse(d),
