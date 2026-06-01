@@ -100,11 +100,39 @@ export const buscarClientePorTelefoneFn = createServerFn({ method: "POST" })
     if (!cli) return { encontrado: false };
 
     const sessao = await garantirSessaoAberta(mesa.id, mesa.restaurante_id);
-    const ativas = await listarComandasAtivas(sessao.id);
-    const comandaId =
-      ativas.length > 0
-        ? await garantirComandaCompartilhada(sessao.id, mesa.restaurante_id)
-        : await criarComandaIndividual(sessao.id, mesa.restaurante_id, cli.id as string);
+
+    // Re-identificação idempotente: se o mesmo cliente já tem vínculo ativo
+    // (saiu_em IS NULL) com uma comanda `aberta` nesta sessão, reutilizar essa
+    // comanda em vez de criar uma nova compartilhada (que deixaria a individual
+    // original órfã).
+    let comandaId: string | null = null;
+    const { data: vincExistente, error: vExistErr } = await supabaseAdmin
+      .from("mesa_sessao_clientes")
+      .select("comanda_id")
+      .eq("sessao_id", sessao.id)
+      .eq("cliente_id", cli.id)
+      .is("saiu_em", null)
+      .maybeSingle();
+    if (vExistErr) throw new Error(vExistErr.message);
+    if (vincExistente?.comanda_id) {
+      const { data: comandaExist, error: cExistErr } = await supabaseAdmin
+        .from("comandas")
+        .select("id, status")
+        .eq("id", vincExistente.comanda_id as string)
+        .maybeSingle();
+      if (cExistErr) throw new Error(cExistErr.message);
+      if (comandaExist && comandaExist.status === "aberta") {
+        comandaId = comandaExist.id as string;
+      }
+    }
+
+    if (!comandaId) {
+      const ativas = await listarComandasAtivas(sessao.id);
+      comandaId =
+        ativas.length > 0
+          ? await garantirComandaCompartilhada(sessao.id, mesa.restaurante_id)
+          : await criarComandaIndividual(sessao.id, mesa.restaurante_id, cli.id as string);
+    }
 
     await vincularClienteSessao(sessao.id, cli.id as string, comandaId);
 
