@@ -1,70 +1,84 @@
-## Análise
 
-### 1. Toast "Bem-vindo(a) de volta" repete a cada retorno ao cardápio
-`src/routes/m.$qrToken.tsx` usa `welcomedRef = useRef(false)`. Ao navegar para `/conta` ou `/minha-conta`, o componente `ClienteMenu` desmonta e o ref zera. Ao voltar, o `useEffect` que reconhece a identidade hidratada dispara o toast novamente.
+# Análise e recomendações
 
-### 2. "Esta mesa tem 2 comandas ativas" persiste após a limpeza
-Em `src/lib/pedidos.functions.ts` → `resumoContaFn` (linhas 392-395), a query que monta `comandas_da_mesa` faz apenas `.eq("sessao_id", data.sessaoId)` — **sem filtrar por status**. A comanda órfã `29d1a0b3…` foi marcada como `fechada`, mas continua sendo retornada e contada. A UI em `m.$qrToken_.conta.tsx` (linha 148) faz `data.comandas_da_mesa.length > 1` e exibe o card.
+## 1) Edição de categoria não permite alterar o destino (cozinha/bar)
 
-### 3. "Última visita" mostra a data da visita atual
-Em `m.$qrToken_.minha-conta.tsx` (linhas 135-142) o "Resumo do cliente" mostra `cliente.ultima_visita`, que é atualizado para `now()` no momento da identificação (`identificarClienteFn`). Por isso sempre exibe a visita atual. O usuário pede para remover dali e adicionar a data da sessão atual em "Esta visita".
+### Diagnóstico
 
----
+- Em `src/components/cardapio/categoria-dialog-body.tsx` (criação) o campo **Destino padrão** existe e é enviado.
+- Em `src/components/cardapio/categoria-chip.tsx` (edição inline) só há o campo `nome`. O `destino` nunca é editado pela UI, embora `atualizarCategoriaFn` já aceite o parâmetro.
+- Consequência observada pelo usuário: produtos vinculados a uma categoria criada sem destino correto não chegam ao KDS, porque o filtro do `/cozinha` exige `pedido_itens.destino = 'cozinha'`, derivado da categoria.
 
-## Correções (escopo mínimo)
+### Correção (escopo mínimo)
 
-### Correção 1 — Persistir o flag de "já saudado" por sessão do navegador
-**Arquivo:** `src/routes/m.$qrToken.tsx`
+**Arquivo:** `src/components/cardapio/categoria-chip.tsx`
 
-Substituir `welcomedRef` por leitura/gravação em `sessionStorage` com chave `mesa-welcomed:${qrToken}`. Assim, dentro da mesma aba/sessão do navegador, o toast aparece uma única vez, mesmo após navegar para outras rotas e voltar.
+- Receber o `destino` atual da categoria via props (`cat.destino`).
+- No modo `editing`, adicionar um `Select` (mesmos componentes shadcn já usados em `categoria-dialog-body.tsx`) com opções **Cozinha** e **Bar**, ao lado do `Input` do nome.
+- No `save()`, passar `{ id, nome, destino }` para `atualizar.mutateAsync`.
+- Sair do modo de edição e chamar `onChanged()` como já faz hoje.
 
-- Em `showWelcome(nome)`: ler `sessionStorage.getItem("mesa-welcomed:" + qrToken)`. Se existir, retornar. Senão, gravar e exibir o toast.
-- Remover o `useRef` e a checagem `welcomedRef.current`.
-- Limpar a chave também em `limpar()` do `useClienteMesa` não é necessário — quando o cliente troca de identidade via `salvar()`, queremos mostrar o welcome de novo apenas se for outra pessoa. Para simplicidade e mínima intervenção, basta usar `sessionStorage` com chave por `qrToken`. Se trocar de cliente na mesma aba, o toast já saudou e ficará suprimido até a aba ser fechada — comportamento aceitável (e melhor que repetir 5 vezes).
+**Arquivo:** `src/routes/_authenticated/admin/cardapio.tsx` (ou onde o chip é renderizado)
 
-Nenhuma outra mudança de comportamento.
+- Garantir que o objeto `cat` passado para `<CategoriaChip />` contém `destino` (o hook `useCardapio` já retorna `destino` no tipo `Categoria`).
 
-### Correção 2 — Filtrar comandas fechadas em `resumoContaFn`
-**Arquivo:** `src/lib/pedidos.functions.ts` (apenas a query das linhas 392-395)
+Nada mais é tocado: o `atualizarCategoriaFn`, o tipo `Categoria`, o hook `useAtualizarCategoria` e o destino dos produtos individuais (`destino_override`) continuam idênticos. Nenhuma migração de banco.
 
-Adicionar `.eq("status", "aberta")` na seleção de `comandas` para o cálculo de `comandas_da_mesa` e `total_mesa`. Com isso:
-- O card "Esta mesa tem N comandas ativas" passa a refletir somente comandas abertas.
-- `total_mesa` deixa de somar comandas fechadas (que neste caso valem 0, então sem efeito numérico hoje).
-- A comanda atual (`atual = lista.find(...)`) também passa a vir filtrada por aberta — o que é correto, já que a tela "Conta da mesa" só faz sentido para comandas abertas. Se a atual estiver fechada, cai no branch existente "Nenhum pedido ainda nesta comanda" sem quebrar.
-
-Nenhuma outra função (`listarComandasAtivas`, `entrarNaMesaFn`, etc.) é tocada — todas já filtram por `status='aberta'`.
-
-### Correção 3 — Mover data para o card "Esta visita"
-**Arquivo:** `src/routes/m.$qrToken_.minha-conta.tsx`
-
-- **Remover** o bloco `col-span-2` "Última visita" do card "Resumo do cliente" (linhas 135-142). O grid permanece com "Total gasto" e "Ticket médio".
-- **Adicionar** no card "Esta visita" (logo abaixo do título, antes das linhas atuais) uma linha de subtítulo com a data/hora formatada. Fonte da data: `data.cliente.ultima_visita` (já disponível no payload, e é equivalente à abertura desta visita, já que é atualizado na identificação). Formato pedido pelo usuário: `01/06/2026, 16:46` → `toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" })`.
-
-Exemplo de marcação adicionada no card "Esta visita":
-```tsx
-<div className="text-sm font-semibold">
-  Esta visita
-  {data.cliente.ultima_visita ? (
-    <span className="ml-2 text-xs font-normal text-muted-foreground">
-      {new Date(data.cliente.ultima_visita).toLocaleString("pt-BR", {
-        dateStyle: "short",
-        timeStyle: "short",
-      })}
-    </span>
-  ) : null}
-</div>
-```
-
-Nenhuma alteração no backend, tipos ou hooks. Nenhuma mudança em outros cards, cores, espaçamentos ou textos.
+### Como validar
+Após a alteração:
+1. Editar uma categoria existente, mudar destino para "Cozinha", salvar.
+2. Criar um pedido com um produto dessa categoria.
+3. Conferir se aparece no display `/cozinha`.
 
 ---
 
-## Arquivos alterados (3)
-1. `src/routes/m.$qrToken.tsx` — `sessionStorage` no `showWelcome`.
-2. `src/lib/pedidos.functions.ts` — `.eq("status", "aberta")` na query de `comandas` dentro de `resumoContaFn`.
-3. `src/routes/m.$qrToken_.minha-conta.tsx` — remover "Última visita" do "Resumo do cliente" e adicionar data no header de "Esta visita".
+## 2) `/admin/pedidos` permite avançar status, desconectado do KDS
+
+### Diagnóstico
+
+Existem **dois conceitos paralelos de status**:
+
+- **Status global do pedido** (`pedidos.status`) — exibido e avançado em `/admin/pedidos`.
+- **Status por destino** (`pedido_destino_status`, destino `cozinha`/`bar`) — lido/atualizado pelos displays `/cozinha` e `/bar`.
+
+O Kanban admin não atualiza `pedido_destino_status`, então avançar status por lá não comunica nada ao KDS. Isso cria sensação de desincronização.
+
+### Recomendações (não aplicar agora)
+
+- **R2.1** — Tornar `/admin/pedidos` somente leitura para a fila operacional: remover os botões "avançar" do Kanban; manter visualização completa (filtros, totais, detalhe, garçom, cliente, itens) e a ação de cancelamento.
+- **R2.2** — No Kanban admin, exibir chips do estado por destino lidos de `pedido_destino_status` para refletir o que realmente está acontecendo na cozinha/bar.
+- **R2.3** — No KDS, quando `pedidos.length > 0` e `ativos.length === 0`, mostrar aviso de diagnóstico ("X pedidos já estão prontos/entregues ou sem itens da cozinha").
+- **R2.4** — Mostrar nome do restaurante no header do KDS para evitar confusão de conta.
+
+---
+
+## 3) Garçom não consegue ver conta e pedidos da mesa
+
+### Diagnóstico
+
+Em `/sala`, os cards de `MinhasMesasGrid` só oferecem o atalho **"+"** para nova comanda. Não há ação "abrir mesa" com visão consolidada. Backend já tem peças reaproveitáveis: `listarComandasAbertasMesaFn`, `resumoContaFn`, `buscarItensPedidoFn`, `listarPedidosDoDiaFn`.
+
+### Recomendações (não aplicar agora)
+
+- **R3.1** — Nova rota `/sala/mesa/$mesaId` exibindo: cabeçalho da mesa, comandas ativas (titular, total parcial, total pago, saldo), pedidos da sessão em ordem cronológica com status por destino, e conta consolidada (subtotal, descontos, cashback, total a pagar, total pago, saldo).
+- **R3.2** — Tornar o card da mesa em `MinhasMesasGrid` clicável (abre `/sala/mesa/:mesaId`); manter o botão "+" como atalho no canto. Mesma melhoria em `/admin/garcons/:garcomId/sala` (modo somente leitura).
+- **R3.3** — Criar `resumoContaMesaFn(restauranteId, mesaId)` (com `requireSupabaseAuth` + `assertAcessoRestaurante`) para servir o mesmo formato consolidado sem depender de `qrToken`/`clienteId`. Permite reaproveitar o componente "Conta da mesa".
+
+---
+
+## Escopo a aplicar agora
+
+Apenas o **ponto 1** (edição de destino no chip de categoria). Após implementar, testar:
+1. Editar categoria existente para destino "Cozinha".
+2. Criar pedido com produto dessa categoria.
+3. Confirmar exibição no display `/cozinha`.
+
+As recomendações dos pontos 2 e 3 ficam preservadas no plano para implementação futura, conforme priorização do usuário.
+
+## Arquivos alterados (agora)
+1. `src/components/cardapio/categoria-chip.tsx` — adicionar `Select` de destino no modo edição; enviar `destino` no `atualizar.mutateAsync`.
+2. `src/routes/_authenticated/admin/cardapio.tsx` *(somente se necessário)* — garantir que `destino` é repassado ao `CategoriaChip`.
 
 ## Fora de escopo
-- Não altero `listarComandasAtivas`, hooks, layout, cores, ou outros componentes.
-- Não toco no banco de dados.
-- Não mexo na lógica de identificação/sessão.
+- Nada de banco de dados, RLS, hooks ou outras telas.
+- Sem mudanças de layout, cores, textos, espaçamentos ou comportamento de outros componentes.
