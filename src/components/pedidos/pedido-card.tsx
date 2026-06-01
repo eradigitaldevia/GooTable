@@ -25,6 +25,39 @@ interface Item {
   cliente_nome: string | null;
 }
 
+interface DestinoStatusInfo {
+  destino: "cozinha" | "bar";
+  status: StatusPedido;
+}
+
+const DESTINO_LABEL: Record<"cozinha" | "bar", string> = {
+  cozinha: "Cozinha",
+  bar: "Bar",
+};
+
+const STATUS_LABEL: Record<StatusPedido, string> = {
+  recebido: "recebido",
+  em_preparo: "em preparo",
+  pronto: "pronto",
+  entregue: "entregue",
+  cancelado: "cancelado",
+};
+
+function destinoChipClasses(status: StatusPedido) {
+  switch (status) {
+    case "pronto":
+      return "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400";
+    case "em_preparo":
+      return "bg-amber-500/15 text-amber-700 dark:text-amber-400";
+    case "cancelado":
+      return "bg-destructive/15 text-destructive";
+    case "entregue":
+      return "bg-muted text-muted-foreground";
+    default:
+      return "bg-blue-500/15 text-blue-700 dark:text-blue-400";
+  }
+}
+
 export function PedidoCard({
   pedido,
   itens,
@@ -33,6 +66,7 @@ export function PedidoCard({
   onClick,
   onAvancar,
   garcomNome,
+  destinoStatus,
 }: {
   pedido: Pedido;
   itens: Item[];
@@ -41,6 +75,7 @@ export function PedidoCard({
   onClick: () => void;
   onAvancar: (next: StatusPedido) => void;
   garcomNome?: string | null;
+  destinoStatus?: DestinoStatusInfo[];
 }) {
   const minutos = Math.floor((Date.now() - new Date(pedido.criado_em).getTime()) / 60000);
   return (
@@ -55,6 +90,18 @@ export function PedidoCard({
       {garcomNome && (
         <div className="mt-1">
           <GarcomBadge nome={garcomNome} />
+        </div>
+      )}
+      {destinoStatus && destinoStatus.length > 0 && (
+        <div className="mt-1 flex flex-wrap gap-1">
+          {destinoStatus.map((d) => (
+            <span
+              key={d.destino}
+              className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${destinoChipClasses(d.status)}`}
+            >
+              {DESTINO_LABEL[d.destino]}: {STATUS_LABEL[d.status]}
+            </span>
+          ))}
         </div>
       )}
       <ul className="mt-2 space-y-0.5 text-xs">

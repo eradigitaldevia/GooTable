@@ -25,6 +25,11 @@ interface Item {
 }
 interface Mesa { id: string; numero: string; }
 
+interface DestinoStatusInfo {
+  destino: "cozinha" | "bar";
+  status: StatusPedido;
+}
+
 interface Coluna {
   key: StatusPedido;
   label: string;
@@ -40,6 +45,7 @@ export function PedidosKanban({
   onAbrir,
   onAvancar,
   garcomPorPedido,
+  destinoStatusPorPedido,
 }: {
   colunas: Coluna[];
   pedidos: Pedido[];
@@ -48,6 +54,7 @@ export function PedidosKanban({
   onAbrir: (p: Pedido) => void;
   onAvancar: (p: Pedido, novo: StatusPedido) => void | Promise<void>;
   garcomPorPedido?: (p: Pedido) => string | null;
+  destinoStatusPorPedido?: Map<string, DestinoStatusInfo[]>;
 }) {
   return (
     <div className="grid gap-4 lg:grid-cols-4">
@@ -63,6 +70,7 @@ export function PedidosKanban({
           onAbrir={onAbrir}
           onAvancar={onAvancar}
           garcomPorPedido={garcomPorPedido}
+          destinoStatusPorPedido={destinoStatusPorPedido}
         />
       ))}
     </div>

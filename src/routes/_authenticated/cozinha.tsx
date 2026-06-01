@@ -273,6 +273,11 @@ function CozinhaKDS() {
           <div className="flex h-[60vh] flex-col items-center justify-center gap-3 text-muted-foreground">
             <ChefHat className="h-12 w-12 opacity-40" />
             <p className="text-lg">Nenhum pedido na fila. ✨</p>
+            {pedidos.length > 0 && (
+              <p className="max-w-md text-center text-sm text-muted-foreground">
+                {pedidos.length} {pedidos.length === 1 ? "pedido já está" : "pedidos já estão"} pronto(s), entregue(s) ou sem itens da cozinha.
+              </p>
+            )}
           </div>
         ) : (
           <div className="grid gap-4 md:grid-cols-2">

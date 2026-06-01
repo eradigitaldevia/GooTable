@@ -10,7 +10,7 @@ import { CardsGridSkeleton } from "@/components/admin/skeletons/cards-grid-skele
 import { toast } from "sonner";
 import { PedidosKanban } from "@/components/pedidos/pedidos-kanban";
 import { DetalhePedido } from "@/components/pedidos/detalhe-pedido";
-import { usePedidosDoDia, useAtualizarStatusPedido } from "@/hooks/use-pedidos";
+import { usePedidosDoDia } from "@/hooks/use-pedidos";
 import { queryKeys } from "@/lib/query-keys";
 import { listarPedidosDoDiaFn } from "@/lib/pedidos.functions";
 import { useGarcomLookup } from "@/hooks/use-garcom-lookup";
@@ -57,9 +57,9 @@ interface Item {
 interface Mesa { id: string; numero: string; }
 
 const COLUNAS: { key: StatusPedido; label: string; icon: any; next?: StatusPedido }[] = [
-  { key: "recebido", label: "Recebido", icon: Clock, next: "em_preparo" },
-  { key: "em_preparo", label: "Em preparo", icon: ChefHat, next: "pronto" },
-  { key: "pronto", label: "Pronto", icon: Bell, next: "entregue" },
+  { key: "recebido", label: "Recebido", icon: Clock },
+  { key: "em_preparo", label: "Em preparo", icon: ChefHat },
+  { key: "pronto", label: "Pronto", icon: Bell },
   { key: "entregue", label: "Entregue", icon: PackageCheck },
 ];
 
@@ -71,7 +71,6 @@ function PedidosPainel() {
   const [aberto, setAberto] = useState<Pedido | null>(null);
 
   const { data, isLoading } = usePedidosDoDia(restauranteId ?? undefined);
-  const atualizarStatusMut = useAtualizarStatusPedido(restauranteId ?? undefined);
   const { nomeDoPedido } = useGarcomLookup(restauranteId ?? undefined);
 
   const pedidos = (data?.pedidos ?? []) as Pedido[];
@@ -136,14 +135,6 @@ function PedidosPainel() {
     };
   }, [restauranteId, qc]);
 
-  const atualizarStatus = async (pedido: Pedido, novo: StatusPedido) => {
-    try {
-      await atualizarStatusMut.mutateAsync({ id: pedido.id, status: novo });
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Erro ao atualizar status");
-    }
-  };
-
   const itensPorPedido = useMemo(() => {
     const m = new Map<string, Item[]>();
     for (const it of itens) {
@@ -152,6 +143,15 @@ function PedidosPainel() {
     }
     return m;
   }, [itens]);
+
+  const destinoStatusPorPedido = useMemo(() => {
+    const m = new Map<string, { destino: "cozinha" | "bar"; status: StatusPedido }[]>();
+    for (const d of destinoStatusList) {
+      if (!m.has(d.pedido_id)) m.set(d.pedido_id, []);
+      m.get(d.pedido_id)!.push({ destino: d.destino, status: d.status });
+    }
+    return m;
+  }, [destinoStatusList]);
 
   if (isLoading || !restauranteId) {
     return (
@@ -167,7 +167,7 @@ function PedidosPainel() {
       <header>
         <h1 className="text-3xl font-bold tracking-tight">Pedidos</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Painel realtime — atualize o status conforme o pedido avança.
+          Painel realtime — visualize os pedidos do dia. O avanço de status é feito pela cozinha/bar e pelo garçom ao entregar.
         </p>
       </header>
 
@@ -177,8 +177,9 @@ function PedidosPainel() {
         itensPorPedido={itensPorPedido}
         mesas={mesas}
         onAbrir={setAberto}
-        onAvancar={atualizarStatus}
+        onAvancar={() => {}}
         garcomPorPedido={(p) => nomeDoPedido(p)}
+        destinoStatusPorPedido={destinoStatusPorPedido}
       />
 
       <DetalhePedido

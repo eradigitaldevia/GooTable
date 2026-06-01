@@ -14,6 +14,7 @@ import {
   listarComandasAbertasMesaFn,
   listarPedidosDoDiaFn,
   resumoContaFn,
+  resumoContaMesaFn,
   type StatusPedido,
 } from "@/lib/pedidos.functions";
 
@@ -191,5 +192,19 @@ export function useListarComandasAbertasMesa() {
   return useMutation({
     mutationFn: (data: { restauranteId: string; mesaId: string }) =>
       fn({ data }),
+  });
+}
+
+export function useResumoContaMesa(
+  restauranteId: string | undefined,
+  mesaId: string | undefined,
+) {
+  const fn = useServerFn(resumoContaMesaFn);
+  const enabled = !!restauranteId && !!mesaId;
+  return useQuery({
+    queryKey: ["resumo-conta-mesa", restauranteId ?? "none", mesaId ?? "none"],
+    queryFn: () =>
+      fn({ data: { restauranteId: restauranteId!, mesaId: mesaId! } }),
+    enabled,
   });
 }
