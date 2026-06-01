@@ -306,3 +306,129 @@ function CashbackSection({
     </section>
   );
 }
+
+function VisitaDetalheSheet({
+  qrToken,
+  clienteId,
+  sessaoId,
+  open,
+  onOpenChange,
+}: {
+  qrToken: string;
+  clienteId: string | undefined;
+  sessaoId: string | null;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}) {
+  const { data, isLoading } = useDetalheVisita({ qrToken, clienteId, sessaoId });
+
+  return (
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetContent side="bottom" className="max-h-[90vh] overflow-y-auto">
+        <SheetHeader>
+          <SheetTitle>Detalhes da visita</SheetTitle>
+        </SheetHeader>
+
+        {isLoading || !data ? (
+          <div className="py-12 text-center">
+            <Loader2 className="mx-auto h-6 w-6 animate-spin text-primary" />
+          </div>
+        ) : (
+          <div className="mt-4 space-y-4">
+            <section className="rounded-2xl border bg-card p-4 shadow-[var(--shadow-soft)]">
+              <div className="text-sm font-semibold">
+                {new Date(data.sessao.aberta_em).toLocaleString("pt-BR")}
+              </div>
+              <div className="mt-1 text-xs text-muted-foreground">
+                {data.sessao.mesa_numero ? `Mesa ${data.sessao.mesa_numero} · ` : ""}
+                {data.sessao.status}
+                {data.sessao.fechada_em
+                  ? ` · Encerrada em ${new Date(data.sessao.fechada_em).toLocaleString("pt-BR")}`
+                  : ""}
+              </div>
+            </section>
+
+            {data.pedidos.length === 0 ? (
+              <p className="py-4 text-center text-sm text-muted-foreground">
+                Sem itens registrados nesta visita.
+              </p>
+            ) : (
+              data.pedidos.map((p) => (
+                <section
+                  key={p.id}
+                  className="rounded-2xl border bg-card p-4 shadow-[var(--shadow-soft)]"
+                >
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="font-semibold">
+                      {new Date(p.criado_em).toLocaleString("pt-BR")}
+                    </span>
+                    <span className="text-xs text-muted-foreground">{p.status}</span>
+                  </div>
+                  {p.itens.length === 0 ? (
+                    <p className="mt-2 text-xs text-muted-foreground">Sem itens seus neste pedido.</p>
+                  ) : (
+                    <ul className="mt-2 space-y-1 text-sm">
+                      {p.itens.map((it, idx) => (
+                        <li
+                          key={idx}
+                          className="flex items-start justify-between gap-2 text-muted-foreground"
+                        >
+                          <span className="min-w-0 truncate">
+                            {it.quantidade}x {it.nome_produto}
+                            {it.observacao ? (
+                              <span className="block text-xs italic">{it.observacao}</span>
+                            ) : null}
+                          </span>
+                          <span className="font-semibold text-foreground">
+                            {formatBRL(it.subtotal)}
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                  {p.observacao ? (
+                    <p className="mt-2 text-xs italic text-muted-foreground">
+                      Obs.: {p.observacao}
+                    </p>
+                  ) : null}
+                  <div className="mt-2 flex justify-between border-t pt-2 text-sm">
+                    <span className="text-muted-foreground">Subtotal</span>
+                    <span className="font-semibold">{formatBRL(p.subtotal_cliente)}</span>
+                  </div>
+                </section>
+              ))
+            )}
+
+            <section className="rounded-2xl border bg-card p-4 shadow-[var(--shadow-soft)]">
+              <div className="text-sm font-semibold">Totais da visita</div>
+              <div className="mt-2 space-y-1 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Meu subtotal</span>
+                  <span className="font-semibold">{formatBRL(data.totais.subtotal_cliente)}</span>
+                </div>
+                {data.totais.cashback_gerado > 0 && (
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Cashback gerado</span>
+                    <span className="font-semibold">{formatBRL(data.totais.cashback_gerado)}</span>
+                  </div>
+                )}
+                {data.totais.cashback_resgatado > 0 && (
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Cashback resgatado</span>
+                    <span className="font-semibold">-{formatBRL(data.totais.cashback_resgatado)}</span>
+                  </div>
+                )}
+                <div className="flex justify-between border-t pt-2 text-base">
+                  <span className="font-semibold">Total pago da sessão</span>
+                  <span className="font-bold text-primary">
+                    {formatBRL(data.totais.total_pago_sessao)}
+                  </span>
+                </div>
+              </div>
+            </section>
+          </div>
+        )}
+      </SheetContent>
+    </Sheet>
+  );
+}
