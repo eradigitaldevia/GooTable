@@ -1,11 +1,18 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Pencil, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { useAtualizarCategoria, useExcluirCategoria } from "@/hooks/use-cardapio";
 
-interface Categoria { id: string; nome: string; ordem: number; }
+interface Categoria { id: string; nome: string; ordem: number; destino: "cozinha" | "bar"; }
 
 export function CategoriaChip({
   cat,
@@ -18,12 +25,13 @@ export function CategoriaChip({
 }) {
   const [editing, setEditing] = useState(false);
   const [nome, setNome] = useState(cat.nome);
+  const [destino, setDestino] = useState<"cozinha" | "bar">(cat.destino);
   const atualizar = useAtualizarCategoria(restauranteId);
   const excluir = useExcluirCategoria(restauranteId);
 
   async function save() {
     try {
-      await atualizar.mutateAsync({ id: cat.id, nome: nome.trim() });
+      await atualizar.mutateAsync({ id: cat.id, nome: nome.trim(), destino });
       setEditing(false);
       onChanged();
     } catch (e) {
@@ -51,8 +59,17 @@ export function CategoriaChip({
             className="h-7 w-32"
             autoFocus
           />
+          <Select value={destino} onValueChange={(v) => setDestino(v as "cozinha" | "bar")}>
+            <SelectTrigger className="h-7 w-28">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="cozinha">Cozinha</SelectItem>
+              <SelectItem value="bar">Bar</SelectItem>
+            </SelectContent>
+          </Select>
           <Button size="sm" variant="ghost" onClick={save}>Salvar</Button>
-          <Button size="sm" variant="ghost" onClick={() => setEditing(false)}>Cancelar</Button>
+          <Button size="sm" variant="ghost" onClick={() => { setNome(cat.nome); setDestino(cat.destino); setEditing(false); }}>Cancelar</Button>
         </>
       ) : (
         <>
