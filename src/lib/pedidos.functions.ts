@@ -761,3 +761,307 @@ export const listarComandasAbertasMesaFn = createServerFn({ method: "POST" })
       titular_nome: c.titular_cliente_id ? nomes.get(c.titular_cliente_id) ?? null : null,
     }));
   });
+
+/* ---------- Garçom/Admin: resumo consolidado da conta da mesa ---------- */
+
+export interface ResumoMesaItem {
+  id: string;
+  nome_produto: string;
+  quantidade: number;
+  quantidade_pronta: number;
+  preco_unit: number;
+  observacao: string | null;
+  cliente_nome: string | null;
+  destino: "cozinha" | "bar";
+  status: "pendente" | "em_preparo" | "pronto";
+}
+
+export interface ResumoMesaPedido {
+  id: string;
+  status: StatusPedido;
+  total: number;
+  criado_em: string;
+  comanda_id: string | null;
+  garcom_nome: string | null;
+  cliente_nome: string | null;
+  observacao: string | null;
+  itens: ResumoMesaItem[];
+  destino_status: { destino: "cozinha" | "bar"; status: StatusPedido }[];
+}
+
+export interface ResumoMesaComanda {
+  id: string;
+  tipo: "individual" | "compartilhada";
+  titular_nome: string | null;
+  subtotal: number;
+  desconto_cupom: number;
+  cashback_resgatado: number;
+  total: number;
+  total_pago: number;
+  saldo: number;
+}
+
+export interface ResumoContaMesa {
+  mesa: { id: string; numero: string };
+  sessao: { id: string; aberta_em: string } | null;
+  comandas: ResumoMesaComanda[];
+  pedidos: ResumoMesaPedido[];
+  totais: {
+    subtotal: number;
+    desconto_cupom: number;
+    cashback_resgatado: number;
+    total: number;
+    total_pago: number;
+    saldo: number;
+  };
+}
+
+export const resumoContaMesaFn = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) =>
+    z
+      .object({
+        restauranteId: z.string().uuid(),
+        mesaId: z.string().uuid(),
+      })
+      .parse(d),
+  )
+  .handler(async ({ context, data }): Promise<ResumoContaMesa> => {
+    const { supabase, userId } = context;
+    await assertAcessoRestaurante(supabase, userId, data.restauranteId);
+
+    const { data: mesa, error: mErr } = await supabaseAdmin
+      .from("mesas")
+      .select("id, numero, restaurante_id")
+      .eq("id", data.mesaId)
+      .maybeSingle();
+    if (mErr) throw new Error(mErr.message);
+    if (!mesa || mesa.restaurante_id !== data.restauranteId) {
+      throw new Error("Mesa não encontrada");
+    }
+
+    const { data: sessao } = await supabaseAdmin
+      .from("mesa_sessoes")
+      .select("id, aberta_em")
+      .eq("mesa_id", data.mesaId)
+      .eq("status", "aberta")
+      .maybeSingle();
+
+    const sessaoInfo = sessao
+      ? { id: sessao.id as string, aberta_em: sessao.aberta_em as string }
+      : null;
+
+    let comandas: ResumoMesaComanda[] = [];
+    let pedidos: ResumoMesaPedido[] = [];
+
+    if (sessaoInfo) {
+      const { data: cs, error: cErr } = await supabaseAdmin
+        .from("comandas")
+        .select(
+          "id, tipo, subtotal, desconto_cupom, cashback_resgatado, total, total_pago, titular_cliente_id",
+        )
+        .eq("sessao_id", sessaoInfo.id)
+        .eq("status", "aberta")
+        .order("criado_em", { ascending: true });
+      if (cErr) throw new Error(cErr.message);
+      const lista = (cs ?? []) as Array<{
+        id: string;
+        tipo: "individual" | "compartilhada";
+        subtotal: number;
+        desconto_cupom: number;
+        cashback_resgatado: number;
+        total: number;
+        total_pago: number;
+        titular_cliente_id: string | null;
+      }>;
+
+      const titularIds = lista
+        .map((c) => c.titular_cliente_id)
+        .filter((v): v is string => !!v);
+      const nomesTitulares = new Map<string, string>();
+      if (titularIds.length) {
+        const { data: cli } = await supabaseAdmin
+          .from("clientes")
+          .select("id, nome")
+          .in("id", titularIds);
+        for (const c of cli ?? []) {
+          nomesTitulares.set(c.id as string, c.nome as string);
+        }
+      }
+
+      comandas = lista.map((c) => {
+        const total = Number(c.total ?? 0);
+        const pago = Number(c.total_pago ?? 0);
+        return {
+          id: c.id,
+          tipo: c.tipo,
+          titular_nome: c.titular_cliente_id
+            ? nomesTitulares.get(c.titular_cliente_id) ?? null
+            : null,
+          subtotal: Number(c.subtotal ?? 0),
+          desconto_cupom: Number(c.desconto_cupom ?? 0),
+          cashback_resgatado: Number(c.cashback_resgatado ?? 0),
+          total,
+          total_pago: pago,
+          saldo: total - pago,
+        };
+      });
+
+      // Pedidos da sessão (cronológico)
+      const { data: peds, error: pErr } = await supabaseAdmin
+        .from("pedidos")
+        .select(
+          "id, status, total, criado_em, comanda_id, garcom_id, cliente_id, cliente_nome, observacao",
+        )
+        .eq("sessao_id", sessaoInfo.id)
+        .order("criado_em", { ascending: true });
+      if (pErr) throw new Error(pErr.message);
+      const listaPed = (peds ?? []) as Array<{
+        id: string;
+        status: StatusPedido;
+        total: number;
+        criado_em: string;
+        comanda_id: string | null;
+        garcom_id: string | null;
+        cliente_id: string | null;
+        cliente_nome: string | null;
+        observacao: string | null;
+      }>;
+
+      const pedidoIds = listaPed.map((p) => p.id);
+      let itensRaw: Array<{
+        id: string;
+        pedido_id: string;
+        nome_produto: string;
+        quantidade: number;
+        quantidade_pronta: number;
+        preco_unit: number;
+        observacao: string | null;
+        cliente_nome: string | null;
+        destino: "cozinha" | "bar";
+        status: "pendente" | "em_preparo" | "pronto";
+      }> = [];
+      let destinoStatusRaw: Array<{
+        pedido_id: string;
+        destino: "cozinha" | "bar";
+        status: StatusPedido;
+      }> = [];
+      if (pedidoIds.length) {
+        const [{ data: its, error: iErr }, { data: ds, error: dErr }] = await Promise.all([
+          supabaseAdmin
+            .from("pedido_itens")
+            .select(
+              "id, pedido_id, nome_produto, quantidade, quantidade_pronta, preco_unit, observacao, cliente_nome, destino, status",
+            )
+            .in("pedido_id", pedidoIds),
+          supabaseAdmin
+            .from("pedido_destino_status")
+            .select("pedido_id, destino, status")
+            .in("pedido_id", pedidoIds),
+        ]);
+        if (iErr) throw new Error(iErr.message);
+        if (dErr) throw new Error(dErr.message);
+        itensRaw = (its ?? []) as typeof itensRaw;
+        destinoStatusRaw = (ds ?? []) as typeof destinoStatusRaw;
+      }
+
+      // Nomes de garçons
+      const garcomIds = Array.from(
+        new Set(listaPed.map((p) => p.garcom_id).filter((v): v is string => !!v)),
+      );
+      const nomesGarcom = new Map<string, string>();
+      if (garcomIds.length) {
+        const { data: gs } = await supabaseAdmin
+          .from("garcons")
+          .select("id, nome")
+          .in("id", garcomIds);
+        for (const g of gs ?? []) {
+          nomesGarcom.set(g.id as string, g.nome as string);
+        }
+      }
+
+      // Nomes de clientes (autor do pedido) quando vazio em cliente_nome
+      const clienteIds = Array.from(
+        new Set(listaPed.map((p) => p.cliente_id).filter((v): v is string => !!v)),
+      );
+      const nomesClientes = new Map<string, string>();
+      if (clienteIds.length) {
+        const { data: cli2 } = await supabaseAdmin
+          .from("clientes")
+          .select("id, nome")
+          .in("id", clienteIds);
+        for (const c of cli2 ?? []) {
+          nomesClientes.set(c.id as string, c.nome as string);
+        }
+      }
+
+      const itensPorPedido = new Map<string, ResumoMesaItem[]>();
+      for (const it of itensRaw) {
+        const arr = itensPorPedido.get(it.pedido_id) ?? [];
+        arr.push({
+          id: it.id,
+          nome_produto: it.nome_produto,
+          quantidade: it.quantidade,
+          quantidade_pronta: it.quantidade_pronta ?? 0,
+          preco_unit: Number(it.preco_unit),
+          observacao: it.observacao,
+          cliente_nome: it.cliente_nome,
+          destino: it.destino,
+          status: it.status,
+        });
+        itensPorPedido.set(it.pedido_id, arr);
+      }
+
+      const dsPorPedido = new Map<
+        string,
+        { destino: "cozinha" | "bar"; status: StatusPedido }[]
+      >();
+      for (const d of destinoStatusRaw) {
+        const arr = dsPorPedido.get(d.pedido_id) ?? [];
+        arr.push({ destino: d.destino, status: d.status });
+        dsPorPedido.set(d.pedido_id, arr);
+      }
+
+      pedidos = listaPed.map((p) => ({
+        id: p.id,
+        status: p.status,
+        total: Number(p.total ?? 0),
+        criado_em: p.criado_em,
+        comanda_id: p.comanda_id,
+        garcom_nome: p.garcom_id ? nomesGarcom.get(p.garcom_id) ?? null : null,
+        cliente_nome:
+          p.cliente_nome ||
+          (p.cliente_id ? nomesClientes.get(p.cliente_id) ?? null : null),
+        observacao: p.observacao,
+        itens: itensPorPedido.get(p.id) ?? [],
+        destino_status: dsPorPedido.get(p.id) ?? [],
+      }));
+    }
+
+    const totais = comandas.reduce(
+      (acc, c) => ({
+        subtotal: acc.subtotal + c.subtotal,
+        desconto_cupom: acc.desconto_cupom + c.desconto_cupom,
+        cashback_resgatado: acc.cashback_resgatado + c.cashback_resgatado,
+        total: acc.total + c.total,
+        total_pago: acc.total_pago + c.total_pago,
+        saldo: acc.saldo + c.saldo,
+      }),
+      {
+        subtotal: 0,
+        desconto_cupom: 0,
+        cashback_resgatado: 0,
+        total: 0,
+        total_pago: 0,
+        saldo: 0,
+      },
+    );
+
+    return {
+      mesa: { id: mesa.id as string, numero: mesa.numero as string },
+      sessao: sessaoInfo,
+      comandas,
+      pedidos,
+      totais,
+    };
+  });
