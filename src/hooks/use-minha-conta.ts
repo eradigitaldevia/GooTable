@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { minhaContaFn } from "@/lib/clientes.functions";
+import { minhaContaFn, detalheVisitaFn } from "@/lib/clientes.functions";
 
 export function useMinhaConta(input: {
   qrToken: string;
@@ -53,5 +53,26 @@ export function useAplicarCashback(qrToken: string) {
       qc.invalidateQueries({ queryKey: ["minha-conta", qrToken] });
       qc.invalidateQueries({ queryKey: ["resumo-conta", qrToken] });
     },
+  });
+}
+
+export function useDetalheVisita(input: {
+  qrToken: string;
+  clienteId: string | undefined;
+  sessaoId: string | null;
+}) {
+  const fn = useServerFn(detalheVisitaFn);
+  const enabled = !!input.clienteId && !!input.sessaoId;
+  return useQuery({
+    queryKey: ["detalhe-visita", input.qrToken, input.sessaoId ?? "none"],
+    queryFn: () =>
+      fn({
+        data: {
+          qrToken: input.qrToken,
+          clienteId: input.clienteId!,
+          sessaoId: input.sessaoId!,
+        },
+      }),
+    enabled,
   });
 }

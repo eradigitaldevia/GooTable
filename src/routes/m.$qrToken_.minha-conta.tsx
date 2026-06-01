@@ -1,11 +1,21 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { ArrowLeft, Loader2, Wallet, Receipt } from "lucide-react";
+import { ArrowLeft, Loader2, Wallet, Receipt, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
 import { toast } from "sonner";
 import { useClienteMesa } from "@/hooks/use-cliente-mesa";
-import { useAplicarCashback, useMinhaConta } from "@/hooks/use-minha-conta";
+import {
+  useAplicarCashback,
+  useDetalheVisita,
+  useMinhaConta,
+} from "@/hooks/use-minha-conta";
 import { useRealtimeMesa } from "@/hooks/use-realtime";
 import { formatBRL } from "@/lib/cart";
 
@@ -20,6 +30,7 @@ function MinhaConta() {
   const navigate = useNavigate();
   const { identidade, hidratado } = useClienteMesa(qrToken);
   const [page, setPage] = useState(0);
+  const [sessaoSelecionada, setSessaoSelecionada] = useState<string | null>(null);
 
   useEffect(() => {
     if (hidratado && !identidade) {
@@ -38,7 +49,7 @@ function MinhaConta() {
 
   useRealtimeMesa(qrToken, identidade?.sessaoId);
 
-  const totalPages = data ? Math.max(1, Math.ceil(data.historico_total / PAGE_SIZE)) : 1;
+  const totalPages = data ? Math.max(1, Math.ceil(data.visitas_total / PAGE_SIZE)) : 1;
 
 
   return (
@@ -134,31 +145,40 @@ function MinhaConta() {
 
             <section className="rounded-2xl border bg-card p-4 shadow-[var(--shadow-soft)]">
               <div className="flex items-center justify-between">
-                <div className="text-sm font-semibold">Histórico de pedidos</div>
+                <div className="text-sm font-semibold">Histórico de visitas</div>
                 <div className="text-xs text-muted-foreground">
-                  {data.historico_total} no total
+                  {data.visitas_total} no total
                 </div>
               </div>
 
-              {data.historico.length === 0 ? (
-                <p className="mt-3 text-sm text-muted-foreground">Sem pedidos anteriores.</p>
+              {data.visitas.length === 0 ? (
+                <p className="mt-3 text-sm text-muted-foreground">Sem visitas anteriores.</p>
               ) : (
                 <ul className="mt-3 divide-y">
-                  {data.historico.map((p) => (
-                    <li key={p.id} className="flex items-center justify-between py-2 text-sm">
-                      <div className="min-w-0">
-                        <div className="font-medium">
-                          {new Date(p.criado_em).toLocaleString("pt-BR")}
+                  {data.visitas.map((v) => (
+                    <li key={v.sessao_id}>
+                      <button
+                        type="button"
+                        onClick={() => setSessaoSelecionada(v.sessao_id)}
+                        className="flex w-full items-center justify-between gap-2 py-2 text-left text-sm hover:bg-accent/40 rounded-md px-1"
+                      >
+                        <div className="min-w-0">
+                          <div className="font-medium">
+                            {new Date(v.aberta_em).toLocaleString("pt-BR")}
+                            {v.mesa_numero ? ` · Mesa ${v.mesa_numero}` : ""}
+                          </div>
+                          <div className="text-xs text-muted-foreground">
+                            {v.pedidos_count} {v.pedidos_count === 1 ? "pedido" : "pedidos"} · {formatBRL(v.total_cliente)}
+                          </div>
                         </div>
-                        <div className="text-xs text-muted-foreground">{p.status}</div>
-                      </div>
-                      <div className="font-semibold">{formatBRL(p.total)}</div>
+                        <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
+                      </button>
                     </li>
                   ))}
                 </ul>
               )}
 
-              {data.historico_total > PAGE_SIZE && (
+              {data.visitas_total > PAGE_SIZE && (
                 <div className="mt-3 flex items-center justify-between">
                   <Button
                     size="sm"
@@ -182,6 +202,16 @@ function MinhaConta() {
                 </div>
               )}
             </section>
+
+            <VisitaDetalheSheet
+              qrToken={qrToken}
+              clienteId={identidade?.clienteId}
+              sessaoId={sessaoSelecionada}
+              open={sessaoSelecionada !== null}
+              onOpenChange={(o) => {
+                if (!o) setSessaoSelecionada(null);
+              }}
+            />
           </>
         )}
       </main>
@@ -274,5 +304,131 @@ function CashbackSection({
         </>
       )}
     </section>
+  );
+}
+
+function VisitaDetalheSheet({
+  qrToken,
+  clienteId,
+  sessaoId,
+  open,
+  onOpenChange,
+}: {
+  qrToken: string;
+  clienteId: string | undefined;
+  sessaoId: string | null;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}) {
+  const { data, isLoading } = useDetalheVisita({ qrToken, clienteId, sessaoId });
+
+  return (
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetContent side="bottom" className="max-h-[90vh] overflow-y-auto">
+        <SheetHeader>
+          <SheetTitle>Detalhes da visita</SheetTitle>
+        </SheetHeader>
+
+        {isLoading || !data ? (
+          <div className="py-12 text-center">
+            <Loader2 className="mx-auto h-6 w-6 animate-spin text-primary" />
+          </div>
+        ) : (
+          <div className="mt-4 space-y-4">
+            <section className="rounded-2xl border bg-card p-4 shadow-[var(--shadow-soft)]">
+              <div className="text-sm font-semibold">
+                {new Date(data.sessao.aberta_em).toLocaleString("pt-BR")}
+              </div>
+              <div className="mt-1 text-xs text-muted-foreground">
+                {data.sessao.mesa_numero ? `Mesa ${data.sessao.mesa_numero} · ` : ""}
+                {data.sessao.status}
+                {data.sessao.fechada_em
+                  ? ` · Encerrada em ${new Date(data.sessao.fechada_em).toLocaleString("pt-BR")}`
+                  : ""}
+              </div>
+            </section>
+
+            {data.pedidos.length === 0 ? (
+              <p className="py-4 text-center text-sm text-muted-foreground">
+                Sem itens registrados nesta visita.
+              </p>
+            ) : (
+              data.pedidos.map((p) => (
+                <section
+                  key={p.id}
+                  className="rounded-2xl border bg-card p-4 shadow-[var(--shadow-soft)]"
+                >
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="font-semibold">
+                      {new Date(p.criado_em).toLocaleString("pt-BR")}
+                    </span>
+                    <span className="text-xs text-muted-foreground">{p.status}</span>
+                  </div>
+                  {p.itens.length === 0 ? (
+                    <p className="mt-2 text-xs text-muted-foreground">Sem itens seus neste pedido.</p>
+                  ) : (
+                    <ul className="mt-2 space-y-1 text-sm">
+                      {p.itens.map((it, idx) => (
+                        <li
+                          key={idx}
+                          className="flex items-start justify-between gap-2 text-muted-foreground"
+                        >
+                          <span className="min-w-0 truncate">
+                            {it.quantidade}x {it.nome_produto}
+                            {it.observacao ? (
+                              <span className="block text-xs italic">{it.observacao}</span>
+                            ) : null}
+                          </span>
+                          <span className="font-semibold text-foreground">
+                            {formatBRL(it.subtotal)}
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                  {p.observacao ? (
+                    <p className="mt-2 text-xs italic text-muted-foreground">
+                      Obs.: {p.observacao}
+                    </p>
+                  ) : null}
+                  <div className="mt-2 flex justify-between border-t pt-2 text-sm">
+                    <span className="text-muted-foreground">Subtotal</span>
+                    <span className="font-semibold">{formatBRL(p.subtotal_cliente)}</span>
+                  </div>
+                </section>
+              ))
+            )}
+
+            <section className="rounded-2xl border bg-card p-4 shadow-[var(--shadow-soft)]">
+              <div className="text-sm font-semibold">Totais da visita</div>
+              <div className="mt-2 space-y-1 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Meu subtotal</span>
+                  <span className="font-semibold">{formatBRL(data.totais.subtotal_cliente)}</span>
+                </div>
+                {data.totais.cashback_gerado > 0 && (
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Cashback gerado</span>
+                    <span className="font-semibold">{formatBRL(data.totais.cashback_gerado)}</span>
+                  </div>
+                )}
+                {data.totais.cashback_resgatado > 0 && (
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Cashback resgatado</span>
+                    <span className="font-semibold">-{formatBRL(data.totais.cashback_resgatado)}</span>
+                  </div>
+                )}
+                <div className="flex justify-between border-t pt-2 text-base">
+                  <span className="font-semibold">Total pago da sessão</span>
+                  <span className="font-bold text-primary">
+                    {formatBRL(data.totais.total_pago_sessao)}
+                  </span>
+                </div>
+              </div>
+            </section>
+          </div>
+        )}
+      </SheetContent>
+    </Sheet>
   );
 }
