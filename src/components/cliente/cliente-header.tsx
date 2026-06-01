@@ -1,4 +1,5 @@
-import { Search } from "lucide-react";
+import { Search, Receipt, User } from "lucide-react";
+import { Link } from "@tanstack/react-router";
 import { Input } from "@/components/ui/input";
 import { CategoriaTabs } from "./categoria-tabs";
 
@@ -20,6 +21,7 @@ export function ClienteHeader({
   categorias,
   catAtiva,
   onCatChange,
+  qrToken,
 }: {
   restaurante: Restaurante | null;
   mesa: Mesa | null;
@@ -28,6 +30,7 @@ export function ClienteHeader({
   categorias: Categoria[];
   catAtiva: string | "todas";
   onCatChange: (v: string | "todas") => void;
+  qrToken: string;
 }) {
   return (
     <header className="sticky top-0 z-30 border-b bg-background/90 backdrop-blur">
@@ -43,6 +46,22 @@ export function ClienteHeader({
           <h1 className="truncate text-base font-bold leading-tight">{restaurante?.nome}</h1>
           <p className="text-xs text-muted-foreground">Mesa {mesa?.numero}</p>
         </div>
+        <Link
+          to="/m/$qrToken/conta"
+          params={{ qrToken }}
+          aria-label="Conta da mesa"
+          className="rounded-full p-2 hover:bg-accent"
+        >
+          <Receipt className="h-5 w-5" />
+        </Link>
+        <Link
+          to="/m/$qrToken/minha-conta"
+          params={{ qrToken }}
+          aria-label="Minha conta"
+          className="rounded-full p-2 hover:bg-accent"
+        >
+          <User className="h-5 w-5" />
+        </Link>
       </div>
       <div className="mx-auto max-w-2xl px-4 pb-3">
         <div className="relative">
