@@ -392,7 +392,8 @@ export const resumoContaFn = createServerFn({ method: "POST" })
     const { data: comandas, error: cErr } = await supabaseAdmin
       .from("comandas")
       .select("id, tipo, subtotal, cashback_resgatado, total, total_pago, desconto_cupom, cupom_id")
-      .eq("sessao_id", data.sessaoId);
+      .eq("sessao_id", data.sessaoId)
+      .eq("status", "aberta");
     if (cErr) throw new Error(cErr.message);
     const lista = (comandas ?? []) as Array<{
       id: string;
