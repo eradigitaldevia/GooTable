@@ -279,6 +279,7 @@ function ClienteMenu() {
         categorias={categorias}
         catAtiva={catAtiva}
         onCatChange={setCatAtiva}
+        qrToken={qrToken}
       />
 
       <main className="mx-auto max-w-2xl px-4 py-4">

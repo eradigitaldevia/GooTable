@@ -75,6 +75,19 @@ function Status() {
             Adicionar mais itens
           </Button>
         </Link>
+
+        <div className="grid grid-cols-2 gap-3">
+          <Link to="/m/$qrToken/conta" params={{ qrToken }} className="block">
+            <Button variant="outline" className="w-full h-12 rounded-2xl">
+              Conta da mesa
+            </Button>
+          </Link>
+          <Link to="/m/$qrToken/minha-conta" params={{ qrToken }} className="block">
+            <Button variant="outline" className="w-full h-12 rounded-2xl">
+              Minha conta
+            </Button>
+          </Link>
+        </div>
       </main>
     </div>
   );
