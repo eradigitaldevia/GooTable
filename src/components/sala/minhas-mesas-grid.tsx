@@ -25,11 +25,8 @@ export function MinhasMesasGrid({
       {mesas.map((m) => {
         const prontos = prontosPorMesa.get(m.id) ?? 0;
         const chamados = chamadosPorMesa.get(m.id) ?? 0;
-        return (
-          <div
-            key={m.id}
-            className="relative rounded-xl border border-border bg-card p-4 text-center shadow-sm"
-          >
+        const conteudo = (
+          <>
             {readOnly ? (
               <button
                 type="button"
@@ -44,6 +41,7 @@ export function MinhasMesasGrid({
                 to="/sala/nova-comanda/$mesaId"
                 params={{ mesaId: m.id }}
                 aria-label={`Novo pedido na mesa ${m.numero}`}
+                onClick={(e) => e.stopPropagation()}
                 className="absolute right-2 top-2 flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground shadow hover:opacity-90"
               >
                 <Plus className="h-4 w-4" />
@@ -68,7 +66,18 @@ export function MinhasMesasGrid({
                 <span className="text-muted-foreground">tranquila</span>
               )}
             </div>
-          </div>
+          </>
+        );
+        return (
+          <Link
+            key={m.id}
+            to="/sala/mesa/$mesaId"
+            params={{ mesaId: m.id }}
+            aria-label={`Ver detalhes da mesa ${m.numero}`}
+            className="relative block rounded-xl border border-border bg-card p-4 text-center shadow-sm transition hover:border-primary"
+          >
+            {conteudo}
+          </Link>
         );
       })}
     </div>

@@ -49,6 +49,7 @@ import { Route as AuthenticatedAdminCardapioRouteImport } from './routes/_authen
 import { Route as AuthenticatedAdminCaixaRouteImport } from './routes/_authenticated/admin/caixa'
 import { Route as MQrTokenStatusPedidoIdRouteImport } from './routes/m.$qrToken_.status.$pedidoId'
 import { Route as AuthenticatedSalaNovaComandaMesaIdRouteImport } from './routes/_authenticated/sala_.nova-comanda.$mesaId'
+import { Route as AuthenticatedSalaMesaMesaIdRouteImport } from './routes/_authenticated/sala_.mesa.$mesaId'
 import { Route as AuthenticatedAdminClientesIdRouteImport } from './routes/_authenticated/admin/clientes.$id'
 import { Route as AuthenticatedAdminGarconsGarcomIdSalaRouteImport } from './routes/_authenticated/admin/garcons_.$garcomId.sala'
 
@@ -267,6 +268,12 @@ const AuthenticatedSalaNovaComandaMesaIdRoute =
     path: '/sala/nova-comanda/$mesaId',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
+const AuthenticatedSalaMesaMesaIdRoute =
+  AuthenticatedSalaMesaMesaIdRouteImport.update({
+    id: '/sala_/mesa/$mesaId',
+    path: '/sala/mesa/$mesaId',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedAdminClientesIdRoute =
   AuthenticatedAdminClientesIdRouteImport.update({
     id: '/$id',
@@ -319,6 +326,7 @@ export interface FileRoutesByFullPath {
   '/admin/': typeof AuthenticatedAdminIndexRoute
   '/caixa/': typeof AuthenticatedCaixaIndexRoute
   '/admin/clientes/$id': typeof AuthenticatedAdminClientesIdRoute
+  '/sala/mesa/$mesaId': typeof AuthenticatedSalaMesaMesaIdRoute
   '/sala/nova-comanda/$mesaId': typeof AuthenticatedSalaNovaComandaMesaIdRoute
   '/m/$qrToken/status/$pedidoId': typeof MQrTokenStatusPedidoIdRoute
   '/admin/garcons/$garcomId/sala': typeof AuthenticatedAdminGarconsGarcomIdSalaRoute
@@ -359,6 +367,7 @@ export interface FileRoutesByTo {
   '/admin': typeof AuthenticatedAdminIndexRoute
   '/caixa': typeof AuthenticatedCaixaIndexRoute
   '/admin/clientes/$id': typeof AuthenticatedAdminClientesIdRoute
+  '/sala/mesa/$mesaId': typeof AuthenticatedSalaMesaMesaIdRoute
   '/sala/nova-comanda/$mesaId': typeof AuthenticatedSalaNovaComandaMesaIdRoute
   '/m/$qrToken/status/$pedidoId': typeof MQrTokenStatusPedidoIdRoute
   '/admin/garcons/$garcomId/sala': typeof AuthenticatedAdminGarconsGarcomIdSalaRoute
@@ -404,6 +413,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
   '/_authenticated/caixa/': typeof AuthenticatedCaixaIndexRoute
   '/_authenticated/admin/clientes/$id': typeof AuthenticatedAdminClientesIdRoute
+  '/_authenticated/sala_/mesa/$mesaId': typeof AuthenticatedSalaMesaMesaIdRoute
   '/_authenticated/sala_/nova-comanda/$mesaId': typeof AuthenticatedSalaNovaComandaMesaIdRoute
   '/m/$qrToken_/status/$pedidoId': typeof MQrTokenStatusPedidoIdRoute
   '/_authenticated/admin/garcons_/$garcomId/sala': typeof AuthenticatedAdminGarconsGarcomIdSalaRoute
@@ -449,6 +459,7 @@ export interface FileRouteTypes {
     | '/admin/'
     | '/caixa/'
     | '/admin/clientes/$id'
+    | '/sala/mesa/$mesaId'
     | '/sala/nova-comanda/$mesaId'
     | '/m/$qrToken/status/$pedidoId'
     | '/admin/garcons/$garcomId/sala'
@@ -489,6 +500,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/caixa'
     | '/admin/clientes/$id'
+    | '/sala/mesa/$mesaId'
     | '/sala/nova-comanda/$mesaId'
     | '/m/$qrToken/status/$pedidoId'
     | '/admin/garcons/$garcomId/sala'
@@ -533,6 +545,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/'
     | '/_authenticated/caixa/'
     | '/_authenticated/admin/clientes/$id'
+    | '/_authenticated/sala_/mesa/$mesaId'
     | '/_authenticated/sala_/nova-comanda/$mesaId'
     | '/m/$qrToken_/status/$pedidoId'
     | '/_authenticated/admin/garcons_/$garcomId/sala'
@@ -835,6 +848,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSalaNovaComandaMesaIdRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/sala_/mesa/$mesaId': {
+      id: '/_authenticated/sala_/mesa/$mesaId'
+      path: '/sala/mesa/$mesaId'
+      fullPath: '/sala/mesa/$mesaId'
+      preLoaderRoute: typeof AuthenticatedSalaMesaMesaIdRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/admin/clientes/$id': {
       id: '/_authenticated/admin/clientes/$id'
       path: '/$id'
@@ -931,6 +951,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedCaixaRoute: typeof AuthenticatedCaixaRouteWithChildren
   AuthenticatedCozinhaRoute: typeof AuthenticatedCozinhaRoute
   AuthenticatedSalaRoute: typeof AuthenticatedSalaRoute
+  AuthenticatedSalaMesaMesaIdRoute: typeof AuthenticatedSalaMesaMesaIdRoute
   AuthenticatedSalaNovaComandaMesaIdRoute: typeof AuthenticatedSalaNovaComandaMesaIdRoute
 }
 
@@ -940,6 +961,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedCaixaRoute: AuthenticatedCaixaRouteWithChildren,
   AuthenticatedCozinhaRoute: AuthenticatedCozinhaRoute,
   AuthenticatedSalaRoute: AuthenticatedSalaRoute,
+  AuthenticatedSalaMesaMesaIdRoute: AuthenticatedSalaMesaMesaIdRoute,
   AuthenticatedSalaNovaComandaMesaIdRoute:
     AuthenticatedSalaNovaComandaMesaIdRoute,
 }
