@@ -1,11 +1,21 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { ArrowLeft, Loader2, Wallet, Receipt } from "lucide-react";
+import { ArrowLeft, Loader2, Wallet, Receipt, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
 import { toast } from "sonner";
 import { useClienteMesa } from "@/hooks/use-cliente-mesa";
-import { useAplicarCashback, useMinhaConta } from "@/hooks/use-minha-conta";
+import {
+  useAplicarCashback,
+  useDetalheVisita,
+  useMinhaConta,
+} from "@/hooks/use-minha-conta";
 import { useRealtimeMesa } from "@/hooks/use-realtime";
 import { formatBRL } from "@/lib/cart";
 
@@ -20,6 +30,7 @@ function MinhaConta() {
   const navigate = useNavigate();
   const { identidade, hidratado } = useClienteMesa(qrToken);
   const [page, setPage] = useState(0);
+  const [sessaoSelecionada, setSessaoSelecionada] = useState<string | null>(null);
 
   useEffect(() => {
     if (hidratado && !identidade) {
@@ -38,7 +49,7 @@ function MinhaConta() {
 
   useRealtimeMesa(qrToken, identidade?.sessaoId);
 
-  const totalPages = data ? Math.max(1, Math.ceil(data.historico_total / PAGE_SIZE)) : 1;
+  const totalPages = data ? Math.max(1, Math.ceil(data.visitas_total / PAGE_SIZE)) : 1;
 
 
   return (
@@ -134,31 +145,40 @@ function MinhaConta() {
 
             <section className="rounded-2xl border bg-card p-4 shadow-[var(--shadow-soft)]">
               <div className="flex items-center justify-between">
-                <div className="text-sm font-semibold">Histórico de pedidos</div>
+                <div className="text-sm font-semibold">Histórico de visitas</div>
                 <div className="text-xs text-muted-foreground">
-                  {data.historico_total} no total
+                  {data.visitas_total} no total
                 </div>
               </div>
 
-              {data.historico.length === 0 ? (
-                <p className="mt-3 text-sm text-muted-foreground">Sem pedidos anteriores.</p>
+              {data.visitas.length === 0 ? (
+                <p className="mt-3 text-sm text-muted-foreground">Sem visitas anteriores.</p>
               ) : (
                 <ul className="mt-3 divide-y">
-                  {data.historico.map((p) => (
-                    <li key={p.id} className="flex items-center justify-between py-2 text-sm">
-                      <div className="min-w-0">
-                        <div className="font-medium">
-                          {new Date(p.criado_em).toLocaleString("pt-BR")}
+                  {data.visitas.map((v) => (
+                    <li key={v.sessao_id}>
+                      <button
+                        type="button"
+                        onClick={() => setSessaoSelecionada(v.sessao_id)}
+                        className="flex w-full items-center justify-between gap-2 py-2 text-left text-sm hover:bg-accent/40 rounded-md px-1"
+                      >
+                        <div className="min-w-0">
+                          <div className="font-medium">
+                            {new Date(v.aberta_em).toLocaleString("pt-BR")}
+                            {v.mesa_numero ? ` · Mesa ${v.mesa_numero}` : ""}
+                          </div>
+                          <div className="text-xs text-muted-foreground">
+                            {v.pedidos_count} {v.pedidos_count === 1 ? "pedido" : "pedidos"} · {formatBRL(v.total_cliente)}
+                          </div>
                         </div>
-                        <div className="text-xs text-muted-foreground">{p.status}</div>
-                      </div>
-                      <div className="font-semibold">{formatBRL(p.total)}</div>
+                        <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
+                      </button>
                     </li>
                   ))}
                 </ul>
               )}
 
-              {data.historico_total > PAGE_SIZE && (
+              {data.visitas_total > PAGE_SIZE && (
                 <div className="mt-3 flex items-center justify-between">
                   <Button
                     size="sm"
@@ -182,6 +202,16 @@ function MinhaConta() {
                 </div>
               )}
             </section>
+
+            <VisitaDetalheSheet
+              qrToken={qrToken}
+              clienteId={identidade?.clienteId}
+              sessaoId={sessaoSelecionada}
+              open={sessaoSelecionada !== null}
+              onOpenChange={(o) => {
+                if (!o) setSessaoSelecionada(null);
+              }}
+            />
           </>
         )}
       </main>
