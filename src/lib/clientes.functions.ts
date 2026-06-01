@@ -196,11 +196,16 @@ export const entrarNaMesaFn = createServerFn({ method: "POST" })
 
 /* ---------- Público: Minha Conta do cliente ---------- */
 
-export interface PedidoHistorico {
-  id: string;
-  total: number;
+export interface VisitaResumo {
+  sessao_id: string;
+  mesa_numero: string | null;
+  aberta_em: string;
+  fechada_em: string | null;
   status: string;
-  criado_em: string;
+  pedidos_count: number;
+  total_cliente: number;
+  cashback_gerado: number;
+  cashback_resgatado: number;
 }
 
 export interface MinhaContaResultado {
@@ -222,8 +227,8 @@ export interface MinhaContaResultado {
     percentual_cashback: number;
     percentual_max_resgate: number;
   };
-  historico: PedidoHistorico[];
-  historico_total: number;
+  visitas: VisitaResumo[];
+  visitas_total: number;
 }
 
 export const minhaContaFn = createServerFn({ method: "POST" })
@@ -309,17 +314,83 @@ export const minhaContaFn = createServerFn({ method: "POST" })
       .maybeSingle();
     if (prErr) throw new Error(prErr.message);
 
-    // Histórico paginado de pedidos do cliente neste restaurante
-    const from = data.page * data.pageSize;
-    const to = from + data.pageSize - 1;
-    const { data: hist, error: hErr, count } = await supabaseAdmin
+    // Histórico de visitas (agrupado por mesa_sessao), excluindo a sessão atual
+    const { data: pedsAll, error: pErr } = await supabaseAdmin
       .from("pedidos")
-      .select("id, total, status, criado_em", { count: "exact" })
+      .select("id, sessao_id, total, cashback_gerado, cashback_resgatado, criado_em")
       .eq("restaurante_id", mesa.restaurante_id)
       .eq("cliente_id", data.clienteId)
-      .order("criado_em", { ascending: false })
-      .range(from, to);
-    if (hErr) throw new Error(hErr.message);
+      .not("sessao_id", "is", null)
+      .neq("sessao_id", data.sessaoId);
+    if (pErr) throw new Error(pErr.message);
+
+    const grupos = new Map<
+      string,
+      {
+        pedidos_count: number;
+        total_cliente: number;
+        cashback_gerado: number;
+        cashback_resgatado: number;
+      }
+    >();
+    for (const p of pedsAll ?? []) {
+      const sid = p.sessao_id as string;
+      const g = grupos.get(sid) ?? {
+        pedidos_count: 0,
+        total_cliente: 0,
+        cashback_gerado: 0,
+        cashback_resgatado: 0,
+      };
+      g.pedidos_count += 1;
+      g.total_cliente += Number(p.total ?? 0);
+      g.cashback_gerado += Number(p.cashback_gerado ?? 0);
+      g.cashback_resgatado += Number(p.cashback_resgatado ?? 0);
+      grupos.set(sid, g);
+    }
+
+    const sessaoIds = Array.from(grupos.keys());
+    let visitas: VisitaResumo[] = [];
+    if (sessaoIds.length) {
+      const { data: sessoes, error: sErr } = await supabaseAdmin
+        .from("mesa_sessoes")
+        .select("id, mesa_id, aberta_em, fechada_em, status")
+        .in("id", sessaoIds);
+      if (sErr) throw new Error(sErr.message);
+      const mesaIds = Array.from(
+        new Set((sessoes ?? []).map((s) => s.mesa_id as string)),
+      );
+      const mesasMap = new Map<string, string>();
+      if (mesaIds.length) {
+        const { data: mesasRows, error: msErr } = await supabaseAdmin
+          .from("mesas")
+          .select("id, numero")
+          .in("id", mesaIds);
+        if (msErr) throw new Error(msErr.message);
+        for (const m of mesasRows ?? []) {
+          mesasMap.set(m.id as string, m.numero as string);
+        }
+      }
+      visitas = (sessoes ?? []).map((s) => {
+        const g = grupos.get(s.id as string)!;
+        return {
+          sessao_id: s.id as string,
+          mesa_numero: mesasMap.get(s.mesa_id as string) ?? null,
+          aberta_em: s.aberta_em as string,
+          fechada_em: (s.fechada_em as string | null) ?? null,
+          status: s.status as string,
+          pedidos_count: g.pedidos_count,
+          total_cliente: g.total_cliente,
+          cashback_gerado: g.cashback_gerado,
+          cashback_resgatado: g.cashback_resgatado,
+        };
+      });
+      visitas.sort((a, b) => (a.aberta_em < b.aberta_em ? 1 : -1));
+    }
+
+    const visitasTotal = visitas.length;
+    const fromIdx = data.page * data.pageSize;
+    const toIdx = fromIdx + data.pageSize;
+    const visitasPage = visitas.slice(fromIdx, toIdx);
 
     return {
       cliente: {
@@ -340,12 +411,165 @@ export const minhaContaFn = createServerFn({ method: "POST" })
         percentual_cashback: Number(prog?.percentual_cashback ?? 0),
         percentual_max_resgate: Number(prog?.percentual_max_resgate ?? 100),
       },
-      historico: (hist ?? []).map((p) => ({
+      visitas: visitasPage,
+      visitas_total: visitasTotal,
+    };
+  });
+
+export interface DetalheVisitaResultado {
+  sessao: {
+    id: string;
+    mesa_numero: string | null;
+    aberta_em: string;
+    fechada_em: string | null;
+    status: string;
+  };
+  pedidos: Array<{
+    id: string;
+    criado_em: string;
+    status: string;
+    observacao: string | null;
+    cashback_gerado: number;
+    cashback_resgatado: number;
+    itens: Array<{
+      nome_produto: string;
+      quantidade: number;
+      preco_unit: number;
+      subtotal: number;
+      observacao: string | null;
+    }>;
+    subtotal_cliente: number;
+  }>;
+  totais: {
+    subtotal_cliente: number;
+    cashback_gerado: number;
+    cashback_resgatado: number;
+    total_pago_sessao: number;
+  };
+}
+
+export const detalheVisitaFn = createServerFn({ method: "POST" })
+  .inputValidator((d) =>
+    z
+      .object({
+        qrToken: z.string().min(1).max(80),
+        clienteId: z.string().uuid(),
+        sessaoId: z.string().uuid(),
+      })
+      .parse(d),
+  )
+  .handler(async ({ data }): Promise<DetalheVisitaResultado> => {
+    const { data: mesa, error: mErr } = await supabaseAdmin
+      .from("mesas")
+      .select("id, restaurante_id")
+      .eq("qr_token", data.qrToken)
+      .maybeSingle();
+    if (mErr) throw new Error(mErr.message);
+    if (!mesa) throw new Error("Mesa indisponível");
+
+    const { data: sessao, error: sErr } = await supabaseAdmin
+      .from("mesa_sessoes")
+      .select("id, mesa_id, restaurante_id, aberta_em, fechada_em, status")
+      .eq("id", data.sessaoId)
+      .maybeSingle();
+    if (sErr) throw new Error(sErr.message);
+    if (!sessao || sessao.restaurante_id !== mesa.restaurante_id) {
+      throw new Error("Visita inválida");
+    }
+
+    const { data: mesaRow, error: mrErr } = await supabaseAdmin
+      .from("mesas")
+      .select("numero")
+      .eq("id", sessao.mesa_id as string)
+      .maybeSingle();
+    if (mrErr) throw new Error(mrErr.message);
+
+    const { data: peds, error: pErr } = await supabaseAdmin
+      .from("pedidos")
+      .select("id, criado_em, status, observacao, cashback_gerado, cashback_resgatado")
+      .eq("sessao_id", data.sessaoId)
+      .eq("cliente_id", data.clienteId)
+      .order("criado_em", { ascending: true });
+    if (pErr) throw new Error(pErr.message);
+
+    const pedidoIds = (peds ?? []).map((p) => p.id as string);
+    const itensPorPedido = new Map<
+      string,
+      Array<{
+        nome_produto: string;
+        quantidade: number;
+        preco_unit: number;
+        subtotal: number;
+        observacao: string | null;
+      }>
+    >();
+    if (pedidoIds.length) {
+      const { data: itens, error: iErr } = await supabaseAdmin
+        .from("pedido_itens")
+        .select("pedido_id, nome_produto, quantidade, preco_unit, observacao")
+        .in("pedido_id", pedidoIds)
+        .eq("cliente_id", data.clienteId);
+      if (iErr) throw new Error(iErr.message);
+      for (const it of itens ?? []) {
+        const pid = it.pedido_id as string;
+        const qtd = Number(it.quantidade ?? 0);
+        const pu = Number(it.preco_unit ?? 0);
+        const arr = itensPorPedido.get(pid) ?? [];
+        arr.push({
+          nome_produto: it.nome_produto as string,
+          quantidade: qtd,
+          preco_unit: pu,
+          subtotal: pu * qtd,
+          observacao: (it.observacao as string | null) ?? null,
+        });
+        itensPorPedido.set(pid, arr);
+      }
+    }
+
+    const { data: pags, error: pgErr } = await supabaseAdmin
+      .from("pagamentos")
+      .select("valor, status")
+      .eq("sessao_id", data.sessaoId);
+    if (pgErr) throw new Error(pgErr.message);
+    const totalPagoSessao = (pags ?? [])
+      .filter((p) => p.status === "confirmado")
+      .reduce((acc, p) => acc + Number(p.valor ?? 0), 0);
+
+    let subtotalCliente = 0;
+    let cashbackGerado = 0;
+    let cashbackResgatado = 0;
+    const pedidos = (peds ?? []).map((p) => {
+      const itens = itensPorPedido.get(p.id as string) ?? [];
+      const sub = itens.reduce((a, i) => a + i.subtotal, 0);
+      subtotalCliente += sub;
+      cashbackGerado += Number(p.cashback_gerado ?? 0);
+      cashbackResgatado += Number(p.cashback_resgatado ?? 0);
+      return {
         id: p.id as string,
-        total: Number(p.total ?? 0),
-        status: p.status as string,
         criado_em: p.criado_em as string,
-      })),
-      historico_total: count ?? 0,
+        status: p.status as string,
+        observacao: (p.observacao as string | null) ?? null,
+        cashback_gerado: Number(p.cashback_gerado ?? 0),
+        cashback_resgatado: Number(p.cashback_resgatado ?? 0),
+        itens,
+        subtotal_cliente: sub,
+      };
+    });
+
+    return {
+      sessao: {
+        id: sessao.id as string,
+        mesa_numero: (mesaRow?.numero as string | undefined) ?? null,
+        aberta_em: sessao.aberta_em as string,
+        fechada_em: (sessao.fechada_em as string | null) ?? null,
+        status: sessao.status as string,
+      },
+      pedidos,
+      totais: {
+        subtotal_cliente: subtotalCliente,
+        cashback_gerado: cashbackGerado,
+        cashback_resgatado: cashbackResgatado,
+        total_pago_sessao: totalPagoSessao,
+      },
     };
   });
