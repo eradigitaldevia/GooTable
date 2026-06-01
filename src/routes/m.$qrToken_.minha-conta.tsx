@@ -92,7 +92,17 @@ function MinhaConta() {
             </section>
 
             <section className="rounded-2xl border bg-card p-4 shadow-[var(--shadow-soft)]">
-              <div className="text-sm font-semibold">Esta visita</div>
+              <div className="text-sm font-semibold">
+                Esta visita
+                {data.cliente.ultima_visita ? (
+                  <span className="ml-2 text-xs font-normal text-muted-foreground">
+                    {new Date(data.cliente.ultima_visita).toLocaleString("pt-BR", {
+                      dateStyle: "short",
+                      timeStyle: "short",
+                    })}
+                  </span>
+                ) : null}
+              </div>
               <div className="mt-2 space-y-1 text-sm">
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Meu subtotal nesta comanda</span>
@@ -131,14 +141,6 @@ function MinhaConta() {
                 <div>
                   <div className="text-xs text-muted-foreground">Ticket médio</div>
                   <div className="font-semibold">{formatBRL(data.cliente.ticket_medio)}</div>
-                </div>
-                <div className="col-span-2">
-                  <div className="text-xs text-muted-foreground">Última visita</div>
-                  <div className="font-semibold">
-                    {data.cliente.ultima_visita
-                      ? new Date(data.cliente.ultima_visita).toLocaleString("pt-BR")
-                      : "—"}
-                  </div>
                 </div>
               </div>
             </section>

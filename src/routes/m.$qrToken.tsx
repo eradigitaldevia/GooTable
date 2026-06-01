@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { HeaderClienteSkeleton } from "@/components/cliente/skeletons/header-cliente-skeleton";
 import { ProdutosListaSkeleton } from "@/components/cliente/skeletons/produtos-lista-skeleton";
@@ -54,11 +54,12 @@ function ClienteMenu() {
   const [selecionado, setSelecionado] = useState<ProdutoPublico | null>(null);
   const [count, setCount] = useState(0);
   const [modoLookup, setModoLookup] = useState(true);
-  const welcomedRef = useRef(false);
 
   const showWelcome = (nome: string) => {
-    if (welcomedRef.current) return;
-    welcomedRef.current = true;
+    if (typeof window === "undefined") return;
+    const key = `mesa-welcomed:${qrToken}`;
+    if (window.sessionStorage.getItem(key)) return;
+    window.sessionStorage.setItem(key, "1");
     const primeiroNome = nome.trim().split(/\s+/)[0] || nome;
     toast.success(`Bem-vindo(a) de volta, ${primeiroNome}! 👋`);
   };
