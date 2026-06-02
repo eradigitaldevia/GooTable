@@ -23,16 +23,26 @@ export const Route = createFileRoute("/_authenticated/admin")({
     const userId = session?.user.id;
     if (!userId) return {};
 
-    const [restaurante, paData] = await Promise.all([
-      queryClient.ensureQueryData({
-        queryKey: queryKeys.meuRestaurante(userId),
-        queryFn: () => getMeuRestauranteFn(),
-      }),
-      queryClient.ensureQueryData({
-        queryKey: ["platform-admin"],
-        queryFn: () => verificarPlatformAdmin(),
-      }),
-    ]);
+    let restaurante: Awaited<ReturnType<typeof getMeuRestauranteFn>>;
+    let paData: Awaited<ReturnType<typeof verificarPlatformAdmin>>;
+    try {
+      [restaurante, paData] = await Promise.all([
+        queryClient.ensureQueryData({
+          queryKey: queryKeys.meuRestaurante(userId),
+          queryFn: () => getMeuRestauranteFn(),
+        }),
+        queryClient.ensureQueryData({
+          queryKey: ["platform-admin"],
+          queryFn: () => verificarPlatformAdmin(),
+        }),
+      ]);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      if (msg.includes("Unauthorized")) {
+        throw redirect({ to: "/login" });
+      }
+      throw err;
+    }
 
     if (!restaurante) {
       throw redirect({ to: paData?.isPlatformAdmin ? "/superadmin" : "/cadastro" });

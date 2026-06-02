@@ -19,20 +19,31 @@ export const Route = createFileRoute("/_authenticated/caixa")({
     const userId = session?.user.id;
     if (!userId) return {};
 
-    const [restaurante, paData, papelData] = await Promise.all([
-      queryClient.ensureQueryData({
-        queryKey: queryKeys.meuRestaurante(userId),
-        queryFn: () => getMeuRestauranteFn(),
-      }),
-      queryClient.ensureQueryData({
-        queryKey: ["platform-admin"],
-        queryFn: () => verificarPlatformAdmin(),
-      }),
-      queryClient.ensureQueryData({
-        queryKey: ["meu-papel"],
-        queryFn: () => getMeuPapelFn(),
-      }),
-    ]);
+    let restaurante: Awaited<ReturnType<typeof getMeuRestauranteFn>>;
+    let paData: Awaited<ReturnType<typeof verificarPlatformAdmin>>;
+    let papelData: Awaited<ReturnType<typeof getMeuPapelFn>>;
+    try {
+      [restaurante, paData, papelData] = await Promise.all([
+        queryClient.ensureQueryData({
+          queryKey: queryKeys.meuRestaurante(userId),
+          queryFn: () => getMeuRestauranteFn(),
+        }),
+        queryClient.ensureQueryData({
+          queryKey: ["platform-admin"],
+          queryFn: () => verificarPlatformAdmin(),
+        }),
+        queryClient.ensureQueryData({
+          queryKey: ["meu-papel"],
+          queryFn: () => getMeuPapelFn(),
+        }),
+      ]);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      if (msg.includes("Unauthorized")) {
+        throw redirect({ to: "/login" });
+      }
+      throw err;
+    }
 
     if (!restaurante) {
       throw redirect({ to: paData?.isPlatformAdmin ? "/superadmin" : "/cadastro" });
