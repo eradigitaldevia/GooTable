@@ -7,6 +7,9 @@ import {
   garantirSessaoAberta,
   listarComandasAtivas,
   vincularClienteSessao,
+  detectarConflitoMesa,
+  transferirCliente,
+  type ConflitoMesa,
 } from "./sessoes.server";
 
 const onlyDigits = (s: string) => s.replace(/\D/g, "");
@@ -49,6 +52,12 @@ export type BuscarClientePorTelefoneResultado =
   | { encontrado: false }
   | {
       encontrado: true;
+      conflito: ConflitoMesa;
+      cliente: { id: string; nome: string; telefone: string };
+    }
+  | {
+      encontrado: true;
+      conflito?: undefined;
       cliente: { id: string; nome: string; telefone: string };
       sessaoId: string;
       comandaId: string;
@@ -98,6 +107,24 @@ export const buscarClientePorTelefoneFn = createServerFn({ method: "POST" })
       .maybeSingle();
     if (cErr) throw new Error(cErr.message);
     if (!cli) return { encontrado: false };
+
+    // Bloqueio: cliente já está em outra mesa do mesmo restaurante.
+    const conflito = await detectarConflitoMesa(
+      cli.id as string,
+      mesa.restaurante_id,
+      mesa.id,
+    );
+    if (conflito) {
+      return {
+        encontrado: true,
+        conflito,
+        cliente: {
+          id: cli.id as string,
+          nome: cli.nome as string,
+          telefone: cli.telefone as string,
+        },
+      };
+    }
 
     const sessao = await garantirSessaoAberta(mesa.id, mesa.restaurante_id);
 
