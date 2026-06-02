@@ -7,6 +7,9 @@ import {
   garantirSessaoAberta,
   listarComandasAtivas,
   vincularClienteSessao,
+  detectarConflitoMesa,
+  transferirCliente,
+  type ConflitoMesa,
 } from "./sessoes.server";
 
 const onlyDigits = (s: string) => s.replace(/\D/g, "");
@@ -49,6 +52,12 @@ export type BuscarClientePorTelefoneResultado =
   | { encontrado: false }
   | {
       encontrado: true;
+      conflito: ConflitoMesa;
+      cliente: { id: string; nome: string; telefone: string };
+    }
+  | {
+      encontrado: true;
+      conflito?: undefined;
       cliente: { id: string; nome: string; telefone: string };
       sessaoId: string;
       comandaId: string;
@@ -98,6 +107,24 @@ export const buscarClientePorTelefoneFn = createServerFn({ method: "POST" })
       .maybeSingle();
     if (cErr) throw new Error(cErr.message);
     if (!cli) return { encontrado: false };
+
+    // Bloqueio: cliente já está em outra mesa do mesmo restaurante.
+    const conflito = await detectarConflitoMesa(
+      cli.id as string,
+      mesa.restaurante_id,
+      mesa.id,
+    );
+    if (conflito) {
+      return {
+        encontrado: true,
+        conflito,
+        cliente: {
+          id: cli.id as string,
+          nome: cli.nome as string,
+          telefone: cli.telefone as string,
+        },
+      };
+    }
 
     const sessao = await garantirSessaoAberta(mesa.id, mesa.restaurante_id);
 
@@ -154,3 +181,56 @@ export const buscarClientePorTelefoneFn = createServerFn({ method: "POST" })
       restauranteId: mesa.restaurante_id,
     };
   });
+
+/**
+ * Transfere a identidade do cliente de uma comanda/sessão de outra mesa
+ * para a mesa identificada pelo QR atual. Bloqueia quando há consumo
+ * lançado pelo cliente na origem.
+ */
+export const transferirClienteParaMesaFn = createServerFn({ method: "POST" })
+  .inputValidator((d) =>
+    z
+      .object({
+        qrToken: z.string().min(1).max(80),
+        clienteId: z.string().uuid(),
+        sessaoOrigemId: z.string().uuid(),
+        comandaOrigemId: z.string().uuid(),
+      })
+      .parse(d),
+  )
+  .handler(
+    async ({
+      data,
+    }): Promise<{ sessaoId: string; comandaId: string; mesaId: string; restauranteId: string }> => {
+      const { data: mesa, error: mErr } = await supabaseAdmin
+        .from("mesas")
+        .select("id, restaurante_id, ativa")
+        .eq("qr_token", data.qrToken)
+        .maybeSingle();
+      if (mErr) throw new Error(mErr.message);
+      if (!mesa || !mesa.ativa) throw new Error("Mesa indisponível");
+
+      const { data: rest, error: rErr } = await supabaseAdmin
+        .from("restaurantes")
+        .select("ativo")
+        .eq("id", mesa.restaurante_id)
+        .maybeSingle();
+      if (rErr) throw new Error(rErr.message);
+      if (!rest?.ativo) throw new Error("Restaurante indisponível");
+
+      const { sessaoId, comandaId } = await transferirCliente(
+        data.clienteId,
+        data.sessaoOrigemId,
+        data.comandaOrigemId,
+        mesa.id,
+        mesa.restaurante_id,
+      );
+
+      return {
+        sessaoId,
+        comandaId,
+        mesaId: mesa.id,
+        restauranteId: mesa.restaurante_id,
+      };
+    },
+  );

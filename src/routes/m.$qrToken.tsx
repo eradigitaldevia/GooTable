@@ -24,7 +24,11 @@ import {
   type EscolhaComanda,
 } from "@/components/cliente/escolher-comanda-modal";
 import { entrarNaMesaFn, identificarClienteFn } from "@/lib/clientes.functions";
-import { buscarClientePorTelefoneFn } from "@/lib/cliente-mesa.functions";
+import {
+  buscarClientePorTelefoneFn,
+  transferirClienteParaMesaFn,
+} from "@/lib/cliente-mesa.functions";
+import { ConflitoMesaModal } from "@/components/cliente/conflito-mesa-modal";
 
 export const Route = createFileRoute("/m/$qrToken")({
   component: ClienteMenu,
@@ -38,6 +42,16 @@ interface PendenteEscolha {
   comandas: ComandaResumo[];
 }
 
+interface PendenteConflito {
+  clienteId: string;
+  nome: string;
+  telefone: string;
+  sessaoOrigemId: string;
+  comandaOrigemId: string;
+  numeroMesaAtual: string;
+  podeTransferir: boolean;
+}
+
 function ClienteMenu() {
   const { qrToken } = Route.useParams();
   const navigate = useNavigate();
@@ -47,8 +61,10 @@ function ClienteMenu() {
   const identificar = useServerFn(identificarClienteFn);
   const entrarNaMesa = useServerFn(entrarNaMesaFn);
   const buscarPorTelefone = useServerFn(buscarClientePorTelefoneFn);
+  const transferirParaMesa = useServerFn(transferirClienteParaMesaFn);
   const [enviando, setEnviando] = useState(false);
   const [pendente, setPendente] = useState<PendenteEscolha | null>(null);
+  const [conflito, setConflito] = useState<PendenteConflito | null>(null);
   const [busca, setBusca] = useState("");
   const [catAtiva, setCatAtiva] = useState<string | "todas">("todas");
   const [selecionado, setSelecionado] = useState<ProdutoPublico | null>(null);
@@ -89,7 +105,7 @@ function ClienteMenu() {
           data: { qrToken, telefone: identidade.telefone },
         });
         if (cancelado) return;
-        if (r.encontrado) {
+        if (r.encontrado && !r.conflito) {
           salvar({
             clienteId: r.cliente.id,
             nome: r.cliente.nome,
@@ -98,6 +114,17 @@ function ClienteMenu() {
             comandaId: r.comandaId,
           });
           showWelcome(r.cliente.nome);
+        } else if (r.encontrado && r.conflito) {
+          setConflito({
+            clienteId: r.cliente.id,
+            nome: r.cliente.nome,
+            telefone: r.cliente.telefone,
+            sessaoOrigemId: r.conflito.sessaoId,
+            comandaOrigemId: r.conflito.comandaId,
+            numeroMesaAtual: r.conflito.numeroMesa,
+            podeTransferir: r.conflito.podeTransferir,
+          });
+          limpar();
         } else {
           limpar();
         }
@@ -148,6 +175,18 @@ function ClienteMenu() {
         setModoLookup(false);
         return;
       }
+      if (r.conflito) {
+        setConflito({
+          clienteId: r.cliente.id,
+          nome: r.cliente.nome,
+          telefone: r.cliente.telefone,
+          sessaoOrigemId: r.conflito.sessaoId,
+          comandaOrigemId: r.conflito.comandaId,
+          numeroMesaAtual: r.conflito.numeroMesa,
+          podeTransferir: r.conflito.podeTransferir,
+        });
+        return;
+      }
       salvar({
         clienteId: r.cliente.id,
         nome: r.cliente.nome,
@@ -167,7 +206,17 @@ function ClienteMenu() {
     try {
       setEnviando(true);
       const res = await identificar({ data: { qrToken, nome: v.nome, telefone: v.telefone } });
-      if (res.comandas_ativas.length > 0) {
+      if (res.conflito) {
+        setConflito({
+          clienteId: res.cliente.id,
+          nome: res.cliente.nome,
+          telefone: res.cliente.telefone,
+          sessaoOrigemId: res.conflito.sessaoId,
+          comandaOrigemId: res.conflito.comandaId,
+          numeroMesaAtual: res.conflito.numeroMesa,
+          podeTransferir: res.conflito.podeTransferir,
+        });
+      } else if (res.comandas_ativas.length > 0) {
         setPendente({
           clienteId: res.cliente.id,
           nome: res.cliente.nome,
@@ -194,6 +243,34 @@ function ClienteMenu() {
       }
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Não foi possível continuar");
+    } finally {
+      setEnviando(false);
+    }
+  };
+
+  const handleTransferir = async () => {
+    if (!conflito) return;
+    try {
+      setEnviando(true);
+      const r = await transferirParaMesa({
+        data: {
+          qrToken,
+          clienteId: conflito.clienteId,
+          sessaoOrigemId: conflito.sessaoOrigemId,
+          comandaOrigemId: conflito.comandaOrigemId,
+        },
+      });
+      salvar({
+        clienteId: conflito.clienteId,
+        nome: conflito.nome,
+        telefone: conflito.telefone,
+        sessaoId: r.sessaoId,
+        comandaId: r.comandaId,
+      });
+      toast.success(`Conta transferida da Mesa ${conflito.numeroMesaAtual}.`);
+      setConflito(null);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Não foi possível transferir");
     } finally {
       setEnviando(false);
     }
@@ -251,7 +328,16 @@ function ClienteMenu() {
   if (!identidade) {
     return (
       <>
-        {pendente ? (
+        {conflito ? (
+          <ConflitoMesaModal
+            clienteNome={conflito.nome}
+            numeroMesaAtual={conflito.numeroMesaAtual}
+            podeTransferir={conflito.podeTransferir}
+            enviando={enviando}
+            onTransferir={handleTransferir}
+            onCancelar={() => setConflito(null)}
+          />
+        ) : pendente ? (
           <EscolherComandaModal
             comandasAtivas={pendente.comandas}
             onEscolher={handleEscolher}
