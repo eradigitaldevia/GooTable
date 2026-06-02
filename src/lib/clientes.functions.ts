@@ -8,6 +8,8 @@ import {
   listarComandasAtivas,
   vincularClienteSessao,
   type ComandaResumo,
+  detectarConflitoMesa,
+  type ConflitoMesa,
 } from "./sessoes.server";
 
 export interface ClienteIdentificado {
@@ -17,13 +19,23 @@ export interface ClienteIdentificado {
   cashback_saldo: number;
 }
 
-export interface IdentificarResultado {
-  cliente: ClienteIdentificado;
-  sessao_id: string;
-  mesa_id: string;
-  restaurante_id: string;
-  comandas_ativas: ComandaResumo[];
-}
+export type IdentificarResultado =
+  | {
+      cliente: ClienteIdentificado;
+      conflito: ConflitoMesa;
+      sessao_id?: undefined;
+      mesa_id?: undefined;
+      restaurante_id?: undefined;
+      comandas_ativas?: undefined;
+    }
+  | {
+      cliente: ClienteIdentificado;
+      conflito?: undefined;
+      sessao_id: string;
+      mesa_id: string;
+      restaurante_id: string;
+      comandas_ativas: ComandaResumo[];
+    };
 
 const onlyDigits = (s: string) => s.replace(/\D/g, "");
 
@@ -117,6 +129,16 @@ export const identificarClienteFn = createServerFn({ method: "POST" })
         telefone: ins.telefone as string,
         cashback_saldo: Number(ins.cashback_saldo ?? 0),
       };
+    }
+
+    // Bloqueio: cliente já está em outra mesa do mesmo restaurante.
+    const conflito = await detectarConflitoMesa(
+      cliente.id,
+      mesa.restaurante_id,
+      mesa.id,
+    );
+    if (conflito) {
+      return { cliente, conflito };
     }
 
     const sessao = await garantirSessaoAberta(mesa.id, mesa.restaurante_id);
