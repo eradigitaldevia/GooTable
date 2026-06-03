@@ -24,6 +24,20 @@ export interface AtribuicaoMesa {
   atribuido_em: string | null;
 }
 
+export interface AtribuicaoGarcom {
+  id: string;
+  garcom_id: string;
+  garcom_nome: string;
+  atribuido_em: string;
+  turno_aberto: boolean;
+}
+
+export interface AtribuicaoMesaMulti {
+  mesa_id: string;
+  mesa_numero: string;
+  garcons: AtribuicaoGarcom[];
+}
+
 export interface Comissao {
   id: string;
   restaurante_id: string;
@@ -187,6 +201,61 @@ export const listarAtribuicoesMesasFn = createServerFn({ method: "POST" })
     return result;
   });
 
+export const listarAtribuicoesMesasMultiFn = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) =>
+    z.object({ restauranteId: z.string().uuid() }).parse(d),
+  )
+  .handler(async ({ context, data }): Promise<AtribuicaoMesaMulti[]> => {
+    const { supabase, userId } = context;
+    await assertAcessoRestaurante(supabase, userId, data.restauranteId);
+
+    const { data: mesas, error: mErr } = await supabase
+      .from("mesas")
+      .select("id, numero")
+      .eq("restaurante_id", data.restauranteId)
+      .eq("ativa", true)
+      .order("numero", { ascending: true });
+    if (mErr) throw new Error(mErr.message);
+
+    const { data: atrs, error: aErr } = await supabase
+      .from("mesa_garcom")
+      .select("id, mesa_id, garcom_id, atribuido_em, garcons:garcom_id(nome)")
+      .eq("restaurante_id", data.restauranteId)
+      .is("liberado_em", null);
+    if (aErr) throw new Error(aErr.message);
+
+    const { data: turnos } = await supabase
+      .from("garcom_turnos")
+      .select("garcom_id")
+      .eq("restaurante_id", data.restauranteId)
+      .is("encerrado_em", null);
+    const abertos = new Set((turnos ?? []).map((t) => t.garcom_id as string));
+
+    const byMesa = new Map<string, AtribuicaoGarcom[]>();
+    for (const a of atrs ?? []) {
+      const nome =
+        (a as { garcons?: { nome: string } | null }).garcons?.nome ?? "—";
+      const arr = byMesa.get(a.mesa_id as string) ?? [];
+      arr.push({
+        id: a.id as string,
+        garcom_id: a.garcom_id as string,
+        garcom_nome: nome,
+        atribuido_em: a.atribuido_em as string,
+        turno_aberto: abertos.has(a.garcom_id as string),
+      });
+      byMesa.set(a.mesa_id as string, arr);
+    }
+
+    return (mesas ?? []).map((m) => ({
+      mesa_id: m.id as string,
+      mesa_numero: m.numero as string,
+      garcons: (byMesa.get(m.id as string) ?? []).sort((x, y) =>
+        x.atribuido_em.localeCompare(y.atribuido_em),
+      ),
+    }));
+  });
+
 export const atribuirGarcomMesaFn = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d) =>
@@ -207,6 +276,28 @@ export const atribuirGarcomMesaFn = createServerFn({ method: "POST" })
     });
     if (error) throw new Error(error.message);
     return { id };
+  });
+
+export const removerGarcomMesaFn = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) =>
+    z
+      .object({
+        restauranteId: z.string().uuid(),
+        mesaId: z.string().uuid(),
+        garcomId: z.string().uuid(),
+      })
+      .parse(d),
+  )
+  .handler(async ({ context, data }) => {
+    const { supabase, userId } = context;
+    await assertAcessoRestaurante(supabase, userId, data.restauranteId);
+    const { error } = await supabase.rpc("remover_garcom_mesa", {
+      _mesa_id: data.mesaId,
+      _garcom_id: data.garcomId,
+    });
+    if (error) throw new Error(error.message);
+    return { ok: true };
   });
 
 export const liberarGarcomMesaFn = createServerFn({ method: "POST" })

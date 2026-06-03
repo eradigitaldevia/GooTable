@@ -7,6 +7,8 @@ import {
   criarGarcomFn,
   liberarGarcomMesaFn,
   listarAtribuicoesMesasFn,
+  listarAtribuicoesMesasMultiFn,
+  removerGarcomMesaFn,
   listarComissoesFn,
   listarGarconsFn,
   pagarComissoesFn,
@@ -87,6 +89,37 @@ export function useAtribuicoesMesas(restauranteId: string | undefined) {
       : ["atribuicoes-mesas", "none"],
     queryFn: () => fn({ data: { restauranteId: restauranteId! } }),
     enabled: !!restauranteId,
+  });
+}
+
+export function useAtribuicoesMesasMulti(restauranteId: string | undefined) {
+  const fn = useServerFn(listarAtribuicoesMesasMultiFn);
+  return useQuery({
+    queryKey: restauranteId
+      ? [...queryKeys.atribuicoesMesas(restauranteId), "multi"]
+      : ["atribuicoes-mesas-multi", "none"],
+    queryFn: () => fn({ data: { restauranteId: restauranteId! } }),
+    enabled: !!restauranteId,
+    refetchInterval: 60_000,
+  });
+}
+
+export function useRemoverGarcomMesa(restauranteId: string | undefined) {
+  const fn = useServerFn(removerGarcomMesaFn);
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (data: { mesaId: string; garcomId: string }) =>
+      fn({
+        data: {
+          restauranteId: restauranteId!,
+          mesaId: data.mesaId,
+          garcomId: data.garcomId,
+        },
+      }),
+    onSuccess: () => {
+      if (restauranteId)
+        qc.invalidateQueries({ queryKey: queryKeys.atribuicoesMesas(restauranteId) });
+    },
   });
 }
 

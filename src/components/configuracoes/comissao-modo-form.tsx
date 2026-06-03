@@ -53,18 +53,21 @@ export function ComissaoModoForm({
 
       <div className="flex items-start justify-between gap-4 rounded-lg border p-3">
         <div className="min-w-0">
-          <div className="font-medium">Rateio automático na troca de garçom</div>
+          <div className="font-medium">
+            Dividir comissão entre garçons atribuídos com turno aberto
+          </div>
           <p className="mt-1 text-xs text-muted-foreground">
-            Quando o garçom de uma mesa for trocado durante a sessão, a comissão
-            dos pedidos abertos é dividida igualmente entre todos os garçons que
-            passaram pela mesa (ex.: 2 garçons = 50/50). Pedidos já pagos não
-            são alterados.
+            Quando ligado, cada pedido que o garçom lança é dividido igualmente
+            entre todos os garçons da mesa que estão com turno aberto naquele
+            momento. Quando desligado, a comissão fica 100% para quem lançou.
+            Pedidos do cliente (QR) sempre são divididos entre os atribuídos com
+            turno aberto, independente desta opção.
           </p>
         </div>
         <Switch
           checked={rateioTrocaTurno}
           onCheckedChange={(v) => onChange({ comissao_rateio_troca_turno: v })}
-          aria-label="Rateio automático na troca de garçom"
+          aria-label="Dividir comissão entre garçons atribuídos com turno aberto"
         />
       </div>
     </Card>

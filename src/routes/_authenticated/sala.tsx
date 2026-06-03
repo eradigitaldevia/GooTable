@@ -6,15 +6,17 @@ import { SalaHeader } from "@/components/sala/sala-header";
 import { PratosProntosList } from "@/components/sala/pratos-prontos-list";
 import { MinhasMesasGrid } from "@/components/sala/minhas-mesas-grid";
 import { ChamadosList } from "@/components/sala/chamados-list";
-import { OutraMesaModal } from "@/components/sala/outra-mesa-modal";
 import { Button } from "@/components/ui/button";
-import { Search } from "lucide-react";
-import { useNavigate } from "@tanstack/react-router";
+import { Input } from "@/components/ui/input";
+import { Search, Play, Square, Clock } from "lucide-react";
+import { toast } from "sonner";
 import {
   useSalaDados,
   useRealtimeSala,
   useConfirmarEntregaSala,
   useAtenderChamadoSala,
+  useAbrirTurno,
+  useEncerrarTurno,
 } from "@/hooks/use-sala";
 
 export const Route = createFileRoute("/_authenticated/sala")({
@@ -46,8 +48,7 @@ function SalaPage() {
   const [tab, setTab] = useState<"prontos" | "mesas" | "chamados">("prontos");
   const [pendingPedidoId, setPendingPedidoId] = useState<string | null>(null);
   const [pendingChamadoId, setPendingChamadoId] = useState<string | null>(null);
-  const [outraMesaOpen, setOutraMesaOpen] = useState(false);
-  const navigate = useNavigate();
+  const [busca, setBusca] = useState("");
 
   const restauranteId = data?.garcom.restaurante_id;
   const mesas = data?.mesas ?? [];
@@ -57,6 +58,8 @@ function SalaPage() {
 
   const confirmar = useConfirmarEntregaSala(restauranteId);
   const atender = useAtenderChamadoSala(restauranteId);
+  const abrirTurno = useAbrirTurno();
+  const encerrarTurno = useEncerrarTurno();
 
   const prontosPorMesa = useMemo(() => {
     const m = new Map<string, number>();
@@ -78,7 +81,21 @@ function SalaPage() {
   const totalProntos = data?.pedidos_prontos.length ?? 0;
 
   const nome = data?.garcom.nome ?? garcomCtx.nome;
-  const permitirCruzado = data?.permitir_atendimento_cruzado ?? false;
+  const garcomId = data?.garcom.id ?? garcomCtx.id;
+  const turno = data?.turno ?? null;
+
+  const mesasFiltradas = useMemo(() => {
+    const t = busca.trim().toLowerCase();
+    if (!t) return mesas;
+    return mesas.filter((m) => m.numero.toLowerCase().includes(t));
+  }, [mesas, busca]);
+
+  const horaTurno = turno
+    ? new Date(turno.iniciado_em).toLocaleTimeString("pt-BR", {
+        hour: "2-digit",
+        minute: "2-digit",
+      })
+    : null;
 
   return (
     <div className="min-h-screen bg-background">
@@ -89,19 +106,58 @@ function SalaPage() {
         onIrChamados={() => setTab("chamados")}
       />
       <main className="mx-auto max-w-3xl px-4 py-4">
-        {permitirCruzado && restauranteId && (
-          <div className="mb-3 flex justify-end">
-            <Button
-              type="button"
-              size="sm"
-              variant="outline"
-              onClick={() => setOutraMesaOpen(true)}
-            >
-              <Search className="mr-1 h-4 w-4" />
-              Outra mesa
-            </Button>
-          </div>
-        )}
+        <div className="mb-3 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-border bg-card px-3 py-2">
+          {turno ? (
+            <>
+              <div className="flex items-center gap-2 text-sm">
+                <span className="flex h-2 w-2 rounded-full bg-emerald-500" />
+                <Clock className="h-4 w-4 text-muted-foreground" />
+                <span className="font-medium">Turno aberto</span>
+                <span className="text-muted-foreground">desde {horaTurno}</span>
+              </div>
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                disabled={encerrarTurno.isPending}
+                onClick={() => {
+                  encerrarTurno.mutate(garcomId, {
+                    onSuccess: () => toast.success("Turno encerrado"),
+                    onError: (e) =>
+                      toast.error(e instanceof Error ? e.message : "Erro"),
+                  });
+                }}
+              >
+                <Square className="mr-1 h-3.5 w-3.5" />
+                Encerrar turno
+              </Button>
+            </>
+          ) : (
+            <>
+              <div className="flex items-center gap-2 text-sm">
+                <span className="flex h-2 w-2 rounded-full bg-muted-foreground/40" />
+                <span className="text-muted-foreground">
+                  Inicie o turno para receber comissão dos pedidos
+                </span>
+              </div>
+              <Button
+                type="button"
+                size="sm"
+                disabled={abrirTurno.isPending}
+                onClick={() => {
+                  abrirTurno.mutate(garcomId, {
+                    onSuccess: () => toast.success("Turno iniciado"),
+                    onError: (e) =>
+                      toast.error(e instanceof Error ? e.message : "Erro"),
+                  });
+                }}
+              >
+                <Play className="mr-1 h-3.5 w-3.5" />
+                Iniciar turno
+              </Button>
+            </>
+          )}
+        </div>
         {isLoading && !data ? (
           <p className="py-10 text-center text-sm text-muted-foreground">
             Carregando…
@@ -132,8 +188,21 @@ function SalaPage() {
               />
             </TabsContent>
             <TabsContent value="mesas" className="mt-4">
+              {mesas.length > 6 && (
+                <div className="relative mb-3">
+                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                  <Input
+                    type="search"
+                    inputMode="search"
+                    value={busca}
+                    onChange={(e) => setBusca(e.target.value)}
+                    placeholder="Buscar mesa..."
+                    className="pl-9"
+                  />
+                </div>
+              )}
               <MinhasMesasGrid
-                mesas={mesas}
+                mesas={mesasFiltradas}
                 prontosPorMesa={prontosPorMesa}
                 chamadosPorMesa={chamadosPorMesa}
               />
@@ -153,20 +222,6 @@ function SalaPage() {
           </Tabs>
         )}
       </main>
-      {outraMesaOpen && restauranteId && data?.garcom.id && (
-        <OutraMesaModal
-          restauranteId={restauranteId}
-          meuGarcomId={data.garcom.id}
-          onClose={() => setOutraMesaOpen(false)}
-          onSelecionar={(mesaId) => {
-            setOutraMesaOpen(false);
-            navigate({
-              to: "/sala/nova-comanda/$mesaId",
-              params: { mesaId },
-            });
-          }}
-        />
-      )}
     </div>
   );
 }

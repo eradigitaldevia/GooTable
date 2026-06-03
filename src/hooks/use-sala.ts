@@ -7,8 +7,12 @@ import {
   carregarSalaFn,
   carregarSalaAdminFn,
   listarMesasRestauranteFn,
+  abrirTurnoGarcomFn,
+  encerrarTurnoGarcomFn,
+  listarGarconsOnlineFn,
   type SalaDados,
   type MesaRestauranteInfo,
+  type GarcomOnline,
 } from "@/lib/sala.functions";
 import { atualizarStatusPedidoFn } from "@/lib/pedidos.functions";
 import { atenderChamadoFn } from "@/lib/chamados.functions";
@@ -69,6 +73,40 @@ export function useAtenderChamadoSala(restauranteId: string | undefined) {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: SALA_KEY });
     },
+  });
+}
+
+export function useAbrirTurno() {
+  const fn = useServerFn(abrirTurnoGarcomFn);
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (garcomId: string) => fn({ data: { garcomId } }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: SALA_KEY });
+      qc.invalidateQueries({ queryKey: ["garcons-online"] });
+    },
+  });
+}
+
+export function useEncerrarTurno() {
+  const fn = useServerFn(encerrarTurnoGarcomFn);
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (garcomId: string) => fn({ data: { garcomId } }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: SALA_KEY });
+      qc.invalidateQueries({ queryKey: ["garcons-online"] });
+    },
+  });
+}
+
+export function useGarconsOnline(restauranteId: string | undefined) {
+  const fn = useServerFn(listarGarconsOnlineFn);
+  return useQuery<GarcomOnline[]>({
+    queryKey: ["garcons-online", restauranteId ?? "none"],
+    queryFn: () => fn({ data: { restauranteId: restauranteId! } }),
+    enabled: !!restauranteId,
+    refetchInterval: 60_000,
   });
 }
 

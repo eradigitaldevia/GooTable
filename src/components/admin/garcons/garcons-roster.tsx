@@ -14,7 +14,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Pencil, Plus, UserPlus, CheckCircle2, FileText, KeyRound, Mail, Eye } from "lucide-react";
+import { Pencil, Plus, UserPlus, CheckCircle2, FileText, KeyRound, Mail, Eye, Square, Circle } from "lucide-react";
 import { toast } from "sonner";
 import {
   useAtualizarGarcom,
@@ -24,6 +24,7 @@ import {
   useVincularUsuarioGarcom,
   useAlterarEmailGarcom,
 } from "@/hooks/use-garcons";
+import { useGarconsOnline, useEncerrarTurno } from "@/hooks/use-sala";
 import type { Garcom } from "@/lib/garcons.functions";
 import { ExtratoGarcomDialog } from "./extrato-garcom-dialog";
 
@@ -114,6 +115,9 @@ export function GarconsRoster({ restauranteId }: { restauranteId: string }) {
   const vincular = useVincularUsuarioGarcom(restauranteId);
   const redefinirSenha = useRedefinirSenhaGarcom(restauranteId);
   const alterarEmail = useAlterarEmailGarcom(restauranteId);
+  const { data: online = [] } = useGarconsOnline(restauranteId);
+  const encerrarTurno = useEncerrarTurno();
+  const onlineSet = new Set(online.map((o) => o.garcom_id));
   const [openNovo, setOpenNovo] = useState(false);
   const [edit, setEdit] = useState<Garcom | null>(null);
   const [vincularAlvo, setVincularAlvo] = useState<Garcom | null>(null);
@@ -198,13 +202,50 @@ export function GarconsRoster({ restauranteId }: { restauranteId: string }) {
               <td className="px-4 py-3 text-muted-foreground">{g.telefone ?? "—"}</td>
               <td className="px-4 py-3 tabular-nums">{Number(g.percentual_comissao).toFixed(2)}%</td>
               <td className="px-4 py-3">
-                {g.ativo ? (
-                  <Badge variant="secondary">Ativo</Badge>
-                ) : (
-                  <Badge variant="outline" className="text-muted-foreground">
-                    Inativo
-                  </Badge>
-                )}
+                <div className="flex items-center gap-1.5">
+                  {g.ativo ? (
+                    <Badge variant="secondary">Ativo</Badge>
+                  ) : (
+                    <Badge variant="outline" className="text-muted-foreground">
+                      Inativo
+                    </Badge>
+                  )}
+                  {onlineSet.has(g.id) && (
+                    <>
+                      <Badge
+                        variant="outline"
+                        className="gap-1 border-emerald-500/40 text-emerald-700 dark:text-emerald-400"
+                      >
+                        <Circle className="h-2 w-2 fill-current" />
+                        Online
+                      </Badge>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        title="Encerrar turno"
+                        className="h-7 w-7 p-0"
+                        disabled={encerrarTurno.isPending}
+                        onClick={() => {
+                          if (
+                            window.confirm(
+                              `Encerrar o turno de ${g.nome}? Pedidos novos pararão de gerar comissão para ele.`,
+                            )
+                          ) {
+                            encerrarTurno.mutate(g.id, {
+                              onSuccess: () => toast.success("Turno encerrado"),
+                              onError: (e) =>
+                                toast.error(
+                                  e instanceof Error ? e.message : "Erro",
+                                ),
+                            });
+                          }
+                        }}
+                      >
+                        <Square className="h-3.5 w-3.5" />
+                      </Button>
+                    </>
+                  )}
+                </div>
               </td>
               <td className="px-4 py-3">
                 {g.user_id ? (
