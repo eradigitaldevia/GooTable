@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -17,7 +17,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { Loader2, Receipt, Search, Tv, X } from "lucide-react";
+import { Loader2, Receipt, Search, Tv, X, LayoutGrid } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { useMeuRestaurante } from "@/hooks/use-restaurante";
 import { useComandasPagamentoPendente } from "@/hooks/use-pagamentos";
@@ -286,6 +286,17 @@ function CaixaPagamentosPage() {
                             <TooltipContent>{motivoBloqueio}</TooltipContent>
                           </Tooltip>
                         </TooltipProvider>
+                      )}
+                      {c.mesa_id && (
+                        <Button asChild size="sm" variant="ghost" className="ml-2">
+                          <Link
+                            to="/sala/mesa/$mesaId"
+                            params={{ mesaId: c.mesa_id }}
+                          >
+                            <LayoutGrid className="mr-1 h-3.5 w-3.5" />
+                            Juntar/Dividir
+                          </Link>
+                        </Button>
                       )}
                     </td>
                   </tr>
