@@ -564,6 +564,42 @@ export type Database = {
         }
         Relationships: []
       }
+      garcom_turnos: {
+        Row: {
+          criado_em: string
+          encerrado_auto: boolean
+          encerrado_em: string | null
+          encerrado_por: string | null
+          garcom_id: string
+          id: string
+          iniciado_em: string
+          iniciado_por: string | null
+          restaurante_id: string
+        }
+        Insert: {
+          criado_em?: string
+          encerrado_auto?: boolean
+          encerrado_em?: string | null
+          encerrado_por?: string | null
+          garcom_id: string
+          id?: string
+          iniciado_em?: string
+          iniciado_por?: string | null
+          restaurante_id: string
+        }
+        Update: {
+          criado_em?: string
+          encerrado_auto?: boolean
+          encerrado_em?: string | null
+          encerrado_por?: string | null
+          garcom_id?: string
+          id?: string
+          iniciado_em?: string
+          iniciado_por?: string | null
+          restaurante_id?: string
+        }
+        Relationships: []
+      }
       garcons: {
         Row: {
           ativo: boolean
@@ -1463,6 +1499,7 @@ export type Database = {
         }
         Returns: string
       }
+      abrir_turno_garcom: { Args: { _garcom_id: string }; Returns: string }
       aplicar_cashback: {
         Args: { _cliente_id: string; _comanda_id: string; _valor: number }
         Returns: Json
@@ -1554,6 +1591,8 @@ export type Database = {
         Args: { _pedido_id: string }
         Returns: undefined
       }
+      encerrar_turno_garcom: { Args: { _garcom_id: string }; Returns: number }
+      encerrar_turnos_expirados: { Args: never; Returns: number }
       fechar_turno_caixa: {
         Args: {
           _contagem_fisica: number
@@ -1562,6 +1601,10 @@ export type Database = {
           _turno_id: string
         }
         Returns: Json
+      }
+      gerar_pedido_garcons: {
+        Args: { _mesa_id: string; _pedido_id: string; _restaurante_id: string }
+        Returns: number
       }
       is_platform_admin: { Args: { _user_id: string }; Returns: boolean }
       is_restaurante_membro: {
@@ -1614,6 +1657,10 @@ export type Database = {
       remover_cupom_comanda: {
         Args: { _comanda_id: string }
         Returns: undefined
+      }
+      remover_garcom_mesa: {
+        Args: { _garcom_id: string; _mesa_id: string }
+        Returns: number
       }
       resumo_comissoes: { Args: { _restaurante_id: string }; Returns: Json }
       totais_turno_caixa: { Args: { _turno_id: string }; Returns: Json }
