@@ -14,7 +14,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Pencil, Plus, UserPlus, CheckCircle2, FileText, KeyRound, Mail, Eye } from "lucide-react";
+import { Pencil, Plus, UserPlus, CheckCircle2, FileText, KeyRound, Mail, Eye, Square, Circle } from "lucide-react";
 import { toast } from "sonner";
 import {
   useAtualizarGarcom,
@@ -24,6 +24,7 @@ import {
   useVincularUsuarioGarcom,
   useAlterarEmailGarcom,
 } from "@/hooks/use-garcons";
+import { useGarconsOnline, useEncerrarTurno } from "@/hooks/use-sala";
 import type { Garcom } from "@/lib/garcons.functions";
 import { ExtratoGarcomDialog } from "./extrato-garcom-dialog";
 
@@ -114,6 +115,9 @@ export function GarconsRoster({ restauranteId }: { restauranteId: string }) {
   const vincular = useVincularUsuarioGarcom(restauranteId);
   const redefinirSenha = useRedefinirSenhaGarcom(restauranteId);
   const alterarEmail = useAlterarEmailGarcom(restauranteId);
+  const { data: online = [] } = useGarconsOnline(restauranteId);
+  const encerrarTurno = useEncerrarTurno();
+  const onlineSet = new Set(online.map((o) => o.garcom_id));
   const [openNovo, setOpenNovo] = useState(false);
   const [edit, setEdit] = useState<Garcom | null>(null);
   const [vincularAlvo, setVincularAlvo] = useState<Garcom | null>(null);
