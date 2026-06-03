@@ -33,7 +33,12 @@ export async function garantirSessaoAberta(
     .eq("status", "aberta")
     .maybeSingle();
   if (selErr) throw new Error(selErr.message);
-  if (existente) return existente as MesaSessao;
+  if (existente) {
+    // Limpa eventuais comandas órfãs (sem itens e sem vínculos ativos) acumuladas
+    // por fluxos antigos antes de devolver a sessão.
+    await sanitizarComandasOrfas(existente.id as string);
+    return existente as MesaSessao;
+  }
 
   const { data: criada, error: insErr } = await supabaseAdmin
     .from("mesa_sessoes")
@@ -42,6 +47,49 @@ export async function garantirSessaoAberta(
     .single();
   if (insErr || !criada) throw new Error(insErr?.message ?? "Falha ao abrir sessão da mesa");
   return criada as MesaSessao;
+}
+
+/**
+ * Fecha comandas `aberta` da sessão que não têm pedidos NEM vínculos ativos.
+ * Idempotente — usado para limpar resquícios de "Sem titular" deixados por
+ * fluxos antigos de comanda compartilhada.
+ */
+export async function sanitizarComandasOrfas(sessaoId: string): Promise<number> {
+  const { data: abertas, error } = await supabaseAdmin
+    .from("comandas")
+    .select("id")
+    .eq("sessao_id", sessaoId)
+    .eq("status", "aberta");
+  if (error) throw new Error(error.message);
+  const ids = (abertas ?? []).map((c) => c.id as string);
+  if (ids.length === 0) return 0;
+
+  const [{ data: pedRows }, { data: vincRows }] = await Promise.all([
+    supabaseAdmin
+      .from("pedidos")
+      .select("comanda_id")
+      .in("comanda_id", ids),
+    supabaseAdmin
+      .from("mesa_sessao_clientes")
+      .select("comanda_id")
+      .in("comanda_id", ids)
+      .is("saiu_em", null),
+  ]);
+  const comPedidos = new Set(
+    (pedRows ?? []).map((r) => r.comanda_id as string).filter(Boolean),
+  );
+  const comVinculo = new Set(
+    (vincRows ?? []).map((r) => r.comanda_id as string).filter(Boolean),
+  );
+  const orfas = ids.filter((id) => !comPedidos.has(id) && !comVinculo.has(id));
+  if (orfas.length === 0) return 0;
+
+  const { error: closeErr } = await supabaseAdmin
+    .from("comandas")
+    .update({ status: "fechada", fechada_em: new Date().toISOString() })
+    .in("id", orfas);
+  if (closeErr) throw new Error(closeErr.message);
+  return orfas.length;
 }
 
 /** Lista comandas abertas da sessão com nomes de titular e participantes. */
