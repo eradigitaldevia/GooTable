@@ -367,6 +367,7 @@ function MesaDetalhePage() {
           garcomNome={pedidoAberto.garcom_nome ?? null}
           destinoStatus={pedidoAberto.destino_status}
           onClose={() => setPedidoAbertoId(null)}
+          mostrarPagamento={false}
         />
       )}
     </div>

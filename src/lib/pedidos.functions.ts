@@ -950,6 +950,7 @@ export const resumoContaMesaFn = createServerFn({ method: "POST" })
           "id, status, total, criado_em, comanda_id, garcom_id, cliente_id, cliente_nome, observacao",
         )
         .eq("sessao_id", sessaoInfo.id)
+        .neq("status", "cancelado")
         .order("criado_em", { ascending: true });
       if (pErr) throw new Error(pErr.message);
       const listaPed = (peds ?? []) as Array<{
@@ -989,7 +990,8 @@ export const resumoContaMesaFn = createServerFn({ method: "POST" })
             .select(
               "id, pedido_id, nome_produto, quantidade, quantidade_pronta, preco_unit, observacao, cliente_nome, destino, status",
             )
-            .in("pedido_id", pedidoIds),
+            .in("pedido_id", pedidoIds)
+            .neq("status", "cancelado" as never),
           supabaseAdmin
             .from("pedido_destino_status")
             .select("pedido_id, destino, status")

@@ -1,53 +1,35 @@
-# Plano: Cancelamento de pedido/item na área do garçom
+## Diagnóstico
 
-## Contexto
+O pedido `c96d20a3…` (Mesa 01) já está corretamente marcado como `cancelado` no banco (verificado via SQL), e o RPC `cancelar_pedido` ajusta os totais da comanda. O problema está **apenas na camada de leitura/UI**:
 
-O backend (`cancelar_pedido`, `cancelar_item_pedido`), as server functions (`cancelarPedidoFn`, `cancelarItemPedidoFn`) e os hooks (`useCancelarPedido`, `useCancelarItemPedido`) **já existem** desde a entrega anterior do Cenário C. O componente reutilizável `DetalhePedido` (com `AlertDialog` de motivo + lixeira por item) também já existe e está em uso no admin.
+- `resumoContaMesaFn` (`src/lib/pedidos.functions.ts`, l. 947–953) faz `select … from pedidos` **sem filtrar `status='cancelado'`**, então o pedido cancelado continua aparecendo no card "Pedidos da sessão".
+- Os itens carregados (l. 988–992) também não filtram itens com `status='cancelado'`, então cancelamentos de item individual continuariam visíveis.
+- Ao clicar no pedido, o `DetalhePedido` é aberto e mostra o bloco de "Confirmar pagamento" mesmo quando o pedido está cancelado, porque o componente foi reaproveitado do admin e nunca foi pensado para o garçom (que não cobra).
 
-O que faltou: **ligar essa UI na tela do garçom** (`src/routes/_authenticated/sala_.mesa.$mesaId.tsx`), onde hoje os pedidos da sessão só são listados em modo leitura.
+## Correção proposta
 
-## Mudanças
+Mudanças cirúrgicas, apenas frontend/serverFn de leitura — não mexer no RPC nem na lógica de cancelamento (que está OK).
 
-### 1. `src/routes/_authenticated/sala_.mesa.$mesaId.tsx`
+### 1. `src/lib/pedidos.functions.ts` — `resumoContaMesaFn`
+- Adicionar `.neq("status", "cancelado")` no `select` de `pedidos` (l. 947–953), para que pedidos cancelados não voltem para a tela.
+- Adicionar `.neq("status", "cancelado")` no `select` de `pedido_itens` (l. 988–992), cobrindo o caso de cancelamento item-a-item dentro de um pedido que continua ativo.
 
-- Em cada item da lista "Pedidos da sessão", trocar a renderização inline atual por um disclosure (clique no card → abre `Sheet`/`Dialog` com `DetalhePedido`).
-- Passar para `DetalhePedido` os handlers `onCancelar` (pedido inteiro) e `onCancelarItem` (item individual) usando os hooks já existentes:
-  - `useCancelarPedido(restauranteId)` → `cancelarPedidoFn`
-  - `useCancelarItemPedido(restauranteId)` → `cancelarItemPedidoFn`
-- Após sucesso, invalidar `queryKeys.resumoContaMesa` para o card recarregar totais.
-- Carregar os itens detalhados via `useItensPedido(pedidoId)` somente quando o disclosure abrir (lazy).
+### 2. `src/routes/_authenticated/sala_.mesa.$mesaId.tsx`
+- Quando o garçom abrir um pedido pelo card, **não** propagar a opção de cobrança. Passar uma flag (`hideCobranca`) ou usar uma variante do `DetalhePedido` que oculte o bloco "Saldo da comanda" + botão "Confirmar pagamento" — cobrança é responsabilidade do Caixa, não do garçom. O garçom mantém: ver itens, cancelar pedido, cancelar item, dividir comissão.
 
-### 2. Regras de visibilidade (frontend)
+### 3. `src/components/pedidos/detalhe-pedido.tsx`
+- Aceitar nova prop opcional `mostrarPagamento?: boolean` (default `true`, para não quebrar a tela admin).
+- Quando `false`, não renderizar o bloco "Saldo da comanda" nem o `ConfirmarPagamentoDialog`.
+- Independente da prop: se `pedido.status === "cancelado"`, ocultar todo o bloco de pagamento (não faz sentido cobrar pedido cancelado, mesmo no admin).
 
-- Botão "Cancelar pedido" oculto quando `pedido.status ∈ {entregue, cancelado}` (mesma regra já usada no admin).
-- Lixeira por item oculta nas mesmas condições.
-- Quando `quantidade_pronta > 0` ou status `em_preparo`/`pronto`, o `AlertDialog` (já existente em `DetalhePedido`) exige motivo — sem mudanças aqui.
+## Resultado esperado
 
-### 3. Sem mudanças
+- O pedido `c96d20a3…` (e qualquer cancelado) deixa de aparecer no card "Pedidos da sessão" da área do garçom — assim que o React Query reidratar (já invalidamos `["resumo-conta-mesa"]` no `useCancelarPedido`).
+- Itens cancelados dentro de pedidos ativos somem da lista.
+- Na Sala, ao abrir um pedido, o garçom não vê mais o botão "Confirmar pagamento".
 
-- Banco, RPCs, RLS, server functions, hooks, `DetalhePedido`, admin/pedidos: nada muda. Cliente continua sem cancelar pós-envio (só FAB "Chamar garçom").
-- Recálculo de `comandas.subtotal/total`, auditoria em `audit_logs` e bloqueio de `entregue` continuam sendo feitos no servidor — frontend só chama.
+## Arquivos a alterar
 
-## Arquivos
-
-```text
-modificar:
-  src/routes/_authenticated/sala_.mesa.$mesaId.tsx
-    - importar useCancelarPedido, useCancelarItemPedido, useItensPedido, DetalhePedido
-    - tornar cada pedido clicável → Sheet com DetalhePedido + handlers
-    - invalidar resumo-conta-mesa no onSuccess
-```
-
-Sem migration, sem novos componentes, sem mudanças no admin.
-
-## Validação
-
-- Garçom abre mesa → clica em pedido `recebido` → "Cancelar pedido" → confirma sem motivo → comanda recalcula.
-- Garçom clica em pedido `em_preparo` → tenta cancelar → `AlertDialog` exige motivo (≥3 chars) → confirma → `audit_logs` registra.
-- Garçom clica em item específico → lixeira → mesma regra de motivo → item sumir, totais atualizam.
-- Pedido `entregue` → botões ocultos.
-
-## Pergunta
-
-1. Disclosure preferido: `Sheet` lateral (mesma estética do admin) ou `Dialog` central? Sugiro **Sheet** para mobile-friendly.  
-Resposta: **Sheet** 
+- `src/lib/pedidos.functions.ts`
+- `src/routes/_authenticated/sala_.mesa.$mesaId.tsx`
+- `src/components/pedidos/detalhe-pedido.tsx`
