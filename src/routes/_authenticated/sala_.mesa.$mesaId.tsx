@@ -8,6 +8,7 @@ import { useResumoContaMesa } from "@/hooks/use-pedidos";
 import { formatBRL } from "@/lib/cart";
 import { JuntarComandasDialog } from "@/components/sala/juntar-comandas-dialog";
 import { DividirTotalDialog } from "@/components/sala/dividir-total-dialog";
+import { DetalhePedido } from "@/components/pedidos/detalhe-pedido";
 
 export const Route = createFileRoute("/_authenticated/sala_/mesa/$mesaId")({
   component: MesaDetalhePage,
@@ -59,6 +60,10 @@ function MesaDetalhePage() {
   );
   const [juntarOpen, setJuntarOpen] = useState(false);
   const [dividirOpen, setDividirOpen] = useState(false);
+  const [pedidoAbertoId, setPedidoAbertoId] = useState<string | null>(null);
+
+  const pedidoAberto =
+    data?.pedidos.find((p) => p.id === pedidoAbertoId) ?? null;
 
   return (
     <div className="min-h-screen bg-background">
@@ -236,7 +241,16 @@ function MesaDetalhePage() {
                     return (
                       <li
                         key={p.id}
-                        className="rounded-lg border bg-background p-3"
+                        className="rounded-lg border bg-background p-3 text-left transition hover:bg-muted/40 cursor-pointer w-full"
+                        onClick={() => setPedidoAbertoId(p.id)}
+                        role="button"
+                        tabIndex={0}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" || e.key === " ") {
+                            e.preventDefault();
+                            setPedidoAbertoId(p.id);
+                          }
+                        }}
                       >
                         <div className="flex items-center justify-between gap-2">
                           <div className="flex items-center gap-2 text-xs text-muted-foreground">
@@ -324,6 +338,36 @@ function MesaDetalhePage() {
             pedidos={data.pedidos}
           />
         </>
+      )}
+
+      {pedidoAberto && restauranteId && data && (
+        <DetalhePedido
+          pedido={{
+            id: pedidoAberto.id,
+            status: pedidoAberto.status,
+            total: pedidoAberto.total,
+            observacao: pedidoAberto.observacao,
+            criado_em: pedidoAberto.criado_em,
+            mesa_id: mesaId,
+            restaurante_id: restauranteId,
+            comanda_id: pedidoAberto.comanda_id,
+          }}
+          itens={pedidoAberto.itens.map((it) => ({
+            id: it.id,
+            pedido_id: pedidoAberto.id,
+            nome_produto: it.nome_produto,
+            quantidade: it.quantidade,
+            preco_unit: it.preco_unit,
+            observacao: it.observacao,
+            cliente_nome: it.cliente_nome,
+            quantidade_pronta: it.quantidade_pronta,
+            destino: it.destino,
+          }))}
+          mesa={data.mesa.numero}
+          garcomNome={pedidoAberto.garcom_nome ?? null}
+          destinoStatus={pedidoAberto.destino_status}
+          onClose={() => setPedidoAbertoId(null)}
+        />
       )}
     </div>
   );
