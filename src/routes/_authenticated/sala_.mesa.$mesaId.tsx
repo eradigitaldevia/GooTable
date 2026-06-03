@@ -1,10 +1,13 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowLeft, Clock } from "lucide-react";
+import { ArrowLeft, Clock, Merge, Split } from "lucide-react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
 import { useMeuRestaurante } from "@/hooks/use-restaurante";
 import { useResumoContaMesa } from "@/hooks/use-pedidos";
 import { formatBRL } from "@/lib/cart";
+import { JuntarComandasDialog } from "@/components/sala/juntar-comandas-dialog";
+import { DividirTotalDialog } from "@/components/sala/dividir-total-dialog";
 
 export const Route = createFileRoute("/_authenticated/sala_/mesa/$mesaId")({
   component: MesaDetalhePage,
@@ -54,6 +57,8 @@ function MesaDetalhePage() {
     restauranteId,
     mesaId,
   );
+  const [juntarOpen, setJuntarOpen] = useState(false);
+  const [dividirOpen, setDividirOpen] = useState(false);
 
   return (
     <div className="min-h-screen bg-background">
@@ -143,9 +148,27 @@ function MesaDetalhePage() {
                       className="rounded-lg border bg-background p-3 text-sm"
                     >
                       <div className="flex items-center justify-between">
-                        <span className="font-medium">
-                          {c.titular_nome ?? "Sem titular"}
-                        </span>
+                        <div className="min-w-0 flex-1">
+                          <div className="font-medium">
+                            {c.titular_nome ??
+                              (c.participantes.length > 0
+                                ? `Compartilhada · ${c.participantes
+                                    .map((p) => p.nome)
+                                    .filter(Boolean)
+                                    .join(", ")}`
+                                : "Sem titular")}
+                          </div>
+                          {c.titular_nome && c.participantes.length > 1 && (
+                            <div className="mt-0.5 text-xs text-muted-foreground">
+                              +{" "}
+                              {c.participantes
+                                .filter((p) => p.cliente_id !== c.titular_cliente_id)
+                                .map((p) => p.nome)
+                                .filter(Boolean)
+                                .join(", ")}
+                            </div>
+                          )}
+                        </div>
                         <span className="text-xs uppercase tracking-wide text-muted-foreground">
                           {c.tipo}
                         </span>
@@ -173,6 +196,25 @@ function MesaDetalhePage() {
                     </li>
                   ))}
                 </ul>
+              )}
+              {data.comandas.length > 0 && data.sessao && (
+                <div className="mt-3 flex flex-wrap gap-2">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    disabled={data.comandas.length < 2}
+                    onClick={() => setJuntarOpen(true)}
+                  >
+                    <Merge className="mr-1 h-3.5 w-3.5" /> Juntar comandas
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setDividirOpen(true)}
+                  >
+                    <Split className="mr-1 h-3.5 w-3.5" /> Dividir total
+                  </Button>
+                </div>
               )}
             </section>
 
@@ -262,6 +304,27 @@ function MesaDetalhePage() {
           </>
         )}
       </main>
+
+      {data && data.sessao && restauranteId && (
+        <>
+          <JuntarComandasDialog
+            open={juntarOpen}
+            onOpenChange={setJuntarOpen}
+            restauranteId={restauranteId}
+            mesaId={mesaId}
+            sessaoId={data.sessao.id}
+            comandas={data.comandas}
+          />
+          <DividirTotalDialog
+            open={dividirOpen}
+            onOpenChange={setDividirOpen}
+            restauranteId={restauranteId}
+            sessaoId={data.sessao.id}
+            comandas={data.comandas}
+            pedidos={data.pedidos}
+          />
+        </>
+      )}
     </div>
   );
 }
