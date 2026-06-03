@@ -4,8 +4,8 @@ import {
   juntarComandasMesaFn,
   gerarDivisaoContaFn,
   sanitizarComandasOrfasFn,
+  type ModoDivisao,
 } from "@/lib/cliente-mesa.functions";
-import type { ModoDivisao } from "@/lib/sessoes.server";
 
 export function useJuntarComandasMesa(
   restauranteId: string | undefined,
