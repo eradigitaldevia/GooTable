@@ -302,12 +302,6 @@ export function DetalhePedido({
           </Button>
         )}
 
-        {pedido.status !== "cancelado" && (
-          <Button variant="outline" onClick={() => setDivOpen(true)}>
-            <Users className="mr-2 h-4 w-4" /> Dividir comissão
-          </Button>
-        )}
-
         {pedido.comanda_id && (
           <ConfirmarPagamentoDialog
             open={pagOpen}
@@ -317,13 +311,6 @@ export function DetalhePedido({
             saldoSugerido={saldo}
           />
         )}
-
-        <DividirComissaoDialog
-          open={divOpen}
-          onOpenChange={setDivOpen}
-          restauranteId={pedido.restaurante_id}
-          pedidoId={pedido.id}
-        />
 
         <AlertDialog open={cancelarPedidoOpen} onOpenChange={setCancelarPedidoOpen}>
           <AlertDialogContent>
