@@ -140,7 +140,11 @@ function Configuracoes() {
         onChange={patch}
       />
 
-      <ComissaoModoForm modo={form.comissao_modo} onChange={patch} />
+      <ComissaoModoForm
+        modo={form.comissao_modo}
+        rateioTrocaTurno={form.comissao_rateio_troca_turno}
+        onChange={patch}
+      />
 
       <section className="rounded-lg border border-border bg-card p-4">
         <div className="flex items-start justify-between gap-4">
