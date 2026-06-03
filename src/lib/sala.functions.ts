@@ -329,6 +329,8 @@ export const carregarSalaAdminFn = createServerFn({ method: "POST" })
         pedidos_prontos: [],
         chamados_pendentes: [],
         permitir_atendimento_cruzado: permitirCruzadoAdmin,
+        turno: null,
+        garcons_online: 0,
       };
     }
 
@@ -418,6 +420,8 @@ export const carregarSalaAdminFn = createServerFn({ method: "POST" })
       pedidos_prontos,
       chamados_pendentes,
       permitir_atendimento_cruzado: permitirCruzadoAdmin,
+      turno: null,
+      garcons_online: 0,
     };
   });
 
