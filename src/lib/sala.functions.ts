@@ -541,3 +541,53 @@ export const listarMesasRestauranteFn = createServerFn({ method: "POST" })
       return result;
     },
   );
+
+/* ---------- Turno do garçom (check-in / check-out) ---------- */
+
+export const abrirTurnoGarcomFn = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) => z.object({ garcomId: z.string().uuid() }).parse(d))
+  .handler(async ({ context, data }) => {
+    const { supabase } = context;
+    const { data: id, error } = await supabase.rpc("abrir_turno_garcom", {
+      _garcom_id: data.garcomId,
+    });
+    if (error) throw new Error(error.message);
+    return { id: id as string };
+  });
+
+export const encerrarTurnoGarcomFn = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) => z.object({ garcomId: z.string().uuid() }).parse(d))
+  .handler(async ({ context, data }) => {
+    const { supabase } = context;
+    const { data: count, error } = await supabase.rpc("encerrar_turno_garcom", {
+      _garcom_id: data.garcomId,
+    });
+    if (error) throw new Error(error.message);
+    return { count: Number(count ?? 0) };
+  });
+
+export interface GarcomOnline {
+  garcom_id: string;
+  iniciado_em: string;
+}
+
+export const listarGarconsOnlineFn = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) =>
+    z.object({ restauranteId: z.string().uuid() }).parse(d),
+  )
+  .handler(async ({ context, data }): Promise<GarcomOnline[]> => {
+    const { supabase } = context;
+    const { data: rows, error } = await supabase
+      .from("garcom_turnos")
+      .select("garcom_id, iniciado_em")
+      .eq("restaurante_id", data.restauranteId)
+      .is("encerrado_em", null);
+    if (error) throw new Error(error.message);
+    return (rows ?? []).map((r) => ({
+      garcom_id: r.garcom_id as string,
+      iniciado_em: r.iniciado_em as string,
+    }));
+  });
