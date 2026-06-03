@@ -15,6 +15,8 @@ import {
   type DivisaoContaResultado,
   type JuntarComandasResultado,
 } from "./sessoes.server";
+
+export type { ModoDivisao, DivisaoContaResultado, JuntarComandasResultado };
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { assertAcessoRestaurante } from "./auth.server";
 
