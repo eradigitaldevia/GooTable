@@ -990,8 +990,7 @@ export const resumoContaMesaFn = createServerFn({ method: "POST" })
             .select(
               "id, pedido_id, nome_produto, quantidade, quantidade_pronta, preco_unit, observacao, cliente_nome, destino, status",
             )
-            .in("pedido_id", pedidoIds)
-            .neq("status", "cancelado" as never),
+            .in("pedido_id", pedidoIds),
           supabaseAdmin
             .from("pedido_destino_status")
             .select("pedido_id, destino, status")
