@@ -3,6 +3,7 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { assertAcessoRestaurante } from "./auth.server";
+import { sanitizarComandasOrfas } from "./sessoes.server";
 
 export type StatusPedido =
   | "recebido"
@@ -793,6 +794,8 @@ export interface ResumoMesaComanda {
   id: string;
   tipo: "individual" | "compartilhada";
   titular_nome: string | null;
+  titular_cliente_id: string | null;
+  participantes: { cliente_id: string; nome: string }[];
   subtotal: number;
   desconto_cupom: number;
   cashback_resgatado: number;
@@ -855,6 +858,9 @@ export const resumoContaMesaFn = createServerFn({ method: "POST" })
     let pedidos: ResumoMesaPedido[] = [];
 
     if (sessaoInfo) {
+      // Limpa comandas órfãs antes de montar o resumo.
+      await sanitizarComandasOrfas(sessaoInfo.id);
+
       const { data: cs, error: cErr } = await supabaseAdmin
         .from("comandas")
         .select(
@@ -889,6 +895,34 @@ export const resumoContaMesaFn = createServerFn({ method: "POST" })
         }
       }
 
+      // Participantes ativos por comanda
+      const comandaIds = lista.map((c) => c.id);
+      const participantesPorComanda = new Map<
+        string,
+        { cliente_id: string; nome: string }[]
+      >();
+      if (comandaIds.length > 0) {
+        const { data: vincs } = await supabaseAdmin
+          .from("mesa_sessao_clientes")
+          .select("comanda_id, cliente_id, clientes:cliente_id(nome)")
+          .in("comanda_id", comandaIds)
+          .is("saiu_em", null);
+        for (const v of (vincs ?? []) as Array<{
+          comanda_id: string | null;
+          cliente_id: string | null;
+          clientes: { nome: string } | null;
+        }>) {
+          const cid = v.comanda_id;
+          const clid = v.cliente_id;
+          if (!cid || !clid) continue;
+          if (!participantesPorComanda.has(cid)) participantesPorComanda.set(cid, []);
+          participantesPorComanda.get(cid)!.push({
+            cliente_id: clid,
+            nome: v.clientes?.nome ?? "",
+          });
+        }
+      }
+
       comandas = lista.map((c) => {
         const total = Number(c.total ?? 0);
         const pago = Number(c.total_pago ?? 0);
@@ -898,6 +932,8 @@ export const resumoContaMesaFn = createServerFn({ method: "POST" })
           titular_nome: c.titular_cliente_id
             ? nomesTitulares.get(c.titular_cliente_id) ?? null
             : null,
+          titular_cliente_id: c.titular_cliente_id,
+          participantes: participantesPorComanda.get(c.id) ?? [],
           subtotal: Number(c.subtotal ?? 0),
           desconto_cupom: Number(c.desconto_cupom ?? 0),
           cashback_resgatado: Number(c.cashback_resgatado ?? 0),

@@ -3,7 +3,6 @@ import { z } from "zod";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import {
   criarComandaIndividual,
-  garantirComandaCompartilhada,
   garantirSessaoAberta,
   listarComandasAtivas,
   vincularClienteSessao,
@@ -198,22 +197,35 @@ export const entrarNaMesaFn = createServerFn({ method: "POST" })
     if (cErr) throw new Error(cErr.message);
     if (!cliente) throw new Error("Cliente não encontrado");
 
-    let comandaId: string;
-    let escolhaEfetiva = data.escolha;
-    if (escolhaEfetiva === "auto") {
-      const ativas = await listarComandasAtivas(sessao.id);
-      escolhaEfetiva = ativas.length > 0 ? "participar" : "separada";
+    // Sempre individual: cada cliente entra com sua própria comanda.
+    // Reusa se já existir vínculo ativo (re-identificação idempotente).
+    const { data: vincExistente } = await supabaseAdmin
+      .from("mesa_sessao_clientes")
+      .select("comanda_id")
+      .eq("sessao_id", sessao.id)
+      .eq("cliente_id", data.clienteId)
+      .is("saiu_em", null)
+      .maybeSingle();
+    let comandaId: string | null = null;
+    if (vincExistente?.comanda_id) {
+      const { data: comExist } = await supabaseAdmin
+        .from("comandas")
+        .select("id, status")
+        .eq("id", vincExistente.comanda_id as string)
+        .maybeSingle();
+      if (comExist && comExist.status === "aberta") {
+        comandaId = comExist.id as string;
+      }
     }
-
-    if (escolhaEfetiva === "participar") {
-      comandaId = await garantirComandaCompartilhada(sessao.id, mesa.restaurante_id);
-    } else {
-      comandaId = await criarComandaIndividual(sessao.id, mesa.restaurante_id, data.clienteId);
+    if (!comandaId) {
+      comandaId = await criarComandaIndividual(
+        sessao.id,
+        mesa.restaurante_id,
+        data.clienteId,
+      );
     }
-
     await vincularClienteSessao(sessao.id, data.clienteId, comandaId);
-
-    return { comanda_id: comandaId, escolha: escolhaEfetiva };
+    return { comanda_id: comandaId, escolha: "separada" as const };
   });
 
 /* ---------- Público: Minha Conta do cliente ---------- */

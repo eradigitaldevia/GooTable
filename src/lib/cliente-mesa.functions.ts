@@ -3,14 +3,22 @@ import { z } from "zod";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import {
   criarComandaIndividual,
-  garantirComandaCompartilhada,
   garantirSessaoAberta,
-  listarComandasAtivas,
   vincularClienteSessao,
   detectarConflitoMesa,
   transferirCliente,
+  juntarComandas,
+  gerarDivisaoConta,
+  sanitizarComandasOrfas,
   type ConflitoMesa,
+  type ModoDivisao,
+  type DivisaoContaResultado,
+  type JuntarComandasResultado,
 } from "./sessoes.server";
+
+export type { ModoDivisao, DivisaoContaResultado, JuntarComandasResultado };
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { assertAcessoRestaurante } from "./auth.server";
 
 const onlyDigits = (s: string) => s.replace(/\D/g, "");
 
@@ -154,11 +162,12 @@ export const buscarClientePorTelefoneFn = createServerFn({ method: "POST" })
     }
 
     if (!comandaId) {
-      const ativas = await listarComandasAtivas(sessao.id);
-      comandaId =
-        ativas.length > 0
-          ? await garantirComandaCompartilhada(sessao.id, mesa.restaurante_id)
-          : await criarComandaIndividual(sessao.id, mesa.restaurante_id, cli.id as string);
+      // Sempre individual: cada cliente entra com sua própria comanda.
+      comandaId = await criarComandaIndividual(
+        sessao.id,
+        mesa.restaurante_id,
+        cli.id as string,
+      );
     }
 
     await vincularClienteSessao(sessao.id, cli.id as string, comandaId);
@@ -234,3 +243,108 @@ export const transferirClienteParaMesaFn = createServerFn({ method: "POST" })
       };
     },
   );
+
+/* ============================================================
+ * Garçom/Caixa: juntar comandas da mesa
+ * ============================================================ */
+
+export const juntarComandasMesaFn = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) =>
+    z
+      .object({
+        restauranteId: z.string().uuid(),
+        sessaoId: z.string().uuid(),
+        comandaIds: z.array(z.string().uuid()).min(2).max(20),
+        titularClienteId: z.string().uuid().nullable(),
+      })
+      .parse(d),
+  )
+  .handler(async ({ context, data }): Promise<JuntarComandasResultado> => {
+    const { supabase, userId } = context;
+    await assertAcessoRestaurante(supabase, userId, data.restauranteId);
+    // Sanity: sessão pertence ao restaurante.
+    const { data: sessao, error: sErr } = await supabaseAdmin
+      .from("mesa_sessoes")
+      .select("id, restaurante_id, status")
+      .eq("id", data.sessaoId)
+      .maybeSingle();
+    if (sErr) throw new Error(sErr.message);
+    if (!sessao || sessao.restaurante_id !== data.restauranteId) {
+      throw new Error("Sessão inválida");
+    }
+    if (sessao.status !== "aberta") throw new Error("Sessão não está aberta");
+    return juntarComandas(data.sessaoId, data.comandaIds, data.titularClienteId);
+  });
+
+/* ============================================================
+ * Garçom/Caixa: calcular plano de divisão
+ * ============================================================ */
+
+const modoSchema = z.discriminatedUnion("tipo", [
+  z.object({ tipo: z.literal("igual"), n: z.number().int().min(1).max(30) }),
+  z.object({
+    tipo: z.literal("por_participante"),
+    clienteIds: z.array(z.string().uuid()).min(1).max(30),
+  }),
+  z.object({
+    tipo: z.literal("por_item"),
+    atribuicoes: z
+      .array(
+        z.object({
+          itemId: z.string().uuid(),
+          clienteId: z.string().uuid().nullable(),
+        }),
+      )
+      .min(1)
+      .max(500),
+  }),
+]);
+
+export const gerarDivisaoContaFn = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) =>
+    z
+      .object({
+        restauranteId: z.string().uuid(),
+        sessaoId: z.string().uuid(),
+        comandaIds: z.array(z.string().uuid()).min(1).max(20),
+        modo: modoSchema,
+      })
+      .parse(d),
+  )
+  .handler(async ({ context, data }): Promise<DivisaoContaResultado> => {
+    const { supabase, userId } = context;
+    await assertAcessoRestaurante(supabase, userId, data.restauranteId);
+    const { data: sessao, error: sErr } = await supabaseAdmin
+      .from("mesa_sessoes")
+      .select("id, restaurante_id")
+      .eq("id", data.sessaoId)
+      .maybeSingle();
+    if (sErr) throw new Error(sErr.message);
+    if (!sessao || sessao.restaurante_id !== data.restauranteId) {
+      throw new Error("Sessão inválida");
+    }
+    return gerarDivisaoConta(data.sessaoId, data.comandaIds, data.modo as ModoDivisao);
+  });
+
+/* ============================================================
+ * Garçom/Caixa: sanitizar manualmente comandas órfãs de uma sessão
+ * ============================================================ */
+
+export const sanitizarComandasOrfasFn = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) =>
+    z
+      .object({
+        restauranteId: z.string().uuid(),
+        sessaoId: z.string().uuid(),
+      })
+      .parse(d),
+  )
+  .handler(async ({ context, data }) => {
+    const { supabase, userId } = context;
+    await assertAcessoRestaurante(supabase, userId, data.restauranteId);
+    const fechadas = await sanitizarComandasOrfas(data.sessaoId);
+    return { fechadas };
+  });
