@@ -25,6 +25,7 @@ type ConfigPayload = {
   caixa_teto_dinheiro: number | null;
   caixa_conferencia_cega: boolean;
   caixa_obrigatorio_para_pagamento: boolean;
+  comissao_rateio_troca_turno: boolean;
 };
 
 export function useAtualizarConfiguracoes(userId: string | undefined) {
