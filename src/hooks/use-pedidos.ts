@@ -83,6 +83,8 @@ export function useCancelarPedido(restauranteId: string | undefined) {
     onSuccess: (_d, vars) => {
       if (restauranteId) qc.invalidateQueries({ queryKey: queryKeys.pedidos(restauranteId) });
       qc.invalidateQueries({ queryKey: queryKeys.pedido(vars.pedidoId) });
+      qc.invalidateQueries({ queryKey: ["resumo-conta-mesa"] });
+      qc.invalidateQueries({ queryKey: ["sala-dados"] });
     },
   });
 }
@@ -96,6 +98,8 @@ export function useCancelarItemPedido(restauranteId: string | undefined) {
     onSuccess: (_d, vars) => {
       if (restauranteId) qc.invalidateQueries({ queryKey: queryKeys.pedidos(restauranteId) });
       qc.invalidateQueries({ queryKey: queryKeys.pedido(vars.pedidoId) });
+      qc.invalidateQueries({ queryKey: ["resumo-conta-mesa"] });
+      qc.invalidateQueries({ queryKey: ["sala-dados"] });
     },
   });
 }
