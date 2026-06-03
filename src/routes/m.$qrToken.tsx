@@ -18,11 +18,6 @@ import {
   type IdentificacaoValores,
 } from "@/components/cliente/identificacao-modal";
 import { LookupTelefoneStep } from "@/components/cliente/lookup-telefone-step";
-import {
-  EscolherComandaModal,
-  type ComandaResumo,
-  type EscolhaComanda,
-} from "@/components/cliente/escolher-comanda-modal";
 import { entrarNaMesaFn, identificarClienteFn } from "@/lib/clientes.functions";
 import {
   buscarClientePorTelefoneFn,
@@ -33,14 +28,6 @@ import { ConflitoMesaModal } from "@/components/cliente/conflito-mesa-modal";
 export const Route = createFileRoute("/m/$qrToken")({
   component: ClienteMenu,
 });
-
-interface PendenteEscolha {
-  clienteId: string;
-  nome: string;
-  telefone: string;
-  sessaoId: string;
-  comandas: ComandaResumo[];
-}
 
 interface PendenteConflito {
   clienteId: string;
@@ -63,7 +50,6 @@ function ClienteMenu() {
   const buscarPorTelefone = useServerFn(buscarClientePorTelefoneFn);
   const transferirParaMesa = useServerFn(transferirClienteParaMesaFn);
   const [enviando, setEnviando] = useState(false);
-  const [pendente, setPendente] = useState<PendenteEscolha | null>(null);
   const [conflito, setConflito] = useState<PendenteConflito | null>(null);
   const [busca, setBusca] = useState("");
   const [catAtiva, setCatAtiva] = useState<string | "todas">("todas");
@@ -216,21 +202,14 @@ function ClienteMenu() {
           numeroMesaAtual: res.conflito.numeroMesa,
           podeTransferir: res.conflito.podeTransferir,
         });
-      } else if (res.comandas_ativas.length > 0) {
-        setPendente({
-          clienteId: res.cliente.id,
-          nome: res.cliente.nome,
-          telefone: res.cliente.telefone,
-          sessaoId: res.sessao_id,
-          comandas: res.comandas_ativas,
-        });
       } else {
+        // Sempre cria/reusa comanda individual — sem modal de escolha.
         const entrada = await entrarNaMesa({
           data: {
             qrToken,
             clienteId: res.cliente.id,
             sessaoId: res.sessao_id,
-            escolha: "auto",
+            escolha: "separada",
           },
         });
         salvar({
@@ -276,33 +255,6 @@ function ClienteMenu() {
     }
   };
 
-  const handleEscolher = async (escolha: EscolhaComanda) => {
-    if (!pendente) return;
-    try {
-      setEnviando(true);
-      const entrada = await entrarNaMesa({
-        data: {
-          qrToken,
-          clienteId: pendente.clienteId,
-          sessaoId: pendente.sessaoId,
-          escolha,
-        },
-      });
-      salvar({
-        clienteId: pendente.clienteId,
-        nome: pendente.nome,
-        telefone: pendente.telefone,
-        sessaoId: pendente.sessaoId,
-        comandaId: entrada.comanda_id,
-      });
-      setPendente(null);
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Não foi possível continuar");
-    } finally {
-      setEnviando(false);
-    }
-  };
-
   if (isLoading || !hidratado) {
     return (
       <div className="min-h-screen bg-background pb-28">
@@ -336,12 +288,6 @@ function ClienteMenu() {
             enviando={enviando}
             onTransferir={handleTransferir}
             onCancelar={() => setConflito(null)}
-          />
-        ) : pendente ? (
-          <EscolherComandaModal
-            comandasAtivas={pendente.comandas}
-            onEscolher={handleEscolher}
-            enviando={enviando}
           />
         ) : modoLookup ? (
           <LookupTelefoneStep
