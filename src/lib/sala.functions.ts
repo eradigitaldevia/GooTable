@@ -47,6 +47,8 @@ export interface SalaDados {
   pedidos_prontos: SalaPedidoPronto[];
   chamados_pendentes: SalaChamado[];
   permitir_atendimento_cruzado: boolean;
+  turno: { id: string; iniciado_em: string } | null;
+  garcons_online: number;
 }
 
 export interface MesaRestauranteInfo {
@@ -82,38 +84,75 @@ export const carregarSalaFn = createServerFn({ method: "POST" })
     const permitirCruzado =
       (rest?.permitir_atendimento_cruzado as boolean | undefined) ?? true;
 
-    const { data: atribs, error: aErr } = await supabase
-      .from("mesa_garcom")
-      .select("mesa_id, atribuido_em")
-      .eq("restaurante_id", restauranteId)
+    // Turno aberto deste garçom
+    const { data: turnoRow } = await supabase
+      .from("garcom_turnos")
+      .select("id, iniciado_em")
       .eq("garcom_id", garcom.id as string)
-      .is("liberado_em", null);
-    if (aErr) throw new Error(aErr.message);
+      .is("encerrado_em", null)
+      .maybeSingle();
+    const turno = turnoRow
+      ? { id: turnoRow.id as string, iniciado_em: turnoRow.iniciado_em as string }
+      : null;
 
-    const mesaIdsAtrib = Array.from(
-      new Set((atribs ?? []).map((a) => a.mesa_id as string)),
-    );
-    const atribuidoEmByMesa = new Map<string, string>();
-    for (const a of atribs ?? []) {
-      atribuidoEmByMesa.set(a.mesa_id as string, a.atribuido_em as string);
-    }
+    // Quantidade de garçons online no restaurante
+    const { count: garconsOnline } = await supabase
+      .from("garcom_turnos")
+      .select("id", { count: "exact", head: true })
+      .eq("restaurante_id", restauranteId)
+      .is("encerrado_em", null);
 
+    // Quando cruzado ON, lista todas as mesas ativas; senão, só as atribuídas.
     let mesas: SalaMesa[] = [];
-    if (mesaIdsAtrib.length) {
+    if (permitirCruzado) {
       const { data: ms, error: mErr } = await supabase
         .from("mesas")
         .select("id, numero")
-        .in("id", mesaIdsAtrib);
+        .eq("restaurante_id", restauranteId)
+        .eq("ativa", true);
       if (mErr) throw new Error(mErr.message);
       mesas = (ms ?? [])
         .map((m) => ({
           id: m.id as string,
           numero: m.numero as string,
-          atribuido_em: atribuidoEmByMesa.get(m.id as string) ?? "",
+          atribuido_em: "",
         }))
         .sort((x, y) =>
           x.numero.localeCompare(y.numero, "pt-BR", { numeric: true }),
         );
+    } else {
+      const { data: atribs, error: aErr } = await supabase
+      .from("mesa_garcom")
+      .select("mesa_id, atribuido_em")
+      .eq("restaurante_id", restauranteId)
+      .eq("garcom_id", garcom.id as string)
+      .is("liberado_em", null);
+      if (aErr) throw new Error(aErr.message);
+
+      const mesaIdsAtrib = Array.from(
+        new Set((atribs ?? []).map((a) => a.mesa_id as string)),
+      );
+      const atribuidoEmByMesa = new Map<string, string>();
+      for (const a of atribs ?? []) {
+        atribuidoEmByMesa.set(a.mesa_id as string, a.atribuido_em as string);
+      }
+
+      if (mesaIdsAtrib.length) {
+        const { data: ms, error: mErr } = await supabase
+          .from("mesas")
+          .select("id, numero")
+          .in("id", mesaIdsAtrib);
+        if (mErr) throw new Error(mErr.message);
+        mesas = (ms ?? [])
+          .map((m) => ({
+            id: m.id as string,
+            numero: m.numero as string,
+            atribuido_em: atribuidoEmByMesa.get(m.id as string) ?? "",
+          }))
+          .sort((x, y) =>
+            x.numero.localeCompare(y.numero, "pt-BR", { numeric: true }),
+          );
+      }
     }
 
     const mesaIds = mesas.map((m) => m.id);
@@ -126,6 +165,8 @@ export const carregarSalaFn = createServerFn({ method: "POST" })
         pedidos_prontos: [],
         chamados_pendentes: [],
         permitir_atendimento_cruzado: permitirCruzado,
+        turno,
+        garcons_online: garconsOnline ?? 0,
       };
     }
 
@@ -215,6 +256,8 @@ export const carregarSalaFn = createServerFn({ method: "POST" })
       pedidos_prontos,
       chamados_pendentes,
       permitir_atendimento_cruzado: permitirCruzado,
+      turno,
+      garcons_online: garconsOnline ?? 0,
     };
   });
 
