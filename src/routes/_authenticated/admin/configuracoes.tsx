@@ -36,6 +36,7 @@ function Configuracoes() {
     caixa_teto_dinheiro: "" as string,
     caixa_conferencia_cega: false,
     caixa_obrigatorio_para_pagamento: false,
+    comissao_rateio_troca_turno: false,
   });
 
   useEffect(() => {
@@ -58,6 +59,8 @@ function Configuracoes() {
       caixa_conferencia_cega: restaurante.caixa_conferencia_cega ?? false,
       caixa_obrigatorio_para_pagamento:
         restaurante.caixa_obrigatorio_para_pagamento ?? false,
+      comissao_rateio_troca_turno:
+        restaurante.comissao_rateio_troca_turno ?? false,
     });
   }, [restaurante]);
 
@@ -103,6 +106,7 @@ function Configuracoes() {
         caixa_conferencia_cega: form.caixa_conferencia_cega,
         caixa_obrigatorio_para_pagamento:
           form.caixa_obrigatorio_para_pagamento,
+        comissao_rateio_troca_turno: form.comissao_rateio_troca_turno,
       });
       toast.success("Configurações salvas");
     } catch (e: any) {
