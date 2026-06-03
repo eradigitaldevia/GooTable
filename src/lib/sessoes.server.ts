@@ -430,3 +430,324 @@ export async function transferirCliente(
 
   return { sessaoId: sessaoNova.id, comandaId: comandaNovaId };
 }
+
+/* ============================================================
+ * Juntar comandas (garçom/caixa no fechamento)
+ * ============================================================ */
+
+export interface JuntarComandasResultado {
+  comandaDestinoId: string;
+  origensFechadas: string[];
+}
+
+/**
+ * Junta N comandas `aberta` da mesma sessão em uma única comanda destino.
+ * - Reutiliza a comanda mais antiga do conjunto como destino (preserva histórico).
+ * - Tipo/titular do destino são definidos pelos parâmetros (sempre perguntados na UI).
+ * - Move pedidos e vínculos de clientes; fecha as origens.
+ * - Bloqueia se qualquer origem tem pagamento confirmado.
+ */
+export async function juntarComandas(
+  sessaoId: string,
+  comandaIds: string[],
+  titularClienteId: string | null,
+): Promise<JuntarComandasResultado> {
+  if (comandaIds.length < 2) {
+    throw new Error("Selecione ao menos 2 comandas para juntar.");
+  }
+
+  const { data: comandas, error: cErr } = await supabaseAdmin
+    .from("comandas")
+    .select(
+      "id, sessao_id, status, restaurante_id, criado_em, total_pago, cashback_resgatado, desconto_cupom, cupom_id",
+    )
+    .in("id", comandaIds);
+  if (cErr) throw new Error(cErr.message);
+  const lista = (comandas ?? []) as Array<{
+    id: string;
+    sessao_id: string;
+    status: "aberta" | "fechada";
+    restaurante_id: string;
+    criado_em: string;
+    total_pago: number | string;
+    cashback_resgatado: number | string;
+    desconto_cupom: number | string;
+    cupom_id: string | null;
+  }>;
+
+  if (lista.length !== comandaIds.length) {
+    throw new Error("Alguma comanda informada não foi encontrada.");
+  }
+  for (const c of lista) {
+    if (c.sessao_id !== sessaoId) throw new Error("Comandas de sessões diferentes.");
+    if (c.status !== "aberta") throw new Error("Apenas comandas abertas podem ser juntadas.");
+  }
+
+  // Bloqueia se qualquer origem tem pagamento confirmado.
+  const { data: pags, error: pagErr } = await supabaseAdmin
+    .from("pagamentos")
+    .select("comanda_id")
+    .in("comanda_id", comandaIds)
+    .eq("status", "confirmado")
+    .limit(1);
+  if (pagErr) throw new Error(pagErr.message);
+  if ((pags ?? []).length > 0) {
+    throw new Error(
+      "Uma das comandas já possui pagamento confirmado. Não é possível juntar.",
+    );
+  }
+
+  const restauranteId = lista[0].restaurante_id;
+
+  if (titularClienteId) {
+    // Valida titular pertence ao restaurante.
+    const { data: cli, error: clErr } = await supabaseAdmin
+      .from("clientes")
+      .select("id, restaurante_id")
+      .eq("id", titularClienteId)
+      .maybeSingle();
+    if (clErr) throw new Error(clErr.message);
+    if (!cli || cli.restaurante_id !== restauranteId) {
+      throw new Error("Titular inválido.");
+    }
+  }
+
+  // Destino = mais antiga.
+  const ordenadas = [...lista].sort((a, b) => (a.criado_em < b.criado_em ? -1 : 1));
+  const destino = ordenadas[0];
+  const origens = ordenadas.slice(1);
+  const origensIds = origens.map((c) => c.id);
+
+  // Atualiza tipo/titular do destino.
+  const novoTipo: "individual" | "compartilhada" = titularClienteId
+    ? "individual"
+    : "compartilhada";
+  const { error: updDestErr } = await supabaseAdmin
+    .from("comandas")
+    .update({
+      tipo: novoTipo,
+      titular_cliente_id: titularClienteId,
+      atualizado_em: new Date().toISOString(),
+    })
+    .eq("id", destino.id);
+  if (updDestErr) throw new Error(updDestErr.message);
+
+  // Move pedidos.
+  if (origensIds.length > 0) {
+    const { error: pmErr } = await supabaseAdmin
+      .from("pedidos")
+      .update({ comanda_id: destino.id })
+      .in("comanda_id", origensIds);
+    if (pmErr) throw new Error(pmErr.message);
+
+    // Move vínculos ativos de clientes.
+    const { error: vmErr } = await supabaseAdmin
+      .from("mesa_sessao_clientes")
+      .update({ comanda_id: destino.id })
+      .in("comanda_id", origensIds)
+      .is("saiu_em", null);
+    if (vmErr) throw new Error(vmErr.message);
+  }
+
+  // Recalcula totais da destino somando subtotais dos pedidos + ajustes.
+  const { data: pedsDest, error: pdErr } = await supabaseAdmin
+    .from("pedidos")
+    .select("total")
+    .eq("comanda_id", destino.id);
+  if (pdErr) throw new Error(pdErr.message);
+  const subtotalDestino = (pedsDest ?? []).reduce(
+    (acc, p) => acc + Number(p.total ?? 0),
+    0,
+  );
+  const descontoTotal = lista.reduce(
+    (acc, c) => acc + Number(c.desconto_cupom ?? 0),
+    0,
+  );
+  const cashbackTotal = lista.reduce(
+    (acc, c) => acc + Number(c.cashback_resgatado ?? 0),
+    0,
+  );
+  const totalPagoTotal = lista.reduce(
+    (acc, c) => acc + Number(c.total_pago ?? 0),
+    0,
+  );
+  const totalDestino = Math.max(0, subtotalDestino - descontoTotal - cashbackTotal);
+
+  const { error: totErr } = await supabaseAdmin
+    .from("comandas")
+    .update({
+      subtotal: subtotalDestino,
+      desconto_cupom: descontoTotal,
+      cashback_resgatado: cashbackTotal,
+      total: totalDestino,
+      total_pago: totalPagoTotal,
+      atualizado_em: new Date().toISOString(),
+    })
+    .eq("id", destino.id);
+  if (totErr) throw new Error(totErr.message);
+
+  // Fecha as origens (zera totais — pedidos foram migrados).
+  if (origensIds.length > 0) {
+    const { error: closeErr } = await supabaseAdmin
+      .from("comandas")
+      .update({
+        status: "fechada",
+        fechada_em: new Date().toISOString(),
+        subtotal: 0,
+        total: 0,
+        total_pago: 0,
+        cashback_resgatado: 0,
+        desconto_cupom: 0,
+      })
+      .in("id", origensIds);
+    if (closeErr) throw new Error(closeErr.message);
+  }
+
+  return { comandaDestinoId: destino.id, origensFechadas: origensIds };
+}
+
+/* ============================================================
+ * Dividir total entre N (gera plano de pagamento, não fragmenta)
+ * ============================================================ */
+
+export type ModoDivisao =
+  | { tipo: "igual"; n: number }
+  | { tipo: "por_participante"; clienteIds: string[] }
+  | { tipo: "por_item"; atribuicoes: { itemId: string; clienteId: string | null }[] };
+
+export interface FatiaDivisao {
+  label: string;
+  valor: number;
+  cliente_id: string | null;
+}
+
+export interface DivisaoContaResultado {
+  total: number;
+  fatias: FatiaDivisao[];
+  comandas_envolvidas: string[];
+}
+
+/**
+ * Calcula um plano de divisão da conta. Não altera o banco — apenas devolve
+ * fatias para que a UI registre pagamentos parciais nas comandas via
+ * `registrar_pagamento`. O arredondamento joga a sobra de centavos na última
+ * fatia.
+ */
+export async function gerarDivisaoConta(
+  sessaoId: string,
+  comandaIds: string[],
+  modo: ModoDivisao,
+): Promise<DivisaoContaResultado> {
+  if (comandaIds.length === 0) throw new Error("Selecione ao menos uma comanda.");
+
+  const { data: comandas, error: cErr } = await supabaseAdmin
+    .from("comandas")
+    .select("id, sessao_id, status, total, total_pago")
+    .in("id", comandaIds);
+  if (cErr) throw new Error(cErr.message);
+  const lista = (comandas ?? []) as Array<{
+    id: string;
+    sessao_id: string;
+    status: string;
+    total: number | string;
+    total_pago: number | string;
+  }>;
+  if (lista.length !== comandaIds.length) throw new Error("Comanda inválida.");
+  for (const c of lista) {
+    if (c.sessao_id !== sessaoId) throw new Error("Comandas de sessões diferentes.");
+  }
+  const totalRestante = lista.reduce(
+    (acc, c) => acc + Math.max(0, Number(c.total ?? 0) - Number(c.total_pago ?? 0)),
+    0,
+  );
+
+  const round2 = (v: number) => Math.round(v * 100) / 100;
+
+  let fatias: FatiaDivisao[] = [];
+
+  if (modo.tipo === "igual") {
+    if (modo.n < 1) throw new Error("Divisor inválido.");
+    const base = round2(totalRestante / modo.n);
+    fatias = Array.from({ length: modo.n }, (_, i) => ({
+      label: `Parte ${i + 1}/${modo.n}`,
+      valor: base,
+      cliente_id: null,
+    }));
+    const soma = round2(base * modo.n);
+    const diff = round2(totalRestante - soma);
+    if (diff !== 0 && fatias.length > 0) {
+      fatias[fatias.length - 1].valor = round2(fatias[fatias.length - 1].valor + diff);
+    }
+  } else if (modo.tipo === "por_participante") {
+    if (modo.clienteIds.length === 0)
+      throw new Error("Selecione ao menos 1 participante.");
+    const { data: cls } = await supabaseAdmin
+      .from("clientes")
+      .select("id, nome")
+      .in("id", modo.clienteIds);
+    const nomes = new Map((cls ?? []).map((c) => [c.id as string, c.nome as string]));
+    const n = modo.clienteIds.length;
+    const base = round2(totalRestante / n);
+    fatias = modo.clienteIds.map((cid, i) => ({
+      label: nomes.get(cid) ?? `Cliente ${i + 1}`,
+      valor: base,
+      cliente_id: cid,
+    }));
+    const soma = round2(base * n);
+    const diff = round2(totalRestante - soma);
+    if (diff !== 0 && fatias.length > 0) {
+      fatias[fatias.length - 1].valor = round2(fatias[fatias.length - 1].valor + diff);
+    }
+  } else {
+    // Por item: soma os subtotais de cada item por cliente atribuído.
+    const { data: peds } = await supabaseAdmin
+      .from("pedidos")
+      .select("id")
+      .in("comanda_id", comandaIds);
+    const pedidoIds = (peds ?? []).map((p) => p.id as string);
+    if (pedidoIds.length === 0) {
+      return { total: 0, fatias: [], comandas_envolvidas: comandaIds };
+    }
+    const { data: itens } = await supabaseAdmin
+      .from("pedido_itens")
+      .select("id, quantidade, preco_unit")
+      .in("pedido_id", pedidoIds);
+    const subtotalPorItem = new Map<string, number>();
+    for (const it of itens ?? []) {
+      const sub = Number(it.preco_unit) * Number(it.quantidade);
+      subtotalPorItem.set(it.id as string, sub);
+    }
+
+    const porCliente = new Map<string | "_sem", number>();
+    for (const a of modo.atribuicoes) {
+      const sub = subtotalPorItem.get(a.itemId);
+      if (sub == null) continue;
+      const key = a.clienteId ?? "_sem";
+      porCliente.set(key, (porCliente.get(key) ?? 0) + sub);
+    }
+    const clienteIds = Array.from(porCliente.keys()).filter(
+      (k): k is string => k !== "_sem",
+    );
+    const nomes = new Map<string, string>();
+    if (clienteIds.length > 0) {
+      const { data: cls } = await supabaseAdmin
+        .from("clientes")
+        .select("id, nome")
+        .in("id", clienteIds);
+      for (const c of cls ?? []) nomes.set(c.id as string, c.nome as string);
+    }
+    fatias = Array.from(porCliente.entries())
+      .filter(([, v]) => v > 0.0001)
+      .map(([key, valor]) => ({
+        label: key === "_sem" ? "Sem atribuição" : nomes.get(key) ?? "Cliente",
+        valor: round2(valor),
+        cliente_id: key === "_sem" ? null : key,
+      }));
+  }
+
+  return {
+    total: round2(totalRestante),
+    fatias,
+    comandas_envolvidas: comandaIds,
+  };
+}
