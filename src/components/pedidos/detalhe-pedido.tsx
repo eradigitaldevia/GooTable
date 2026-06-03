@@ -77,6 +77,7 @@ export function DetalhePedido({
   onClose,
   garcomNome,
   destinoStatus,
+  mostrarPagamento = true,
 }: {
   pedido: Pedido | null;
   itens: Item[];
@@ -84,6 +85,7 @@ export function DetalhePedido({
   onClose: () => void;
   garcomNome?: string | null;
   destinoStatus?: DestinoStatusInfo[];
+  mostrarPagamento?: boolean;
 }) {
   const [pagOpen, setPagOpen] = useState(false);
   const [divOpen, setDivOpen] = useState(false);
@@ -245,7 +247,7 @@ export function DetalhePedido({
           <span className="text-xl font-bold text-primary">{formatBRL(Number(pedido.total))}</span>
         </div>
 
-        {pedido.comanda_id && (
+        {pedido.comanda_id && mostrarPagamento && pedido.status !== "cancelado" && (
           <div className="space-y-2 rounded-xl border bg-muted/30 p-3">
             <div className="flex items-center justify-between text-sm">
               <span className="text-muted-foreground">Total da comanda</span>
