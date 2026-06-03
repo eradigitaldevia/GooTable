@@ -17,13 +17,12 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { X, Wallet, CheckCircle2, Users, Trash2, ChefHat, Wine } from "lucide-react";
+import { X, Wallet, CheckCircle2, Trash2, ChefHat, Wine } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { formatBRL } from "@/lib/cart";
 import { usePagamentosComanda } from "@/hooks/use-pagamentos";
 import { ConfirmarPagamentoDialog } from "@/components/admin/confirmar-pagamento-dialog";
 import { GarcomBadge } from "@/components/garcons/garcom-badge";
-import { DividirComissaoDialog } from "@/components/pedidos/dividir-comissao-dialog";
 import { useCancelarPedido, useCancelarItemPedido } from "@/hooks/use-pedidos";
 import { toast } from "sonner";
 
@@ -88,7 +87,6 @@ export function DetalhePedido({
   mostrarPagamento?: boolean;
 }) {
   const [pagOpen, setPagOpen] = useState(false);
-  const [divOpen, setDivOpen] = useState(false);
   const [cancelarPedidoOpen, setCancelarPedidoOpen] = useState(false);
   const [motivoPedido, setMotivoPedido] = useState("");
   const [itemCancelar, setItemCancelar] = useState<Item | null>(null);
