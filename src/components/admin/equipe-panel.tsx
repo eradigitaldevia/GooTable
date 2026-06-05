@@ -43,6 +43,7 @@ import {
   useRemoverMembroEquipe,
 } from "@/hooks/use-equipe";
 import { PAPEIS, type PapelMembro } from "@/lib/equipe.functions";
+import { traduzirErroSenha } from "@/lib/auth-errors";
 
 const PAPEL_LABEL: Record<PapelMembro, string> = {
   admin: "Admin",
@@ -122,7 +123,7 @@ export function EquipePanel({ restauranteId }: { restauranteId: string }) {
       setCriarSenha("");
       setCriarPapel("cozinheiro");
     } catch (e: any) {
-      toast.error(e?.message ?? "Erro ao criar membro");
+      toast.error(traduzirErroSenha(e));
     }
   };
 
@@ -147,8 +148,8 @@ export function EquipePanel({ restauranteId }: { restauranteId: string }) {
 
   const handleRedefinirSenha = async () => {
     if (!senhaDialog) return;
-    if (novaSenha.length < 6) {
-      toast.error("A senha deve ter no mínimo 6 caracteres");
+    if (novaSenha.length < 8) {
+      toast.error("A senha deve ter no mínimo 8 caracteres");
       return;
     }
     if (novaSenha !== confirmarSenha) {
@@ -165,7 +166,7 @@ export function EquipePanel({ restauranteId }: { restauranteId: string }) {
       setNovaSenha("");
       setConfirmarSenha("");
     } catch (e: any) {
-      toast.error(e?.message ?? "Erro ao redefinir senha");
+      toast.error(traduzirErroSenha(e));
     }
   };
 
