@@ -410,7 +410,7 @@ export function GarconsRoster({ restauranteId }: { restauranteId: string }) {
                 type="text"
                 value={vincSenha}
                 onChange={(e) => setVincSenha(e.target.value)}
-                placeholder="mínimo 6 caracteres"
+                placeholder="mín. 8 caracteres, evite senhas comuns"
                 autoComplete="off"
               />
               <p className="mt-1 text-xs text-muted-foreground">
