@@ -499,7 +499,7 @@ export function EquipePanel({ restauranteId }: { restauranteId: string }) {
             <Button
               onClick={handleRedefinirSenha}
               disabled={
-                novaSenha.length < 6 ||
+                novaSenha.length < 8 ||
                 novaSenha !== confirmarSenha ||
                 redefinirSenha.isPending
               }
