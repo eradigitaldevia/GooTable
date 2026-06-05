@@ -27,6 +27,7 @@ import {
 import { useGarconsOnline, useEncerrarTurno } from "@/hooks/use-sala";
 import type { Garcom } from "@/lib/garcons.functions";
 import { ExtratoGarcomDialog } from "./extrato-garcom-dialog";
+import { traduzirErroSenha } from "@/lib/auth-errors";
 
 function GarcomForm({
   initial,
@@ -374,8 +375,8 @@ export function GarconsRoster({ restauranteId }: { restauranteId: string }) {
                 toast.error("E-mail inválido");
                 return;
               }
-              if (vincSenha.length < 6) {
-                toast.error("Senha deve ter ao menos 6 caracteres");
+              if (vincSenha.length < 8) {
+                toast.error("Senha deve ter ao menos 8 caracteres");
                 return;
               }
               try {
@@ -387,9 +388,7 @@ export function GarconsRoster({ restauranteId }: { restauranteId: string }) {
                 toast.success("Usuário criado e vinculado");
                 setVincularAlvo(null);
               } catch (err) {
-                toast.error(
-                  err instanceof Error ? err.message : "Erro ao vincular",
-                );
+                toast.error(traduzirErroSenha(err));
               }
             }}
           >
@@ -411,7 +410,7 @@ export function GarconsRoster({ restauranteId }: { restauranteId: string }) {
                 type="text"
                 value={vincSenha}
                 onChange={(e) => setVincSenha(e.target.value)}
-                placeholder="mínimo 6 caracteres"
+                placeholder="mín. 8 caracteres, evite senhas comuns"
                 autoComplete="off"
               />
               <p className="mt-1 text-xs text-muted-foreground">
@@ -455,8 +454,8 @@ export function GarconsRoster({ restauranteId }: { restauranteId: string }) {
             onSubmit={async (e) => {
               e.preventDefault();
               if (!senhaAlvo) return;
-              if (novaSenha.length < 6) {
-                toast.error("A senha deve ter no mínimo 6 caracteres");
+              if (novaSenha.length < 8) {
+                toast.error("A senha deve ter no mínimo 8 caracteres");
                 return;
               }
               if (novaSenha !== confirmarSenha) {
@@ -473,9 +472,7 @@ export function GarconsRoster({ restauranteId }: { restauranteId: string }) {
                 setNovaSenha("");
                 setConfirmarSenha("");
               } catch (err) {
-                toast.error(
-                  err instanceof Error ? err.message : "Erro ao redefinir senha",
-                );
+                toast.error(traduzirErroSenha(err));
               }
             }}
           >
@@ -486,7 +483,7 @@ export function GarconsRoster({ restauranteId }: { restauranteId: string }) {
                 type="text"
                 value={novaSenha}
                 onChange={(e) => setNovaSenha(e.target.value)}
-                placeholder="mínimo 6 caracteres"
+                placeholder="mín. 8 caracteres, evite senhas comuns"
                 autoComplete="off"
               />
             </div>
@@ -505,7 +502,7 @@ export function GarconsRoster({ restauranteId }: { restauranteId: string }) {
               <Button
                 type="submit"
                 disabled={
-                  novaSenha.length < 6 ||
+                  novaSenha.length < 8 ||
                   novaSenha !== confirmarSenha ||
                   redefinirSenha.isPending
                 }

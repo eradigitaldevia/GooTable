@@ -1,89 +1,51 @@
+## Causa
 
-# Plano consolidado: atribuição, atendimento cruzado, turnos e comissão
+A mensagem `Password is known to be weak and easy to guess, please choose a different one.` vem do **Lovable Cloud Auth (HIBP — Have I Been Pwned)**, que está **ativado** no projeto. Sempre que uma senha é criada/alterada via `auth.admin.updateUserById` / `createUser`, o backend verifica se ela aparece em vazamentos públicos conhecidos. Se aparecer (ex.: `123456`, `senha123`, `admin123`, nome do restaurante, etc.), a operação é rejeitada com esse erro em inglês.
 
-Este plano substitui as discussões anteriores e fica como referência única.
+Não é um bug — é proteção. O problema é que:
 
-## 1. Regras do modelo
+1. A mensagem chega **em inglês** e o usuário não entende o motivo.
+2. A UI só exige "mínimo 6 caracteres", sem avisar sobre o HIBP.
+3. O mesmo acontece em outros 3 fluxos: criar membro direto, criar garçom com login, redefinir senha do garçom.
 
-| Aspecto | Cruzado LIGADO | Cruzado DESLIGADO |
-|---|---|---|
-| Quem pode lançar pedido | Qualquer garçom ativo | Apenas garçons atribuídos à mesa |
-| Atribuição de mesas | Obrigatória (1+) | Obrigatória (1+) |
-| Aba "Mesas" em `/admin/garcons` | Visível | Visível |
-| Sala do garçom (`/sala`) | Todas as mesas ativas + busca | Apenas mesas atribuídas + busca |
-| Botão "Outra mesa" | Oculto | Oculto |
+## Correção proposta
 
-Atribuição é **sempre obrigatória** porque pedidos do QR precisam de garçom para gerar comissão.
+### 1. Traduzir e tratar o erro nos handlers (frontend)
 
-## 2. Check-in / Check-out de turno
+Criar um helper `traduzirErroSenha(e)` em `src/lib/utils.ts` (ou novo `src/lib/auth-errors.ts`) que mapeia mensagens conhecidas do Supabase Auth para PT-BR:
 
-Nova tabela `garcom_turnos` (`id, restaurante_id, garcom_id, iniciado_em, encerrado_em, encerrado_por`).
+- `Password is known to be weak...` → *"Esta senha é muito comum e aparece em vazamentos conhecidos. Escolha uma senha mais forte (combine letras, números e símbolos)."*
+- `Password should be at least N characters` → *"A senha deve ter no mínimo N caracteres."*
+- `New password should be different from the old password` → *"A nova senha deve ser diferente da atual."*
 
-- Header da sala do garçom: badge "Turno aberto desde HH:mm" + botão "Encerrar turno".
-- Ao entrar na sala sem turno aberto: modal "Iniciar turno" (1 clique).
-- `/admin/garcons`: badge verde "Online" nos garçons com turno aberto + botão admin "Encerrar turno" (caso esqueçam).
-- Fechamento automático: cron diário 1x/dia fecha turnos abertos há mais de 16h (marca `encerrado_por = NULL` para identificar fechamento automático).
+Aplicar nos `catch` de:
 
-## 3. Múltiplos garçons por mesa
+- `src/components/admin/equipe-panel.tsx` → `handleCriar`, `handleRedefinirSenha`
+- `src/components/admin/garcons/garcons-roster.tsx` (ou onde está o dialog de senha do garçom) → criar usuário + redefinir senha
+- `src/routes/reset-password.tsx` → `handleSubmit`
 
-- `mesa_garcom` já suporta múltiplos vínculos ativos (sem UNIQUE em `mesa_id` com `liberado_em IS NULL`).
-- RPC `atribuir_garcom_mesa` deixa de liberar os anteriores — apenas adiciona (sem duplicar).
-- Nova RPC `remover_garcom_mesa(_mesa_id, _garcom_id)`.
-- UI da aba "Mesas": chips multi-select por mesa com botões "+ Adicionar" e "x". Sem limite.
+### 2. Avisos preventivos na UI
 
-## 4. Regra de comissão
+Nos dialogs/forms de senha (equipe e garçom), trocar o placeholder e o helper text:
 
-Toggle existente `comissao_rateio_troca_turno` é renomeado para **"Dividir comissão entre garçons atribuídos com turno aberto"** e passa a controlar:
+- Antes: `mínimo 6 caracteres`
+- Depois: `Use ao menos 8 caracteres, combinando letras, números e símbolos. Evite senhas comuns.`
 
-**Pedido do garçom (lançado por ele no app):**
-- Toggle OFF: 100% para `pedidos.garcom_id` (quem lançou), independente dos outros.
-- Toggle ON: divide igualmente entre todos os garçons atribuídos à mesa **com turno aberto** no momento do pedido.
+Aumentar a validação client-side de `length < 6` para `length < 8` (alinhado à boa prática), mantendo a mensagem clara — o HIBP continua sendo a checagem final no servidor.
 
-**Pedido do cliente (QR, `garcom_id` NULL):**
-- Sempre divide igualmente entre garçons atribuídos à mesa **com turno aberto** no momento do pedido (independente do toggle).
-- Se nenhum atribuído tiver turno aberto: pedido entra sem comissão + warning no admin.
+### 3. (Opcional, não recomendado agora) - Não implementar
 
-A escolha do conjunto de garçons é feita no momento da criação do pedido (geração de `pedido_garcons`), não no fechamento — assim a comissão fica congelada e auditável.
+Desativar HIBP via `supabase--configure_auth` com `password_hibp_enabled: false`. **Não recomendo** — reduz a segurança da conta de membros da equipe. Melhor manter ativo e apenas comunicar bem o erro. Não desativar.
 
-## 5. Validações e edge cases
+## Arquivos alterados
 
-- Aba "Mesas": warning (não bloqueio) se mesa ativa não tem garçom atribuído.
-- Sala do garçom (cruzado OFF) sem mesas atribuídas: mensagem "Peça ao admin para atribuir mesas".
-- Pedido QR em mesa sem garçom com turno aberto: criado normalmente, sem `pedido_garcons`, badge "Sem comissão" no admin. Não há retroativo automático.
-- Toggle alterado no meio do expediente: vale só para pedidos novos.
-- Garçom encerra turno com pedidos abertos: tudo bem, comissão dos pedidos já criados está congelada.
+- `src/lib/auth-errors.ts` (novo) — função `traduzirErroSenha`.
+- `src/components/admin/equipe-panel.tsx` — usar helper + textos novos.
+- `src/components/admin/garcons/garcons-roster.tsx` — mesmo tratamento.
+- `src/routes/reset-password.tsx` — mesmo tratamento.
 
-## 6. Detalhes técnicos
+## Fora de escopo
 
-### Migrations
-1. Tabela `garcom_turnos` + RLS (`is_restaurante_membro`) + GRANTs + índice `(restaurante_id, garcom_id) WHERE encerrado_em IS NULL`.
-2. RPCs: `abrir_turno_garcom(_garcom_id)`, `encerrar_turno_garcom(_garcom_id)`, `encerrar_turnos_expirados()` (chamada pelo cron).
-3. RPC `remover_garcom_mesa(_mesa_id, _garcom_id)`.
-4. Alterar `atribuir_garcom_mesa`: remover bloco que libera vínculo anterior; remover bloco de rateio retroativo (rateio agora é só no momento da criação).
-5. Alterar `criar_pedido_garcom`: ao final, gerar linhas em `pedido_garcons` conforme regra do item 4 (intersecção atribuídos × turno aberto).
-6. Novo trigger ou ajuste em `criar_pedido_publico`: para QR, gerar `pedido_garcons` com garçons atribuídos × turno aberto.
-7. Renomear label do toggle no form (`comissao_rateio_troca_turno` mantém o nome físico).
-
-### Frontend
-- `src/components/garcons/mesas-tab.tsx`: chips multi-select + warning de mesa sem garçom.
-- `src/lib/garcons.functions.ts`: serverFns para `remover_garcom_mesa`.
-- `src/routes/_authenticated/sala.tsx`: filtro por modo (cruzado on/off), input de busca, header com badge de turno e botões iniciar/encerrar.
-- `src/lib/sala.functions.ts`: serverFns `abrir_turno`, `encerrar_turno`, `listar_mesas_sala`.
-- `src/routes/_authenticated/admin/garcons.tsx`: badge "Online" por garçom + botão admin "Encerrar turno".
-- `src/components/configuracoes/comissao-modo-form.tsx`: novo texto do toggle.
-
-### Cron
-- Insert em `cron.schedule` para chamar `encerrar_turnos_expirados()` 1x/dia às 06:00.
-
-## 7. Fora de escopo
-
-- Escala semanal antecipada (Nível 2/3) — adicionar depois se necessário.
-- Retroativo de comissão para pedidos QR órfãos.
-- Relatórios de comissão e horas trabalhadas (telas existentes continuam).
-- Alterações em `comissao_modo` (Por pedido / Por item) — mantido.
-
-## 8. Riscos
-
-- Garçom esquecer de encerrar turno: mitigado por fechamento automático em 16h e botão admin.
-- Toggle alterado no meio do dia gera mistura de regras (esperado).
-- Múltiplos garçons em chips podem ocupar várias linhas com mesas muito populadas (aceitável).
+- Mudar política de senha no servidor.
+- Forçar troca periódica de senha.
+- Política de complexidade adicional (regex de símbolos obrigatórios).

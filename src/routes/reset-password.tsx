@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { QrCode, Loader2 } from "lucide-react";
+import { traduzirErroSenha } from "@/lib/auth-errors";
 
 export const Route = createFileRoute("/reset-password")({
   component: ResetPassword,
@@ -14,8 +15,8 @@ export const Route = createFileRoute("/reset-password")({
 
 const schema = z
   .object({
-    password: z.string().min(6, "Senha deve ter ao menos 6 caracteres"),
-    confirm: z.string().min(6, "Confirme a nova senha"),
+    password: z.string().min(8, "Senha deve ter ao menos 8 caracteres"),
+    confirm: z.string().min(8, "Confirme a nova senha"),
   })
   .refine((d) => d.password === d.confirm, {
     message: "As senhas não coincidem",
@@ -56,7 +57,7 @@ function ResetPassword() {
     const { error } = await supabase.auth.updateUser({ password: parsed.data.password });
     setLoading(false);
     if (error) {
-      toast.error(error.message ?? "Falha ao atualizar a senha");
+      toast.error(traduzirErroSenha(error));
       return;
     }
     toast.success("Senha atualizada com sucesso.");
