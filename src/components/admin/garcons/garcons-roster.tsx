@@ -27,6 +27,7 @@ import {
 import { useGarconsOnline, useEncerrarTurno } from "@/hooks/use-sala";
 import type { Garcom } from "@/lib/garcons.functions";
 import { ExtratoGarcomDialog } from "./extrato-garcom-dialog";
+import { traduzirErroSenha } from "@/lib/auth-errors";
 
 function GarcomForm({
   initial,
@@ -374,8 +375,8 @@ export function GarconsRoster({ restauranteId }: { restauranteId: string }) {
                 toast.error("E-mail inválido");
                 return;
               }
-              if (vincSenha.length < 6) {
-                toast.error("Senha deve ter ao menos 6 caracteres");
+              if (vincSenha.length < 8) {
+                toast.error("Senha deve ter ao menos 8 caracteres");
                 return;
               }
               try {
@@ -387,9 +388,7 @@ export function GarconsRoster({ restauranteId }: { restauranteId: string }) {
                 toast.success("Usuário criado e vinculado");
                 setVincularAlvo(null);
               } catch (err) {
-                toast.error(
-                  err instanceof Error ? err.message : "Erro ao vincular",
-                );
+                toast.error(traduzirErroSenha(err));
               }
             }}
           >
