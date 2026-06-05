@@ -283,7 +283,7 @@ export function EquipePanel({ restauranteId }: { restauranteId: string }) {
                   type="text"
                   value={criarSenha}
                   onChange={(e) => setCriarSenha(e.target.value)}
-                  placeholder="mínimo 6 caracteres"
+                  placeholder="mín. 8 caracteres, evite senhas comuns"
                 />
               </div>
               <div>
@@ -303,7 +303,7 @@ export function EquipePanel({ restauranteId }: { restauranteId: string }) {
               </div>
               <Button
                 onClick={handleCriar}
-                disabled={!criarEmail || criarSenha.length < 6 || criar.isPending}
+                disabled={!criarEmail || criarSenha.length < 8 || criar.isPending}
               >
                 Criar
               </Button>
@@ -478,7 +478,7 @@ export function EquipePanel({ restauranteId }: { restauranteId: string }) {
                 type="text"
                 value={novaSenha}
                 onChange={(e) => setNovaSenha(e.target.value)}
-                placeholder="mínimo 6 caracteres"
+                placeholder="mín. 8 caracteres, evite senhas comuns"
               />
             </div>
             <div>
