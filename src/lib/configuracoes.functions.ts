@@ -37,6 +37,7 @@ const configSchema = z.object({
   caixa_conferencia_cega: z.boolean(),
   caixa_obrigatorio_para_pagamento: z.boolean(),
   comissao_rateio_troca_turno: z.boolean(),
+  comissao_pedido_cliente: z.boolean(),
 });
 
 export const atualizarConfiguracoesFn = createServerFn({ method: "POST" })
@@ -67,6 +68,7 @@ export const atualizarConfiguracoesFn = createServerFn({ method: "POST" })
         caixa_conferencia_cega: data.caixa_conferencia_cega,
         caixa_obrigatorio_para_pagamento: data.caixa_obrigatorio_para_pagamento,
         comissao_rateio_troca_turno: data.comissao_rateio_troca_turno,
+        comissao_pedido_cliente: data.comissao_pedido_cliente,
       })
       .eq("id", data.restauranteId);
     if (error) throw new Error(error.message);
