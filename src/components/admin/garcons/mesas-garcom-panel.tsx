@@ -8,7 +8,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { AlertTriangle, X, Plus, Circle } from "lucide-react";
+import { AlertTriangle, Info, X, Plus, Circle } from "lucide-react";
 import { toast } from "sonner";
 import { useMemo, useState } from "react";
 import {
@@ -18,7 +18,13 @@ import {
   useRemoverGarcomMesa,
 } from "@/hooks/use-garcons";
 
-export function MesasGarcomPanel({ restauranteId }: { restauranteId: string }) {
+export function MesasGarcomPanel({
+  restauranteId,
+  comissaoPedidoCliente = true,
+}: {
+  restauranteId: string;
+  comissaoPedidoCliente?: boolean;
+}) {
   const { data: atribuicoes = [], isLoading } =
     useAtribuicoesMesasMulti(restauranteId);
   const { data: garcons = [] } = useGarcons(restauranteId, false);
@@ -59,13 +65,23 @@ export function MesasGarcomPanel({ restauranteId }: { restauranteId: string }) {
           rateio de comissão consideram apenas garçons com turno aberto.
         </p>
       </div>
-      {semGarcom > 0 && (
+      {semGarcom > 0 && comissaoPedidoCliente && (
         <div className="flex items-start gap-2 border-b border-border bg-amber-500/10 px-4 py-3 text-xs text-amber-700 dark:text-amber-400">
           <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
           <span>
             {semGarcom} mesa{semGarcom > 1 ? "s" : ""} sem garçom atribuído.
             Pedidos do cliente nessa{semGarcom > 1 ? "s mesas" : " mesa"} ficarão
             sem comissão.
+          </span>
+        </div>
+      )}
+      {semGarcom > 0 && !comissaoPedidoCliente && (
+        <div className="flex items-start gap-2 border-b border-border bg-muted/40 px-4 py-3 text-xs text-muted-foreground">
+          <Info className="mt-0.5 h-4 w-4 shrink-0" />
+          <span>
+            {semGarcom} mesa{semGarcom > 1 ? "s" : ""} sem garçom atribuído.
+            A comissão em pedidos do cliente (QR) está desligada, então essas
+            mesas seguem operando normalmente.
           </span>
         </div>
       )}

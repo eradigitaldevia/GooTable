@@ -1076,6 +1076,7 @@ export type Database = {
           id: string
           mesa_id: string
           observacao: string | null
+          origem: string
           restaurante_id: string
           sessao_id: string | null
           status: Database["public"]["Enums"]["pedido_status"]
@@ -1093,6 +1094,7 @@ export type Database = {
           id?: string
           mesa_id: string
           observacao?: string | null
+          origem?: string
           restaurante_id: string
           sessao_id?: string | null
           status?: Database["public"]["Enums"]["pedido_status"]
@@ -1110,6 +1112,7 @@ export type Database = {
           id?: string
           mesa_id?: string
           observacao?: string | null
+          origem?: string
           restaurante_id?: string
           sessao_id?: string | null
           status?: Database["public"]["Enums"]["pedido_status"]
@@ -1324,6 +1327,7 @@ export type Database = {
           caixa_teto_dinheiro: number | null
           comissao_modo: string
           comissao_pedido_cliente: boolean
+          comissao_pedido_cliente_percentual: number | null
           comissao_rateio_troca_turno: boolean
           cor_primaria: string | null
           criado_em: string
@@ -1344,6 +1348,7 @@ export type Database = {
           caixa_teto_dinheiro?: number | null
           comissao_modo?: string
           comissao_pedido_cliente?: boolean
+          comissao_pedido_cliente_percentual?: number | null
           comissao_rateio_troca_turno?: boolean
           cor_primaria?: string | null
           criado_em?: string
@@ -1364,6 +1369,7 @@ export type Database = {
           caixa_teto_dinheiro?: number | null
           comissao_modo?: string
           comissao_pedido_cliente?: boolean
+          comissao_pedido_cliente_percentual?: number | null
           comissao_rateio_troca_turno?: boolean
           cor_primaria?: string | null
           criado_em?: string

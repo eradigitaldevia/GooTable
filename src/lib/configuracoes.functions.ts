@@ -38,6 +38,7 @@ const configSchema = z.object({
   caixa_obrigatorio_para_pagamento: z.boolean(),
   comissao_rateio_troca_turno: z.boolean(),
   comissao_pedido_cliente: z.boolean(),
+  comissao_pedido_cliente_percentual: z.number().min(0).max(100).nullable(),
 });
 
 export const atualizarConfiguracoesFn = createServerFn({ method: "POST" })
@@ -69,6 +70,7 @@ export const atualizarConfiguracoesFn = createServerFn({ method: "POST" })
         caixa_obrigatorio_para_pagamento: data.caixa_obrigatorio_para_pagamento,
         comissao_rateio_troca_turno: data.comissao_rateio_troca_turno,
         comissao_pedido_cliente: data.comissao_pedido_cliente,
+        comissao_pedido_cliente_percentual: data.comissao_pedido_cliente_percentual,
       })
       .eq("id", data.restauranteId);
     if (error) throw new Error(error.message);
