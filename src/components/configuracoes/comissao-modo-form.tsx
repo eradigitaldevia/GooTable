@@ -9,11 +9,17 @@ import {
 export function ComissaoModoForm({
   modo,
   rateioTrocaTurno,
+  pagarPedidoCliente,
   onChange,
 }: {
   modo: "pedido" | "item";
   rateioTrocaTurno: boolean;
-  onChange: (p: { comissao_modo?: "pedido" | "item"; comissao_rateio_troca_turno?: boolean }) => void;
+  pagarPedidoCliente: boolean;
+  onChange: (p: {
+    comissao_modo?: "pedido" | "item";
+    comissao_rateio_troca_turno?: boolean;
+    comissao_pedido_cliente?: boolean;
+  }) => void;
 }) {
   return (
     <Card className="space-y-4 p-6">
@@ -68,6 +74,27 @@ export function ComissaoModoForm({
           checked={rateioTrocaTurno}
           onCheckedChange={(v) => onChange({ comissao_rateio_troca_turno: v })}
           aria-label="Dividir comissão entre garçons atribuídos com turno aberto"
+        />
+      </div>
+
+      <div className="flex items-start justify-between gap-4 rounded-lg border p-3">
+        <div className="min-w-0">
+          <div className="font-medium">
+            Pagar comissão em pedidos do cliente (QR Code)
+          </div>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Quando ligado, pedidos lançados pelo cliente pelo QR Code geram
+            comissão dividida entre os garçons atribuídos à mesa que estão com
+            turno aberto. Quando desligado, apenas pedidos lançados por um
+            garçom geram comissão — e esses pedidos do cliente também deixam
+            de contar para as metas individuais. A atribuição da mesa continua
+            obrigatória para organização da sala.
+          </p>
+        </div>
+        <Switch
+          checked={pagarPedidoCliente}
+          onCheckedChange={(v) => onChange({ comissao_pedido_cliente: v })}
+          aria-label="Pagar comissão em pedidos do cliente"
         />
       </div>
     </Card>

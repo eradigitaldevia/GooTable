@@ -26,6 +26,7 @@ type ConfigPayload = {
   caixa_conferencia_cega: boolean;
   caixa_obrigatorio_para_pagamento: boolean;
   comissao_rateio_troca_turno: boolean;
+  comissao_pedido_cliente: boolean;
 };
 
 export function useAtualizarConfiguracoes(userId: string | undefined) {

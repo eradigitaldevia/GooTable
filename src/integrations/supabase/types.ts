@@ -1323,6 +1323,7 @@ export type Database = {
           caixa_obrigatorio_para_pagamento: boolean
           caixa_teto_dinheiro: number | null
           comissao_modo: string
+          comissao_pedido_cliente: boolean
           comissao_rateio_troca_turno: boolean
           cor_primaria: string | null
           criado_em: string
@@ -1342,6 +1343,7 @@ export type Database = {
           caixa_obrigatorio_para_pagamento?: boolean
           caixa_teto_dinheiro?: number | null
           comissao_modo?: string
+          comissao_pedido_cliente?: boolean
           comissao_rateio_troca_turno?: boolean
           cor_primaria?: string | null
           criado_em?: string
@@ -1361,6 +1363,7 @@ export type Database = {
           caixa_obrigatorio_para_pagamento?: boolean
           caixa_teto_dinheiro?: number | null
           comissao_modo?: string
+          comissao_pedido_cliente?: boolean
           comissao_rateio_troca_turno?: boolean
           cor_primaria?: string | null
           criado_em?: string
