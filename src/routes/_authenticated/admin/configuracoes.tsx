@@ -38,6 +38,7 @@ function Configuracoes() {
     caixa_obrigatorio_para_pagamento: false,
     comissao_rateio_troca_turno: false,
     comissao_pedido_cliente: true,
+    comissao_pedido_cliente_percentual: "" as string,
   });
 
   useEffect(() => {
@@ -64,6 +65,10 @@ function Configuracoes() {
         restaurante.comissao_rateio_troca_turno ?? false,
       comissao_pedido_cliente:
         restaurante.comissao_pedido_cliente ?? true,
+      comissao_pedido_cliente_percentual:
+        restaurante.comissao_pedido_cliente_percentual != null
+          ? String(restaurante.comissao_pedido_cliente_percentual)
+          : "",
     });
   }, [restaurante]);
 
@@ -86,6 +91,16 @@ function Configuracoes() {
     } catch (e: any) {
       toast.error(e?.message ?? "PIX inválido");
       return;
+    }
+    const percCliente = form.comissao_pedido_cliente_percentual.trim();
+    let percClienteNum: number | null = null;
+    if (percCliente !== "") {
+      const n = Number(percCliente.replace(",", "."));
+      if (!Number.isFinite(n) || n < 0 || n > 100) {
+        toast.error("Percentual de pedido do cliente deve estar entre 0 e 100");
+        return;
+      }
+      percClienteNum = n;
     }
     try {
       await atualizar.mutateAsync({
@@ -111,6 +126,7 @@ function Configuracoes() {
           form.caixa_obrigatorio_para_pagamento,
         comissao_rateio_troca_turno: form.comissao_rateio_troca_turno,
         comissao_pedido_cliente: form.comissao_pedido_cliente,
+        comissao_pedido_cliente_percentual: percClienteNum,
       });
       toast.success("Configurações salvas");
     } catch (e: any) {
@@ -148,6 +164,7 @@ function Configuracoes() {
         modo={form.comissao_modo}
         rateioTrocaTurno={form.comissao_rateio_troca_turno}
         pagarPedidoCliente={form.comissao_pedido_cliente}
+        percentualPedidoCliente={form.comissao_pedido_cliente_percentual}
         onChange={patch}
       />
 
