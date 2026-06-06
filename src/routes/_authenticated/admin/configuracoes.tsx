@@ -37,6 +37,7 @@ function Configuracoes() {
     caixa_conferencia_cega: false,
     caixa_obrigatorio_para_pagamento: false,
     comissao_rateio_troca_turno: false,
+    comissao_pedido_cliente: true,
   });
 
   useEffect(() => {
@@ -61,6 +62,8 @@ function Configuracoes() {
         restaurante.caixa_obrigatorio_para_pagamento ?? false,
       comissao_rateio_troca_turno:
         restaurante.comissao_rateio_troca_turno ?? false,
+      comissao_pedido_cliente:
+        restaurante.comissao_pedido_cliente ?? true,
     });
   }, [restaurante]);
 
@@ -107,6 +110,7 @@ function Configuracoes() {
         caixa_obrigatorio_para_pagamento:
           form.caixa_obrigatorio_para_pagamento,
         comissao_rateio_troca_turno: form.comissao_rateio_troca_turno,
+        comissao_pedido_cliente: form.comissao_pedido_cliente,
       });
       toast.success("Configurações salvas");
     } catch (e: any) {
@@ -143,6 +147,7 @@ function Configuracoes() {
       <ComissaoModoForm
         modo={form.comissao_modo}
         rateioTrocaTurno={form.comissao_rateio_troca_turno}
+        pagarPedidoCliente={form.comissao_pedido_cliente}
         onChange={patch}
       />
 
