@@ -1,51 +1,65 @@
-## Causa
+## Objetivo
 
-A mensagem `Password is known to be weak and easy to guess, please choose a different one.` vem do **Lovable Cloud Auth (HIBP — Have I Been Pwned)**, que está **ativado** no projeto. Sempre que uma senha é criada/alterada via `auth.admin.updateUserById` / `createUser`, o backend verifica se ela aparece em vazamentos públicos conhecidos. Se aparecer (ex.: `123456`, `senha123`, `admin123`, nome do restaurante, etc.), a operação é rejeitada com esse erro em inglês.
+Permitir que cada restaurante decida, em **Configurações → Comissão de garçons**, se pedidos lançados pelo próprio cliente (QR Code) geram comissão para os garçons atribuídos. Hoje a regra é fixa (sempre paga); passa a ser um switch, com **default ligado** para preservar o comportamento atual.
 
-Não é um bug — é proteção. O problema é que:
+Quando desligado, esses pedidos **também não contam para metas individuais** do garçom (decisão do usuário — evita "bater meta sem atender").
 
-1. A mensagem chega **em inglês** e o usuário não entende o motivo.
-2. A UI só exige "mínimo 6 caracteres", sem avisar sobre o HIBP.
-3. O mesmo acontece em outros 3 fluxos: criar membro direto, criar garçom com login, redefinir senha do garçom.
+## Mudanças
 
-## Correção proposta
+### 1. Banco
 
-### 1. Traduzir e tratar o erro nos handlers (frontend)
+Nova coluna em `restaurantes`:
 
-Criar um helper `traduzirErroSenha(e)` em `src/lib/utils.ts` (ou novo `src/lib/auth-errors.ts`) que mapeia mensagens conhecidas do Supabase Auth para PT-BR:
+- `comissao_pedido_cliente boolean NOT NULL DEFAULT true`
 
-- `Password is known to be weak...` → *"Esta senha é muito comum e aparece em vazamentos conhecidos. Escolha uma senha mais forte (combine letras, números e símbolos)."*
-- `Password should be at least N characters` → *"A senha deve ter no mínimo N caracteres."*
-- `New password should be different from the old password` → *"A nova senha deve ser diferente da atual."*
+Sem alteração de RLS. Tipos do Supabase regeneram após a migração.
 
-Aplicar nos `catch` de:
+### 2. UI — Configurações
 
-- `src/components/admin/equipe-panel.tsx` → `handleCriar`, `handleRedefinirSenha`
-- `src/components/admin/garcons/garcons-roster.tsx` (ou onde está o dialog de senha do garçom) → criar usuário + redefinir senha
-- `src/routes/reset-password.tsx` → `handleSubmit`
+Em `src/components/configuracoes/comissao-modo-form.tsx`, adicionar um terceiro bloco (mesmo padrão visual do switch de rateio):
 
-### 2. Avisos preventivos na UI
+> **Pagar comissão em pedidos do cliente (QR Code)**
+> Quando ligado, pedidos lançados pelo cliente pelo QR Code geram comissão dividida entre os garçons atribuídos à mesa que estão com turno aberto. Quando desligado, apenas pedidos lançados por um garçom geram comissão. A atribuição da mesa continua obrigatória para organização da sala.
 
-Nos dialogs/forms de senha (equipe e garçom), trocar o placeholder e o helper text:
+Wire em `src/routes/_authenticated/admin/configuracoes.tsx` (estado, defaults, payload do save) e em `src/hooks/use-configuracoes.ts` + `src/lib/configuracoes.functions.ts` (Zod + UPDATE).
 
-- Antes: `mínimo 6 caracteres`
-- Depois: `Use ao menos 8 caracteres, combinando letras, números e símbolos. Evite senhas comuns.`
+### 3. Tipos e contrato
 
-Aumentar a validação client-side de `length < 6` para `length < 8` (alinhado à boa prática), mantendo a mensagem clara — o HIBP continua sendo a checagem final no servidor.
+- `Restaurante` em `src/lib/restaurante.functions.ts`: adicionar `comissao_pedido_cliente: boolean`.
+- `ConfigPayload` em `use-configuracoes.ts`: idem.
+- `configSchema` em `configuracoes.functions.ts`: `comissao_pedido_cliente: z.boolean()`.
 
-### 3. (Opcional, não recomendado agora) - Não implementar
+### 4. Cálculo de comissão
 
-Desativar HIBP via `supabase--configure_auth` com `password_hibp_enabled: false`. **Não recomendo** — reduz a segurança da conta de membros da equipe. Melhor manter ativo e apenas comunicar bem o erro. Não desativar.
+No ponto onde a comissão é gerada para pedidos (provavelmente no fluxo de confirmação/entrega em `src/lib/pedidos.functions.ts` ou função correlata — a confirmar na implementação):
 
-## Arquivos alterados
+- Se `pedido.garcom_id IS NULL` (= pedido feito pelo cliente) **e** `restaurante.comissao_pedido_cliente = false` → **não inserir** linhas em `comissoes` para esse pedido. Sair cedo do cálculo.
+- Caso contrário, comportamento atual mantido (rateio entre atribuídos com turno aberto).
 
-- `src/lib/auth-errors.ts` (novo) — função `traduzirErroSenha`.
-- `src/components/admin/equipe-panel.tsx` — usar helper + textos novos.
-- `src/components/admin/garcons/garcons-roster.tsx` — mesmo tratamento.
-- `src/routes/reset-password.tsx` — mesmo tratamento.
+### 5. Metas e bônus
+
+Em `src/lib/garcom-bonus.functions.ts` (apuração de metas), ao somar volume/quantidade por garçom:
+
+- Quando `comissao_pedido_cliente = false`, excluir do somatório os pedidos com `garcom_id IS NULL` (mesmo que tenham passado pela mesa atribuída ao garçom).
+- Quando ligado, sem mudança.
+
+### 6. Relatórios e extrato
+
+Sem mudança funcional, mas validar `src/components/admin/garcons/extrato-garcom-dialog.tsx` e `comissoes-panel.tsx`: como eles consomem a tabela `comissoes`, automaticamente refletem a regra (pedidos sem comissão simplesmente não aparecem). Nenhum código novo necessário.
+
+## Arquivos a alterar
+
+- `supabase/migrations/<novo>.sql` — adicionar coluna.
+- `src/lib/restaurante.functions.ts` — tipo `Restaurante`.
+- `src/lib/configuracoes.functions.ts` — schema + UPDATE.
+- `src/hooks/use-configuracoes.ts` — `ConfigPayload`.
+- `src/components/configuracoes/comissao-modo-form.tsx` — novo switch.
+- `src/routes/_authenticated/admin/configuracoes.tsx` — estado/save.
+- `src/lib/pedidos.functions.ts` (ou função de cálculo de comissão equivalente) — pular geração.
+- `src/lib/garcom-bonus.functions.ts` — excluir do somatório de metas.
 
 ## Fora de escopo
 
-- Mudar política de senha no servidor.
-- Forçar troca periódica de senha.
-- Política de complexidade adicional (regex de símbolos obrigatórios).
+- Remover obrigatoriedade de atribuição de mesa (continua).
+- Configurar percentuais diferentes por canal (QR vs garçom). Aqui é só liga/desliga.
+- Retroatividade: a regra vale a partir de pedidos novos; comissões já geradas não são revertidas.
