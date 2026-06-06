@@ -44,7 +44,10 @@ function GarconsPage() {
           <TabsTrigger value="bonus">Metas & Bônus</TabsTrigger>
         </TabsList>
         <TabsContent value="mesas" className="mt-4">
-          <MesasGarcomPanel restauranteId={restaurante.id} />
+          <MesasGarcomPanel
+            restauranteId={restaurante.id}
+            comissaoPedidoCliente={restaurante.comissao_pedido_cliente}
+          />
         </TabsContent>
         <TabsContent value="garcons" className="mt-4">
           <GarconsRoster restauranteId={restaurante.id} />
