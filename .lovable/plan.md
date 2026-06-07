@@ -1,73 +1,90 @@
-## Objetivo
+# Melhorias de UX na página /admin/cardapio
 
-Adicionar validação inline e alertas de pré-requisito ao formulário de comissão para evitar configurações inconsistentes e orientar o admin antes de salvar.
+Objetivo: tornar o gerenciamento do cardápio mais rápido e organizado quando o restaurante tem dezenas/centenas de itens. **Sem alterar** nenhuma lógica de cardápio (categorias, produtos, comissão, destinos) — apenas a página `src/routes/_authenticated/admin/cardapio.tsx` e componentes de apresentação.
 
-## Frente 1 — Validação inline do percentual QR
+## Melhorias propostas
 
-Em `src/components/configuracoes/comissao-modo-form.tsx`:
+### 1. Barra de busca de produtos
 
-- Calcular `percentualPedidoClienteInvalido` derivado de `percentualPedidoCliente`:
-  - válido quando vazio (usa padrão);
-  - válido quando `Number(valor.replace(",", "."))` é finito e está entre 0 e 100;
-  - inválido caso contrário.
-- Aplicar `aria-invalid` e classe `border-destructive` no `<Input>` quando inválido.
-- Renderizar mensagem `<p>` abaixo do input: "Use um valor entre 0 e 100." em `text-destructive` quando inválido.
-- Expor o estado de validade via nova prop callback `onValidityChange?: (valid: boolean) => void` (chamada em `useEffect` quando o valor muda), para o pai poder desabilitar o botão Salvar — alinhado ao padrão já usado para PIX.
+Campo de texto no topo da seção de produtos que filtra por **nome** e **descrição** (case-insensitive, sem acento). Ícone de lupa, botão "limpar", contador "X de Y produtos".
 
-Em `src/routes/_authenticated/admin/configuracoes.tsx`:
+### 2. Filtros rápidos (chips)
 
-- Novo estado local `comissaoFormValido` (default `true`).
-- Passar `onValidityChange={setComissaoFormValido}` para `<ComissaoModoForm />`.
-- Desabilitar o botão "Salvar alterações" quando `!comissaoFormValido` (mantém também o `toast.error` existente em `save()` como segunda linha de defesa).
+Logo abaixo da busca, chips de filtro combinável:
 
-## Frente 2 — Alertas de pré-requisito
+- **Categoria**: clicar em um chip da seção "Categorias" passa a filtrar a grid (visual de "selecionado"). Inclui chip "Sem categoria".
+- **Disponibilidade**: Todos / Disponíveis / Indisponíveis.
+- **Destino**: Todos / Cozinha / Bar (deriva de `destino_override` ou `categoria.destino`).
+- Chip "Limpar filtros" quando algum filtro estiver ativo.
 
-Levantar dados leves em `src/routes/_authenticated/admin/configuracoes.tsx`:
+### 3. Agrupamento por categoria (toggle)
 
-- `useGarcons(restaurante.id, false)` para garçons ativos.
-- `useAtribuicoesMesasMulti(restaurante.id)` para contar mesas sem garçom.
+Botão de alternância **"Agrupar por categoria"** (padrão ligado). Quando ligado: cada categoria vira uma sub-seção com seu próprio cabeçalho (nome + contagem + destino). Quando desligado: grid plana como hoje.
 
-Calcular três sinais e passar como props para `<ComissaoModoForm />`:
+### 4. Ordenação
 
-- `semGarcons: boolean` — nenhum garçom ativo cadastrado.
-- `todosGarconsZerados: boolean` — há garçons, mas todos com `percentual_comissao === 0` **e** o campo de % específico para QR está vazio.
-- `mesasSemGarcom: number` — quantidade de mesas sem garçom atribuído (só usado quando `comissao_pedido_cliente` está ON).
+Select com opções: **Ordem padrão** (atual), **Nome A–Z**, **Preço ↑**, **Preço ↓**, **Indisponíveis primeiro**. Persistente apenas durante a sessão.
 
-Em `comissao-modo-form.tsx`, adicionar bloco de alertas no topo do card (acima do RadioGroup), renderizando condicionalmente cada item:
+### 5. Alternância de visualização: Grid / Lista
 
-- **Sem garçons cadastrados** (sempre que `semGarcons`):
-  - tom `bg-amber-500/10` + ícone `AlertTriangle`.
-  - Texto: "Nenhum garçom cadastrado. A comissão só terá efeito após cadastrar garçons em Garçons → Garçons."
-  - Link para `/admin/garcons?tab=garcons` usando `<Link>` do TanStack Router.
+Botão Grid (atual) vs Lista densa (linhas compactas com thumb pequena, nome, categoria, preço, switch, ações) — útil para varrer muitos itens rapidamente.
 
-- **Garçons com 0%** (quando `todosGarconsZerados` e `!semGarcons`):
-  - tom `bg-amber-500/10` + ícone `AlertTriangle`.
-  - Texto: "Os garçons cadastrados estão com 0% de comissão. Defina o percentual em cada garçom ou preencha um % específico para pedidos do cliente."
-  - Link para `/admin/garcons?tab=garcons`.
+### 6. Estados vazios contextuais
 
-- **Mesas sem garçom** (quando `comissao_pedido_cliente` ON e `mesasSemGarcom > 0`):
-  - tom `bg-amber-500/10` + ícone `AlertTriangle`.
-  - Texto: "{n} mesa(s) sem garçom atribuído. Pedidos do cliente nessas mesas ficarão sem comissão." (mesma copy do `mesas-garcom-panel`).
-  - Link para `/admin/garcons?tab=mesas`.
+Quando filtros não retornam nada: mensagem clara "Nenhum produto corresponde aos filtros" + botão "Limpar filtros". Hoje, com filtros aplicados, a grid simplesmente fica vazia.
 
-Cada alerta usa o mesmo padrão visual já presente em `mesas-garcom-panel.tsx` (flex + ícone + texto) para manter consistência.
+### 7. Sticky toolbar
 
-## Arquivos a alterar
+Header + busca/filtros ficam grudados no topo ao rolar (`sticky top-0`), com leve blur de fundo. Categorias permanecem como seção rolável acima.
 
-- `src/components/configuracoes/comissao-modo-form.tsx` — novas props (`semGarcons`, `todosGarconsZerados`, `mesasSemGarcom`, `onValidityChange`), bloco de alertas, validação inline do input.
-- `src/routes/_authenticated/admin/configuracoes.tsx` — chamadas `useGarcons` + `useAtribuicoesMesasMulti`, cálculo dos sinais, estado `comissaoFormValido`, props passadas e `disabled` no botão Salvar.
+### 8. Atalhos de teclado
 
-## Fora de escopo
+- `/` foca a busca
+- `Esc` limpa a busca
 
-- Frente 3 (coerência entre flags).
-- Mudanças no banco, em triggers, em RLS ou em qualquer outra função.
-- Alterações no painel de Garçons (`mesas-garcom-panel.tsx`) — os alertas em Configurações são adicionais, não substitutivos.
-- Bloqueio técnico de salvar quando há alertas (são apenas orientativos; só o input inválido bloqueia).
+### 9. Melhorias visuais menores no ProdutoCard
 
+- Mostrar **destino** (Cozinha/Bar) como badge discreto ao lado da categoria.
+- Mostrar indicador quando o produto tem **comissão customizada** (`percentual_comissao` não nulo) — pequeno badge "%".
+- Confirmar exclusão com `AlertDialog` em vez de `confirm()` nativo (consistência visual já usada em outras telas).
+
+### 10. Contagem global no header
+
+"Cardápio" passa a exibir, no subtítulo, contagens vivas: "X categorias · Y produtos (Z disponíveis)".
+
+## Escopo técnico
+
+Arquivos afetados (apenas apresentação):
+
+- `src/routes/_authenticated/admin/cardapio.tsx` — estado local de busca/filtros/ordenação/visualização, derivação de lista filtrada, toolbar sticky, agrupamento.
+- `src/components/cardapio/produto-card.tsx` — badges de destino/comissão, troca de `confirm()` por `AlertDialog`.
+- Novo `src/components/cardapio/produto-row.tsx` — linha densa para o modo "Lista".
+- Novo `src/components/cardapio/cardapio-toolbar.tsx` — encapsula busca/filtros/ordenação/visualização (mantém o route file enxuto).
+
+**Não serão tocados**: hooks (`use-cardapio`), server functions (`cardapio.functions.ts`), schemas, banco, dialogs de criação/edição, lógica de destino/comissão.
+
+Persistência das preferências (ordenação/visualização/agrupamento): apenas em estado React (sessão). Sem `localStorage` para manter escopo mínimo.
+
+## Sugestões fora do escopo (não implementar agora)
+
+Drag-and-drop para reordenar produtos/categorias, duplicar produto, ações em lote (selecionar vários e marcar indisponível/excluir), import/export CSV — exigiriam alterações em server functions e banco.
+
+## Pergunta antes de partir para o plano final
+
+Quer que eu inclua **todas** as 10 melhorias acima, ou prefere selecionar um subconjunto (ex.: só 1, 2, 3, 6 para um primeiro passo mais focado)?  
+  
+Resposta: incluas as melhorias 1, 2, 3, 4, 5, 6, 9 e 10.  
+
+
+  
 IMPORTANTE:
 
-Execute APENAS a alteração explicitamente solicitada.
-NÃO refatore, otimize, melhore ou modifique código não relacionado.
-NÃO faça suposições.
-Se algo não estiver claro, PARE e pergunte antes de alterar qualquer coisa.
+Execute APENAS a alteração explicitamente solicitada. 
+
+NÃO refatore, otimize, melhore ou modifique código não relacionado. 
+
+NÃO faça suposições. 
+
+Se algo não estiver claro, PARE e pergunte antes de alterar qualquer coisa. 
+
 Preserve 100% do comportamento e da funcionalidade existentes.

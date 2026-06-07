@@ -1,12 +1,23 @@
-import { memo } from "react";
+import { memo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
-import { Pencil, Trash2, Image as ImageIcon } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Pencil, Trash2, Image as ImageIcon, Percent } from "lucide-react";
 import { toast } from "sonner";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { ProdutoDialog } from "./produto-dialog";
 import { useAlterarDisponibilidadeProduto, useExcluirProduto } from "@/hooks/use-cardapio";
 
-interface Categoria { id: string; nome: string; ordem: number; }
+interface Categoria { id: string; nome: string; ordem: number; destino: "cozinha" | "bar"; }
 interface Produto {
   id: string;
   nome: string;
@@ -16,6 +27,9 @@ interface Produto {
   disponivel: boolean;
   categoria_id: string | null;
   ordem: number;
+  percentual_comissao: number | null;
+  comissao_aplicavel: boolean;
+  destino_override: "cozinha" | "bar" | null;
 }
 
 function ProdutoCardComponent({
@@ -30,8 +44,10 @@ function ProdutoCardComponent({
   onChanged: () => void;
 }) {
   const cat = categorias.find((c) => c.id === produto.categoria_id);
+  const destino = produto.destino_override ?? cat?.destino ?? "cozinha";
   const alterarDisp = useAlterarDisponibilidadeProduto(restauranteId);
   const excluir = useExcluirProduto(restauranteId);
+  const [confirmOpen, setConfirmOpen] = useState(false);
 
   async function toggleDisponivel(v: boolean) {
     try {
@@ -42,7 +58,6 @@ function ProdutoCardComponent({
     }
   }
   async function remove() {
-    if (!confirm(`Excluir "${produto.nome}"?`)) return;
     try {
       await excluir.mutateAsync({ id: produto.id });
       toast.success("Produto excluído");
@@ -72,7 +87,19 @@ function ProdutoCardComponent({
         <div className="flex items-start justify-between gap-2">
           <div className="min-w-0">
             <h3 className="truncate font-semibold">{produto.nome}</h3>
-            {cat && <span className="text-xs text-muted-foreground">{cat.nome}</span>}
+            <div className="mt-0.5 flex flex-wrap items-center gap-1.5">
+              {cat ? (
+                <span className="text-xs text-muted-foreground">{cat.nome}</span>
+              ) : (
+                <span className="text-xs italic text-muted-foreground">Sem categoria</span>
+              )}
+              <Badge variant="secondary" className="px-1.5 py-0 text-[10px] uppercase">{destino}</Badge>
+              {produto.percentual_comissao != null && (
+                <Badge variant="secondary" className="gap-0.5 px-1.5 py-0 text-[10px]" title="Comissão customizada">
+                  <Percent className="h-2.5 w-2.5" /> {produto.percentual_comissao}
+                </Badge>
+              )}
+            </div>
           </div>
           <div className="text-right font-bold text-primary">
             {Number(produto.preco).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
@@ -96,12 +123,26 @@ function ProdutoCardComponent({
                 <Button size="icon" variant="ghost"><Pencil className="h-4 w-4" /></Button>
               }
             />
-            <Button size="icon" variant="ghost" onClick={remove}>
+            <Button size="icon" variant="ghost" onClick={() => setConfirmOpen(true)}>
               <Trash2 className="h-4 w-4" />
             </Button>
           </div>
         </div>
       </div>
+      <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir produto?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta ação não pode ser desfeita. O produto "{produto.nome}" será removido do cardápio.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={remove}>Excluir</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
