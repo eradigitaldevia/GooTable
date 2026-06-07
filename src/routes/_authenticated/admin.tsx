@@ -111,7 +111,7 @@ function AdminLayout() {
 
   return (
     <div className="flex min-h-screen bg-background">
-      <aside className="hidden w-16 shrink-0 flex-col border-r border-sidebar-border bg-sidebar md:flex lg:hidden">
+      <aside className="sticky top-0 h-screen overflow-y-auto hidden w-16 shrink-0 flex-col border-r border-sidebar-border bg-sidebar md:flex lg:hidden">
         <AdminSidebar
           restaurante={restaurante}
           isPlatformAdmin={isPlatformAdmin}
@@ -120,7 +120,7 @@ function AdminLayout() {
           papel={papel}
         />
       </aside>
-      <aside className="hidden w-64 shrink-0 flex-col border-r border-sidebar-border bg-sidebar lg:flex">
+      <aside className="sticky top-0 h-screen overflow-y-auto hidden w-64 shrink-0 flex-col border-r border-sidebar-border bg-sidebar lg:flex">
         <AdminSidebar
           restaurante={restaurante}
           isPlatformAdmin={isPlatformAdmin}
