@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { useMeuRestaurante } from "@/hooks/use-restaurante";
 import { useAtualizarConfiguracoes, useValidarPix } from "@/hooks/use-configuracoes";
+import { useGarcons, useAtribuicoesMesasMulti } from "@/hooks/use-garcons";
 import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
@@ -22,6 +23,11 @@ function Configuracoes() {
   const { data: restaurante, isLoading } = useMeuRestaurante(user?.id);
   const atualizar = useAtualizarConfiguracoes(user?.id);
   const validarPix = useValidarPix();
+  const { data: garconsAtivos = [] } = useGarcons(restaurante?.id, false);
+  const { data: atribuicoesMesas = [] } = useAtribuicoesMesasMulti(
+    restaurante?.id,
+  );
+  const [comissaoFormValido, setComissaoFormValido] = useState(true);
 
   const [form, setForm] = useState({
     nome: "",
@@ -75,6 +81,15 @@ function Configuracoes() {
   function patch(p: Partial<typeof form>) {
     setForm((f) => ({ ...f, ...p }));
   }
+
+  const semGarcons = garconsAtivos.length === 0;
+  const todosGarconsZerados =
+    garconsAtivos.length > 0 &&
+    garconsAtivos.every((g) => Number(g.percentual_comissao ?? 0) === 0) &&
+    form.comissao_pedido_cliente_percentual.trim() === "";
+  const mesasSemGarcom = atribuicoesMesas.filter(
+    (a) => a.garcons.length === 0,
+  ).length;
 
   async function save() {
     if (!restaurante) return;
@@ -166,6 +181,10 @@ function Configuracoes() {
         pagarPedidoCliente={form.comissao_pedido_cliente}
         percentualPedidoCliente={form.comissao_pedido_cliente_percentual}
         onChange={patch}
+        semGarcons={semGarcons}
+        todosGarconsZerados={todosGarconsZerados}
+        mesasSemGarcom={mesasSemGarcom}
+        onValidityChange={setComissaoFormValido}
       />
 
       <section className="rounded-lg border border-border bg-card p-4">
@@ -268,7 +287,11 @@ function Configuracoes() {
       </section>
 
       <div className="flex justify-end">
-        <Button onClick={save} disabled={atualizar.isPending} className="h-11 px-6">
+        <Button
+          onClick={save}
+          disabled={atualizar.isPending || !comissaoFormValido}
+          className="h-11 px-6"
+        >
           {atualizar.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
           Salvar alterações
         </Button>

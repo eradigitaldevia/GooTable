@@ -1,103 +1,73 @@
 ## Objetivo
 
-Tornar o switch **"Pagar comissão em pedidos do cliente (QR Code)"** confiável em 100% dos cenários — incluindo o caso comum em que a mesa tem garçom atribuído e o trigger `trg_pedidos_set_garcom` preenche `pedidos.garcom_id` automaticamente. Hoje, com a mesa atribuída, desligar o flag **não impede** a geração de comissão.
+Adicionar validação inline e alertas de pré-requisito ao formulário de comissão para evitar configurações inconsistentes e orientar o admin antes de salvar.
 
-Adicionalmente, permitir definir um **percentual específico para pedidos do cliente (QR)**, opcional, que sobrescreve o percentual normal do garçom (e do produto, no modo "item") quando preenchido.
+## Frente 1 — Validação inline do percentual QR
 
-A obrigatoriedade de atribuição de mesa **permanece como está** (recomendação + alerta), sem novos bloqueios técnicos.
+Em `src/components/configuracoes/comissao-modo-form.tsx`:
 
-## Mudanças
+- Calcular `percentualPedidoClienteInvalido` derivado de `percentualPedidoCliente`:
+  - válido quando vazio (usa padrão);
+  - válido quando `Number(valor.replace(",", "."))` é finito e está entre 0 e 100;
+  - inválido caso contrário.
+- Aplicar `aria-invalid` e classe `border-destructive` no `<Input>` quando inválido.
+- Renderizar mensagem `<p>` abaixo do input: "Use um valor entre 0 e 100." em `text-destructive` quando inválido.
+- Expor o estado de validade via nova prop callback `onValidityChange?: (valid: boolean) => void` (chamada em `useEffect` quando o valor muda), para o pai poder desabilitar o botão Salvar — alinhado ao padrão já usado para PIX.
 
-### 1. Banco — coluna `pedidos.origem`
+Em `src/routes/_authenticated/admin/configuracoes.tsx`:
 
-Migration adiciona:
+- Novo estado local `comissaoFormValido` (default `true`).
+- Passar `onValidityChange={setComissaoFormValido}` para `<ComissaoModoForm />`.
+- Desabilitar o botão "Salvar alterações" quando `!comissaoFormValido` (mantém também o `toast.error` existente em `save()` como segunda linha de defesa).
 
-- `pedidos.origem text NOT NULL DEFAULT 'garcom' CHECK (origem IN ('cliente','garcom'))`
-- Backfill via default (histórico fica como `'garcom'`; comissões antigas não são revertidas).
+## Frente 2 — Alertas de pré-requisito
 
-Ajustes em funções SQL:
+Levantar dados leves em `src/routes/_authenticated/admin/configuracoes.tsx`:
 
-- `**criar_pedido_publico**` (QR cliente): insere `origem = 'cliente'`.
-- **Demais fluxos**: usam o default `'garcom'`.
-- `**trg_pedido_gerar_comissao**`: trocar `NEW.garcom_id IS NULL AND v_pagar_cliente = false` por `NEW.origem = 'cliente' AND v_pagar_cliente = false`. Assim o flag funciona mesmo com `garcom_id` preenchido pelo `trg_pedidos_set_garcom`.
-- `**calcular_bonus_garcom**` (metas): trocar `p.garcom_id IS NOT NULL` por `p.origem = 'garcom'` nos filtros condicionais ao flag.
+- `useGarcons(restaurante.id, false)` para garçons ativos.
+- `useAtribuicoesMesasMulti(restaurante.id)` para contar mesas sem garçom.
 
-### 2. Banco — coluna `restaurantes.comissao_pedido_cliente_percentual`
+Calcular três sinais e passar como props para `<ComissaoModoForm />`:
 
-Migration adiciona:
+- `semGarcons: boolean` — nenhum garçom ativo cadastrado.
+- `todosGarconsZerados: boolean` — há garçons, mas todos com `percentual_comissao === 0` **e** o campo de % específico para QR está vazio.
+- `mesasSemGarcom: number` — quantidade de mesas sem garçom atribuído (só usado quando `comissao_pedido_cliente` está ON).
 
-- `restaurantes.comissao_pedido_cliente_percentual numeric NULL CHECK (comissao_pedido_cliente_percentual IS NULL OR (comissao_pedido_cliente_percentual >= 0 AND comissao_pedido_cliente_percentual <= 100))`
-- `NULL` = comportamento atual (usa `garcons.percentual_comissao` e, no modo item, `produtos.percentual_comissao`).
-- Valor preenchido = **sobrescreve tudo** para pedidos com `origem = 'cliente'` (regra única, previsível: "pedido QR paga X%").
+Em `comissao-modo-form.tsx`, adicionar bloco de alertas no topo do card (acima do RadioGroup), renderizando condicionalmente cada item:
 
-Ajuste em `**trg_pedido_gerar_comissao**`:
+- **Sem garçons cadastrados** (sempre que `semGarcons`):
+  - tom `bg-amber-500/10` + ícone `AlertTriangle`.
+  - Texto: "Nenhum garçom cadastrado. A comissão só terá efeito após cadastrar garçons em Garçons → Garçons."
+  - Link para `/admin/garcons?tab=garcons` usando `<Link>` do TanStack Router.
 
-- Quando `NEW.origem = 'cliente'` e flag ligado e `restaurantes.comissao_pedido_cliente_percentual IS NOT NULL`: usar esse percentual no cálculo de `valor_comissao`, ignorando o percentual do garçom e o do produto (modo item).
-- Caso contrário, cálculo atual.
+- **Garçons com 0%** (quando `todosGarconsZerados` e `!semGarcons`):
+  - tom `bg-amber-500/10` + ícone `AlertTriangle`.
+  - Texto: "Os garçons cadastrados estão com 0% de comissão. Defina o percentual em cada garçom ou preencha um % específico para pedidos do cliente."
+  - Link para `/admin/garcons?tab=garcons`.
 
-### 3. UI — `comissao-modo-form.tsx`
+- **Mesas sem garçom** (quando `comissao_pedido_cliente` ON e `mesasSemGarcom > 0`):
+  - tom `bg-amber-500/10` + ícone `AlertTriangle`.
+  - Texto: "{n} mesa(s) sem garçom atribuído. Pedidos do cliente nessas mesas ficarão sem comissão." (mesma copy do `mesas-garcom-panel`).
+  - Link para `/admin/garcons?tab=mesas`.
 
-Ajustar a copy do switch e adicionar o input do percentual dentro do mesmo bloco, visível apenas quando o switch está ligado:
-
-> **Pagar comissão em pedidos do cliente (QR Code)**
-> Quando ligado, pedidos do cliente (QR) geram comissão dividida entre os garçons atribuídos à mesa com turno aberto. Recomendamos manter cada mesa com pelo menos um garçom atribuído para que a comissão tenha destinatário. Quando desligado, somente pedidos lançados por um garçom geram comissão, e os pedidos do cliente também deixam de contar para as metas individuais.
->
-> **Percentual específico para pedidos do cliente (opcional)**
-> Deixe vazio para usar o percentual padrão de cada garçom. Quando preenchido, substitui o percentual do garçom (e do produto, no modo Por item) apenas para pedidos lançados pelo cliente.
-
-Input numérico com sufixo `%`, range 0–100, placeholder "Usar percentual padrão", desabilitado quando o switch está OFF.
-
-### 4. UI — `mesas-garcom-panel.tsx`
-
-Alerta "X mesas sem garçom atribuído" condicional ao flag `comissao_pedido_cliente`:
-
-- ON: copy atual (tom de alerta — comissão sem destinatário).
-- OFF: copy neutra/informativa (comissão QR desligada).
-
-Para isso:
-
-- `src/routes/_authenticated/admin/garcons.tsx` passa `comissaoPedidoCliente={restaurante.comissao_pedido_cliente}` para `<MesasGarcomPanel />`.
-- `MesasGarcomPanel` aceita a prop opcional e troca apenas a copy/tom.
-
-### 5. Contrato TypeScript
-
-- `Restaurante` em `src/lib/restaurante.functions.ts`: adicionar `comissao_pedido_cliente_percentual: number | null`.
-- `ConfigPayload` em `src/hooks/use-configuracoes.ts`: idem.
-- `configSchema` em `src/lib/configuracoes.functions.ts`: `comissao_pedido_cliente_percentual: z.number().min(0).max(100).nullable()` + incluir no `UPDATE`.
-- `src/routes/_authenticated/admin/configuracoes.tsx`: estado do form (`""` quando vazio), hidratação a partir do restaurante, envio normalizado (`""` → `null`).
-
-### 6. Verificação
-
-Após a migração ser aprovada, busca rápida em `src/routes/_authenticated/sala*` e `src/components/sala/*` para confirmar que nenhum texto de UI promete bloqueio de mesa sem garçom (mantemos apenas recomendação).
+Cada alerta usa o mesmo padrão visual já presente em `mesas-garcom-panel.tsx` (flex + ícone + texto) para manter consistência.
 
 ## Arquivos a alterar
 
-- `supabase/migrations/<novo>.sql` — `pedidos.origem`, `restaurantes.comissao_pedido_cliente_percentual`, ajustes em `criar_pedido_publico`, `trg_pedido_gerar_comissao` e `calcular_bonus_garcom`.
-- `src/lib/restaurante.functions.ts` — tipo `Restaurante`.
-- `src/lib/configuracoes.functions.ts` — schema + UPDATE.
-- `src/hooks/use-configuracoes.ts` — `ConfigPayload`.
-- `src/components/configuracoes/comissao-modo-form.tsx` — copy + input de percentual.
-- `src/routes/_authenticated/admin/configuracoes.tsx` — estado/hidratação/save.
-- `src/components/admin/garcons/mesas-garcom-panel.tsx` — alerta condicional.
-- `src/routes/_authenticated/admin/garcons.tsx` — passar a prop.
+- `src/components/configuracoes/comissao-modo-form.tsx` — novas props (`semGarcons`, `todosGarconsZerados`, `mesasSemGarcom`, `onValidityChange`), bloco de alertas, validação inline do input.
+- `src/routes/_authenticated/admin/configuracoes.tsx` — chamadas `useGarcons` + `useAtribuicoesMesasMulti`, cálculo dos sinais, estado `comissaoFormValido`, props passadas e `disabled` no botão Salvar.
 
 ## Fora de escopo
 
-- Bloqueio técnico de mesa sem garçom (continua só recomendação + alerta).
-- Percentual de QR diferenciado por garçom ou por produto (apenas um valor global).
-- Retroatividade: comissões já geradas não são revertidas; histórico fica como `origem = 'garcom'`.
-- RLS, comandas, fluxo do QR cliente, reversão de comissão.
-
-&nbsp;
+- Frente 3 (coerência entre flags).
+- Mudanças no banco, em triggers, em RLS ou em qualquer outra função.
+- Alterações no painel de Garçons (`mesas-garcom-panel.tsx`) — os alertas em Configurações são adicionais, não substitutivos.
+- Bloqueio técnico de salvar quando há alertas (são apenas orientativos; só o input inválido bloqueia).
 
 IMPORTANTE:
 
 Execute APENAS a alteração explicitamente solicitada.
-
 NÃO refatore, otimize, melhore ou modifique código não relacionado.
-
 NÃO faça suposições.
-
 Se algo não estiver claro, PARE e pergunte antes de alterar qualquer coisa.
-
 Preserve 100% do comportamento e da funcionalidade existentes.
