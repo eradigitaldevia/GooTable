@@ -13,6 +13,7 @@ import { useCriarPedidoPublico } from "@/hooks/use-pedidos";
 import { useClienteMesa } from "@/hooks/use-cliente-mesa";
 import { useCardapioPublico } from "@/hooks/use-cardapio-publico";
 import { UpsellCarrinho } from "@/components/cliente/upsell-carrinho";
+import { usePedidosComanda } from "@/hooks/use-pedidos-comanda";
 
 export const Route = createFileRoute("/m/$qrToken_/carrinho")({
   component: Carrinho,
@@ -23,6 +24,7 @@ function Carrinho() {
   const navigate = useNavigate();
   const { identidade, hidratado } = useClienteMesa(qrToken);
   const { data: cardapio } = useCardapioPublico(qrToken);
+  const { data: pedidosComanda } = usePedidosComanda(qrToken, identidade?.comandaId);
   const [items, setItems] = useState<CartItem[]>([]);
   const [obsGeral, setObsGeral] = useState("");
   const criarPedido = useCriarPedidoPublico();
@@ -142,6 +144,7 @@ function Carrinho() {
                 onAdd={setItems}
                 clienteNome={identidade?.nome}
                 clienteId={identidade?.clienteId}
+                produtosJaPedidos={new Set(pedidosComanda?.produto_ids ?? [])}
               />
             )}
           </>
