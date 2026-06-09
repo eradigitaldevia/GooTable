@@ -10,6 +10,7 @@ interface Produto {
   categoria_id: string | null;
   disponivel: boolean;
   ordem: number;
+  destaque_upsell: boolean;
 }
 
 function ProdutoCardComponent({
