@@ -1,0 +1,2 @@
+ALTER TABLE public.produtos ADD COLUMN IF NOT EXISTS destaque_upsell boolean NOT NULL DEFAULT false;
+CREATE INDEX IF NOT EXISTS produtos_destaque_upsell_idx ON public.produtos (restaurante_id) WHERE destaque_upsell = true;

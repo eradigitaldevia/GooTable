@@ -1184,6 +1184,7 @@ export type Database = {
           comissao_aplicavel: boolean
           criado_em: string
           descricao: string | null
+          destaque_upsell: boolean
           destino_override:
             | Database["public"]["Enums"]["destino_preparo"]
             | null
@@ -1201,6 +1202,7 @@ export type Database = {
           comissao_aplicavel?: boolean
           criado_em?: string
           descricao?: string | null
+          destaque_upsell?: boolean
           destino_override?:
             | Database["public"]["Enums"]["destino_preparo"]
             | null
@@ -1218,6 +1220,7 @@ export type Database = {
           comissao_aplicavel?: boolean
           criado_em?: string
           descricao?: string | null
+          destaque_upsell?: boolean
           destino_override?:
             | Database["public"]["Enums"]["destino_preparo"]
             | null
