@@ -1,6 +1,8 @@
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Plus, Minus, Trash2 } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
+import { Plus, Minus, Trash2, MessageSquarePlus } from "lucide-react";
 import { formatBRL, type CartItem } from "@/lib/cart";
 
 export function CarrinhoItemRow({
@@ -8,12 +10,15 @@ export function CarrinhoItemRow({
   idx,
   onSetQtd,
   onSetNome,
+  onSetObs,
 }: {
   item: CartItem;
   idx: number;
   onSetQtd: (idx: number, q: number) => void;
   onSetNome: (idx: number, nome: string) => void;
+  onSetObs?: (idx: number, obs: string) => void;
 }) {
+  const [editObs, setEditObs] = useState(!!item.observacao);
   return (
     <div className="rounded-2xl border bg-card p-4 shadow-[var(--shadow-soft)]">
       <div className="flex items-start justify-between gap-3">
@@ -23,9 +28,6 @@ export function CarrinhoItemRow({
             <span className="mt-1 inline-block rounded-full bg-secondary px-2 py-0.5 text-xs text-secondary-foreground">
               {item.cliente_nome}
             </span>
-          )}
-          {item.observacao && (
-            <p className="mt-1 text-xs text-muted-foreground">Obs: {item.observacao}</p>
           )}
           <div className="mt-1 text-sm text-primary font-semibold">
             {formatBRL(item.preco * item.quantidade)}
@@ -55,6 +57,32 @@ export function CarrinhoItemRow({
           </Button>
         </div>
       </div>
+      {onSetObs && (
+        <div className="mt-3">
+          {editObs ? (
+            <Textarea
+              value={item.observacao ?? ""}
+              onChange={(e) => onSetObs(idx, e.target.value)}
+              onBlur={() => {
+                if (!item.observacao) setEditObs(false);
+              }}
+              placeholder="Ex.: sem cebola, ao ponto…"
+              rows={2}
+              className="text-sm"
+              autoFocus
+            />
+          ) : (
+            <button
+              type="button"
+              onClick={() => setEditObs(true)}
+              className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
+            >
+              <MessageSquarePlus className="h-3.5 w-3.5" />
+              Adicionar observação
+            </button>
+          )}
+        </div>
+      )}
     </div>
   );
 }
