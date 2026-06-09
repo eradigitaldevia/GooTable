@@ -6,6 +6,8 @@ import { useResumoConta } from "@/hooks/use-pedidos";
 import { useRealtimeMesa } from "@/hooks/use-realtime";
 import { formatBRL } from "@/lib/cart";
 import { CupomInput } from "@/components/cliente/cupom-input";
+import { DividirContaDialog } from "@/components/cliente/dividir-conta-dialog";
+import { CarrinhoPersistente } from "@/components/cliente/carrinho-persistente";
 
 export const Route = createFileRoute("/m/$qrToken_/conta")({
   component: ContaMesa,
@@ -143,6 +145,17 @@ function ContaMesa() {
                   cupomCodigo={data.comanda_atual.cupom_codigo}
                 />
               </div>
+
+              <div className="mt-3">
+                <DividirContaDialog
+                  total={data.comanda_atual.total}
+                  porCliente={data.comanda_atual.por_cliente.map((g) => ({
+                    cliente_id: g.cliente_id,
+                    cliente_nome: g.cliente_nome,
+                    subtotal: g.subtotal,
+                  }))}
+                />
+              </div>
             </section>
 
             {data.comandas_da_mesa.length > 1 && (
@@ -159,6 +172,8 @@ function ContaMesa() {
           </>
         )}
       </main>
+
+      <CarrinhoPersistente qrToken={qrToken} />
     </div>
   );
 }
