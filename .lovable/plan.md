@@ -1,71 +1,41 @@
-# Sugestões do carrinho: destaque manual + contextual
+## Não sugerir itens já presentes no carrinho ou nos pedidos da comanda
 
-Substituir a regra atual (apenas categorias prioritárias por regex) por uma lógica em 3 camadas, com controle do restaurante e contexto do pedido.
+Hoje `sugerirUpsell` só remove itens do **carrinho local** (`idsNoCarrinho`). Itens que já foram enviados em pedidos anteriores da mesma comanda continuam aparecendo como sugestão, o que causa recomendações redundantes (ex.: cliente já pediu Coca, o upsell ainda sugere Coca).
 
-## 1. Banco de dados
+### Mudança proposta
 
-Migração adicionando coluna na tabela `produtos`:
+1. **Backend — expor produtos já pedidos na comanda**
+   - Em `src/lib/status-pedido-publico.functions.ts`, dentro de `listarPedidosComandaPublicoFn`:
+     - Adicionar `produto_id` e `status` ao select de `pedido_itens` (já carrega os itens, é só incluir o campo).
+     - Retornar, junto de `pedidos`, um novo campo `produto_ids: string[]` — conjunto distinto de `produto_id` de itens **não cancelados** (qualquer status ≠ `cancelado`).
+   - Atualizar o tipo de retorno da fn.
 
-- `destaque_upsell boolean NOT NULL DEFAULT false`
-- Índice parcial para acelerar a leitura: `CREATE INDEX ON produtos (restaurante_id) WHERE destaque_upsell = true`
+2. **Frontend — passar esse conjunto ao upsell**
+   - Em `src/routes/m.$qrToken_.carrinho.tsx`:
+     - Chamar `usePedidosComanda(qrToken, identidade?.comandaId)` (hook já existe).
+     - Extrair `produtosJaPedidos = new Set(data?.produto_ids ?? [])`.
+     - Passar como nova prop `produtosJaPedidos` ao `<UpsellCarrinho />` (vazio quando não houver comanda).
 
-Atualizar o select público em `src/lib/cardapio-publico.functions.ts` para retornar o novo campo, e o tipo `ProdutoPublico`.
+3. **Lógica — excluir do pool de candidatos**
+   - Em `src/lib/upsell.ts`, `sugerirUpsell` recebe um 4º parâmetro opcional `idsExcluidos?: Set<string>`.
+   - O filtro `candidatos` passa a ser:
+     ```ts
+     produtos.filter(p => p.disponivel && !idsNoCarrinho.has(p.id) && !idsExcluidos?.has(p.id))
+     ```
+   - O cálculo de `tiposNoCarrinho` também considera `idsExcluidos` (se já pedimos bebida, não sugerir outra bebida na camada B). Renomear internamente para `tiposJaConsumidos` para refletir a semântica.
 
-## 2. Admin do cardápio
+4. **`UpsellCarrinho`**
+   - Aceita `produtosJaPedidos?: Set<string>` e repassa para `sugerirUpsell` como `idsExcluidos`.
 
-Em `src/routes/_authenticated/admin/cardapio.tsx` (ou no formulário de produto correspondente):
+### Arquivos afetados
 
-- Adicionar um `Switch` "Sugerir no carrinho (upsell)" no formulário de criação/edição de produto.
-- Adicionar um ícone de estrela no card do produto na listagem indicando quando está em destaque, com toggle rápido (clique para ligar/desligar) para facilitar a curadoria.
-- Persistir via mutação existente de update de produto.
+- `src/lib/status-pedido-publico.functions.ts` — incluir `produto_id`/`status` no select e devolver `produto_ids` no retorno.
+- `src/routes/m.$qrToken_.carrinho.tsx` — consumir `usePedidosComanda` e propagar o set.
+- `src/components/cliente/upsell-carrinho.tsx` — nova prop opcional.
+- `src/lib/upsell.ts` — parâmetro `idsExcluidos` + uso em `candidatos` e em `tiposJaConsumidos`.
 
-## 3. Nova lógica em `upsell-carrinho.tsx`
+### Fora de escopo
 
-Substituir o algoritmo atual por:
-
-```text
-candidatos = produtos disponíveis e não presentes no carrinho
-
-categoriasNoCarrinho = set de categoria_id dos itens do carrinho
-
-camada A — destaques: candidatos com destaque_upsell = true,
-           ordenados por: (a) categoria ainda não no carrinho, (b) preço asc
-
-camada B — contextuais: candidatos cuja categoria casa regras:
-           - se não há bebida no carrinho → 1 bebida
-           - se não há sobremesa no carrinho e já existe prato principal → 1 sobremesa
-           - evita categorias já presentes
-           detecta categoria por nome (regex igual ao atual, mantida como utilitário)
-
-camada C — fallback: demais candidatos disponíveis (qualquer categoria
-           ainda não representada), para completar até 3 sugestões
-
-sugestoes = dedup(A ++ B ++ C).slice(0, 3)
-```
-
-Comportamento adicional:
-
-- Se `sugestoes` ficar vazio (catálogo pequeno, tudo já no carrinho), não renderiza a seção (igual hoje).
-- Mantém o toggle global `upsell_habilitado` do restaurante como gate (sem mudança).
-- Sem chamadas extras de rede: tudo derivado de `produtos`/`categorias` já carregados.
-
-## 4. Detalhes técnicos
-
-Arquivos afetados:
-
-- `supabase/migrations/<novo>.sql` — `ALTER TABLE produtos ADD COLUMN destaque_upsell ...` + índice
-- `src/integrations/supabase/types.ts` — regenerado após a migração
-- `src/lib/cardapio-publico.functions.ts` — incluir `destaque_upsell` no select e no tipo `ProdutoPublico`
-- `src/lib/produtos.functions.ts` (ou equivalente do admin) — incluir `destaque_upsell` nos schemas Zod de create/update
-- `src/routes/_authenticated/admin/cardapio.tsx` — `Switch` no form + indicador na lista
-- `src/components/cliente/upsell-carrinho.tsx` — reescrever `ordenados`/`sugestoes` com as 3 camadas; extrair `detectarCategoria(nome)` para um util pequeno
-
-Sem mudanças em RLS (coluna nova herda as policies existentes de `produtos`).
-
-## 5. Fora de escopo
-
-- Ranking por histórico de pedidos (popularidade real)
-- Sugestão por IA
-- A/B testing de sugestões
-
-Esses ficam para uma fase futura caso o restaurante peça mais inteligência.
+- Não muda RLS nem schema do banco.
+- Não muda nada na tela de status do pedido (a fn só ganha um campo extra, retrocompatível).
+- Não toca nas camadas A/B/C nem nos rótulos de motivo (continuam como discutido anteriormente, separadamente).
