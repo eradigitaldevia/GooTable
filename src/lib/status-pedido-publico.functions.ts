@@ -115,8 +115,7 @@ export const listarPedidosComandaPublicoFn = createServerFn({ method: "POST" })
       })
       .parse(d),
   )
-  .handler(async ({ data }): Promise<{ erro?: string; pedidos?: PedidoComandaResumo[] }> => {
-    void 0;
+  .handler(async ({ data }): Promise<{ erro?: string; pedidos?: PedidoComandaResumo[]; produto_ids?: string[] }> => {
     const { data: mesa, error: mErr } = await supabaseAdmin
       .from("mesas")
       .select("restaurante_id")
