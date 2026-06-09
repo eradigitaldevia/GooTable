@@ -298,6 +298,57 @@ export type Database = {
         }
         Relationships: []
       }
+      comanda_couverts: {
+        Row: {
+          comanda_id: string
+          criado_em: string
+          descricao: string | null
+          id: string
+          lancado_por: string | null
+          quantidade: number
+          restaurante_id: string
+          tipo: string
+          valor_unitario: number
+        }
+        Insert: {
+          comanda_id: string
+          criado_em?: string
+          descricao?: string | null
+          id?: string
+          lancado_por?: string | null
+          quantidade?: number
+          restaurante_id: string
+          tipo: string
+          valor_unitario: number
+        }
+        Update: {
+          comanda_id?: string
+          criado_em?: string
+          descricao?: string | null
+          id?: string
+          lancado_por?: string | null
+          quantidade?: number
+          restaurante_id?: string
+          tipo?: string
+          valor_unitario?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "comanda_couverts_comanda_id_fkey"
+            columns: ["comanda_id"]
+            isOneToOne: false
+            referencedRelation: "comandas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "comanda_couverts_restaurante_id_fkey"
+            columns: ["restaurante_id"]
+            isOneToOne: false
+            referencedRelation: "restaurantes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       comandas: {
         Row: {
           atualizado_em: string
@@ -1333,6 +1384,12 @@ export type Database = {
           comissao_pedido_cliente_percentual: number | null
           comissao_rateio_troca_turno: boolean
           cor_primaria: string | null
+          couvert_artistico_descricao: string | null
+          couvert_artistico_habilitado: boolean
+          couvert_artistico_valor: number | null
+          couvert_mesa_descricao: string | null
+          couvert_mesa_habilitado: boolean
+          couvert_mesa_valor: number | null
           criado_em: string
           id: string
           logo_url: string | null
@@ -1342,6 +1399,9 @@ export type Database = {
           pix_habilitado: boolean
           pix_nome_titular: string | null
           slug: string
+          taxa_servico_descricao: string | null
+          taxa_servico_habilitada: boolean
+          taxa_servico_percentual: number | null
           upsell_habilitado: boolean
         }
         Insert: {
@@ -1355,6 +1415,12 @@ export type Database = {
           comissao_pedido_cliente_percentual?: number | null
           comissao_rateio_troca_turno?: boolean
           cor_primaria?: string | null
+          couvert_artistico_descricao?: string | null
+          couvert_artistico_habilitado?: boolean
+          couvert_artistico_valor?: number | null
+          couvert_mesa_descricao?: string | null
+          couvert_mesa_habilitado?: boolean
+          couvert_mesa_valor?: number | null
           criado_em?: string
           id?: string
           logo_url?: string | null
@@ -1364,6 +1430,9 @@ export type Database = {
           pix_habilitado?: boolean
           pix_nome_titular?: string | null
           slug: string
+          taxa_servico_descricao?: string | null
+          taxa_servico_habilitada?: boolean
+          taxa_servico_percentual?: number | null
           upsell_habilitado?: boolean
         }
         Update: {
@@ -1377,6 +1446,12 @@ export type Database = {
           comissao_pedido_cliente_percentual?: number | null
           comissao_rateio_troca_turno?: boolean
           cor_primaria?: string | null
+          couvert_artistico_descricao?: string | null
+          couvert_artistico_habilitado?: boolean
+          couvert_artistico_valor?: number | null
+          couvert_mesa_descricao?: string | null
+          couvert_mesa_habilitado?: boolean
+          couvert_mesa_valor?: number | null
           criado_em?: string
           id?: string
           logo_url?: string | null
@@ -1386,6 +1461,9 @@ export type Database = {
           pix_habilitado?: boolean
           pix_nome_titular?: string | null
           slug?: string
+          taxa_servico_descricao?: string | null
+          taxa_servico_habilitada?: boolean
+          taxa_servico_percentual?: number | null
           upsell_habilitado?: boolean
         }
         Relationships: []
@@ -1643,6 +1721,10 @@ export type Database = {
       pode_operar_caixa: {
         Args: { _restaurante_id: string; _user_id: string }
         Returns: boolean
+      }
+      recalcular_couvert_comanda: {
+        Args: { _comanda_id: string }
+        Returns: undefined
       }
       recomputar_destino_status: {
         Args: {
