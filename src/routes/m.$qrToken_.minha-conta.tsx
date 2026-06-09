@@ -18,6 +18,7 @@ import {
 } from "@/hooks/use-minha-conta";
 import { useRealtimeMesa } from "@/hooks/use-realtime";
 import { formatBRL } from "@/lib/cart";
+import { CarrinhoPersistente } from "@/components/cliente/carrinho-persistente";
 
 export const Route = createFileRoute("/m/$qrToken_/minha-conta")({
   component: MinhaConta,
@@ -217,6 +218,7 @@ function MinhaConta() {
           </>
         )}
       </main>
+      <CarrinhoPersistente qrToken={qrToken} />
     </div>
   );
 }
