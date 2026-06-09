@@ -10,6 +10,8 @@ import { toast } from "sonner";
 import { IdentidadeForm } from "@/components/configuracoes/identidade-form";
 import { PixForm } from "@/components/configuracoes/pix-form";
 import { ComissaoModoForm } from "@/components/configuracoes/comissao-modo-form";
+import { TaxaServicoForm } from "@/components/configuracoes/taxa-servico-form";
+import { CouvertForm } from "@/components/configuracoes/couvert-form";
 import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -46,6 +48,15 @@ function Configuracoes() {
     comissao_pedido_cliente: true,
     comissao_pedido_cliente_percentual: "" as string,
     upsell_habilitado: true,
+    taxa_servico_habilitada: false,
+    taxa_servico_percentual: "" as string,
+    taxa_servico_descricao: "",
+    couvert_mesa_habilitado: false,
+    couvert_mesa_valor: "" as string,
+    couvert_mesa_descricao: "",
+    couvert_artistico_habilitado: false,
+    couvert_artistico_valor: "" as string,
+    couvert_artistico_descricao: "",
   });
 
   useEffect(() => {
@@ -77,6 +88,26 @@ function Configuracoes() {
           ? String(restaurante.comissao_pedido_cliente_percentual)
           : "",
       upsell_habilitado: restaurante.upsell_habilitado ?? true,
+      taxa_servico_habilitada: restaurante.taxa_servico_habilitada ?? false,
+      taxa_servico_percentual:
+        restaurante.taxa_servico_percentual != null
+          ? String(restaurante.taxa_servico_percentual)
+          : "",
+      taxa_servico_descricao: restaurante.taxa_servico_descricao ?? "",
+      couvert_mesa_habilitado: restaurante.couvert_mesa_habilitado ?? false,
+      couvert_mesa_valor:
+        restaurante.couvert_mesa_valor != null
+          ? String(restaurante.couvert_mesa_valor)
+          : "",
+      couvert_mesa_descricao: restaurante.couvert_mesa_descricao ?? "",
+      couvert_artistico_habilitado:
+        restaurante.couvert_artistico_habilitado ?? false,
+      couvert_artistico_valor:
+        restaurante.couvert_artistico_valor != null
+          ? String(restaurante.couvert_artistico_valor)
+          : "",
+      couvert_artistico_descricao:
+        restaurante.couvert_artistico_descricao ?? "",
     });
   }, [restaurante]);
 
@@ -119,6 +150,36 @@ function Configuracoes() {
       }
       percClienteNum = n;
     }
+
+    function parseNumOrNull(raw: string, max: number, label: string): number | null | "ERR" {
+      const t = raw.trim();
+      if (t === "") return null;
+      const n = Number(t.replace(",", "."));
+      if (!Number.isFinite(n) || n < 0 || n > max) {
+        toast.error(`${label} inválido (0–${max})`);
+        return "ERR";
+      }
+      return n;
+    }
+    const taxaPerc = parseNumOrNull(form.taxa_servico_percentual, 30, "Taxa de serviço (%)");
+    if (taxaPerc === "ERR") return;
+    const couvertMesaVal = parseNumOrNull(form.couvert_mesa_valor, 1000, "Couvert de mesa (R$)");
+    if (couvertMesaVal === "ERR") return;
+    const couvertArtVal = parseNumOrNull(form.couvert_artistico_valor, 1000, "Couvert artístico (R$)");
+    if (couvertArtVal === "ERR") return;
+
+    if (form.taxa_servico_habilitada && (taxaPerc == null || taxaPerc <= 0)) {
+      toast.error("Informe o percentual da taxa de serviço.");
+      return;
+    }
+    if (form.couvert_mesa_habilitado && (couvertMesaVal == null || couvertMesaVal <= 0)) {
+      toast.error("Informe o valor do couvert de mesa.");
+      return;
+    }
+    if (form.couvert_artistico_habilitado && (couvertArtVal == null || couvertArtVal <= 0)) {
+      toast.error("Informe o valor por pessoa do couvert artístico.");
+      return;
+    }
     try {
       await atualizar.mutateAsync({
         restauranteId: restaurante.id,
@@ -145,6 +206,15 @@ function Configuracoes() {
         comissao_pedido_cliente: form.comissao_pedido_cliente,
         comissao_pedido_cliente_percentual: percClienteNum,
         upsell_habilitado: form.upsell_habilitado,
+        taxa_servico_habilitada: form.taxa_servico_habilitada,
+        taxa_servico_percentual: taxaPerc,
+        taxa_servico_descricao: form.taxa_servico_descricao.trim() || null,
+        couvert_mesa_habilitado: form.couvert_mesa_habilitado,
+        couvert_mesa_valor: couvertMesaVal,
+        couvert_mesa_descricao: form.couvert_mesa_descricao.trim() || null,
+        couvert_artistico_habilitado: form.couvert_artistico_habilitado,
+        couvert_artistico_valor: couvertArtVal,
+        couvert_artistico_descricao: form.couvert_artistico_descricao.trim() || null,
       });
       toast.success("Configurações salvas");
     } catch (e: any) {
@@ -175,6 +245,23 @@ function Configuracoes() {
         habilitado={form.pix_habilitado}
         chave={form.pix_chave}
         titular={form.pix_nome_titular}
+        onChange={patch}
+      />
+
+      <TaxaServicoForm
+        habilitada={form.taxa_servico_habilitada}
+        percentual={form.taxa_servico_percentual}
+        descricao={form.taxa_servico_descricao}
+        onChange={patch}
+      />
+
+      <CouvertForm
+        mesaHabilitado={form.couvert_mesa_habilitado}
+        mesaValor={form.couvert_mesa_valor}
+        mesaDescricao={form.couvert_mesa_descricao}
+        artisticoHabilitado={form.couvert_artistico_habilitado}
+        artisticoValor={form.couvert_artistico_valor}
+        artisticoDescricao={form.couvert_artistico_descricao}
         onChange={patch}
       />
 
