@@ -1339,6 +1339,7 @@ export type Database = {
           pix_habilitado: boolean
           pix_nome_titular: string | null
           slug: string
+          upsell_habilitado: boolean
         }
         Insert: {
           ativo?: boolean
@@ -1360,6 +1361,7 @@ export type Database = {
           pix_habilitado?: boolean
           pix_nome_titular?: string | null
           slug: string
+          upsell_habilitado?: boolean
         }
         Update: {
           ativo?: boolean
@@ -1381,6 +1383,7 @@ export type Database = {
           pix_habilitado?: boolean
           pix_nome_titular?: string | null
           slug?: string
+          upsell_habilitado?: boolean
         }
         Relationships: []
       }

@@ -1,0 +1,1 @@
+ALTER TABLE public.restaurantes ADD COLUMN upsell_habilitado boolean NOT NULL DEFAULT true;

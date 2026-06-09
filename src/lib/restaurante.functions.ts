@@ -23,6 +23,7 @@ export interface Restaurante {
   comissao_rateio_troca_turno: boolean;
   comissao_pedido_cliente: boolean;
   comissao_pedido_cliente_percentual: number | null;
+  upsell_habilitado: boolean;
 }
 
 /** Restaurante do usuário autenticado (primeiro vínculo). */
