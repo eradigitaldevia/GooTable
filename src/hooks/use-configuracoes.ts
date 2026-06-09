@@ -29,6 +29,15 @@ type ConfigPayload = {
   comissao_pedido_cliente: boolean;
   comissao_pedido_cliente_percentual: number | null;
   upsell_habilitado: boolean;
+  taxa_servico_habilitada: boolean;
+  taxa_servico_percentual: number | null;
+  taxa_servico_descricao: string | null;
+  couvert_mesa_habilitado: boolean;
+  couvert_mesa_valor: number | null;
+  couvert_mesa_descricao: string | null;
+  couvert_artistico_habilitado: boolean;
+  couvert_artistico_valor: number | null;
+  couvert_artistico_descricao: string | null;
 };
 
 export function useAtualizarConfiguracoes(userId: string | undefined) {

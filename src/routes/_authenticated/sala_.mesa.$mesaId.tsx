@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowLeft, Clock, Merge, Split } from "lucide-react";
+import { ArrowLeft, Clock, Merge, Split, Coffee, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
@@ -9,6 +9,9 @@ import { formatBRL } from "@/lib/cart";
 import { JuntarComandasDialog } from "@/components/sala/juntar-comandas-dialog";
 import { DividirTotalDialog } from "@/components/sala/dividir-total-dialog";
 import { DetalhePedido } from "@/components/pedidos/detalhe-pedido";
+import { LancarCouvertDialog } from "@/components/sala/lancar-couvert-dialog";
+import { useRemoverCouvert } from "@/hooks/use-couvert";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/sala_/mesa/$mesaId")({
   component: MesaDetalhePage,
@@ -61,6 +64,12 @@ function MesaDetalhePage() {
   const [juntarOpen, setJuntarOpen] = useState(false);
   const [dividirOpen, setDividirOpen] = useState(false);
   const [pedidoAbertoId, setPedidoAbertoId] = useState<string | null>(null);
+  const [couvertComandaId, setCouvertComandaId] = useState<string | null>(null);
+  const removerCouvert = useRemoverCouvert();
+
+  const couvertAtivo =
+    (restaurante?.couvert_mesa_habilitado ?? false) ||
+    (restaurante?.couvert_artistico_habilitado ?? false);
 
   const pedidoAberto =
     data?.pedidos.find((p) => p.id === pedidoAbertoId) ?? null;
@@ -198,6 +207,53 @@ function MesaDetalhePage() {
                           </div>
                         </div>
                       </div>
+                      {c.couverts && c.couverts.length > 0 && (
+                        <ul className="mt-2 space-y-0.5 rounded-md bg-muted/40 p-2 text-[11px]">
+                          {c.couverts.map((cv) => (
+                            <li key={cv.id} className="flex items-center justify-between gap-2">
+                              <span>
+                                {cv.tipo === "mesa" ? "Couvert mesa" : "Couvert artístico"}
+                                {" "}· {cv.quantidade}× {formatBRL(cv.valor_unitario)}
+                              </span>
+                              <div className="flex items-center gap-2">
+                                <span className="font-semibold">{formatBRL(cv.total)}</span>
+                                <button
+                                  type="button"
+                                  className="text-destructive hover:underline"
+                                  onClick={async () => {
+                                    if (!restauranteId) return;
+                                    if (!confirm("Remover este couvert?")) return;
+                                    try {
+                                      await removerCouvert.mutateAsync({
+                                        restauranteId,
+                                        couvertId: cv.id,
+                                      });
+                                      toast.success("Couvert removido");
+                                    } catch (e) {
+                                      toast.error(e instanceof Error ? e.message : "Erro ao remover");
+                                    }
+                                  }}
+                                  aria-label="Remover couvert"
+                                >
+                                  <Trash2 className="h-3 w-3" />
+                                </button>
+                              </div>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                      {couvertAtivo && (
+                        <div className="mt-2 flex justify-end">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => setCouvertComandaId(c.id)}
+                          >
+                            <Coffee className="mr-1 h-3 w-3" />
+                            Lançar couvert
+                          </Button>
+                        </div>
+                      )}
                     </li>
                   ))}
                 </ul>
@@ -368,6 +424,25 @@ function MesaDetalhePage() {
           destinoStatus={pedidoAberto.destino_status}
           onClose={() => setPedidoAbertoId(null)}
           mostrarPagamento={false}
+        />
+      )}
+
+      {couvertComandaId && restauranteId && restaurante && (
+        <LancarCouvertDialog
+          open={!!couvertComandaId}
+          onOpenChange={(v) => !v && setCouvertComandaId(null)}
+          restauranteId={restauranteId}
+          comandaId={couvertComandaId}
+          comandaLabel={
+            data?.comandas.find((c) => c.id === couvertComandaId)?.titular_nome ??
+            "Comanda"
+          }
+          config={{
+            couvert_mesa_habilitado: restaurante.couvert_mesa_habilitado,
+            couvert_mesa_valor: restaurante.couvert_mesa_valor,
+            couvert_artistico_habilitado: restaurante.couvert_artistico_habilitado,
+            couvert_artistico_valor: restaurante.couvert_artistico_valor,
+          }}
         />
       )}
     </div>
