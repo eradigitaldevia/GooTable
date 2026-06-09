@@ -45,6 +45,7 @@ function Configuracoes() {
     comissao_rateio_troca_turno: false,
     comissao_pedido_cliente: true,
     comissao_pedido_cliente_percentual: "" as string,
+    upsell_habilitado: true,
   });
 
   useEffect(() => {
@@ -75,6 +76,7 @@ function Configuracoes() {
         restaurante.comissao_pedido_cliente_percentual != null
           ? String(restaurante.comissao_pedido_cliente_percentual)
           : "",
+      upsell_habilitado: restaurante.upsell_habilitado ?? true,
     });
   }, [restaurante]);
 
@@ -142,6 +144,7 @@ function Configuracoes() {
         comissao_rateio_troca_turno: form.comissao_rateio_troca_turno,
         comissao_pedido_cliente: form.comissao_pedido_cliente,
         comissao_pedido_cliente_percentual: percClienteNum,
+        upsell_habilitado: form.upsell_habilitado,
       });
       toast.success("Configurações salvas");
     } catch (e: any) {
@@ -206,6 +209,26 @@ function Configuracoes() {
               patch({ permitir_atendimento_cruzado: v })
             }
             aria-label="Permitir atendimento cruzado"
+          />
+        </div>
+      </section>
+
+      <section className="rounded-lg border border-border bg-card p-4">
+        <div className="flex items-start justify-between gap-4">
+          <div className="min-w-0">
+            <h2 className="text-base font-semibold">
+              Sugerir acompanhamentos no carrinho
+            </h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Mostra ao cliente, no carrinho, até 3 sugestões de bebidas e
+              sobremesas para complementar o pedido. Desligue se preferir não
+              exibir recomendações automáticas.
+            </p>
+          </div>
+          <Switch
+            checked={form.upsell_habilitado}
+            onCheckedChange={(v) => patch({ upsell_habilitado: v })}
+            aria-label="Sugerir acompanhamentos no carrinho"
           />
         </div>
       </section>
