@@ -363,12 +363,25 @@ export interface ResumoComanda {
   cupom_codigo: string | null;
   itens: ResumoItemConta[];
   por_cliente: { cliente_id: string; cliente_nome: string; subtotal: number }[];
+  couverts: {
+    id: string;
+    tipo: "mesa" | "artistico";
+    quantidade: number;
+    valor_unitario: number;
+    total: number;
+    descricao: string | null;
+  }[];
 }
 export interface ResumoConta {
   comanda_atual: ResumoComanda | null;
   meu_subtotal_na_comanda: number;
   total_mesa: number;
   comandas_da_mesa: { id: string; tipo: "individual" | "compartilhada"; total: number }[];
+  taxa_servico_habilitada: boolean;
+  taxa_servico_percentual: number;
+  taxa_servico_valor: number;
+  taxa_servico_descricao: string | null;
+  total_sugerido: number;
 }
 
 export const resumoContaFn = createServerFn({ method: "POST" })
@@ -383,11 +396,19 @@ export const resumoContaFn = createServerFn({ method: "POST" })
   .handler(async ({ data }): Promise<ResumoConta> => {
     const { data: mesa, error: mErr } = await supabaseAdmin
       .from("mesas")
-      .select("id")
+      .select("id, restaurante_id")
       .eq("qr_token", data.qrToken)
       .maybeSingle();
     if (mErr) throw new Error(mErr.message);
     if (!mesa) throw new Error("Mesa indisponível");
+
+    const { data: rest } = await supabaseAdmin
+      .from("restaurantes")
+      .select(
+        "taxa_servico_habilitada, taxa_servico_percentual, taxa_servico_descricao",
+      )
+      .eq("id", mesa.restaurante_id as string)
+      .maybeSingle();
 
     // Comandas da sessão
     const { data: comandas, error: cErr } = await supabaseAdmin
@@ -489,10 +510,35 @@ export const resumoContaFn = createServerFn({ method: "POST" })
         cupom_codigo: cupomCodigo,
         itens,
         por_cliente: Array.from(grupoMap.values()),
+        couverts: [],
       };
+
+      const { data: covs } = await supabaseAdmin
+        .from("comanda_couverts")
+        .select("id, tipo, quantidade, valor_unitario, descricao")
+        .eq("comanda_id", atual.id)
+        .order("criado_em", { ascending: true });
+      comandaAtual.couverts = (covs ?? []).map((c) => {
+        const q = Number(c.quantidade);
+        const v = Number(c.valor_unitario);
+        return {
+          id: c.id as string,
+          tipo: c.tipo as "mesa" | "artistico",
+          quantidade: q,
+          valor_unitario: v,
+          total: q * v,
+          descricao: (c.descricao as string | null) ?? null,
+        };
+      });
     }
 
     const totalMesa = lista.reduce((acc, c) => acc + Number(c.total ?? 0), 0);
+
+    const taxaHab = !!rest?.taxa_servico_habilitada;
+    const taxaPerc = Number(rest?.taxa_servico_percentual ?? 0);
+    const baseTaxa = comandaAtual ? Number(comandaAtual.total) : 0;
+    const taxaValor = taxaHab && taxaPerc > 0 ? Number(((baseTaxa * taxaPerc) / 100).toFixed(2)) : 0;
+    const totalSugerido = baseTaxa + taxaValor;
 
     return {
       comanda_atual: comandaAtual,
@@ -503,6 +549,11 @@ export const resumoContaFn = createServerFn({ method: "POST" })
         tipo: c.tipo,
         total: Number(c.total ?? 0),
       })),
+      taxa_servico_habilitada: taxaHab,
+      taxa_servico_percentual: taxaPerc,
+      taxa_servico_valor: taxaValor,
+      taxa_servico_descricao: (rest?.taxa_servico_descricao as string | null) ?? null,
+      total_sugerido: totalSugerido,
     };
   });
 
