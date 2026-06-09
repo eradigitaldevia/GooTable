@@ -28,6 +28,7 @@ type ConfigPayload = {
   comissao_rateio_troca_turno: boolean;
   comissao_pedido_cliente: boolean;
   comissao_pedido_cliente_percentual: number | null;
+  upsell_habilitado: boolean;
 };
 
 export function useAtualizarConfiguracoes(userId: string | undefined) {
