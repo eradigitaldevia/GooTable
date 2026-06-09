@@ -1,69 +1,71 @@
-# Plano: Melhorias no fluxo de pedidos do cliente
+# Sugestões do carrinho: destaque manual + contextual
 
-Objetivo: tornar a experiência "uma refeição contínua" em vez de "pedidos isolados". Tudo é frontend + serverFns de leitura + ativação de Realtime + **uma coluna nova** para configurar upsell. Sem outras alterações de schema.
+Substituir a regra atual (apenas categorias prioritárias por regex) por uma lógica em 3 camadas, com controle do restaurante e contexto do pedido.
 
-## Escopo das melhorias
+## 1. Banco de dados
 
-1. **Carrinho persistente flutuante** em todas as telas do cliente.
-2. **Agrupar pedidos da comanda** na tela de status (timeline da refeição).
-3. **Estados de preparo por item** mais claros.
-4. **Confirmação antes de enviar** com resumo.
-5. **Observações por item** no carrinho.
-6. **Upsell/recomendações** no carrinho — **configurável (liga/desliga) pelo restaurante**.
-7. **Polling → Realtime** no status e na conta.
-8. **Notificação quando o pedido fica pronto** (som + vibração + toast).
-9. **Tempo estimado de preparo**.
-10. **Chamar garçom com motivo rápido**.
-11. **Cancelar item pelo cliente até antes do preparo**.
-12. **Divisão de conta** visual na tela "Conta da mesa".
+Migração adicionando coluna na tabela `produtos`:
 
-## Entregas por fase
+- `destaque_upsell boolean NOT NULL DEFAULT false`
+- Índice parcial para acelerar a leitura: `CREATE INDEX ON produtos (restaurante_id) WHERE destaque_upsell = true`
 
-### Fase 1 — Carrinho persistente + Realtime + Agrupamento (núcleo)
+Atualizar o select público em `src/lib/cardapio-publico.functions.ts` para retornar o novo campo, e o tipo `ProdutoPublico`.
 
-(inalterado — já implementado conforme descrito anteriormente)
+## 2. Admin do cardápio
 
-### Fase 2 — Confirmação, observações, notificações
+Em `src/routes/_authenticated/admin/cardapio.tsx` (ou no formulário de produto correspondente):
 
-(inalterado — já implementado)
+- Adicionar um `Switch` "Sugerir no carrinho (upsell)" no formulário de criação/edição de produto.
+- Adicionar um ícone de estrela no card do produto na listagem indicando quando está em destaque, com toggle rápido (clique para ligar/desligar) para facilitar a curadoria.
+- Persistir via mutação existente de update de produto.
 
-### Fase 3 — Polish
+## 3. Nova lógica em `upsell-carrinho.tsx`
 
-**3.1 Recomendações/upsell — agora configurável**
+Substituir o algoritmo atual por:
 
-- **Schema**: nova coluna `restaurantes.upsell_habilitado boolean not null default true` (default `true` para não quebrar restaurantes existentes; cada dono pode desligar).
-- **Painel admin**: na tela de configurações do restaurante (`src/routes/_authenticated/...` de configurações), adicionar um `Switch` "Sugerir acompanhamentos ao cliente no carrinho" com descrição curta. Usa as mutations/serverFns existentes de update do restaurante (estender o serverFn de update para aceitar o novo campo).
-- **Exposição pública**: incluir `upsell_habilitado` no payload de `obterRestaurantePublicoFn` (ou equivalente já consumido pelo fluxo `/m/$qrToken`) para que o cliente saiba ler a flag sem auth.
-- **Frontend cliente** (`m.$qrToken_.carrinho.tsx`): o bloco "Que tal acompanhar?" só renderiza quando `restaurante.upsell_habilitado === true`. Quando desligado, nenhum espaço/placeholder aparece.
-- **Lógica de sugestão** (quando ligado): até 3 produtos do cardápio já em cache, priorizando categorias "bebidas" e "sobremesas" e excluindo itens já no carrinho.
+```text
+candidatos = produtos disponíveis e não presentes no carrinho
 
-**3.2 Chamar garçom com motivos** — inalterado.
+categoriasNoCarrinho = set de categoria_id dos itens do carrinho
 
-**3.3 Cancelamento de item pelo cliente** — inalterado (regra: só `pendente`, guard no backend).
+camada A — destaques: candidatos com destaque_upsell = true,
+           ordenados por: (a) categoria ainda não no carrinho, (b) preço asc
 
-**3.4 Divisão de conta (somente visual)** — inalterado (sem mutations, sem impacto em comandas/pagamentos).
+camada B — contextuais: candidatos cuja categoria casa regras:
+           - se não há bebida no carrinho → 1 bebida
+           - se não há sobremesa no carrinho e já existe prato principal → 1 sobremesa
+           - evita categorias já presentes
+           detecta categoria por nome (regex igual ao atual, mantida como utilitário)
 
-## Arquivos afetados (delta da Fase 3)
+camada C — fallback: demais candidatos disponíveis (qualquer categoria
+           ainda não representada), para completar até 3 sugestões
 
-**Novos**
-- `src/components/cliente/upsell-carrinho.tsx` (renderiza condicionalmente o bloco de sugestões).
+sugestoes = dedup(A ++ B ++ C).slice(0, 3)
+```
 
-**Editados**
-- `src/routes/m.$qrToken_.carrinho.tsx` — passa a flag `upsell_habilitado` ao componente.
-- ServerFn público do restaurante — incluir `upsell_habilitado` no retorno.
-- Tela de configurações do restaurante (admin) — adicionar o `Switch`.
-- ServerFn de update do restaurante — aceitar `upsell_habilitado` opcional.
+Comportamento adicional:
 
-**Migration**
-- `ALTER TABLE public.restaurantes ADD COLUMN upsell_habilitado boolean NOT NULL DEFAULT true;`
+- Se `sugestoes` ficar vazio (catálogo pequeno, tudo já no carrinho), não renderiza a seção (igual hoje).
+- Mantém o toggle global `upsell_habilitado` do restaurante como gate (sem mudança).
+- Sem chamadas extras de rede: tudo derivado de `produtos`/`categorias` já carregados.
 
-## Pontos técnicos
+## 4. Detalhes técnicos
 
-- Default `true` evita regressão para restaurantes existentes; UX já planejada é preservada por padrão.
-- Flag lida via serverFn público existente — sem novas rotas autenticadas para o cliente.
-- Nenhuma mudança em RLS é necessária (a coluna entra em tabela já com policies adequadas; leitura pública já é feita por serverFn com `supabaseAdmin` projetando colunas seguras — basta adicionar a coluna à projeção).
-- Toggle reativo: ao desligar no admin, próxima carga do cardápio público já omite o bloco.
+Arquivos afetados:
 
-## Ordem de execução
+- `supabase/migrations/<novo>.sql` — `ALTER TABLE produtos ADD COLUMN destaque_upsell ...` + índice
+- `src/integrations/supabase/types.ts` — regenerado após a migração
+- `src/lib/cardapio-publico.functions.ts` — incluir `destaque_upsell` no select e no tipo `ProdutoPublico`
+- `src/lib/produtos.functions.ts` (ou equivalente do admin) — incluir `destaque_upsell` nos schemas Zod de create/update
+- `src/routes/_authenticated/admin/cardapio.tsx` — `Switch` no form + indicador na lista
+- `src/components/cliente/upsell-carrinho.tsx` — reescrever `ordenados`/`sugestoes` com as 3 camadas; extrair `detectarCategoria(nome)` para um util pequeno
 
-Migration → expor flag no serverFn público → Switch no admin → render condicional no carrinho.
+Sem mudanças em RLS (coluna nova herda as policies existentes de `produtos`).
+
+## 5. Fora de escopo
+
+- Ranking por histórico de pedidos (popularidade real)
+- Sugestão por IA
+- A/B testing de sugestões
+
+Esses ficam para uma fase futura caso o restaurante peça mais inteligência.
