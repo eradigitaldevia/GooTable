@@ -1,41 +1,67 @@
-## Não sugerir itens já presentes no carrinho ou nos pedidos da comanda
+# Plano: Refinamentos do Upsell (3, 5, 7, 8)
 
-Hoje `sugerirUpsell` só remove itens do **carrinho local** (`idsNoCarrinho`). Itens que já foram enviados em pedidos anteriores da mesma comanda continuam aparecendo como sugestão, o que causa recomendações redundantes (ex.: cliente já pediu Coca, o upsell ainda sugere Coca).
+Implementar 4 melhorias na sugestão de upsell sem alterar schema do banco.
 
-### Mudança proposta
+## 3) Ocultar upsell quando o carrinho está vazio
 
-1. **Backend — expor produtos já pedidos na comanda**
-   - Em `src/lib/status-pedido-publico.functions.ts`, dentro de `listarPedidosComandaPublicoFn`:
-     - Adicionar `produto_id` e `status` ao select de `pedido_itens` (já carrega os itens, é só incluir o campo).
-     - Retornar, junto de `pedidos`, um novo campo `produto_ids: string[]` — conjunto distinto de `produto_id` de itens **não cancelados** (qualquer status ≠ `cancelado`).
-   - Atualizar o tipo de retorno da fn.
+**Arquivo:** `src/components/cliente/upsell-carrinho.tsx`
 
-2. **Frontend — passar esse conjunto ao upsell**
-   - Em `src/routes/m.$qrToken_.carrinho.tsx`:
-     - Chamar `usePedidosComanda(qrToken, identidade?.comandaId)` (hook já existe).
-     - Extrair `produtosJaPedidos = new Set(data?.produto_ids ?? [])`.
-     - Passar como nova prop `produtosJaPedidos` ao `<UpsellCarrinho />` (vazio quando não houver comanda).
+- Adicionar guarda no início: se `items.length === 0`, retornar `null`.
+- Mantém o componente visível assim que o cliente adicionar o 1º item.
 
-3. **Lógica — excluir do pool de candidatos**
-   - Em `src/lib/upsell.ts`, `sugerirUpsell` recebe um 4º parâmetro opcional `idsExcluidos?: Set<string>`.
-   - O filtro `candidatos` passa a ser:
-     ```ts
-     produtos.filter(p => p.disponivel && !idsNoCarrinho.has(p.id) && !idsExcluidos?.has(p.id))
-     ```
-   - O cálculo de `tiposNoCarrinho` também considera `idsExcluidos` (se já pedimos bebida, não sugerir outra bebida na camada B). Renomear internamente para `tiposJaConsumidos` para refletir a semântica.
+## 5) Rotação por sessão via localStorage
 
-4. **`UpsellCarrinho`**
-   - Aceita `produtosJaPedidos?: Set<string>` e repassa para `sugerirUpsell` como `idsExcluidos`.
+**Arquivo novo:** `src/lib/upsell-rotacao.ts`
 
-### Arquivos afetados
+- Funções `registrarImpressao(qrToken, produtoId)` e `getImpressoes(qrToken): Record<string, number>`.
+- Storage key: `upsell:imp:<qrToken>` com TTL de 6h (expira no carregamento se ultrapassado).
+- Estrutura: `{ ts: number, counts: Record<string, number> }`.
 
-- `src/lib/status-pedido-publico.functions.ts` — incluir `produto_id`/`status` no select e devolver `produto_ids` no retorno.
-- `src/routes/m.$qrToken_.carrinho.tsx` — consumir `usePedidosComanda` e propagar o set.
-- `src/components/cliente/upsell-carrinho.tsx` — nova prop opcional.
-- `src/lib/upsell.ts` — parâmetro `idsExcluidos` + uso em `candidatos` e em `tiposJaConsumidos`.
+**Arquivo:** `src/lib/upsell.ts`
 
-### Fora de escopo
+- Adicionar 6º parâmetro opcional `impressoes?: Record<string, number>` em `sugerirUpsell`.
+- Ao ordenar cada camada (A/B/C), deprioriza itens com `impressoes[id] >= 2` (joga para o fim, mantendo ordem interna).
 
-- Não muda RLS nem schema do banco.
-- Não muda nada na tela de status do pedido (a fn só ganha um campo extra, retrocompatível).
-- Não toca nas camadas A/B/C nem nos rótulos de motivo (continuam como discutido anteriormente, separadamente).
+**Arquivo:** `src/components/cliente/upsell-carrinho.tsx`
+
+- Ler impressões com `getImpressoes(qrToken)` e passar para `sugerirUpsell`.
+- Em `useEffect`, ao renderizar as sugestões, chamar `registrarImpressao` para cada `id` exibido (uma vez por mudança de lista).
+
+## 7) Thumbnails nas sugestões
+
+**Arquivo:** `src/components/cliente/upsell-carrinho.tsx`
+
+- Renderizar `<img src={p.imagem_url}>` (16x16 → `h-12 w-12 rounded-md object-cover`) ao lado esquerdo do nome quando `imagem_url` existir.
+- Fallback: ícone neutro (`<UtensilsCrossed />` em caixa cinza) quando não há imagem.
+- `loading="lazy"` e `decoding="async"`.
+
+## 8) Badges de motivação
+
+**Arquivo:** `src/lib/upsell.ts`
+
+- Trocar retorno de `sugerirUpsell` para `Array<{ produto: ProdutoPublico; motivo: MotivoUpsell }>`.
+- Tipo `MotivoUpsell = "destaque" | "bebida" | "sobremesa" | "popular"`.
+  - Camada A → `"destaque"`
+  - Camada B (bebida) → `"bebida"`
+  - Camada B (sobremesa) → `"sobremesa"`
+  - Camada C → `"popular"`
+
+**Arquivo:** `src/components/cliente/upsell-carrinho.tsx`
+
+- Map `motivo → { label, icon }`:
+  - `destaque` → ⭐ Destaque
+  - `bebida` → 🥤 Combina com seu pedido
+  - `sobremesa` → 🍰 Para finalizar
+  - `popular` → 👍 Mais pedidos
+- Renderizar como `<Badge variant="secondary" className="text-[10px]">` acima/abaixo do preço.
+
+## Detalhes técnicos
+
+- Sem mudança de schema, RLS, ou edge function.
+- Sem mudança no fluxo `produtosJaPedidos` já implementado.
+- Camada A continua respeitando ordenação por tipo novo + preço; rotação age como tiebreaker final.
+- Build TS: tipo de retorno muda em `sugerirUpsell` — único consumidor é `UpsellCarrinho`, então é seguro.
+
+## Fora de escopo
+
+- `bloqueado_upsell` (rec #1), filtro por ticket (#2), tabela `upsell_eventos` (#4), `tipo_upsell` em categorias (#6), A/B test do título (#9).
