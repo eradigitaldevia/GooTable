@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { Users } from "lucide-react";
 import { formatBRL } from "@/lib/cart";
+import { CancelarItemButton } from "@/components/cliente/cancelar-item-button";
 
 interface Item {
   id: string;
@@ -39,7 +40,15 @@ function StatusBadge({ item }: { item: Item }) {
   );
 }
 
-export function ItensPedido({ itens, total }: { itens: Item[]; total: number }) {
+export function ItensPedido({
+  itens,
+  total,
+  cancelContext,
+}: {
+  itens: Item[];
+  total: number;
+  cancelContext?: { qrToken: string; pedidoId: string; comandaId?: string | null };
+}) {
   const [aba, setAba] = useState<"itens" | "dividir">("itens");
 
   const grupos = useMemo(() => {
@@ -85,7 +94,18 @@ export function ItensPedido({ itens, total }: { itens: Item[]; total: number }) 
                 {it.observacao && (
                   <span className="block text-xs text-muted-foreground">↳ {it.observacao}</span>
                 )}
-                <StatusBadge item={it} />
+                <div className="mt-0.5 flex items-center gap-2">
+                  <StatusBadge item={it} />
+                  {cancelContext && (it.status ?? "pendente") === "pendente" && (
+                    <CancelarItemButton
+                      qrToken={cancelContext.qrToken}
+                      pedidoId={cancelContext.pedidoId}
+                      itemId={it.id}
+                      nome={it.nome_produto}
+                      comandaId={cancelContext.comandaId}
+                    />
+                  )}
+                </div>
               </span>
               <span className="text-muted-foreground">
                 {formatBRL(Number(it.preco_unit) * it.quantidade)}

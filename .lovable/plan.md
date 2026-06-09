@@ -1,90 +1,120 @@
-# Melhorias de UX na página /admin/cardapio
+# Plano: Melhorias no fluxo de pedidos do cliente
 
-Objetivo: tornar o gerenciamento do cardápio mais rápido e organizado quando o restaurante tem dezenas/centenas de itens. **Sem alterar** nenhuma lógica de cardápio (categorias, produtos, comissão, destinos) — apenas a página `src/routes/_authenticated/admin/cardapio.tsx` e componentes de apresentação.
+Objetivo: tornar a experiência "uma refeição contínua" em vez de "pedidos isolados", aplicando as 12 oportunidades discutidas. Tudo é frontend + um serverFn de leitura adicional + ativação de Realtime. Sem alterações de schema.
 
-## Melhorias propostas
+## Escopo das melhorias
 
-### 1. Barra de busca de produtos
+1. **Carrinho persistente flutuante** em todas as telas do cliente (cardápio, status, conta, minha conta).
+2. **Agrupar pedidos da comanda** na tela de status (timeline da refeição).
+3. **Estados de preparo por item** mais claros (bebida pronta vs. prato em preparo).
+4. **Confirmação antes de enviar** com resumo (itens, observações, total, tempo estimado).
+5. **Observações por item** no carrinho.
+6. **Upsell/recomendações** no carrinho.
+7. **Polling → Realtime** na tela de status e conta.
+8. **Notificação quando o pedido fica pronto** (som + vibração + toast).
+9. **Tempo estimado de preparo** por pedido/item.
+10. **Chamar garçom com motivo rápido** (FAB existente + drawer com motivos).
+11. **Cancelar item pelo cliente até antes do preparo** (regra atualizada — ver detalhes).
+12. **Divisão de conta** visual na tela "Conta da mesa" (somente cálculo — ver detalhes).
 
-Campo de texto no topo da seção de produtos que filtra por **nome** e **descrição** (case-insensitive, sem acento). Ícone de lupa, botão "limpar", contador "X de Y produtos".
+## Entregas por fase
 
-### 2. Filtros rápidos (chips)
+### Fase 1 — Carrinho persistente + Realtime + Agrupamento (núcleo)
 
-Logo abaixo da busca, chips de filtro combinável:
+**1.1 Carrinho persistente flutuante**
+- Novo `src/components/cliente/carrinho-persistente.tsx`: pílula flutuante (canto inferior direito) com badge de qtd e total; clique navega para `/m/$qrToken/carrinho`.
+- Substitui `CarrinhoFlutuante` (barra full-width) por pílula compacta para conviver com FAB "Chamar garçom" e botões da tela de status.
+- Mostrado em `/m/$qrToken`, `/m/$qrToken/status/$pedidoId`, `/m/$qrToken/conta`, `/m/$qrToken/minha-conta`.
+- Lê do mesmo `localStorage` (`mesa-cart:${qrToken}`) e ouve o evento `mesa-cart-change` já existente.
+- Visível só quando há itens e o cliente está identificado.
+- Reposicionar `ChamarGarcomFab` com offset quando o carrinho estiver visível.
 
-- **Categoria**: clicar em um chip da seção "Categorias" passa a filtrar a grid (visual de "selecionado"). Inclui chip "Sem categoria".
-- **Disponibilidade**: Todos / Disponíveis / Indisponíveis.
-- **Destino**: Todos / Cozinha / Bar (deriva de `destino_override` ou `categoria.destino`).
-- Chip "Limpar filtros" quando algum filtro estiver ativo.
+**1.2 Realtime no status e na conta**
+- Novo hook `useRealtimePedidoPublico(restauranteId, pedidoId)` em `src/hooks/use-realtime.ts`: `postgres_changes` em `pedidos` (filtro por `id`) e `pedido_itens` (filtro por `pedido_id`); invalida `["status-pedido-publico", qrToken, pedidoId]` e `["pedidos-comanda", qrToken, comandaId]`.
+- Trocar `refetchInterval: 5000` da tela de status pelo hook (mantém o fetch inicial).
+- Em `useRealtimeMesa`, trocar `setInterval` por subscrição real a `pedidos`/`pedido_itens` filtrada por `sessao_id`/`comanda_id`.
+- Pré-requisito: garantir que `pedidos` e `pedido_itens` estão na `publication supabase_realtime`. Se não estiverem, criar migration `ALTER PUBLICATION supabase_realtime ADD TABLE ...`.
 
-### 3. Agrupamento por categoria (toggle)
+**1.3 Agrupar pedidos da comanda no status**
+- Novo serverFn `listarPedidosComandaPublicoFn` em `src/lib/status-pedido-publico.functions.ts`: dado `qrToken` + `comandaId`, valida e retorna lista de pedidos da comanda (id, status, criado_em, total, itens prontos/total).
+- Carregar via `useQuery` na tela de status; render como **timeline** ("Pedido #1 entregue · Pedido #2 preparando · Pedido #3 recebido"). Clique expande os itens (reaproveita `ItensPedido`).
+- Cabeçalho passa a ser "Sua refeição na Mesa X" + total acumulado.
 
-Botão de alternância **"Agrupar por categoria"** (padrão ligado). Quando ligado: cada categoria vira uma sub-seção com seu próprio cabeçalho (nome + contagem + destino). Quando desligado: grid plana como hoje.
+### Fase 2 — Confirmação, observações, notificações
 
-### 4. Ordenação
+**2.1 Confirmação antes de enviar** — `AlertDialog` no carrinho com resumo (itens, qtd, obs, total, tempo estimado). Confirmar dispara o envio atual.
 
-Select com opções: **Ordem padrão** (atual), **Nome A–Z**, **Preço ↑**, **Preço ↓**, **Indisponíveis primeiro**. Persistente apenas durante a sessão.
+**2.2 Observações por item** — campo "Observação" colapsável em `carrinho-item-row.tsx` (tipo `CartItem` já tem `observacao`; falta apenas UI).
 
-### 5. Alternância de visualização: Grid / Lista
+**2.3 Notificação "pedido pronto"** — hook `useNotificarPedidoPronto(pedido)`: detecta transição para `pronto`/`entregue` via Realtime e dispara `navigator.vibrate(...)`, beep curto (Web Audio API, sem assets) e `toast.success`. Marca o último status visto em `sessionStorage` por pedido para não repetir.
 
-Botão Grid (atual) vs Lista densa (linhas compactas com thumb pequena, nome, categoria, preço, switch, ações) — útil para varrer muitos itens rapidamente.
+**2.4 Tempo estimado** — MVP: 15 min comida / 5 min bebida calculado a partir dos itens (usa `destino_preparo` do cardápio público quando disponível; senão soma fixa). Configurável depois.
 
-### 6. Estados vazios contextuais
+### Fase 3 — Polish
 
-Quando filtros não retornam nada: mensagem clara "Nenhum produto corresponde aos filtros" + botão "Limpar filtros". Hoje, com filtros aplicados, a grid simplesmente fica vazia.
+**3.1 Recomendações/upsell** — bloco "Que tal acompanhar?" no carrinho com até 3 produtos (bebidas/sobremesas) do cardápio em cache.
 
-### 7. Sticky toolbar
+**3.2 Chamar garçom com motivos** — `ChamarGarcomFab` abre `Drawer` com chips ("Mais um copo", "Talheres", "Conta", "Outro") e envia para o backend de chamados existente.
 
-Header + busca/filtros ficam grudados no topo ao rolar (`sticky top-0`), com leve blur de fundo. Categorias permanecem como seção rolável acima.
+**3.3 Cancelamento de item pelo cliente (regra atualizada)**
+- Regra de negócio: **o cliente só pode cancelar um item enquanto ele estiver com `status = 'pendente'`**. Assim que o item entrar em `em_preparo` (ou `pronto`/`entregue`), o cancelamento pelo cliente fica indisponível. **A capacidade do garçom de cancelar o pedido a qualquer momento permanece intacta** — nenhuma rota/serverFn do garçom é tocada.
+- UI: na tela de status, cada item em `pendente` ganha botão "Cancelar este item" (`AlertDialog` de confirmação). Itens em `em_preparo`/`pronto`/`entregue` não exibem o botão.
+- Backend: novo `cancelarItemPedidoPublicoFn` em `src/lib/status-pedido-publico.functions.ts`:
+  - Valida `qrToken` + `pedidoId` + `itemId` + `comandaId` do cliente (mesma validação de pertença usada nas outras funções públicas).
+  - **Guard obrigatório**: só executa se `pedido_itens.status = 'pendente'`. Qualquer outro status retorna erro "Este item já entrou em preparo e não pode mais ser cancelado".
+  - Ação: `UPDATE pedido_itens SET status = 'cancelado', ...` recalculando o `pedidos.total` (soma dos itens não-cancelados). Se todos os itens do pedido ficarem cancelados, marca `pedidos.status = 'cancelado'`. Nenhum efeito em comissões/comandas além do recálculo de total.
+  - Não altera nenhuma função/fluxo existente do garçom (cancelamento total continua via rotas autenticadas atuais).
+- Realtime já cobre a atualização da UI após o cancelamento.
 
-### 8. Atalhos de teclado
+**3.4 Divisão de conta (somente visual — regra atualizada)**
+- Botão "Dividir conta" na `m.$qrToken_.conta.tsx` abre `Dialog` puramente de **cálculo visual**:
+  - Modo "Igualmente entre N pessoas": input numérico → mostra `total / N` por pessoa.
+  - Modo "Por pessoa (referência)": apenas lê o agrupamento `por_cliente` já retornado por `useResumoConta` e exibe quanto cada cliente deve, com botão "Copiar".
+- **Restrições explícitas**:
+  - **NÃO altera** a separação de pedidos em comandas individuais (lógica de `escolha: "separada"`/`"compartilhada"` em `entrarNaMesaFn` permanece intocada).
+  - **NÃO altera** a função de juntar comandas do garçom (`juntarComandasMesaFn` e UI `juntar-comandas-dialog.tsx` permanecem intocadas).
+  - **NÃO chama** `gerarDivisaoContaFn` nem persiste divisão alguma — é só apresentação.
+  - **NÃO modifica** `comandas`, `pagamentos`, nem qualquer tabela. Nada de mutation.
+- Resultado: o cliente vê quanto cada pessoa deve para alinhar pagamento entre si; o fluxo operacional de comandas/pagamento do restaurante segue exatamente como hoje.
 
-- `/` foca a busca
-- `Esc` limpa a busca
+## Arquivos afetados
 
-### 9. Melhorias visuais menores no ProdutoCard
+**Novos**
+- `src/components/cliente/carrinho-persistente.tsx`
+- `src/components/cliente/refeicao-timeline.tsx`
+- `src/components/cliente/dividir-conta-dialog.tsx`
+- `src/components/cliente/chamar-garcom-drawer.tsx`
+- `src/components/cliente/cancelar-item-button.tsx`
+- `src/hooks/use-notificar-pedido-pronto.ts`
+- `src/hooks/use-pedidos-comanda.ts`
 
-- Mostrar **destino** (Cozinha/Bar) como badge discreto ao lado da categoria.
-- Mostrar indicador quando o produto tem **comissão customizada** (`percentual_comissao` não nulo) — pequeno badge "%".
-- Confirmar exclusão com `AlertDialog` em vez de `confirm()` nativo (consistência visual já usada em outras telas).
+**Editados**
+- `src/hooks/use-realtime.ts` — `useRealtimePedidoPublico` + Realtime real em `useRealtimeMesa`.
+- `src/lib/status-pedido-publico.functions.ts` — `listarPedidosComandaPublicoFn` + `cancelarItemPedidoPublicoFn` (com guard de `status='pendente'`).
+- `src/routes/m.$qrToken.tsx` — usa carrinho persistente; FAB com offset.
+- `src/routes/m.$qrToken_.carrinho.tsx` — diálogo de confirmação; observação por item; upsell.
+- `src/routes/m.$qrToken_.status.$pedidoId.tsx` — timeline da comanda, realtime, notificação, botão "Cancelar item" por item pendente, carrinho persistente.
+- `src/routes/m.$qrToken_.conta.tsx` — botão "Dividir conta" (visual) + carrinho persistente.
+- `src/routes/m.$qrToken_.minha-conta.tsx` — carrinho persistente.
+- `src/components/cliente/carrinho-item-row.tsx` — campo observação.
+- `src/components/cliente/chamar-garcom-fab.tsx` — abre drawer com motivos.
 
-### 10. Contagem global no header
+**Possível migration (somente se necessária)**
+- `ALTER PUBLICATION supabase_realtime ADD TABLE public.pedidos, public.pedido_itens;` — só se ainda não estiverem na publication.
 
-"Cardápio" passa a exibir, no subtítulo, contagens vivas: "X categorias · Y produtos (Z disponíveis)".
+**Removido**
+- `src/components/cliente/carrinho-flutuante.tsx`.
 
-## Escopo técnico
+## Pontos técnicos
 
-Arquivos afetados (apenas apresentação):
+- **Sem alterações de schema** além da publication de realtime (se necessária).
+- **Cancelamento de item** sempre revalidado no servidor pelo `status='pendente'`; UI esconde o botão como UX, mas a regra real está no backend.
+- **Garçom intocado**: nenhuma rota/serverFn em `_authenticated/`, `sala*`, `cozinha*`, `bar*` é editada. Cancelamentos pelo garçom continuam exatamente como hoje.
+- **Divisão de conta**: zero mutations, zero impacto em comandas/pagamentos. Pura UI sobre dados já carregados por `useResumoConta`.
+- **Realtime**: cleanup correto em `useEffect`; filtros por `pedido_id`/`comanda_id`/`sessao_id`.
+- **localStorage existente** segue como fonte do carrinho.
+- **Beep**: Web Audio API, sem assets.
 
-- `src/routes/_authenticated/admin/cardapio.tsx` — estado local de busca/filtros/ordenação/visualização, derivação de lista filtrada, toolbar sticky, agrupamento.
-- `src/components/cardapio/produto-card.tsx` — badges de destino/comissão, troca de `confirm()` por `AlertDialog`.
-- Novo `src/components/cardapio/produto-row.tsx` — linha densa para o modo "Lista".
-- Novo `src/components/cardapio/cardapio-toolbar.tsx` — encapsula busca/filtros/ordenação/visualização (mantém o route file enxuto).
+## Ordem de execução
 
-**Não serão tocados**: hooks (`use-cardapio`), server functions (`cardapio.functions.ts`), schemas, banco, dialogs de criação/edição, lógica de destino/comissão.
-
-Persistência das preferências (ordenação/visualização/agrupamento): apenas em estado React (sessão). Sem `localStorage` para manter escopo mínimo.
-
-## Sugestões fora do escopo (não implementar agora)
-
-Drag-and-drop para reordenar produtos/categorias, duplicar produto, ações em lote (selecionar vários e marcar indisponível/excluir), import/export CSV — exigiriam alterações em server functions e banco.
-
-## Pergunta antes de partir para o plano final
-
-Quer que eu inclua **todas** as 10 melhorias acima, ou prefere selecionar um subconjunto (ex.: só 1, 2, 3, 6 para um primeiro passo mais focado)?  
-  
-Resposta: incluas as melhorias 1, 2, 3, 4, 5, 6, 9 e 10.  
-
-
-  
-IMPORTANTE:
-
-Execute APENAS a alteração explicitamente solicitada. 
-
-NÃO refatore, otimize, melhore ou modifique código não relacionado. 
-
-NÃO faça suposições. 
-
-Se algo não estiver claro, PARE e pergunte antes de alterar qualquer coisa. 
-
-Preserve 100% do comportamento e da funcionalidade existentes.
+Fase 1 (núcleo) → validar → Fase 2 → Fase 3. Cada fase é independente e testável isoladamente.

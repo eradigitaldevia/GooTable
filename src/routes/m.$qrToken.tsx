@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { HeaderClienteSkeleton } from "@/components/cliente/skeletons/header-cliente-skeleton";
@@ -6,7 +6,7 @@ import { ProdutosListaSkeleton } from "@/components/cliente/skeletons/produtos-l
 import { addToCart, cartCount, getCart } from "@/lib/cart";
 import { toast } from "sonner";
 import { ClienteHeader } from "@/components/cliente/cliente-header";
-import { CarrinhoFlutuante } from "@/components/cliente/carrinho-flutuante";
+import { CarrinhoPersistente } from "@/components/cliente/carrinho-persistente";
 import { ProdutoDialog } from "@/components/cliente/produto-dialog";
 import { ProdutosListaCategorizada } from "@/components/cliente/produtos-lista-categorizada";
 import { ChamarGarcomFab } from "@/components/cliente/chamar-garcom-fab";
@@ -41,7 +41,6 @@ interface PendenteConflito {
 
 function ClienteMenu() {
   const { qrToken } = Route.useParams();
-  const navigate = useNavigate();
   const { data, isLoading } = useCardapioPublico(qrToken);
   const { identidade, hidratado, precisaRehidratarSessao, salvar, limpar } =
     useClienteMesa(qrToken);
@@ -324,10 +323,7 @@ function ClienteMenu() {
         />
       </main>
 
-      <CarrinhoFlutuante
-        count={count}
-        onClick={() => navigate({ to: "/m/$qrToken/carrinho", params: { qrToken } })}
-      />
+      <CarrinhoPersistente qrToken={qrToken} />
 
       <ChamarGarcomFab
         qrToken={qrToken}

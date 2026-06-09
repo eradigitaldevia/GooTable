@@ -3,10 +3,12 @@ import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { ArrowLeft, Loader2 } from "lucide-react";
+import { ArrowLeft, Clock } from "lucide-react";
 import { cartTotal, clearCart, formatBRL, getCart, setCart, type CartItem } from "@/lib/cart";
 import { toast } from "sonner";
 import { CarrinhoItemRow } from "@/components/cliente/carrinho-item-row";
+import { ConfirmarPedidoDialog } from "@/components/cliente/confirmar-pedido-dialog";
+import { estimarTempoCart } from "@/lib/tempo-preparo";
 import { useCriarPedidoPublico } from "@/hooks/use-pedidos";
 import { useClienteMesa } from "@/hooks/use-cliente-mesa";
 
@@ -44,6 +46,10 @@ function Carrinho() {
 
   const setNome = (idx: number, nome: string) => {
     atualizar(items.map((it, i) => (i === idx ? { ...it, cliente_nome: nome || undefined } : it)));
+  };
+
+  const setObs = (idx: number, obs: string) => {
+    atualizar(items.map((it, i) => (i === idx ? { ...it, observacao: obs || undefined } : it)));
   };
 
   const enviarPedido = async () => {
@@ -104,6 +110,7 @@ function Carrinho() {
                   idx={idx}
                   onSetQtd={setQtd}
                   onSetNome={setNome}
+                  onSetObs={setObs}
                 />
               ))}
             </div>
@@ -117,6 +124,11 @@ function Carrinho() {
               <span className="text-muted-foreground">Total</span>
               <span className="text-2xl font-bold text-primary">{formatBRL(cartTotal(items))}</span>
             </div>
+
+            <div className="mt-3 flex items-center justify-center gap-2 text-xs text-muted-foreground">
+              <Clock className="h-3.5 w-3.5" />
+              Estimativa de preparo ~{estimarTempoCart(items)} min
+            </div>
           </>
         )}
       </main>
@@ -124,15 +136,12 @@ function Carrinho() {
       {items.length > 0 && (
         <div className="fixed inset-x-0 bottom-0 z-40 border-t bg-background/95 px-4 py-3 backdrop-blur">
           <div className="mx-auto max-w-2xl">
-            <Button
-              size="lg"
-              className="h-14 w-full rounded-2xl text-base font-semibold"
-              disabled={criarPedido.isPending}
-              onClick={enviarPedido}
-            >
-              {criarPedido.isPending ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : null}
-              Enviar pedido · {formatBRL(cartTotal(items))}
-            </Button>
+            <ConfirmarPedidoDialog
+              items={items}
+              obsGeral={obsGeral.trim()}
+              enviando={criarPedido.isPending}
+              onConfirm={enviarPedido}
+            />
           </div>
         </div>
       )}

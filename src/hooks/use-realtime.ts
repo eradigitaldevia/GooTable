@@ -55,7 +55,9 @@ export function useRealtimePedidos(restauranteId: string | undefined) {
 }
 
 /**
- * Polling para um pedido específico (tela de status do cliente).
+ * Realtime para um pedido público do cliente: ouve mudanças em
+ * pedidos (por id) e pedido_itens (por pedido_id) e invalida o cache
+ * da tela de status. Também invalida a lista de pedidos da comanda.
  */
 export function useRealtimePedido(pedidoId: string | undefined) {
   const qc = useQueryClient();
@@ -70,18 +72,97 @@ export function useRealtimePedido(pedidoId: string | undefined) {
 }
 
 /**
- * Polling da mesa atual (conta + clientes ativos na sessão).
+ * Realtime para a tela de status pública (cliente).
+ * Filtra eventos por pedido_id (e por id em pedidos).
+ */
+export function useRealtimePedidoPublico(
+  qrToken: string | undefined,
+  pedidoId: string | undefined,
+  comandaId?: string | null,
+) {
+  const qc = useQueryClient();
+
+  useEffect(() => {
+    if (!qrToken || !pedidoId) return;
+
+    const invalidate = () => {
+      qc.invalidateQueries({ queryKey: ["status-pedido-publico", qrToken, pedidoId] });
+      if (comandaId) {
+        qc.invalidateQueries({ queryKey: ["pedidos-comanda", qrToken, comandaId] });
+      }
+    };
+
+    const channel = supabase
+      .channel(`rt-status-pub-${pedidoId}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "pedidos",
+          filter: `id=eq.${pedidoId}`,
+        },
+        invalidate,
+      )
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "pedido_itens",
+          filter: `pedido_id=eq.${pedidoId}`,
+        },
+        invalidate,
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [qrToken, pedidoId, comandaId, qc]);
+}
+
+/**
+ * Realtime da mesa atual (conta + clientes ativos na sessão).
+ * Ouve mudanças em pedidos/pedido_itens filtrados pela sessão.
  */
 export function useRealtimeMesa(qrToken: string | undefined, sessaoId: string | undefined) {
   const qc = useQueryClient();
 
   useEffect(() => {
     if (!qrToken || !sessaoId) return;
-    const id = setInterval(() => {
+
+    const invalidate = () => {
       qc.invalidateQueries({ queryKey: ["resumo-conta", qrToken] });
       qc.invalidateQueries({ queryKey: ["minha-conta", qrToken] });
-    }, 5000);
-    return () => clearInterval(id);
+    };
+
+    const channel = supabase
+      .channel(`rt-mesa-${sessaoId}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "pedidos",
+          filter: `sessao_id=eq.${sessaoId}`,
+        },
+        invalidate,
+      )
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "pedido_itens",
+        },
+        invalidate,
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [qrToken, sessaoId, qc]);
 }
 
