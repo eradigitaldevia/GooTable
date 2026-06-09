@@ -13,10 +13,11 @@ interface Props {
   onAdd: (next: CartItem[]) => void;
   clienteNome?: string;
   clienteId?: string;
+  produtosJaPedidos?: Set<string>;
 }
 
-export function UpsellCarrinho({ qrToken, produtos, categorias, items, onAdd, clienteNome, clienteId }: Props) {
-  const sugestoes = sugerirUpsell(produtos, categorias, items, 3);
+export function UpsellCarrinho({ qrToken, produtos, categorias, items, onAdd, clienteNome, clienteId, produtosJaPedidos }: Props) {
+  const sugestoes = sugerirUpsell(produtos, categorias, items, 3, produtosJaPedidos);
 
   if (sugestoes.length === 0) return null;
 
