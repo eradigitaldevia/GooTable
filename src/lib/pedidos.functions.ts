@@ -853,6 +853,14 @@ export interface ResumoMesaComanda {
   total: number;
   total_pago: number;
   saldo: number;
+  couverts: {
+    id: string;
+    tipo: "mesa" | "artistico";
+    quantidade: number;
+    valor_unitario: number;
+    total: number;
+    descricao: string | null;
+  }[];
 }
 
 export interface ResumoContaMesa {
@@ -974,6 +982,40 @@ export const resumoContaMesaFn = createServerFn({ method: "POST" })
         }
       }
 
+      // Couverts por comanda
+      const couvertsPorComanda = new Map<
+        string,
+        ResumoMesaComanda["couverts"]
+      >();
+      if (comandaIds.length > 0) {
+        const { data: covs } = await supabaseAdmin
+          .from("comanda_couverts")
+          .select("id, comanda_id, tipo, quantidade, valor_unitario, descricao")
+          .in("comanda_id", comandaIds)
+          .order("criado_em", { ascending: true });
+        for (const cv of (covs ?? []) as Array<{
+          id: string;
+          comanda_id: string;
+          tipo: "mesa" | "artistico";
+          quantidade: number;
+          valor_unitario: number;
+          descricao: string | null;
+        }>) {
+          const q = Number(cv.quantidade);
+          const v = Number(cv.valor_unitario);
+          const arr = couvertsPorComanda.get(cv.comanda_id) ?? [];
+          arr.push({
+            id: cv.id,
+            tipo: cv.tipo,
+            quantidade: q,
+            valor_unitario: v,
+            total: q * v,
+            descricao: cv.descricao ?? null,
+          });
+          couvertsPorComanda.set(cv.comanda_id, arr);
+        }
+      }
+
       comandas = lista.map((c) => {
         const total = Number(c.total ?? 0);
         const pago = Number(c.total_pago ?? 0);
@@ -991,6 +1033,7 @@ export const resumoContaMesaFn = createServerFn({ method: "POST" })
           total,
           total_pago: pago,
           saldo: total - pago,
+          couverts: couvertsPorComanda.get(c.id) ?? [],
         };
       });
 
