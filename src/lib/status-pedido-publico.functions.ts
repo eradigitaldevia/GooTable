@@ -232,17 +232,14 @@ export const cancelarItemPedidoPublicoFn = createServerFn({ method: "POST" })
       0,
     );
 
-    const update: Record<string, unknown> = {
-      total: novoTotal,
-      atualizado_em: new Date().toISOString(),
-    };
-    if (!restantes || restantes.length === 0) {
-      update.status = "cancelado";
-    }
-
+    const todosCancelados = !restantes || restantes.length === 0;
     const { error: upErr } = await supabaseAdmin
       .from("pedidos")
-      .update(update)
+      .update({
+        total: novoTotal,
+        atualizado_em: new Date().toISOString(),
+        ...(todosCancelados ? { status: "cancelado" as const } : {}),
+      })
       .eq("id", data.pedidoId);
     if (upErr) return { erro: upErr.message };
 
