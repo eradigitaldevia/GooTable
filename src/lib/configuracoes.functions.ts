@@ -40,6 +40,15 @@ const configSchema = z.object({
   comissao_pedido_cliente: z.boolean(),
   comissao_pedido_cliente_percentual: z.number().min(0).max(100).nullable(),
   upsell_habilitado: z.boolean(),
+  taxa_servico_habilitada: z.boolean(),
+  taxa_servico_percentual: z.number().min(0).max(30).nullable(),
+  taxa_servico_descricao: z.string().trim().max(200).nullable(),
+  couvert_mesa_habilitado: z.boolean(),
+  couvert_mesa_valor: z.number().min(0).max(1000).nullable(),
+  couvert_mesa_descricao: z.string().trim().max(300).nullable(),
+  couvert_artistico_habilitado: z.boolean(),
+  couvert_artistico_valor: z.number().min(0).max(1000).nullable(),
+  couvert_artistico_descricao: z.string().trim().max(300).nullable(),
 });
 
 export const atualizarConfiguracoesFn = createServerFn({ method: "POST" })
@@ -52,6 +61,15 @@ export const atualizarConfiguracoesFn = createServerFn({ method: "POST" })
     // Regra de negócio: PIX habilitado exige chave preenchida.
     if (data.pix_habilitado && !data.pix_chave) {
       throw new Error("Informe a chave PIX ou desabilite o PIX");
+    }
+    if (data.taxa_servico_habilitada && (data.taxa_servico_percentual == null || data.taxa_servico_percentual <= 0)) {
+      throw new Error("Informe o percentual da taxa de serviço (> 0).");
+    }
+    if (data.couvert_mesa_habilitado && (data.couvert_mesa_valor == null || data.couvert_mesa_valor <= 0)) {
+      throw new Error("Informe o valor do couvert de mesa (> 0).");
+    }
+    if (data.couvert_artistico_habilitado && (data.couvert_artistico_valor == null || data.couvert_artistico_valor <= 0)) {
+      throw new Error("Informe o valor por pessoa do couvert artístico (> 0).");
     }
 
     const { error } = await supabase
@@ -73,6 +91,15 @@ export const atualizarConfiguracoesFn = createServerFn({ method: "POST" })
         comissao_pedido_cliente: data.comissao_pedido_cliente,
         comissao_pedido_cliente_percentual: data.comissao_pedido_cliente_percentual,
         upsell_habilitado: data.upsell_habilitado,
+        taxa_servico_habilitada: data.taxa_servico_habilitada,
+        taxa_servico_percentual: data.taxa_servico_percentual,
+        taxa_servico_descricao: data.taxa_servico_descricao,
+        couvert_mesa_habilitado: data.couvert_mesa_habilitado,
+        couvert_mesa_valor: data.couvert_mesa_valor,
+        couvert_mesa_descricao: data.couvert_mesa_descricao,
+        couvert_artistico_habilitado: data.couvert_artistico_habilitado,
+        couvert_artistico_valor: data.couvert_artistico_valor,
+        couvert_artistico_descricao: data.couvert_artistico_descricao,
       })
       .eq("id", data.restauranteId);
     if (error) throw new Error(error.message);
