@@ -2,6 +2,7 @@ import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { formatBRL, type CartItem, getCart, setCart } from "@/lib/cart";
 import type { CategoriaPublica, ProdutoPublico } from "@/lib/cardapio-publico.functions";
+import { sugerirUpsell } from "@/lib/upsell";
 import { toast } from "sonner";
 
 interface Props {
@@ -14,21 +15,8 @@ interface Props {
   clienteId?: string;
 }
 
-const CATEGORIAS_PRIORITARIAS = /bebida|drink|suco|cerveja|vinho|refri|sobremesa|doce/i;
-
 export function UpsellCarrinho({ qrToken, produtos, categorias, items, onAdd, clienteNome, clienteId }: Props) {
-  const idsNoCarrinho = new Set(items.map((i) => i.produto_id));
-
-  const catsPrioritarias = new Set(
-    categorias.filter((c) => CATEGORIAS_PRIORITARIAS.test(c.nome)).map((c) => c.id),
-  );
-
-  const candidatos = produtos.filter((p) => p.disponivel && !idsNoCarrinho.has(p.id));
-  const ordenados = [
-    ...candidatos.filter((p) => p.categoria_id && catsPrioritarias.has(p.categoria_id)),
-    ...candidatos.filter((p) => !p.categoria_id || !catsPrioritarias.has(p.categoria_id)),
-  ];
-  const sugestoes = ordenados.slice(0, 3);
+  const sugestoes = sugerirUpsell(produtos, categorias, items, 3);
 
   if (sugestoes.length === 0) return null;
 

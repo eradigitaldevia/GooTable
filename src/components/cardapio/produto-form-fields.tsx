@@ -20,6 +20,7 @@ interface FormState {
   percentual_comissao: string;
   comissao_aplicavel: boolean;
   destino_override: "" | "cozinha" | "bar";
+  destaque_upsell: boolean;
 }
 
 export function ProdutoFormFields({
@@ -123,6 +124,21 @@ export function ProdutoFormFields({
             Desligue para itens isentos de comissão.
           </p>
         </div>
+      </div>
+      <div className="space-y-2">
+        <Label>Sugerir no carrinho (upsell)</Label>
+        <div className="flex h-10 items-center gap-2 rounded-md border px-3">
+          <Switch
+            checked={form.destaque_upsell}
+            onCheckedChange={(v) => onChange({ ...form, destaque_upsell: v })}
+          />
+          <span className="text-sm text-muted-foreground">
+            {form.destaque_upsell ? "Em destaque" : "Não sugerido"}
+          </span>
+        </div>
+        <p className="text-xs text-muted-foreground">
+          Quando ligado, este item aparece com prioridade nas sugestões do carrinho dos clientes.
+        </p>
       </div>
     </>
   );
