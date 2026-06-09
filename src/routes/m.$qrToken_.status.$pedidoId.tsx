@@ -6,7 +6,14 @@ import { StatusTimeline } from "@/components/cliente/status-timeline";
 import { StatusTimelineSkeleton } from "@/components/cliente/skeletons/status-timeline-skeleton";
 import { ItensPedido } from "@/components/cliente/itens-pedido";
 import { PixPanel } from "@/components/cliente/pix-panel";
+import { RefeicaoTimeline } from "@/components/cliente/refeicao-timeline";
+import { CarrinhoPersistente } from "@/components/cliente/carrinho-persistente";
+import { ChamarGarcomFab } from "@/components/cliente/chamar-garcom-fab";
 import { carregarStatusPedidoPublicoFn } from "@/lib/status-pedido-publico.functions";
+import { useClienteMesa } from "@/hooks/use-cliente-mesa";
+import { usePedidosComanda } from "@/hooks/use-pedidos-comanda";
+import { useRealtimePedidoPublico } from "@/hooks/use-realtime";
+import { useNotificarPedidoPronto } from "@/hooks/use-notificar-pedido-pronto";
 
 export const Route = createFileRoute("/m/$qrToken_/status/$pedidoId")({
   component: Status,
@@ -14,13 +21,17 @@ export const Route = createFileRoute("/m/$qrToken_/status/$pedidoId")({
 
 function Status() {
   const { qrToken, pedidoId } = Route.useParams();
+  const { identidade } = useClienteMesa(qrToken);
   const fn = useServerFn(carregarStatusPedidoPublicoFn);
   const { data, isLoading } = useQuery({
     queryKey: ["status-pedido-publico", qrToken, pedidoId],
     queryFn: () => fn({ data: { qrToken, pedidoId } }),
-    refetchInterval: 5000,
-    refetchIntervalInBackground: false,
   });
+
+  useRealtimePedidoPublico(qrToken, pedidoId, identidade?.comandaId);
+  useNotificarPedidoPronto(pedidoId, data?.pedido?.status);
+
+  const { data: pedidosComanda } = usePedidosComanda(qrToken, identidade?.comandaId);
 
   if (isLoading) {
     return <StatusTimelineSkeleton />;
@@ -46,9 +57,11 @@ function Status() {
   }
 
   const pixOn = !!restaurante.pix_habilitado && !!restaurante.pix_chave;
+  const lista =
+    pedidosComanda && !("erro" in pedidosComanda) ? pedidosComanda.pedidos ?? [] : [];
 
   return (
-    <div className="min-h-screen bg-background pb-12">
+    <div className="min-h-screen bg-background pb-28">
       <header className="border-b bg-card px-4 py-5">
         <div className="mx-auto max-w-2xl">
           <p className="text-xs uppercase tracking-wide text-muted-foreground">Pedido</p>
@@ -59,7 +72,15 @@ function Status() {
       <main className="mx-auto max-w-2xl space-y-6 px-4 py-6">
         <StatusTimeline status={pedido.status} />
 
-        <ItensPedido itens={itens} total={Number(pedido.total)} />
+        <ItensPedido
+          itens={itens}
+          total={Number(pedido.total)}
+          cancelContext={{ qrToken, pedidoId, comandaId: identidade?.comandaId }}
+        />
+
+        {lista.length > 1 && (
+          <RefeicaoTimeline qrToken={qrToken} pedidos={lista} atualId={pedidoId} />
+        )}
 
         {pixOn && (
           <PixPanel
@@ -89,6 +110,18 @@ function Status() {
           </Link>
         </div>
       </main>
+
+      <CarrinhoPersistente qrToken={qrToken} />
+
+      {identidade && (
+        <ChamarGarcomFab
+          qrToken={qrToken}
+          comandaId={identidade.comandaId}
+          sessaoId={identidade.sessaoId}
+          clienteId={identidade.clienteId}
+          bottomOffset
+        />
+      )}
     </div>
   );
 }
