@@ -146,6 +146,9 @@ export const listarPedidosComandaPublicoFn = createServerFn({ method: "POST" })
       .select("pedido_id, produto_id, quantidade, quantidade_pronta, status")
       .in("pedido_id", ids);
 
+    const pedidosAtivos = new Set(
+      pedidos.filter((p) => p.status !== "cancelado").map((p) => p.id),
+    );
     const agg = new Map<string, { total: number; prontos: number }>();
     const produtoIds = new Set<string>();
     for (const it of itens ?? []) {
@@ -153,7 +156,7 @@ export const listarPedidosComandaPublicoFn = createServerFn({ method: "POST" })
       a.total += it.quantidade;
       a.prontos += it.status === "pronto" ? it.quantidade : it.quantidade_pronta;
       agg.set(it.pedido_id, a);
-      if (it.status !== "cancelado" && it.produto_id) produtoIds.add(it.produto_id);
+      if (it.produto_id && pedidosAtivos.has(it.pedido_id)) produtoIds.add(it.produto_id);
     }
 
     return {
