@@ -30,6 +30,7 @@ export interface ProdutoPublico {
   categoria_id: string | null;
   disponivel: boolean;
   ordem: number;
+  destaque_upsell: boolean;
 }
 
 export type ResultadoCardapio =
@@ -68,7 +69,7 @@ export const carregarCardapioPublicoFn = createServerFn({ method: "POST" })
         .order("ordem"),
       supabaseAdmin
         .from("produtos")
-        .select("id, nome, descricao, preco, imagem_url, categoria_id, disponivel, ordem")
+        .select("id, nome, descricao, preco, imagem_url, categoria_id, disponivel, ordem, destaque_upsell")
         .eq("restaurante_id", m.restaurante_id)
         .eq("disponivel", true)
         .order("ordem"),

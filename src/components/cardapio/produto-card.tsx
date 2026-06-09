@@ -2,7 +2,7 @@ import { memo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
-import { Pencil, Trash2, Image as ImageIcon, Percent } from "lucide-react";
+import { Pencil, Trash2, Image as ImageIcon, Percent, Star } from "lucide-react";
 import { toast } from "sonner";
 import {
   AlertDialog,
@@ -30,6 +30,7 @@ interface Produto {
   percentual_comissao: number | null;
   comissao_aplicavel: boolean;
   destino_override: "cozinha" | "bar" | null;
+  destaque_upsell: boolean;
 }
 
 function ProdutoCardComponent({
@@ -97,6 +98,11 @@ function ProdutoCardComponent({
               {produto.percentual_comissao != null && (
                 <Badge variant="secondary" className="gap-0.5 px-1.5 py-0 text-[10px]" title="Comissão customizada">
                   <Percent className="h-2.5 w-2.5" /> {produto.percentual_comissao}
+                </Badge>
+              )}
+              {produto.destaque_upsell && (
+                <Badge variant="secondary" className="gap-0.5 px-1.5 py-0 text-[10px]" title="Sugerido no carrinho (upsell)">
+                  <Star className="h-2.5 w-2.5 fill-current" /> Upsell
                 </Badge>
               )}
             </div>

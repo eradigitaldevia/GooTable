@@ -27,6 +27,7 @@ interface Produto {
   percentual_comissao?: number | null;
   comissao_aplicavel?: boolean;
   destino_override?: "cozinha" | "bar" | null;
+  destaque_upsell?: boolean;
 }
 
 const produtoSchema = z.object({
@@ -37,6 +38,7 @@ const produtoSchema = z.object({
   percentual_comissao: z.number().min(0).max(100).nullable(),
   comissao_aplicavel: z.boolean(),
   destino_override: z.enum(["cozinha", "bar"]).nullable(),
+  destaque_upsell: z.boolean(),
 });
 
 export default function ProdutoDialogBody({
@@ -61,6 +63,7 @@ export default function ProdutoDialogBody({
       produto?.percentual_comissao != null ? String(produto.percentual_comissao) : "",
     comissao_aplicavel: produto?.comissao_aplicavel ?? true,
     destino_override: (produto?.destino_override ?? "") as "" | "cozinha" | "bar",
+    destaque_upsell: produto?.destaque_upsell ?? false,
   });
   const [imagemUrl, setImagemUrl] = useState<string | null>(produto?.imagem_url ?? null);
   const [uploading, setUploading] = useState(false);
@@ -98,6 +101,7 @@ export default function ProdutoDialogBody({
       percentual_comissao: pctNum,
       comissao_aplicavel: form.comissao_aplicavel,
       destino_override: form.destino_override || null,
+      destaque_upsell: form.destaque_upsell,
     });
     if (!parsed.success) {
       toast.error(parsed.error.issues[0].message);
@@ -113,6 +117,7 @@ export default function ProdutoDialogBody({
       percentual_comissao: parsed.data.percentual_comissao,
       comissao_aplicavel: parsed.data.comissao_aplicavel,
       destino_override: parsed.data.destino_override,
+      destaque_upsell: parsed.data.destaque_upsell,
     };
     try {
       if (produto) {
