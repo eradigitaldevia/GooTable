@@ -51,6 +51,8 @@ const configSchema = z.object({
   couvert_artistico_descricao: z.string().trim().max(300).nullable(),
   taxa_servico_repasse_habilitado: z.boolean(),
   taxa_servico_repasse_percentual: z.number().min(0).max(100).nullable(),
+  couvert_artistico_repasse_habilitado: z.boolean(),
+  couvert_artistico_repasse_percentual: z.number().min(0).max(100).nullable(),
 });
 
 export const atualizarConfiguracoesFn = createServerFn({ method: "POST" })
@@ -81,6 +83,15 @@ export const atualizarConfiguracoesFn = createServerFn({ method: "POST" })
       repassePerc = null;
     } else if (repasseHab && (repassePerc == null || repassePerc <= 0)) {
       throw new Error("Informe o percentual de repasse aos garçons (> 0).");
+    }
+    // Repasse de couvert artístico só faz sentido com o couvert artístico habilitado
+    let repCouvHab = data.couvert_artistico_repasse_habilitado;
+    let repCouvPerc = data.couvert_artistico_repasse_percentual;
+    if (!data.couvert_artistico_habilitado) {
+      repCouvHab = false;
+      repCouvPerc = null;
+    } else if (repCouvHab && (repCouvPerc == null || repCouvPerc <= 0)) {
+      throw new Error("Informe o percentual de repasse aos artistas (> 0).");
     }
 
     const { error } = await supabase
@@ -113,6 +124,8 @@ export const atualizarConfiguracoesFn = createServerFn({ method: "POST" })
         couvert_artistico_descricao: data.couvert_artistico_descricao,
         taxa_servico_repasse_habilitado: repasseHab,
         taxa_servico_repasse_percentual: repassePerc,
+        couvert_artistico_repasse_habilitado: repCouvHab,
+        couvert_artistico_repasse_percentual: repCouvPerc,
       })
       .eq("id", data.restauranteId);
     if (error) throw new Error(error.message);
