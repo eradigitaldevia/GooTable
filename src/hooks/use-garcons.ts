@@ -13,6 +13,7 @@ import {
   listarGarconsFn,
   pagarComissoesFn,
   resumoComissoesFn,
+  listarComissoesTaxaServicoFn,
 } from "@/lib/garcons.functions";
 import {
   redefinirSenhaGarcomFn,
@@ -197,6 +198,28 @@ export function useResumoComissoes(restauranteId: string | undefined) {
       ? queryKeys.resumoComissoes(restauranteId)
       : ["resumo-comissoes", "none"],
     queryFn: () => fn({ data: { restauranteId: restauranteId! } }),
+    enabled: !!restauranteId,
+  });
+}
+
+export function useComissoesTaxaServico(
+  restauranteId: string | undefined,
+  filtros: { status?: "pendente" | "pago" | "todos"; garcomId?: string } = {},
+) {
+  const fn = useServerFn(listarComissoesTaxaServicoFn);
+  const status = filtros.status ?? "pendente";
+  return useQuery({
+    queryKey: restauranteId
+      ? ["comissoes-taxa-servico", restauranteId, { status, garcomId: filtros.garcomId }]
+      : ["comissoes-taxa-servico", "none"],
+    queryFn: () =>
+      fn({
+        data: {
+          restauranteId: restauranteId!,
+          status,
+          garcomId: filtros.garcomId,
+        },
+      }),
     enabled: !!restauranteId,
   });
 }
