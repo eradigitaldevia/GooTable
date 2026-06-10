@@ -239,6 +239,111 @@ export function ComissoesPanel({ restauranteId }: { restauranteId: string }) {
         </table>
         </div>
       </Card>
+
+      {repasseHabilitado && (
+        <Card className="overflow-hidden">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border p-4">
+            <div>
+              <div className="text-sm font-semibold">Repasse de taxa de serviço</div>
+              <div className="text-xs text-muted-foreground">
+                Calculado por comanda fechada, rateado entre os garçons que atenderam.
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              {selecionadosTaxa.size > 0 && (
+                <span className="text-sm text-muted-foreground">
+                  {selecionadosTaxa.size} selecionado(s) — {brl(valorSelecionadoTaxa)}
+                </span>
+              )}
+              <Button
+                disabled={selecionadosTaxa.size === 0 || pagar.isPending}
+                onClick={handlePagarTaxa}
+              >
+                Marcar como pagos
+              </Button>
+            </div>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[760px] text-sm">
+              <thead className="bg-muted/40 text-left text-xs uppercase text-muted-foreground">
+                <tr>
+                  <th className="px-4 py-3 w-10">
+                    {status === "pendente" && (
+                      <Checkbox
+                        checked={
+                          taxas.length > 0 &&
+                          taxas.every((t) => selecionadosTaxa.has(t.id))
+                        }
+                        onCheckedChange={(v) => toggleAllTaxa(!!v)}
+                      />
+                    )}
+                  </th>
+                  <th className="px-4 py-3">Data</th>
+                  <th className="px-4 py-3">Garçom</th>
+                  <th className="px-4 py-3">Comanda</th>
+                  <th className="px-4 py-3 text-right">Taxa total</th>
+                  <th className="px-4 py-3 text-right">% repasse</th>
+                  <th className="px-4 py-3 text-right">Peso</th>
+                  <th className="px-4 py-3 text-right">Repasse</th>
+                  <th className="px-4 py-3">Status</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border">
+                {loadingTaxas && (
+                  <tr>
+                    <td colSpan={9} className="px-4 py-6 text-center text-muted-foreground">
+                      Carregando…
+                    </td>
+                  </tr>
+                )}
+                {!loadingTaxas && taxas.length === 0 && (
+                  <tr>
+                    <td colSpan={9} className="px-4 py-6 text-center text-muted-foreground">
+                      Nenhum repasse neste filtro.
+                    </td>
+                  </tr>
+                )}
+                {taxas.map((t) => (
+                  <tr key={t.id}>
+                    <td className="px-4 py-3">
+                      {t.status === "pendente" && (
+                        <Checkbox
+                          checked={selecionadosTaxa.has(t.id)}
+                          onCheckedChange={(v) => toggleTaxa(t.id, !!v)}
+                        />
+                      )}
+                    </td>
+                    <td className="px-4 py-3 text-muted-foreground">
+                      {new Date(t.calculado_em).toLocaleString("pt-BR")}
+                    </td>
+                    <td className="px-4 py-3 font-medium">{t.garcom_nome}</td>
+                    <td className="px-4 py-3 text-muted-foreground">
+                      {t.comanda_id.slice(0, 8)}
+                    </td>
+                    <td className="px-4 py-3 text-right tabular-nums">{brl(t.valor_taxa_total)}</td>
+                    <td className="px-4 py-3 text-right tabular-nums">
+                      {t.percentual_repasse.toFixed(2)}%
+                    </td>
+                    <td className="px-4 py-3 text-right tabular-nums">
+                      {t.peso.toFixed(0)}
+                    </td>
+                    <td className="px-4 py-3 text-right font-semibold tabular-nums">
+                      {brl(t.valor_repasse)}
+                    </td>
+                    <td className="px-4 py-3">
+                      {t.status === "pago" ? (
+                        <Badge variant="secondary">Pago</Badge>
+                      ) : (
+                        <Badge variant="outline">Pendente</Badge>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </Card>
+      )}
     </div>
   );
 }
