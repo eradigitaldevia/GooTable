@@ -19,6 +19,7 @@ import {
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { useLancarCouvert } from "@/hooks/use-couvert";
+import { useApresentacaoAtiva } from "@/hooks/use-couvert-artistico";
 import { formatBRL } from "@/lib/cart";
 
 export interface CouvertConfig {
@@ -50,6 +51,7 @@ export function LancarCouvertDialog({
   const [quantidade, setQuantidade] = useState("1");
   const [valor, setValor] = useState("");
   const lancar = useLancarCouvert();
+  const { data: apresentacaoAtiva } = useApresentacaoAtiva(restauranteId);
 
   useEffect(() => {
     if (!open) return;
@@ -145,6 +147,18 @@ export function LancarCouvertDialog({
             <span className="text-muted-foreground">Total a cobrar</span>
             <span className="font-semibold">{formatBRL(totalPrevisto)}</span>
           </div>
+          {tipo === "artistico" && !apresentacaoAtiva && (
+            <div className="rounded-md border border-amber-500/40 bg-amber-500/10 p-2 text-xs text-amber-700">
+              Nenhuma apresentação ativa — o couvert será cobrado, mas não
+              gerará repasse para artistas.
+            </div>
+          )}
+          {tipo === "artistico" && apresentacaoAtiva && (
+            <div className="rounded-md border border-emerald-500/40 bg-emerald-500/10 p-2 text-xs text-emerald-700">
+              Vinculado à apresentação:{" "}
+              <strong>{apresentacaoAtiva.nome}</strong>
+            </div>
+          )}
         </div>
 
         <DialogFooter>
