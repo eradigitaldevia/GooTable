@@ -315,6 +315,8 @@ function Configuracoes() {
         artisticoHabilitado={form.couvert_artistico_habilitado}
         artisticoValor={form.couvert_artistico_valor}
         artisticoDescricao={form.couvert_artistico_descricao}
+        repasseHabilitado={form.couvert_artistico_repasse_habilitado}
+        repassePercentual={form.couvert_artistico_repasse_percentual}
         onChange={patch}
       />
 
