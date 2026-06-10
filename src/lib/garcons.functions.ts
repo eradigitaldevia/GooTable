@@ -63,6 +63,21 @@ export interface ResumoComissaoGarcom {
   pedidos_count: number;
 }
 
+export interface ComissaoTaxaServico {
+  id: string;
+  restaurante_id: string;
+  garcom_id: string;
+  garcom_nome: string;
+  comanda_id: string;
+  valor_taxa_total: number;
+  percentual_repasse: number;
+  peso: number;
+  valor_repasse: number;
+  status: "pendente" | "pago";
+  calculado_em: string;
+  pago_em: string | null;
+}
+
 /* ---------- Garçons (CRUD) ---------- */
 
 export const listarGarconsFn = createServerFn({ method: "POST" })
@@ -391,4 +406,49 @@ export const resumoComissoesFn = createServerFn({ method: "POST" })
     });
     if (error) throw new Error(error.message);
     return (result ?? []) as unknown as ResumoComissaoGarcom[];
+  });
+
+export const listarComissoesTaxaServicoFn = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) =>
+    z
+      .object({
+        restauranteId: z.string().uuid(),
+        status: z.enum(["pendente", "pago", "todos"]).default("pendente"),
+        garcomId: z.string().uuid().optional(),
+      })
+      .parse(d),
+  )
+  .handler(async ({ context, data }) => {
+    const { supabase, userId } = context;
+    await assertAcessoRestaurante(supabase, userId, data.restauranteId);
+    let q = supabase
+      .from("comissoes_taxa_servico")
+      .select(
+        "id, restaurante_id, garcom_id, comanda_id, valor_taxa_total, percentual_repasse, peso, valor_repasse, status, calculado_em, pago_em, garcons:garcom_id(nome)",
+      )
+      .eq("restaurante_id", data.restauranteId)
+      .order("calculado_em", { ascending: false })
+      .limit(500);
+    if (data.status !== "todos") q = q.eq("status", data.status);
+    if (data.garcomId) q = q.eq("garcom_id", data.garcomId);
+    const { data: rows, error } = await q;
+    if (error) throw new Error(error.message);
+    return (rows ?? []).map((r) => {
+      const nome = (r as { garcons?: { nome: string } | null }).garcons?.nome ?? "—";
+      return {
+        id: r.id,
+        restaurante_id: r.restaurante_id,
+        garcom_id: r.garcom_id,
+        garcom_nome: nome,
+        comanda_id: r.comanda_id,
+        valor_taxa_total: Number(r.valor_taxa_total),
+        percentual_repasse: Number(r.percentual_repasse),
+        peso: Number(r.peso ?? 0),
+        valor_repasse: Number(r.valor_repasse),
+        status: r.status as "pendente" | "pago",
+        calculado_em: r.calculado_em,
+        pago_em: r.pago_em,
+      } as ComissaoTaxaServico;
+    });
   });

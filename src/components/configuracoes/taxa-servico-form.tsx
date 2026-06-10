@@ -6,15 +6,21 @@ export function TaxaServicoForm({
   habilitada,
   percentual,
   descricao,
+  repasseHabilitado,
+  repassePercentual,
   onChange,
 }: {
   habilitada: boolean;
   percentual: string;
   descricao: string;
+  repasseHabilitado: boolean;
+  repassePercentual: string;
   onChange: (patch: {
     taxa_servico_habilitada?: boolean;
     taxa_servico_percentual?: string;
     taxa_servico_descricao?: string;
+    taxa_servico_repasse_habilitado?: boolean;
+    taxa_servico_repasse_percentual?: string;
   }) => void;
 }) {
   return (
@@ -36,6 +42,7 @@ export function TaxaServicoForm({
       </div>
 
       {habilitada && (
+        <>
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-1">
             <Label>Percentual (%)</Label>
@@ -57,6 +64,43 @@ export function TaxaServicoForm({
             />
           </div>
         </div>
+        <div className="rounded-md border border-dashed border-border bg-muted/30 p-3">
+          <div className="flex items-start justify-between gap-4">
+            <div className="min-w-0">
+              <h3 className="text-sm font-semibold">Repasse aos garçons</h3>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Defina quanto da taxa de serviço arrecadada vai para os
+                garçons (rateado proporcionalmente ao atendimento de cada
+                comanda). Ex.: 100% = toda a taxa vai para os garçons;
+                80% = 20% fica para a casa.
+              </p>
+            </div>
+            <Switch
+              checked={repasseHabilitado}
+              onCheckedChange={(v) =>
+                onChange({ taxa_servico_repasse_habilitado: v })
+              }
+              aria-label="Habilitar repasse da taxa de serviço aos garçons"
+            />
+          </div>
+          {repasseHabilitado && (
+            <div className="mt-3 max-w-xs space-y-1">
+              <Label>% da taxa que vai para os garçons</Label>
+              <Input
+                inputMode="decimal"
+                placeholder="100"
+                value={repassePercentual}
+                onChange={(e) =>
+                  onChange({
+                    taxa_servico_repasse_percentual: e.target.value,
+                  })
+                }
+              />
+              <p className="text-xs text-muted-foreground">Entre 0 e 100%.</p>
+            </div>
+          )}
+        </div>
+        </>
       )}
     </section>
   );

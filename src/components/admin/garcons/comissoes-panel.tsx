@@ -11,7 +11,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
-import { useComissoes, usePagarComissoes, useResumoComissoes } from "@/hooks/use-garcons";
+import {
+  useComissoes,
+  usePagarComissoes,
+  useResumoComissoes,
+  useComissoesTaxaServico,
+} from "@/hooks/use-garcons";
 import { useAuth } from "@/hooks/use-auth";
 import { useMeuRestaurante } from "@/hooks/use-restaurante";
 import { RelatorioExportarCard } from "./relatorio-exportar-card";
@@ -28,6 +33,12 @@ export function ComissoesPanel({ restauranteId }: { restauranteId: string }) {
   const { user } = useAuth();
   const { data: restaurante } = useMeuRestaurante(user?.id);
   const modoItem = restaurante?.comissao_modo === "item";
+  const repasseHabilitado = !!restaurante?.taxa_servico_repasse_habilitado;
+  const { data: taxas = [], isLoading: loadingTaxas } = useComissoesTaxaServico(
+    repasseHabilitado ? restauranteId : undefined,
+    { status },
+  );
+  const [selecionadosTaxa, setSelecionadosTaxa] = useState<Set<string>>(new Set());
 
   const totalPendente = useMemo(
     () => resumo.reduce((acc, r) => acc + Number(r.pendente ?? 0), 0),
@@ -68,6 +79,37 @@ export function ComissoesPanel({ restauranteId }: { restauranteId: string }) {
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Erro ao pagar");
     }
+  };
+
+  const valorSelecionadoTaxa = taxas
+    .filter((t) => selecionadosTaxa.has(t.id))
+    .reduce((acc, t) => acc + t.valor_repasse, 0);
+
+  const handlePagarTaxa = async () => {
+    if (selecionadosTaxa.size === 0) return;
+    try {
+      const r = await pagar.mutateAsync({ ids: Array.from(selecionadosTaxa) });
+      toast.success(`${r.count} repasse(s) marcado(s) como pago(s)`);
+      setSelecionadosTaxa(new Set());
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Erro ao pagar");
+    }
+  };
+
+  const toggleTaxa = (id: string, checked: boolean) => {
+    setSelecionadosTaxa((prev) => {
+      const n = new Set(prev);
+      if (checked) n.add(id);
+      else n.delete(id);
+      return n;
+    });
+  };
+  const toggleAllTaxa = (checked: boolean) => {
+    if (!checked) {
+      setSelecionadosTaxa(new Set());
+      return;
+    }
+    setSelecionadosTaxa(new Set(taxas.filter((t) => t.status === "pendente").map((t) => t.id)));
   };
 
   return (
@@ -197,6 +239,111 @@ export function ComissoesPanel({ restauranteId }: { restauranteId: string }) {
         </table>
         </div>
       </Card>
+
+      {repasseHabilitado && (
+        <Card className="overflow-hidden">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border p-4">
+            <div>
+              <div className="text-sm font-semibold">Repasse de taxa de serviço</div>
+              <div className="text-xs text-muted-foreground">
+                Calculado por comanda fechada, rateado entre os garçons que atenderam.
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              {selecionadosTaxa.size > 0 && (
+                <span className="text-sm text-muted-foreground">
+                  {selecionadosTaxa.size} selecionado(s) — {brl(valorSelecionadoTaxa)}
+                </span>
+              )}
+              <Button
+                disabled={selecionadosTaxa.size === 0 || pagar.isPending}
+                onClick={handlePagarTaxa}
+              >
+                Marcar como pagos
+              </Button>
+            </div>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[760px] text-sm">
+              <thead className="bg-muted/40 text-left text-xs uppercase text-muted-foreground">
+                <tr>
+                  <th className="px-4 py-3 w-10">
+                    {status === "pendente" && (
+                      <Checkbox
+                        checked={
+                          taxas.length > 0 &&
+                          taxas.every((t) => selecionadosTaxa.has(t.id))
+                        }
+                        onCheckedChange={(v) => toggleAllTaxa(!!v)}
+                      />
+                    )}
+                  </th>
+                  <th className="px-4 py-3">Data</th>
+                  <th className="px-4 py-3">Garçom</th>
+                  <th className="px-4 py-3">Comanda</th>
+                  <th className="px-4 py-3 text-right">Taxa total</th>
+                  <th className="px-4 py-3 text-right">% repasse</th>
+                  <th className="px-4 py-3 text-right">Peso</th>
+                  <th className="px-4 py-3 text-right">Repasse</th>
+                  <th className="px-4 py-3">Status</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border">
+                {loadingTaxas && (
+                  <tr>
+                    <td colSpan={9} className="px-4 py-6 text-center text-muted-foreground">
+                      Carregando…
+                    </td>
+                  </tr>
+                )}
+                {!loadingTaxas && taxas.length === 0 && (
+                  <tr>
+                    <td colSpan={9} className="px-4 py-6 text-center text-muted-foreground">
+                      Nenhum repasse neste filtro.
+                    </td>
+                  </tr>
+                )}
+                {taxas.map((t) => (
+                  <tr key={t.id}>
+                    <td className="px-4 py-3">
+                      {t.status === "pendente" && (
+                        <Checkbox
+                          checked={selecionadosTaxa.has(t.id)}
+                          onCheckedChange={(v) => toggleTaxa(t.id, !!v)}
+                        />
+                      )}
+                    </td>
+                    <td className="px-4 py-3 text-muted-foreground">
+                      {new Date(t.calculado_em).toLocaleString("pt-BR")}
+                    </td>
+                    <td className="px-4 py-3 font-medium">{t.garcom_nome}</td>
+                    <td className="px-4 py-3 text-muted-foreground">
+                      {t.comanda_id.slice(0, 8)}
+                    </td>
+                    <td className="px-4 py-3 text-right tabular-nums">{brl(t.valor_taxa_total)}</td>
+                    <td className="px-4 py-3 text-right tabular-nums">
+                      {t.percentual_repasse.toFixed(2)}%
+                    </td>
+                    <td className="px-4 py-3 text-right tabular-nums">
+                      {t.peso.toFixed(0)}
+                    </td>
+                    <td className="px-4 py-3 text-right font-semibold tabular-nums">
+                      {brl(t.valor_repasse)}
+                    </td>
+                    <td className="px-4 py-3">
+                      {t.status === "pago" ? (
+                        <Badge variant="secondary">Pago</Badge>
+                      ) : (
+                        <Badge variant="outline">Pendente</Badge>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </Card>
+      )}
     </div>
   );
 }

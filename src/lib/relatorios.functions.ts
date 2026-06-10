@@ -24,6 +24,17 @@ export interface RelatorioBonusLinha {
   calculado_em: string;
 }
 
+export interface RelatorioTaxaServicoLinha {
+  id: string;
+  comanda_id: string;
+  calculado_em: string;
+  valor_taxa_total: number;
+  percentual_repasse: number;
+  peso: number;
+  valor_repasse: number;
+  status: "pendente" | "pago";
+}
+
 export interface RelatorioGarcom {
   garcom_id: string;
   garcom_nome: string;
@@ -34,10 +45,13 @@ export interface RelatorioGarcom {
     comissao_paga: number;
     bonus_pendente: number;
     bonus_pago: number;
+    taxa_servico_pendente: number;
+    taxa_servico_paga: number;
     total_pagar: number;
   };
   comissoes: RelatorioComissaoLinha[];
   bonus: RelatorioBonusLinha[];
+  taxa_servico: RelatorioTaxaServicoLinha[];
 }
 
 export interface RelatorioComissoes {
@@ -106,6 +120,20 @@ export const gerarRelatorioComissoesFn = createServerFn({ method: "POST" })
     const { data: bonusRows, error: bErr } = await qb;
     if (bErr) throw new Error(bErr.message);
 
+    let qt = supabase
+      .from("comissoes_taxa_servico")
+      .select(
+        "id, garcom_id, comanda_id, valor_taxa_total, percentual_repasse, peso, valor_repasse, status, calculado_em",
+      )
+      .eq("restaurante_id", data.restauranteId)
+      .gte("calculado_em", data.inicio)
+      .lte("calculado_em", data.fim)
+      .order("calculado_em", { ascending: true })
+      .limit(5000);
+    if (data.garcomId) qt = qt.eq("garcom_id", data.garcomId);
+    const { data: taxaRows, error: tErr } = await qt;
+    if (tErr) throw new Error(tErr.message);
+
     const metaIds = Array.from(
       new Set((bonusRows ?? []).map((b) => b.meta_id).filter(Boolean) as string[]),
     );
@@ -132,10 +160,13 @@ export const gerarRelatorioComissoesFn = createServerFn({ method: "POST" })
           comissao_paga: 0,
           bonus_pendente: 0,
           bonus_pago: 0,
+          taxa_servico_pendente: 0,
+          taxa_servico_paga: 0,
           total_pagar: 0,
         },
         comissoes: [],
         bonus: [],
+        taxa_servico: [],
       });
     }
 
@@ -188,9 +219,29 @@ export const gerarRelatorioComissoesFn = createServerFn({ method: "POST" })
       else slot.totais.bonus_pendente += valor;
     }
 
+    for (const t of taxaRows ?? []) {
+      const slot = map.get(t.garcom_id);
+      if (!slot) continue;
+      const valor = Number(t.valor_repasse);
+      slot.taxa_servico.push({
+        id: t.id,
+        comanda_id: t.comanda_id,
+        calculado_em: t.calculado_em,
+        valor_taxa_total: Number(t.valor_taxa_total),
+        percentual_repasse: Number(t.percentual_repasse),
+        peso: Number(t.peso ?? 0),
+        valor_repasse: valor,
+        status: t.status as "pendente" | "pago",
+      });
+      if (t.status === "pago") slot.totais.taxa_servico_paga += valor;
+      else slot.totais.taxa_servico_pendente += valor;
+    }
+
     for (const slot of map.values()) {
       slot.totais.total_pagar =
-        slot.totais.comissao_pendente + slot.totais.bonus_pendente;
+        slot.totais.comissao_pendente +
+        slot.totais.bonus_pendente +
+        slot.totais.taxa_servico_pendente;
     }
 
     const result: RelatorioComissoes = {

@@ -73,6 +73,22 @@ export function exportarRelatorioCSV(rel: RelatorioComissoes) {
           .join(";"),
       );
     }
+    for (const t of g.taxa_servico) {
+      linhas.push(
+        [
+          g.garcom_nome,
+          fmtDateTime(t.calculado_em),
+          `TAXA:${t.comanda_id.slice(0, 8)}`,
+          t.valor_taxa_total.toFixed(2).replace(".", ","),
+          `${t.percentual_repasse.toFixed(2)}% repasse`,
+          t.peso.toFixed(0),
+          t.valor_repasse.toFixed(2).replace(".", ","),
+          t.status,
+        ]
+          .map(csvEscape)
+          .join(";"),
+      );
+    }
   }
   const csv = "\uFEFF" + linhas.join("\n");
   const fname = `comissoes_${rel.restaurante.nome}_${rel.periodo.inicio.slice(0, 10)}_${rel.periodo.fim.slice(0, 10)}.csv`;
@@ -118,6 +134,7 @@ export async function gerarRelatorioPDF(rel: RelatorioComissoes) {
       `Pedidos: ${g.totais.pedidos_count}   Vendido: ${brl(g.totais.total_vendido)}   ` +
       `Comissão pend.: ${brl(g.totais.comissao_pendente)}   paga: ${brl(g.totais.comissao_paga)}   ` +
       `Bônus pend.: ${brl(g.totais.bonus_pendente)}   pago: ${brl(g.totais.bonus_pago)}   ` +
+      `Taxa serv. pend.: ${brl(g.totais.taxa_servico_pendente)}   paga: ${brl(g.totais.taxa_servico_paga)}   ` +
       `Total a pagar: ${brl(g.totais.total_pagar)}`;
     doc.text(linhaResumo, 40, cursorY + 14, { maxWidth: pageWidth - 80 });
     doc.setTextColor(0);
@@ -154,6 +171,26 @@ export async function gerarRelatorioPDF(rel: RelatorioComissoes) {
           fmtDate(b.periodo_ref),
           brl(b.valor),
           b.status,
+        ]),
+        styles: { fontSize: 8, cellPadding: 4 },
+        headStyles: { fillColor: [240, 240, 240], textColor: 30 },
+        margin: { left: 40, right: 40 },
+      });
+      cursorY = (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 10;
+    }
+
+    if (g.taxa_servico.length > 0) {
+      autoTable(doc, {
+        startY: cursorY,
+        head: [["Data", "Comanda", "Taxa total", "% repasse", "Peso", "Repasse", "Status"]],
+        body: g.taxa_servico.map((t) => [
+          fmtDateTime(t.calculado_em),
+          t.comanda_id.slice(0, 8),
+          brl(t.valor_taxa_total),
+          `${t.percentual_repasse.toFixed(2)}%`,
+          `${t.peso.toFixed(0)}`,
+          brl(t.valor_repasse),
+          t.status,
         ]),
         styles: { fontSize: 8, cellPadding: 4 },
         headStyles: { fillColor: [240, 240, 240], textColor: 30 },

@@ -471,6 +471,73 @@ export type Database = {
           },
         ]
       }
+      comissoes_taxa_servico: {
+        Row: {
+          calculado_em: string
+          comanda_id: string
+          garcom_id: string
+          id: string
+          pago_em: string | null
+          pago_por: string | null
+          percentual_repasse: number
+          peso: number
+          restaurante_id: string
+          status: string
+          valor_repasse: number
+          valor_taxa_total: number
+        }
+        Insert: {
+          calculado_em?: string
+          comanda_id: string
+          garcom_id: string
+          id?: string
+          pago_em?: string | null
+          pago_por?: string | null
+          percentual_repasse: number
+          peso: number
+          restaurante_id: string
+          status?: string
+          valor_repasse: number
+          valor_taxa_total: number
+        }
+        Update: {
+          calculado_em?: string
+          comanda_id?: string
+          garcom_id?: string
+          id?: string
+          pago_em?: string | null
+          pago_por?: string | null
+          percentual_repasse?: number
+          peso?: number
+          restaurante_id?: string
+          status?: string
+          valor_repasse?: number
+          valor_taxa_total?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "comissoes_taxa_servico_comanda_id_fkey"
+            columns: ["comanda_id"]
+            isOneToOne: false
+            referencedRelation: "comandas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "comissoes_taxa_servico_garcom_id_fkey"
+            columns: ["garcom_id"]
+            isOneToOne: false
+            referencedRelation: "garcons"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "comissoes_taxa_servico_restaurante_id_fkey"
+            columns: ["restaurante_id"]
+            isOneToOne: false
+            referencedRelation: "restaurantes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       cupons: {
         Row: {
           ativo: boolean
@@ -1402,6 +1469,8 @@ export type Database = {
           taxa_servico_descricao: string | null
           taxa_servico_habilitada: boolean
           taxa_servico_percentual: number | null
+          taxa_servico_repasse_habilitado: boolean
+          taxa_servico_repasse_percentual: number | null
           upsell_habilitado: boolean
         }
         Insert: {
@@ -1433,6 +1502,8 @@ export type Database = {
           taxa_servico_descricao?: string | null
           taxa_servico_habilitada?: boolean
           taxa_servico_percentual?: number | null
+          taxa_servico_repasse_habilitado?: boolean
+          taxa_servico_repasse_percentual?: number | null
           upsell_habilitado?: boolean
         }
         Update: {
@@ -1464,6 +1535,8 @@ export type Database = {
           taxa_servico_descricao?: string | null
           taxa_servico_habilitada?: boolean
           taxa_servico_percentual?: number | null
+          taxa_servico_repasse_habilitado?: boolean
+          taxa_servico_repasse_percentual?: number | null
           upsell_habilitado?: boolean
         }
         Relationships: []
@@ -1698,6 +1771,10 @@ export type Database = {
       gerar_pedido_garcons: {
         Args: { _mesa_id: string; _pedido_id: string; _restaurante_id: string }
         Returns: number
+      }
+      gerar_repasse_taxa_servico: {
+        Args: { p_comanda_id: string }
+        Returns: undefined
       }
       is_platform_admin: { Args: { _user_id: string }; Returns: boolean }
       is_restaurante_membro: {

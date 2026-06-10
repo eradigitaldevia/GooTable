@@ -49,6 +49,8 @@ const configSchema = z.object({
   couvert_artistico_habilitado: z.boolean(),
   couvert_artistico_valor: z.number().min(0).max(1000).nullable(),
   couvert_artistico_descricao: z.string().trim().max(300).nullable(),
+  taxa_servico_repasse_habilitado: z.boolean(),
+  taxa_servico_repasse_percentual: z.number().min(0).max(100).nullable(),
 });
 
 export const atualizarConfiguracoesFn = createServerFn({ method: "POST" })
@@ -70,6 +72,15 @@ export const atualizarConfiguracoesFn = createServerFn({ method: "POST" })
     }
     if (data.couvert_artistico_habilitado && (data.couvert_artistico_valor == null || data.couvert_artistico_valor <= 0)) {
       throw new Error("Informe o valor por pessoa do couvert artístico (> 0).");
+    }
+    // Repasse só faz sentido com a taxa habilitada
+    let repasseHab = data.taxa_servico_repasse_habilitado;
+    let repassePerc = data.taxa_servico_repasse_percentual;
+    if (!data.taxa_servico_habilitada) {
+      repasseHab = false;
+      repassePerc = null;
+    } else if (repasseHab && (repassePerc == null || repassePerc <= 0)) {
+      throw new Error("Informe o percentual de repasse aos garçons (> 0).");
     }
 
     const { error } = await supabase
@@ -100,6 +111,8 @@ export const atualizarConfiguracoesFn = createServerFn({ method: "POST" })
         couvert_artistico_habilitado: data.couvert_artistico_habilitado,
         couvert_artistico_valor: data.couvert_artistico_valor,
         couvert_artistico_descricao: data.couvert_artistico_descricao,
+        taxa_servico_repasse_habilitado: repasseHab,
+        taxa_servico_repasse_percentual: repassePerc,
       })
       .eq("id", data.restauranteId);
     if (error) throw new Error(error.message);

@@ -57,6 +57,8 @@ function Configuracoes() {
     couvert_artistico_habilitado: false,
     couvert_artistico_valor: "" as string,
     couvert_artistico_descricao: "",
+    taxa_servico_repasse_habilitado: false,
+    taxa_servico_repasse_percentual: "" as string,
   });
 
   useEffect(() => {
@@ -108,6 +110,12 @@ function Configuracoes() {
           : "",
       couvert_artistico_descricao:
         restaurante.couvert_artistico_descricao ?? "",
+      taxa_servico_repasse_habilitado:
+        restaurante.taxa_servico_repasse_habilitado ?? false,
+      taxa_servico_repasse_percentual:
+        restaurante.taxa_servico_repasse_percentual != null
+          ? String(restaurante.taxa_servico_repasse_percentual)
+          : "",
     });
   }, [restaurante]);
 
@@ -167,6 +175,8 @@ function Configuracoes() {
     if (couvertMesaVal === "ERR") return;
     const couvertArtVal = parseNumOrNull(form.couvert_artistico_valor, 1000, "Couvert artístico (R$)");
     if (couvertArtVal === "ERR") return;
+    const repassePerc = parseNumOrNull(form.taxa_servico_repasse_percentual, 100, "Repasse aos garçons (%)");
+    if (repassePerc === "ERR") return;
 
     if (form.taxa_servico_habilitada && (taxaPerc == null || taxaPerc <= 0)) {
       toast.error("Informe o percentual da taxa de serviço.");
@@ -178,6 +188,14 @@ function Configuracoes() {
     }
     if (form.couvert_artistico_habilitado && (couvertArtVal == null || couvertArtVal <= 0)) {
       toast.error("Informe o valor por pessoa do couvert artístico.");
+      return;
+    }
+    if (
+      form.taxa_servico_habilitada &&
+      form.taxa_servico_repasse_habilitado &&
+      (repassePerc == null || repassePerc <= 0)
+    ) {
+      toast.error("Informe o percentual de repasse aos garçons.");
       return;
     }
     try {
@@ -215,6 +233,11 @@ function Configuracoes() {
         couvert_artistico_habilitado: form.couvert_artistico_habilitado,
         couvert_artistico_valor: couvertArtVal,
         couvert_artistico_descricao: form.couvert_artistico_descricao.trim() || null,
+        taxa_servico_repasse_habilitado:
+          form.taxa_servico_habilitada && form.taxa_servico_repasse_habilitado,
+        taxa_servico_repasse_percentual: form.taxa_servico_habilitada
+          ? repassePerc
+          : null,
       });
       toast.success("Configurações salvas");
     } catch (e: any) {
@@ -252,6 +275,8 @@ function Configuracoes() {
         habilitada={form.taxa_servico_habilitada}
         percentual={form.taxa_servico_percentual}
         descricao={form.taxa_servico_descricao}
+        repasseHabilitado={form.taxa_servico_repasse_habilitado}
+        repassePercentual={form.taxa_servico_repasse_percentual}
         onChange={patch}
       />
 

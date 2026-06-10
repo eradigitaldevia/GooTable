@@ -38,6 +38,8 @@ type ConfigPayload = {
   couvert_artistico_habilitado: boolean;
   couvert_artistico_valor: number | null;
   couvert_artistico_descricao: string | null;
+  taxa_servico_repasse_habilitado: boolean;
+  taxa_servico_repasse_percentual: number | null;
 };
 
 export function useAtualizarConfiguracoes(userId: string | undefined) {
