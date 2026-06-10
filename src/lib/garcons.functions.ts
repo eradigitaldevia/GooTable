@@ -63,6 +63,21 @@ export interface ResumoComissaoGarcom {
   pedidos_count: number;
 }
 
+export interface ComissaoTaxaServico {
+  id: string;
+  restaurante_id: string;
+  garcom_id: string;
+  garcom_nome: string;
+  comanda_id: string;
+  valor_taxa_total: number;
+  percentual_repasse: number;
+  peso: number;
+  valor_repasse: number;
+  status: "pendente" | "pago";
+  calculado_em: string;
+  pago_em: string | null;
+}
+
 /* ---------- Garçons (CRUD) ---------- */
 
 export const listarGarconsFn = createServerFn({ method: "POST" })
