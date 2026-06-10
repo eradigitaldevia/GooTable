@@ -10,6 +10,8 @@ export function CouvertForm({
   artisticoHabilitado,
   artisticoValor,
   artisticoDescricao,
+  repasseHabilitado,
+  repassePercentual,
   onChange,
 }: {
   mesaHabilitado: boolean;
@@ -18,6 +20,8 @@ export function CouvertForm({
   artisticoHabilitado: boolean;
   artisticoValor: string;
   artisticoDescricao: string;
+  repasseHabilitado: boolean;
+  repassePercentual: string;
   onChange: (patch: {
     couvert_mesa_habilitado?: boolean;
     couvert_mesa_valor?: string;
@@ -25,6 +29,8 @@ export function CouvertForm({
     couvert_artistico_habilitado?: boolean;
     couvert_artistico_valor?: string;
     couvert_artistico_descricao?: string;
+    couvert_artistico_repasse_habilitado?: boolean;
+    couvert_artistico_repasse_percentual?: string;
   }) => void;
 }) {
   return (
