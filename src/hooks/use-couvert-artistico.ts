@@ -18,6 +18,31 @@ import {
   pagarRepassesCouvertFn,
 } from "@/lib/repasses-couvert.functions";
 
+type CriarArtistaInput = {
+  restauranteId: string;
+  nome: string;
+  documento?: string | null;
+  chave_pix?: string | null;
+  tipo_chave_pix?: string | null;
+  observacao?: string | null;
+  ativo: boolean;
+};
+type AtualizarArtistaInput = CriarArtistaInput & { id: string };
+type RemoverArtistaInput = { restauranteId: string; id: string };
+type ArtistaPeso = { artista_id: string; peso: number };
+type AbrirApresentacaoInput = {
+  restauranteId: string;
+  nome: string;
+  inicioEm?: string;
+  artistas: ArtistaPeso[];
+};
+type AtualizarPesosInput = {
+  restauranteId: string;
+  apresentacaoId: string;
+  artistas: ArtistaPeso[];
+};
+type EncerrarInput = { restauranteId: string; apresentacaoId: string };
+
 const kArtistas = (rid: string) => ["artistas", rid] as const;
 const kApres = (rid: string) => ["apresentacoes", rid] as const;
 const kApresAtiva = (rid: string) => ["apresentacao-ativa", rid] as const;
@@ -37,7 +62,7 @@ export function useCriarArtista(restauranteId: string | undefined) {
   const fn = useServerFn(criarArtistaFn);
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (data: Parameters<typeof fn>[0]["data"]) => fn({ data }),
+    mutationFn: (data: CriarArtistaInput) => fn({ data }),
     onSuccess: () => {
       if (restauranteId) qc.invalidateQueries({ queryKey: kArtistas(restauranteId) });
     },
@@ -48,7 +73,7 @@ export function useAtualizarArtista(restauranteId: string | undefined) {
   const fn = useServerFn(atualizarArtistaFn);
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (data: Parameters<typeof fn>[0]["data"]) => fn({ data }),
+    mutationFn: (data: AtualizarArtistaInput) => fn({ data }),
     onSuccess: () => {
       if (restauranteId) qc.invalidateQueries({ queryKey: kArtistas(restauranteId) });
     },
@@ -59,7 +84,7 @@ export function useRemoverArtista(restauranteId: string | undefined) {
   const fn = useServerFn(removerArtistaFn);
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (data: Parameters<typeof fn>[0]["data"]) => fn({ data }),
+    mutationFn: (data: RemoverArtistaInput) => fn({ data }),
     onSuccess: () => {
       if (restauranteId) qc.invalidateQueries({ queryKey: kArtistas(restauranteId) });
     },
@@ -88,7 +113,7 @@ export function useAbrirApresentacao(restauranteId: string | undefined) {
   const fn = useServerFn(abrirApresentacaoFn);
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (data: Parameters<typeof fn>[0]["data"]) => fn({ data }),
+    mutationFn: (data: AbrirApresentacaoInput) => fn({ data }),
     onSuccess: () => {
       if (!restauranteId) return;
       qc.invalidateQueries({ queryKey: kApres(restauranteId) });
@@ -101,7 +126,7 @@ export function useAtualizarPesosApresentacao(restauranteId: string | undefined)
   const fn = useServerFn(atualizarPesosApresentacaoFn);
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (data: Parameters<typeof fn>[0]["data"]) => fn({ data }),
+    mutationFn: (data: AtualizarPesosInput) => fn({ data }),
     onSuccess: () => {
       if (!restauranteId) return;
       qc.invalidateQueries({ queryKey: kApres(restauranteId) });
@@ -114,7 +139,7 @@ export function useEncerrarApresentacao(restauranteId: string | undefined) {
   const fn = useServerFn(encerrarApresentacaoFn);
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (data: Parameters<typeof fn>[0]["data"]) => fn({ data }),
+    mutationFn: (data: EncerrarInput) => fn({ data }),
     onSuccess: () => {
       if (!restauranteId) return;
       qc.invalidateQueries({ queryKey: kApres(restauranteId) });
