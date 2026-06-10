@@ -14,6 +14,136 @@ export type Database = {
   }
   public: {
     Tables: {
+      apresentacao_artistas: {
+        Row: {
+          apresentacao_id: string
+          artista_id: string
+          criado_em: string
+          id: string
+          peso: number
+        }
+        Insert: {
+          apresentacao_id: string
+          artista_id: string
+          criado_em?: string
+          id?: string
+          peso?: number
+        }
+        Update: {
+          apresentacao_id?: string
+          artista_id?: string
+          criado_em?: string
+          id?: string
+          peso?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "apresentacao_artistas_apresentacao_id_fkey"
+            columns: ["apresentacao_id"]
+            isOneToOne: false
+            referencedRelation: "apresentacoes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "apresentacao_artistas_artista_id_fkey"
+            columns: ["artista_id"]
+            isOneToOne: false
+            referencedRelation: "artistas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      apresentacoes: {
+        Row: {
+          atualizado_em: string
+          criada_por: string | null
+          criado_em: string
+          encerrada_por: string | null
+          fim_em: string | null
+          id: string
+          inicio_em: string
+          nome: string
+          restaurante_id: string
+        }
+        Insert: {
+          atualizado_em?: string
+          criada_por?: string | null
+          criado_em?: string
+          encerrada_por?: string | null
+          fim_em?: string | null
+          id?: string
+          inicio_em?: string
+          nome: string
+          restaurante_id: string
+        }
+        Update: {
+          atualizado_em?: string
+          criada_por?: string | null
+          criado_em?: string
+          encerrada_por?: string | null
+          fim_em?: string | null
+          id?: string
+          inicio_em?: string
+          nome?: string
+          restaurante_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "apresentacoes_restaurante_id_fkey"
+            columns: ["restaurante_id"]
+            isOneToOne: false
+            referencedRelation: "restaurantes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      artistas: {
+        Row: {
+          ativo: boolean
+          atualizado_em: string
+          chave_pix: string | null
+          criado_em: string
+          documento: string | null
+          id: string
+          nome: string
+          observacao: string | null
+          restaurante_id: string
+          tipo_chave_pix: string | null
+        }
+        Insert: {
+          ativo?: boolean
+          atualizado_em?: string
+          chave_pix?: string | null
+          criado_em?: string
+          documento?: string | null
+          id?: string
+          nome: string
+          observacao?: string | null
+          restaurante_id: string
+          tipo_chave_pix?: string | null
+        }
+        Update: {
+          ativo?: boolean
+          atualizado_em?: string
+          chave_pix?: string | null
+          criado_em?: string
+          documento?: string | null
+          id?: string
+          nome?: string
+          observacao?: string | null
+          restaurante_id?: string
+          tipo_chave_pix?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "artistas_restaurante_id_fkey"
+            columns: ["restaurante_id"]
+            isOneToOne: false
+            referencedRelation: "restaurantes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       audit_logs: {
         Row: {
           acao: string
@@ -300,6 +430,7 @@ export type Database = {
       }
       comanda_couverts: {
         Row: {
+          apresentacao_id: string | null
           comanda_id: string
           criado_em: string
           descricao: string | null
@@ -311,6 +442,7 @@ export type Database = {
           valor_unitario: number
         }
         Insert: {
+          apresentacao_id?: string | null
           comanda_id: string
           criado_em?: string
           descricao?: string | null
@@ -322,6 +454,7 @@ export type Database = {
           valor_unitario: number
         }
         Update: {
+          apresentacao_id?: string | null
           comanda_id?: string
           criado_em?: string
           descricao?: string | null
@@ -333,6 +466,13 @@ export type Database = {
           valor_unitario?: number
         }
         Relationships: [
+          {
+            foreignKeyName: "comanda_couverts_apresentacao_id_fkey"
+            columns: ["apresentacao_id"]
+            isOneToOne: false
+            referencedRelation: "apresentacoes"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "comanda_couverts_comanda_id_fkey"
             columns: ["comanda_id"]
@@ -1407,6 +1547,73 @@ export type Database = {
         }
         Relationships: []
       }
+      repasses_couvert_artistico: {
+        Row: {
+          apresentacao_id: string
+          artista_id: string
+          calculado_em: string
+          id: string
+          pago_em: string | null
+          pago_por: string | null
+          percentual_repasse: number
+          peso: number
+          restaurante_id: string
+          status: string
+          valor_couvert_total: number
+          valor_repasse: number
+        }
+        Insert: {
+          apresentacao_id: string
+          artista_id: string
+          calculado_em?: string
+          id?: string
+          pago_em?: string | null
+          pago_por?: string | null
+          percentual_repasse?: number
+          peso?: number
+          restaurante_id: string
+          status?: string
+          valor_couvert_total?: number
+          valor_repasse?: number
+        }
+        Update: {
+          apresentacao_id?: string
+          artista_id?: string
+          calculado_em?: string
+          id?: string
+          pago_em?: string | null
+          pago_por?: string | null
+          percentual_repasse?: number
+          peso?: number
+          restaurante_id?: string
+          status?: string
+          valor_couvert_total?: number
+          valor_repasse?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "repasses_couvert_artistico_apresentacao_id_fkey"
+            columns: ["apresentacao_id"]
+            isOneToOne: false
+            referencedRelation: "apresentacoes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "repasses_couvert_artistico_artista_id_fkey"
+            columns: ["artista_id"]
+            isOneToOne: false
+            referencedRelation: "artistas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "repasses_couvert_artistico_restaurante_id_fkey"
+            columns: ["restaurante_id"]
+            isOneToOne: false
+            referencedRelation: "restaurantes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       restaurante_membros: {
         Row: {
           criado_em: string
@@ -1453,6 +1660,8 @@ export type Database = {
           cor_primaria: string | null
           couvert_artistico_descricao: string | null
           couvert_artistico_habilitado: boolean
+          couvert_artistico_repasse_habilitado: boolean
+          couvert_artistico_repasse_percentual: number | null
           couvert_artistico_valor: number | null
           couvert_mesa_descricao: string | null
           couvert_mesa_habilitado: boolean
@@ -1486,6 +1695,8 @@ export type Database = {
           cor_primaria?: string | null
           couvert_artistico_descricao?: string | null
           couvert_artistico_habilitado?: boolean
+          couvert_artistico_repasse_habilitado?: boolean
+          couvert_artistico_repasse_percentual?: number | null
           couvert_artistico_valor?: number | null
           couvert_mesa_descricao?: string | null
           couvert_mesa_habilitado?: boolean
@@ -1519,6 +1730,8 @@ export type Database = {
           cor_primaria?: string | null
           couvert_artistico_descricao?: string | null
           couvert_artistico_habilitado?: boolean
+          couvert_artistico_repasse_habilitado?: boolean
+          couvert_artistico_repasse_percentual?: number | null
           couvert_artistico_valor?: number | null
           couvert_mesa_descricao?: string | null
           couvert_mesa_habilitado?: boolean
@@ -1772,6 +1985,10 @@ export type Database = {
         Args: { _mesa_id: string; _pedido_id: string; _restaurante_id: string }
         Returns: number
       }
+      gerar_repasse_couvert_artistico: {
+        Args: { p_apresentacao_id: string }
+        Returns: number
+      }
       gerar_repasse_taxa_servico: {
         Args: { p_comanda_id: string }
         Returns: undefined
@@ -1785,6 +2002,10 @@ export type Database = {
       metricas_chamados: { Args: { _restaurante_id: string }; Returns: Json }
       pagar_bonus: { Args: { _ids: string[] }; Returns: number }
       pagar_comissoes: { Args: { _ids: string[] }; Returns: number }
+      pagar_repasses_couvert_artistico: {
+        Args: { _ids: string[] }
+        Returns: number
+      }
       periodo_range: {
         Args: {
           _periodo: Database["public"]["Enums"]["garcom_meta_periodo"]
