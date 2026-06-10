@@ -10,6 +10,8 @@ export function CouvertForm({
   artisticoHabilitado,
   artisticoValor,
   artisticoDescricao,
+  repasseHabilitado,
+  repassePercentual,
   onChange,
 }: {
   mesaHabilitado: boolean;
@@ -18,6 +20,8 @@ export function CouvertForm({
   artisticoHabilitado: boolean;
   artisticoValor: string;
   artisticoDescricao: string;
+  repasseHabilitado: boolean;
+  repassePercentual: string;
   onChange: (patch: {
     couvert_mesa_habilitado?: boolean;
     couvert_mesa_valor?: string;
@@ -25,6 +29,8 @@ export function CouvertForm({
     couvert_artistico_habilitado?: boolean;
     couvert_artistico_valor?: string;
     couvert_artistico_descricao?: string;
+    couvert_artistico_repasse_habilitado?: boolean;
+    couvert_artistico_repasse_percentual?: string;
   }) => void;
 }) {
   return (
@@ -98,6 +104,7 @@ export function CouvertForm({
         </div>
 
         {artisticoHabilitado && (
+          <>
           <div className="grid gap-3 sm:grid-cols-2">
             <div className="space-y-1">
               <Label>Valor por pessoa (R$)</Label>
@@ -119,6 +126,49 @@ export function CouvertForm({
               />
             </div>
           </div>
+          <div className="rounded-md border border-dashed border-border bg-muted/30 p-3">
+            <div className="flex items-start justify-between gap-4">
+              <div className="min-w-0">
+                <h3 className="text-sm font-semibold">Repasse aos artistas</h3>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Defina quanto do couvert artístico arrecadado vai para os
+                  artistas (rateado conforme o peso configurado em cada
+                  apresentação). Ex.: 100% = todo o couvert vai para os
+                  artistas; 80% = 20% fica para a casa.
+                </p>
+                <a
+                  href="/admin/couvert-artistico"
+                  className="mt-2 inline-block text-xs font-medium text-primary hover:underline"
+                >
+                  Gerenciar artistas e apresentações →
+                </a>
+              </div>
+              <Switch
+                checked={repasseHabilitado}
+                onCheckedChange={(v) =>
+                  onChange({ couvert_artistico_repasse_habilitado: v })
+                }
+                aria-label="Habilitar repasse do couvert artístico aos artistas"
+              />
+            </div>
+            {repasseHabilitado && (
+              <div className="mt-3 max-w-xs space-y-1">
+                <Label>% do couvert que vai para os artistas</Label>
+                <Input
+                  inputMode="decimal"
+                  placeholder="100"
+                  value={repassePercentual}
+                  onChange={(e) =>
+                    onChange({
+                      couvert_artistico_repasse_percentual: e.target.value,
+                    })
+                  }
+                />
+                <p className="text-xs text-muted-foreground">Entre 0 e 100%.</p>
+              </div>
+            )}
+          </div>
+          </>
         )}
       </div>
     </section>

@@ -35,6 +35,8 @@ export interface Restaurante {
   couvert_artistico_descricao: string | null;
   taxa_servico_repasse_habilitado: boolean;
   taxa_servico_repasse_percentual: number | null;
+  couvert_artistico_repasse_habilitado: boolean;
+  couvert_artistico_repasse_percentual: number | null;
 }
 
 /** Restaurante do usuário autenticado (primeiro vínculo). */

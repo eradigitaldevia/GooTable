@@ -1,91 +1,88 @@
-# Repasse da taxa de serviço para garçons
+## Repasse de Couvert Artístico — rota única com abas
 
-Quando a taxa de serviço estiver ligada, o admin escolhe se ela vai (e quanto) para os garçons. Rateio proporcional aos pedidos atendidos, registrado em nova tabela, gerado uma única vez no fechamento da comanda.
+Substituir as duas rotas separadas (`/admin/artistas` e `/admin/apresentacoes`) por uma única rota **`/admin/couvert-artistico`** com 3 abas.
 
----
+### 1) Rota e navegação
 
-## 1) Configuração
+Nova rota: `src/routes/_authenticated/admin/couvert-artistico.tsx`
 
-Novos campos em `restaurantes` (mesma migration):
+Layout com `Tabs` (shadcn) controladas via search param `?tab=artistas|apresentacoes|repasses` (assim links externos e refresh preservam a aba):
 
-- `taxa_servico_repasse_habilitado boolean NOT NULL DEFAULT false`
-- `taxa_servico_repasse_percentual numeric(5,2) NULL CHECK (>=0 AND <=100)` (default sugerido 100)
+- **Aba "Artistas"** — CRUD de artistas/músicos cadastrados.
+- **Aba "Apresentações"** — abrir, encerrar, listar apresentações e configurar artistas + pesos.
+- **Aba "Repasses"** — listar repasses gerados, filtrar por período/artista, marcar como pago.
 
-UI em `TaxaServicoForm`: aparece um bloco aninhado "Repasse aos garçons" **só quando a taxa de serviço estiver habilitada**:
+Link no menu admin: **"Couvert artístico"** (ícone Music). Aparece somente quando `couvert_artistico_habilitado = true` nas configurações do restaurante.
 
-- Switch "Repassar taxa de serviço aos garçons"
-- Input "% da taxa que vai para os garçons" (0–100, default 100)
-- Texto: "Ex.: 100% = toda taxa vai para os garçons; 80% = 20% fica para a casa."
+### 2) Configuração (Configurações → Couvert)
 
-Validação em `configuracoes.functions.ts`: se `repasse_habilitado` então `percentual > 0`. Se `taxa_servico_habilitada=false`, força `repasse_habilitado=false`.
+No `CouvertForm`, dentro do bloco "Couvert artístico" (quando habilitado), adicionar sub-bloco **"Repasse aos artistas"**:
+- Switch `couvert_artistico_repasse_habilitado`
+- Input `couvert_artistico_repasse_percentual` (0–100, default 100)
+- Texto auxiliar e link "Gerenciar artistas e apresentações →" apontando para `/admin/couvert-artistico`.
 
-## 2) Schema — nova tabela
+Novas colunas em `restaurantes`:
+- `couvert_artistico_repasse_habilitado boolean default false`
+- `couvert_artistico_repasse_percentual numeric(5,2) default 100`
 
-```text
-comissoes_taxa_servico
-  id uuid pk
-  restaurante_id uuid not null (FK restaurantes, cascade)
-  comanda_id uuid not null (FK comandas, cascade) — unique
-  garcom_id uuid not null (FK garcons, restrict)
-  valor_taxa_total numeric(10,2) not null — taxa paga pelo cliente
-  percentual_repasse numeric(5,2) not null — snapshot da config
-  peso numeric not null — peso do garçom na comanda
-  valor_repasse numeric(10,2) not null — quanto este garçom recebe
-  status text not null default 'pendente' check in ('pendente','pago')
-  calculado_em timestamptz not null default now()
-  pago_em timestamptz nullable
-  pago_por uuid nullable
-```
+### 3) Schema
 
-Unique `(comanda_id, garcom_id)` para idempotência. RLS `rw_membro` igual a `comissoes`. GRANTs para `authenticated` e `service_role`.
+**`artistas`** — `id`, `restaurante_id`, `nome`, `documento` (opc.), `chave_pix` (opc.), `tipo_chave_pix`, `observacao`, `ativo`, timestamps. RLS `rw_membro` + GRANTs.
 
-## 3) Gatilho — fechamento da comanda
+**`apresentacoes`** — `id`, `restaurante_id`, `nome`, `inicio_em`, `fim_em` (NULL = aberta), `encerrada_por`, `criada_por`, timestamps. Índice parcial único `(restaurante_id) where fim_em is null` (1 apresentação aberta por restaurante).
 
-Function `gerar_repasse_taxa_servico(p_comanda_id uuid)` em PL/pgSQL:
+**`apresentacao_artistas`** — `id`, `apresentacao_id`, `artista_id`, `peso numeric(5,2)`. Unique `(apresentacao_id, artista_id)`. Validação no serverFn: soma de pesos = 100 (±0.01); ao menos 1 artista.
 
-1. Lê `restaurantes` da comanda; se taxa desligada ou repasse desligado → return.
-2. Soma pagamentos confirmados da comanda. Calcula `taxa_paga = total_pago - (subtotal_liquido)` (proxy: `valor_taxa = subtotal_liquido * percentual_taxa%`; usa o **menor** entre os dois para evitar superpagamento quando cliente recusou a taxa).
-3. `valor_para_garcons = valor_taxa * percentual_repasse%`.
-4. Lê `pedido_garcons` agregado por garçom da comanda (somando `peso` dos pedidos). Se vazio, fallback para `mesa_garcom` atual.
-5. Distribui `valor_para_garcons` proporcionalmente ao peso de cada garçom.
-6. `INSERT ... ON CONFLICT (comanda_id, garcom_id) DO NOTHING` (idempotente).
+**Alteração em `comanda_couverts`** — adicionar `apresentacao_id uuid NULL`. Trigger `BEFORE INSERT` quando `tipo='artistico'` busca a apresentação aberta do restaurante e popula. Sem apresentação aberta → fica NULL (não bloqueia a cobrança).
 
-Trigger `AFTER UPDATE ON comandas` quando `status` muda para `'fechada'` (ou status equivalente já existente — confirmar nome durante implementação): chama a função acima.
+**`repasses_couvert_artistico`** — `id`, `restaurante_id`, `apresentacao_id`, `artista_id`, `valor_couvert_total`, `percentual_repasse`, `peso`, `valor_repasse`, `status` (`pendente|pago`), `calculado_em`, `pago_em`, `pago_por`. Unique `(apresentacao_id, artista_id)`. RLS + GRANTs.
 
-## 4) Pagamento e relatórios
+### 4) Funções SQL
 
-- `garcons.functions.ts` ganha leitura agregada de `comissoes_taxa_servico` por garçom, somada ao extrato existente como linha "Taxa de serviço".
-- `extrato-garcom-dialog.tsx`: nova seção "Taxa de serviço" com lista por comanda + total pendente.
-- `relatorios.functions.ts` / `relatorios-export.ts`: nova coluna "taxa de serviço" no relatório de comissões; total consolidado.
-- Marcação como pago: reutiliza o fluxo de "pagar comissões" existente, agora também marca `comissoes_taxa_servico.status='pago'` no mesmo escopo (filtro por garçom).
+- `gerar_repasse_couvert_artistico(p_apresentacao_id)` — soma `comanda_couverts.valor_total` (tipo=artistico, mesma apresentação), multiplica por `percentual_repasse`, distribui por peso, `INSERT … ON CONFLICT DO UPDATE` (idempotente).
+- `pagar_repasses_couvert_artistico(_ids uuid[])` — marca `status='pago'`, registra `pago_em/pago_por`.
 
-## 5) UI da conta do cliente
+**Gatilho:** ação "Encerrar apresentação" → serverFn `encerrarApresentacaoFn` faz `update fim_em = now()` + chama `gerar_repasse_couvert_artistico`.
 
-Nenhuma mudança visível ao cliente — ele continua vendo apenas "Taxa de serviço (X%) — opcional". O destino do dinheiro é decisão interna.
+### 5) UI da rota — componentes
 
----
+`src/components/couvert-artistico/`:
+- `artistas-tab.tsx` — tabela + dialog de criar/editar artista.
+- `apresentacoes-tab.tsx` — lista (aberta destacada no topo); botão "Abrir apresentação" abre dialog com seleção de artistas e pesos (default igualitário, ajustável; validação 100%); botão "Encerrar" na apresentação aberta com confirmação.
+- `repasses-tab.tsx` — tabela de repasses com filtros (período, artista, status), checkboxes para marcar como pago em lote (reusando padrão visual de `comissoes-panel.tsx`).
 
-## Arquivos afetados
+UI `LancarCouvertDialog`: quando tipo=artístico e não há apresentação aberta, exibir aviso amarelo "Nenhuma apresentação ativa — o repasse não será gerado" (não bloqueia).
 
-```text
-supabase/migrations/<novo>.sql
-  + colunas taxa_servico_repasse_habilitado / _percentual
-  + tabela comissoes_taxa_servico + RLS + GRANTs
-  + function gerar_repasse_taxa_servico + trigger no fechamento
+### 6) Relatórios
 
-src/lib/restaurante.functions.ts          (tipo Restaurante)
-src/lib/configuracoes.functions.ts        (schema + validação)
-src/hooks/use-configuracoes.ts            (ConfigPayload)
-src/components/configuracoes/taxa-servico-form.tsx  (bloco "Repasse aos garçons")
-src/lib/garcons.functions.ts              (extrato + pagamento)
-src/components/admin/garcons/extrato-garcom-dialog.tsx
-src/lib/relatorios.functions.ts
-src/lib/relatorios-export.ts
-src/integrations/supabase/types.ts        (auto)
-```
+`relatorios.functions.ts` + `relatorios-export.ts`: adicionar seção/coluna "Repasse couvert artístico" agrupado por artista no período (CSV + PDF).
 
-## Fora de escopo
+### 7) Fora de escopo
 
-- Repasse de couvert artístico aos músicos/artistas.
-- Política de retenção de imposto sobre a taxa.
-- Repasse parcial por pagamento (mantido apenas no fechamento).
+- Repasse parcial por pagamento (somente no encerramento da apresentação).
+- Retenção fiscal/INSS.
+- Couvert de mesa não gera repasse (100% casa).
+
+### Arquivos
+
+**Migrations:**
+- Colunas em `restaurantes` (repasse habilitado + %)
+- `artistas`
+- `apresentacoes` + `apresentacao_artistas`
+- `alter comanda_couverts` + trigger
+- `repasses_couvert_artistico` + funções `gerar_repasse_couvert_artistico` e `pagar_repasses_couvert_artistico`
+
+**Backend:**
+- `src/lib/configuracoes.functions.ts` (campos novos)
+- `src/lib/artistas.functions.ts` (novo)
+- `src/lib/apresentacoes.functions.ts` (novo)
+- `src/lib/repasses-couvert.functions.ts` (novo — listar/pagar)
+- `src/lib/relatorios.functions.ts` + `relatorios-export.ts`
+
+**Frontend:**
+- `src/components/configuracoes/couvert-form.tsx` (sub-bloco repasse)
+- `src/components/sala/lancar-couvert-dialog.tsx` (aviso sem apresentação)
+- `src/routes/_authenticated/admin/couvert-artistico.tsx` (rota com tabs)
+- `src/components/couvert-artistico/{artistas-tab,apresentacoes-tab,repasses-tab}.tsx`
+- Menu admin: adicionar entrada condicional
+- `src/integrations/supabase/types.ts` (regenerado)
