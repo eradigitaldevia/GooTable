@@ -41,6 +41,7 @@ import { Route as AuthenticatedAdminFidelidadeRouteImport } from './routes/_auth
 import { Route as AuthenticatedAdminEquipeRouteImport } from './routes/_authenticated/admin/equipe'
 import { Route as AuthenticatedAdminDestinosPreparoRouteImport } from './routes/_authenticated/admin/destinos-preparo'
 import { Route as AuthenticatedAdminCuponsRouteImport } from './routes/_authenticated/admin/cupons'
+import { Route as AuthenticatedAdminCouvertArtisticoRouteImport } from './routes/_authenticated/admin/couvert-artistico'
 import { Route as AuthenticatedAdminConfiguracoesRouteImport } from './routes/_authenticated/admin/configuracoes'
 import { Route as AuthenticatedAdminClientesRouteImport } from './routes/_authenticated/admin/clientes'
 import { Route as AuthenticatedAdminChamadosRouteImport } from './routes/_authenticated/admin/chamados'
@@ -222,6 +223,12 @@ const AuthenticatedAdminCuponsRoute =
     path: '/cupons',
     getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
+const AuthenticatedAdminCouvertArtisticoRoute =
+  AuthenticatedAdminCouvertArtisticoRouteImport.update({
+    id: '/couvert-artistico',
+    path: '/couvert-artistico',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
 const AuthenticatedAdminConfiguracoesRoute =
   AuthenticatedAdminConfiguracoesRouteImport.update({
     id: '/configuracoes',
@@ -309,6 +316,7 @@ export interface FileRoutesByFullPath {
   '/admin/chamados': typeof AuthenticatedAdminChamadosRoute
   '/admin/clientes': typeof AuthenticatedAdminClientesRouteWithChildren
   '/admin/configuracoes': typeof AuthenticatedAdminConfiguracoesRoute
+  '/admin/couvert-artistico': typeof AuthenticatedAdminCouvertArtisticoRoute
   '/admin/cupons': typeof AuthenticatedAdminCuponsRoute
   '/admin/destinos-preparo': typeof AuthenticatedAdminDestinosPreparoRoute
   '/admin/equipe': typeof AuthenticatedAdminEquipeRoute
@@ -350,6 +358,7 @@ export interface FileRoutesByTo {
   '/admin/chamados': typeof AuthenticatedAdminChamadosRoute
   '/admin/clientes': typeof AuthenticatedAdminClientesRouteWithChildren
   '/admin/configuracoes': typeof AuthenticatedAdminConfiguracoesRoute
+  '/admin/couvert-artistico': typeof AuthenticatedAdminCouvertArtisticoRoute
   '/admin/cupons': typeof AuthenticatedAdminCuponsRoute
   '/admin/destinos-preparo': typeof AuthenticatedAdminDestinosPreparoRoute
   '/admin/equipe': typeof AuthenticatedAdminEquipeRoute
@@ -396,6 +405,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/chamados': typeof AuthenticatedAdminChamadosRoute
   '/_authenticated/admin/clientes': typeof AuthenticatedAdminClientesRouteWithChildren
   '/_authenticated/admin/configuracoes': typeof AuthenticatedAdminConfiguracoesRoute
+  '/_authenticated/admin/couvert-artistico': typeof AuthenticatedAdminCouvertArtisticoRoute
   '/_authenticated/admin/cupons': typeof AuthenticatedAdminCuponsRoute
   '/_authenticated/admin/destinos-preparo': typeof AuthenticatedAdminDestinosPreparoRoute
   '/_authenticated/admin/equipe': typeof AuthenticatedAdminEquipeRoute
@@ -442,6 +452,7 @@ export interface FileRouteTypes {
     | '/admin/chamados'
     | '/admin/clientes'
     | '/admin/configuracoes'
+    | '/admin/couvert-artistico'
     | '/admin/cupons'
     | '/admin/destinos-preparo'
     | '/admin/equipe'
@@ -483,6 +494,7 @@ export interface FileRouteTypes {
     | '/admin/chamados'
     | '/admin/clientes'
     | '/admin/configuracoes'
+    | '/admin/couvert-artistico'
     | '/admin/cupons'
     | '/admin/destinos-preparo'
     | '/admin/equipe'
@@ -528,6 +540,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/chamados'
     | '/_authenticated/admin/clientes'
     | '/_authenticated/admin/configuracoes'
+    | '/_authenticated/admin/couvert-artistico'
     | '/_authenticated/admin/cupons'
     | '/_authenticated/admin/destinos-preparo'
     | '/_authenticated/admin/equipe'
@@ -792,6 +805,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminCuponsRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
+    '/_authenticated/admin/couvert-artistico': {
+      id: '/_authenticated/admin/couvert-artistico'
+      path: '/couvert-artistico'
+      fullPath: '/admin/couvert-artistico'
+      preLoaderRoute: typeof AuthenticatedAdminCouvertArtisticoRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
     '/_authenticated/admin/configuracoes': {
       id: '/_authenticated/admin/configuracoes'
       path: '/configuracoes'
@@ -893,6 +913,7 @@ interface AuthenticatedAdminRouteChildren {
   AuthenticatedAdminChamadosRoute: typeof AuthenticatedAdminChamadosRoute
   AuthenticatedAdminClientesRoute: typeof AuthenticatedAdminClientesRouteWithChildren
   AuthenticatedAdminConfiguracoesRoute: typeof AuthenticatedAdminConfiguracoesRoute
+  AuthenticatedAdminCouvertArtisticoRoute: typeof AuthenticatedAdminCouvertArtisticoRoute
   AuthenticatedAdminCuponsRoute: typeof AuthenticatedAdminCuponsRoute
   AuthenticatedAdminDestinosPreparoRoute: typeof AuthenticatedAdminDestinosPreparoRoute
   AuthenticatedAdminEquipeRoute: typeof AuthenticatedAdminEquipeRoute
@@ -912,6 +933,8 @@ const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
   AuthenticatedAdminChamadosRoute: AuthenticatedAdminChamadosRoute,
   AuthenticatedAdminClientesRoute: AuthenticatedAdminClientesRouteWithChildren,
   AuthenticatedAdminConfiguracoesRoute: AuthenticatedAdminConfiguracoesRoute,
+  AuthenticatedAdminCouvertArtisticoRoute:
+    AuthenticatedAdminCouvertArtisticoRoute,
   AuthenticatedAdminCuponsRoute: AuthenticatedAdminCuponsRoute,
   AuthenticatedAdminDestinosPreparoRoute:
     AuthenticatedAdminDestinosPreparoRoute,

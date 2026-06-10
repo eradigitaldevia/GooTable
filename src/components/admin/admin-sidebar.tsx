@@ -27,6 +27,7 @@ import {
   UserCog,
   UsersRound,
   Wallet,
+  Music,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
@@ -51,6 +52,7 @@ const NAV = [
   { to: "/admin/configuracoes", label: "Configurações", icon: Settings, exact: false },
   { to: "/admin/equipe", label: "Equipe", icon: UserCog, exact: false },
   { to: "/admin/garcons", label: "Garçons", icon: UsersRound, exact: false },
+  { to: "/admin/couvert-artistico", label: "Couvert artístico", icon: Music, exact: false },
 ] as const;
 
 function useChamadosPendentesCount(restauranteId: string) {
@@ -108,6 +110,7 @@ export function AdminSidebar({
     (item) => {
       if (item.to === "/admin/equipe" && !podeVerEquipe) return false;
       if (item.to === "/caixa" && !podeAcessarCaixa) return false;
+      if (item.to === "/admin/couvert-artistico" && !restaurante.couvert_artistico_habilitado) return false;
       return true;
     },
   );
