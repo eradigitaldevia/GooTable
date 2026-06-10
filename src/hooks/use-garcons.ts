@@ -186,6 +186,7 @@ export function usePagarComissoes(restauranteId: string | undefined) {
       if (restauranteId) {
         qc.invalidateQueries({ queryKey: ["comissoes", restauranteId] });
         qc.invalidateQueries({ queryKey: queryKeys.resumoComissoes(restauranteId) });
+        qc.invalidateQueries({ queryKey: ["comissoes-taxa-servico", restauranteId] });
       }
     },
   });
