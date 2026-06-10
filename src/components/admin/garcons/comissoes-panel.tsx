@@ -11,7 +11,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
-import { useComissoes, usePagarComissoes, useResumoComissoes } from "@/hooks/use-garcons";
+import {
+  useComissoes,
+  usePagarComissoes,
+  useResumoComissoes,
+  useComissoesTaxaServico,
+} from "@/hooks/use-garcons";
 import { useAuth } from "@/hooks/use-auth";
 import { useMeuRestaurante } from "@/hooks/use-restaurante";
 import { RelatorioExportarCard } from "./relatorio-exportar-card";
@@ -28,6 +33,12 @@ export function ComissoesPanel({ restauranteId }: { restauranteId: string }) {
   const { user } = useAuth();
   const { data: restaurante } = useMeuRestaurante(user?.id);
   const modoItem = restaurante?.comissao_modo === "item";
+  const repasseHabilitado = !!restaurante?.taxa_servico_repasse_habilitado;
+  const { data: taxas = [], isLoading: loadingTaxas } = useComissoesTaxaServico(
+    repasseHabilitado ? restauranteId : undefined,
+    { status },
+  );
+  const [selecionadosTaxa, setSelecionadosTaxa] = useState<Set<string>>(new Set());
 
   const totalPendente = useMemo(
     () => resumo.reduce((acc, r) => acc + Number(r.pendente ?? 0), 0),
@@ -68,6 +79,37 @@ export function ComissoesPanel({ restauranteId }: { restauranteId: string }) {
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Erro ao pagar");
     }
+  };
+
+  const valorSelecionadoTaxa = taxas
+    .filter((t) => selecionadosTaxa.has(t.id))
+    .reduce((acc, t) => acc + t.valor_repasse, 0);
+
+  const handlePagarTaxa = async () => {
+    if (selecionadosTaxa.size === 0) return;
+    try {
+      const r = await pagar.mutateAsync({ ids: Array.from(selecionadosTaxa) });
+      toast.success(`${r.count} repasse(s) marcado(s) como pago(s)`);
+      setSelecionadosTaxa(new Set());
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Erro ao pagar");
+    }
+  };
+
+  const toggleTaxa = (id: string, checked: boolean) => {
+    setSelecionadosTaxa((prev) => {
+      const n = new Set(prev);
+      if (checked) n.add(id);
+      else n.delete(id);
+      return n;
+    });
+  };
+  const toggleAllTaxa = (checked: boolean) => {
+    if (!checked) {
+      setSelecionadosTaxa(new Set());
+      return;
+    }
+    setSelecionadosTaxa(new Set(taxas.filter((t) => t.status === "pendente").map((t) => t.id)));
   };
 
   return (
