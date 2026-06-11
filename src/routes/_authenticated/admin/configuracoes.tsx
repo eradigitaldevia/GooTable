@@ -350,6 +350,9 @@ function Configuracoes() {
         restauranteId: restaurante.id,
         nome: f.nome.trim(),
         cor_primaria: f.cor_primaria,
+        cor_secundaria: f.cor_secundaria,
+        cor_acento: f.cor_acento,
+        tema_cardapio: f.tema_cardapio,
         logo_url: f.logo_url,
       };
     } else if (aba === "pagamentos") {
@@ -539,6 +542,9 @@ function Configuracoes() {
             restauranteId={restaurante.id}
             nome={form.nome}
             corPrimaria={form.cor_primaria}
+            corSecundaria={form.cor_secundaria}
+            corAcento={form.cor_acento}
+            tema={form.tema_cardapio}
             logoUrl={form.logo_url}
             onChange={patch}
           />

@@ -10,6 +10,9 @@ export interface Restaurante {
   slug: string;
   logo_url: string | null;
   cor_primaria: string | null;
+  cor_secundaria: string | null;
+  cor_acento: string | null;
+  tema_cardapio: string | null;
   pix_habilitado: boolean;
   pix_chave: string | null;
   pix_nome_titular: string | null;
