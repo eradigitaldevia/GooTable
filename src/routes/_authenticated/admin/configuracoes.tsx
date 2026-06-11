@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { z } from "zod";
 import { useAuth } from "@/hooks/use-auth";
 import { useMeuRestaurante } from "@/hooks/use-restaurante";
@@ -195,18 +195,90 @@ function Configuracoes() {
       return n;
     }
 
-    // Parse silencioso (sem toast) para os campos que NÃO pertencem à aba salva,
-    // reaproveitando o estado atual do form (já validado em saves anteriores).
-    function parseSilent(raw: string): number | null {
-      const t = raw.trim();
-      if (t === "") return null;
-      const n = Number(t.replace(",", "."));
-      return Number.isFinite(n) ? n : null;
-    }
+    let payload: Parameters<typeof atualizar.mutateAsync>[0] | null = null;
 
-    // --- Percentual de pedido do cliente (Comissões) ---
-    let percClienteNum: number | null = null;
-    if (aba === "comissoes") {
+    if (aba === "identidade") {
+      payload = {
+        aba: "identidade",
+        restauranteId: restaurante.id,
+        nome: f.nome.trim(),
+        cor_primaria: f.cor_primaria,
+        logo_url: f.logo_url,
+      };
+    } else if (aba === "pagamentos") {
+      payload = {
+        aba: "pagamentos",
+        restauranteId: restaurante.id,
+        pix_habilitado: f.pix_habilitado,
+        pix_chave: f.pix_chave.trim() || null,
+        pix_nome_titular: f.pix_nome_titular.trim() || null,
+      };
+    } else if (aba === "taxas") {
+      const r1 = parseNumOrNull(f.taxa_servico_percentual, 30, "Taxa de serviço (%)");
+      if (r1 === "ERR") return;
+      const r2 = parseNumOrNull(f.couvert_mesa_valor, 1000, "Couvert de mesa (R$)");
+      if (r2 === "ERR") return;
+      const r3 = parseNumOrNull(f.couvert_artistico_valor, 1000, "Couvert artístico (R$)");
+      if (r3 === "ERR") return;
+      const r4 = parseNumOrNull(f.taxa_servico_repasse_percentual, 100, "Repasse aos garçons (%)");
+      if (r4 === "ERR") return;
+      const r5 = parseNumOrNull(f.couvert_artistico_repasse_percentual, 100, "Repasse aos artistas (%)");
+      if (r5 === "ERR") return;
+
+      if (f.taxa_servico_habilitada && (r1 == null || r1 <= 0)) {
+        toast.error("Informe o percentual da taxa de serviço.");
+        return;
+      }
+      if (f.couvert_mesa_habilitado && (r2 == null || r2 <= 0)) {
+        toast.error("Informe o valor do couvert de mesa.");
+        return;
+      }
+      if (f.couvert_artistico_habilitado && (r3 == null || r3 <= 0)) {
+        toast.error("Informe o valor por pessoa do couvert artístico.");
+        return;
+      }
+      if (
+        f.taxa_servico_habilitada &&
+        f.taxa_servico_repasse_habilitado &&
+        (r4 == null || r4 <= 0)
+      ) {
+        toast.error("Informe o percentual de repasse aos garçons.");
+        return;
+      }
+      if (
+        f.couvert_artistico_habilitado &&
+        f.couvert_artistico_repasse_habilitado &&
+        (r5 == null || r5 <= 0)
+      ) {
+        toast.error("Informe o percentual de repasse aos artistas.");
+        return;
+      }
+
+      payload = {
+        aba: "taxas",
+        restauranteId: restaurante.id,
+        taxa_servico_habilitada: f.taxa_servico_habilitada,
+        taxa_servico_percentual: r1,
+        taxa_servico_descricao: f.taxa_servico_descricao.trim() || null,
+        taxa_servico_repasse_habilitado:
+          f.taxa_servico_habilitada && f.taxa_servico_repasse_habilitado,
+        taxa_servico_repasse_percentual: f.taxa_servico_habilitada ? r4 : null,
+        couvert_mesa_habilitado: f.couvert_mesa_habilitado,
+        couvert_mesa_valor: r2,
+        couvert_mesa_descricao: f.couvert_mesa_descricao.trim() || null,
+        couvert_artistico_habilitado: f.couvert_artistico_habilitado,
+        couvert_artistico_valor: r3,
+        couvert_artistico_descricao: f.couvert_artistico_descricao.trim() || null,
+        couvert_artistico_repasse_habilitado:
+          f.couvert_artistico_habilitado && f.couvert_artistico_repasse_habilitado,
+        couvert_artistico_repasse_percentual: f.couvert_artistico_habilitado ? r5 : null,
+      };
+    } else if (aba === "comissoes") {
+      if (!comissaoFormValido) {
+        toast.error("Verifique os campos de comissões.");
+        return;
+      }
+      let percClienteNum: number | null = null;
       const percCliente = f.comissao_pedido_cliente_percentual.trim();
       if (percCliente !== "") {
         const n = Number(percCliente.replace(",", "."));
@@ -216,86 +288,19 @@ function Configuracoes() {
         }
         percClienteNum = n;
       }
-    } else {
-      percClienteNum = parseSilent(f.comissao_pedido_cliente_percentual);
-    }
-
-    // --- Campos da aba "Taxas e couverts" ---
-    let taxaPerc: number | null;
-    let couvertMesaVal: number | null;
-    let couvertArtVal: number | null;
-    let repassePerc: number | null;
-    let repasseCouvertPerc: number | null;
-    if (aba === "taxas") {
-      const r1 = parseNumOrNull(f.taxa_servico_percentual, 30, "Taxa de serviço (%)");
-      if (r1 === "ERR") return;
-      taxaPerc = r1;
-      const r2 = parseNumOrNull(f.couvert_mesa_valor, 1000, "Couvert de mesa (R$)");
-      if (r2 === "ERR") return;
-      couvertMesaVal = r2;
-      const r3 = parseNumOrNull(f.couvert_artistico_valor, 1000, "Couvert artístico (R$)");
-      if (r3 === "ERR") return;
-      couvertArtVal = r3;
-      const r4 = parseNumOrNull(f.taxa_servico_repasse_percentual, 100, "Repasse aos garçons (%)");
-      if (r4 === "ERR") return;
-      repassePerc = r4;
-      const r5 = parseNumOrNull(f.couvert_artistico_repasse_percentual, 100, "Repasse aos artistas (%)");
-      if (r5 === "ERR") return;
-      repasseCouvertPerc = r5;
-
-      if (f.taxa_servico_habilitada && (taxaPerc == null || taxaPerc <= 0)) {
-        toast.error("Informe o percentual da taxa de serviço.");
-        return;
-      }
-      if (f.couvert_mesa_habilitado && (couvertMesaVal == null || couvertMesaVal <= 0)) {
-        toast.error("Informe o valor do couvert de mesa.");
-        return;
-      }
-      if (f.couvert_artistico_habilitado && (couvertArtVal == null || couvertArtVal <= 0)) {
-        toast.error("Informe o valor por pessoa do couvert artístico.");
-        return;
-      }
-      if (
-        f.taxa_servico_habilitada &&
-        f.taxa_servico_repasse_habilitado &&
-        (repassePerc == null || repassePerc <= 0)
-      ) {
-        toast.error("Informe o percentual de repasse aos garçons.");
-        return;
-      }
-      if (
-        f.couvert_artistico_habilitado &&
-        f.couvert_artistico_repasse_habilitado &&
-        (repasseCouvertPerc == null || repasseCouvertPerc <= 0)
-      ) {
-        toast.error("Informe o percentual de repasse aos artistas.");
-        return;
-      }
-    } else {
-      taxaPerc = parseSilent(f.taxa_servico_percentual);
-      couvertMesaVal = parseSilent(f.couvert_mesa_valor);
-      couvertArtVal = parseSilent(f.couvert_artistico_valor);
-      repassePerc = parseSilent(f.taxa_servico_repasse_percentual);
-      repasseCouvertPerc = parseSilent(f.couvert_artistico_repasse_percentual);
-    }
-
-    if (aba === "comissoes" && !comissaoFormValido) {
-      toast.error("Verifique os campos de comissões.");
-      return;
-    }
-
-    setAbaSalvando(aba);
-    try {
-      await atualizar.mutateAsync({
+      payload = {
+        aba: "comissoes",
         restauranteId: restaurante.id,
-        nome: f.nome.trim(),
-        cor_primaria: f.cor_primaria,
-        logo_url: f.logo_url,
-        pix_habilitado: f.pix_habilitado,
-        pix_chave: f.pix_chave.trim() || null,
-        pix_nome_titular: f.pix_nome_titular.trim() || null,
         comissao_modo: f.comissao_modo,
+        comissao_rateio_troca_turno: f.comissao_rateio_troca_turno,
+        comissao_pedido_cliente: f.comissao_pedido_cliente,
+        comissao_pedido_cliente_percentual: percClienteNum,
         permitir_atendimento_cruzado: f.permitir_atendimento_cruzado,
+      };
+    } else if (aba === "caixa") {
+      payload = {
+        aba: "caixa",
+        restauranteId: restaurante.id,
         caixa_alerta_horas: Math.min(
           72,
           Math.max(1, Math.round(Number(f.caixa_alerta_horas) || 12)),
@@ -305,33 +310,21 @@ function Configuracoes() {
             ? null
             : Math.max(0, Number(f.caixa_teto_dinheiro.replace(",", "."))),
         caixa_conferencia_cega: f.caixa_conferencia_cega,
-        caixa_obrigatorio_para_pagamento:
-          f.caixa_obrigatorio_para_pagamento,
-        comissao_rateio_troca_turno: f.comissao_rateio_troca_turno,
-        comissao_pedido_cliente: f.comissao_pedido_cliente,
-        comissao_pedido_cliente_percentual: percClienteNum,
+        caixa_obrigatorio_para_pagamento: f.caixa_obrigatorio_para_pagamento,
+      };
+    } else if (aba === "cardapio") {
+      payload = {
+        aba: "cardapio",
+        restauranteId: restaurante.id,
         upsell_habilitado: f.upsell_habilitado,
-        taxa_servico_habilitada: f.taxa_servico_habilitada,
-        taxa_servico_percentual: taxaPerc,
-        taxa_servico_descricao: f.taxa_servico_descricao.trim() || null,
-        couvert_mesa_habilitado: f.couvert_mesa_habilitado,
-        couvert_mesa_valor: couvertMesaVal,
-        couvert_mesa_descricao: f.couvert_mesa_descricao.trim() || null,
-        couvert_artistico_habilitado: f.couvert_artistico_habilitado,
-        couvert_artistico_valor: couvertArtVal,
-        couvert_artistico_descricao: f.couvert_artistico_descricao.trim() || null,
-        taxa_servico_repasse_habilitado:
-          f.taxa_servico_habilitada && f.taxa_servico_repasse_habilitado,
-        taxa_servico_repasse_percentual: f.taxa_servico_habilitada
-          ? repassePerc
-          : null,
-        couvert_artistico_repasse_habilitado:
-          f.couvert_artistico_habilitado &&
-          f.couvert_artistico_repasse_habilitado,
-        couvert_artistico_repasse_percentual: f.couvert_artistico_habilitado
-          ? repasseCouvertPerc
-          : null,
-      });
+      };
+    }
+
+    if (!payload) return;
+
+    setAbaSalvando(aba);
+    try {
+      await atualizar.mutateAsync(payload);
       toast.success("Configurações salvas");
     } catch (e: any) {
       toast.error(e?.message ?? "Erro ao salvar");
