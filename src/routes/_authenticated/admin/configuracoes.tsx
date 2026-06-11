@@ -475,12 +475,26 @@ function Configuracoes() {
         onValueChange={(v) => navigate({ search: { tab: v as TabId } })}
       >
         <TabsList className="flex w-full flex-wrap justify-start gap-1">
-          <TabsTrigger value="identidade">Identidade</TabsTrigger>
-          <TabsTrigger value="pagamentos">Pagamentos</TabsTrigger>
-          <TabsTrigger value="taxas">Taxas e couverts</TabsTrigger>
-          <TabsTrigger value="comissoes">Comissões</TabsTrigger>
-          <TabsTrigger value="caixa">Caixa</TabsTrigger>
-          <TabsTrigger value="cardapio">Cardápio</TabsTrigger>
+          {(
+            [
+              ["identidade", "Identidade"],
+              ["pagamentos", "Pagamentos"],
+              ["taxas", "Taxas e couverts"],
+              ["comissoes", "Comissões"],
+              ["caixa", "Caixa"],
+              ["cardapio", "Cardápio"],
+            ] as [TabId, string][]
+          ).map(([id, label]) => (
+            <TabsTrigger key={id} value={id}>
+              {label}
+              {abasSujas[id] && (
+                <span
+                  className="ml-1.5 inline-block h-1.5 w-1.5 rounded-full bg-primary"
+                  aria-label="alterações não salvas"
+                />
+              )}
+            </TabsTrigger>
+          ))}
         </TabsList>
 
         <TabsContent value="identidade" className="space-y-6">
