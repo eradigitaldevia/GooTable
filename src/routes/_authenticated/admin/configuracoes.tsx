@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { z } from "zod";
 import { useAuth } from "@/hooks/use-auth";
 import { useMeuRestaurante } from "@/hooks/use-restaurante";
@@ -83,9 +83,11 @@ function Configuracoes() {
     couvert_artistico_repasse_percentual: "" as string,
   });
 
+  const prevSnapshotRef = useRef<typeof form | null>(null);
+
   useEffect(() => {
     if (!restaurante) return;
-    setForm({
+    const next: typeof form = {
       nome: restaurante.nome,
       cor_primaria: restaurante.cor_primaria || "#c2410c",
       logo_url: restaurante.logo_url,
@@ -144,7 +146,24 @@ function Configuracoes() {
         restaurante.couvert_artistico_repasse_percentual != null
           ? String(restaurante.couvert_artistico_repasse_percentual)
           : "",
-    });
+    };
+    const prev = prevSnapshotRef.current;
+    if (prev == null) {
+      setForm(next);
+    } else {
+      setForm((curr) => {
+        const merged = { ...curr };
+        (Object.keys(next) as (keyof typeof form)[]).forEach((k) => {
+          // Só sobrescreve campos que NÃO estavam sujos (curr[k] === prev[k]).
+          // Campos editados pelo usuário e ainda não salvos são preservados.
+          if (curr[k] === prev[k]) {
+            (merged[k] as typeof next[typeof k]) = next[k];
+          }
+        });
+        return merged;
+      });
+    }
+    prevSnapshotRef.current = next;
   }, [restaurante]);
 
   function patch(p: Partial<typeof form>) {
