@@ -1,14 +1,14 @@
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Loader2, Image as ImageIcon, ExternalLink } from "lucide-react";
+import { Loader2, Image as ImageIcon, Eye } from "lucide-react";
 import { toast } from "sonner";
 import { useUploadLogo } from "@/hooks/use-configuracoes";
 import { PaletaPicker } from "./identidade/paleta-picker";
 import { CoresForm } from "./identidade/cores-form";
-import { PreviewAmostra } from "./identidade/preview-amostra";
 import { PALETAS_PRESETS } from "./identidade/paleta-presets";
+import { PreviewDrawer } from "./identidade/preview-drawer";
 
 type IdentidadePatch = {
   nome?: string;
@@ -41,6 +41,7 @@ export function IdentidadeForm({
   const fileRef = useRef<HTMLInputElement>(null);
   const uploadMut = useUploadLogo();
   const uploading = uploadMut.isPending;
+  const [previewOpen, setPreviewOpen] = useState(false);
 
   const paletaAtivaId =
     PALETAS_PRESETS.find(
@@ -143,36 +144,29 @@ export function IdentidadeForm({
         />
       </div>
 
-      <div className="space-y-3 border-t border-border pt-6">
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <div>
-            <h3 className="text-sm font-semibold">Amostra</h3>
-            <p className="text-xs text-muted-foreground">
-              Combinação de cores aplicada a alguns elementos do cardápio.
-            </p>
-          </div>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={() => window.open("/admin/cardapio-preview", "_blank")}
-            className="gap-1.5"
-          >
-            <ExternalLink className="h-3.5 w-3.5" /> Abrir prévia completa
-          </Button>
-        </div>
-        <PreviewAmostra
-          nome={nome}
-          primaria={corPrimaria}
-          secundaria={corSecundaria}
-          acento={corAcento}
-          tema={tema}
-        />
-        <p className="text-[11px] text-muted-foreground">
-          A prévia completa usa as cores já salvas — salve as alterações antes de
-          abrir.
-        </p>
+      <div className="flex justify-end border-t border-border pt-6">
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={() => setPreviewOpen(true)}
+          className="gap-1.5"
+        >
+          <Eye className="h-3.5 w-3.5" /> Ver prévia ao vivo
+        </Button>
       </div>
+
+      <PreviewDrawer
+        open={previewOpen}
+        onOpenChange={setPreviewOpen}
+        restauranteId={restauranteId}
+        nome={nome}
+        logoUrl={logoUrl}
+        cor_primaria={corPrimaria}
+        cor_secundaria={corSecundaria}
+        cor_acento={corAcento}
+        tema_cardapio={tema}
+      />
     </section>
   );
 }
