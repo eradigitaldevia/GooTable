@@ -342,8 +342,24 @@ function Configuracoes() {
 
   if (isLoading || !restaurante) return <div className="text-sm text-muted-foreground">Carregando…</div>;
 
+  const SaveBtn = ({ aba }: { aba: TabId }) => (
+    <div className="flex justify-end">
+      <Button
+        onClick={() => salvar(aba)}
+        disabled={
+          abaSalvando === aba ||
+          (aba === "comissoes" && !comissaoFormValido)
+        }
+        className="h-11 px-6"
+      >
+        {abaSalvando === aba && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+        Salvar alterações
+      </Button>
+    </div>
+  );
+
   return (
-    <div className="max-w-2xl space-y-8">
+    <div className="max-w-2xl space-y-6">
       <header>
         <h1 className="text-3xl font-bold tracking-tight">Configurações</h1>
         <p className="mt-1 text-sm text-muted-foreground">
@@ -351,183 +367,206 @@ function Configuracoes() {
         </p>
       </header>
 
-      <IdentidadeForm
-        restauranteId={restaurante.id}
-        nome={form.nome}
-        corPrimaria={form.cor_primaria}
-        logoUrl={form.logo_url}
-        onChange={patch}
-      />
+      <Tabs
+        value={tab}
+        onValueChange={(v) => navigate({ search: { tab: v as TabId } })}
+      >
+        <TabsList className="flex w-full flex-wrap justify-start gap-1">
+          <TabsTrigger value="identidade">Identidade</TabsTrigger>
+          <TabsTrigger value="pagamentos">Pagamentos</TabsTrigger>
+          <TabsTrigger value="taxas">Taxas e couverts</TabsTrigger>
+          <TabsTrigger value="comissoes">Comissões</TabsTrigger>
+          <TabsTrigger value="caixa">Caixa</TabsTrigger>
+          <TabsTrigger value="cardapio">Cardápio</TabsTrigger>
+        </TabsList>
 
-      <PixForm
-        habilitado={form.pix_habilitado}
-        chave={form.pix_chave}
-        titular={form.pix_nome_titular}
-        onChange={patch}
-      />
-
-      <TaxaServicoForm
-        habilitada={form.taxa_servico_habilitada}
-        percentual={form.taxa_servico_percentual}
-        descricao={form.taxa_servico_descricao}
-        repasseHabilitado={form.taxa_servico_repasse_habilitado}
-        repassePercentual={form.taxa_servico_repasse_percentual}
-        onChange={patch}
-      />
-
-      <CouvertForm
-        mesaHabilitado={form.couvert_mesa_habilitado}
-        mesaValor={form.couvert_mesa_valor}
-        mesaDescricao={form.couvert_mesa_descricao}
-        artisticoHabilitado={form.couvert_artistico_habilitado}
-        artisticoValor={form.couvert_artistico_valor}
-        artisticoDescricao={form.couvert_artistico_descricao}
-        repasseHabilitado={form.couvert_artistico_repasse_habilitado}
-        repassePercentual={form.couvert_artistico_repasse_percentual}
-        onChange={patch}
-      />
-
-      <ComissaoModoForm
-        modo={form.comissao_modo}
-        rateioTrocaTurno={form.comissao_rateio_troca_turno}
-        pagarPedidoCliente={form.comissao_pedido_cliente}
-        percentualPedidoCliente={form.comissao_pedido_cliente_percentual}
-        onChange={patch}
-        semGarcons={semGarcons}
-        todosGarconsZerados={todosGarconsZerados}
-        mesasSemGarcom={mesasSemGarcom}
-        onValidityChange={setComissaoFormValido}
-      />
-
-      <section className="rounded-lg border border-border bg-card p-4">
-        <div className="flex items-start justify-between gap-4">
-          <div className="min-w-0">
-            <h2 className="text-base font-semibold">
-              Atendimento cruzado entre garçons
-            </h2>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Permite que um garçom lance pedidos em mesas que não foram
-              atribuídas a ele. A comissão sempre vai para quem lançou o
-              pedido. Quando desligado, cada garçom só atende suas próprias
-              mesas.
-            </p>
-          </div>
-          <Switch
-            checked={form.permitir_atendimento_cruzado}
-            onCheckedChange={(v) =>
-              patch({ permitir_atendimento_cruzado: v })
-            }
-            aria-label="Permitir atendimento cruzado"
+        <TabsContent value="identidade" className="space-y-6">
+          <IdentidadeForm
+            restauranteId={restaurante.id}
+            nome={form.nome}
+            corPrimaria={form.cor_primaria}
+            logoUrl={form.logo_url}
+            onChange={patch}
           />
-        </div>
-      </section>
+          <SaveBtn aba="identidade" />
+        </TabsContent>
 
-      <section className="rounded-lg border border-border bg-card p-4">
-        <div className="flex items-start justify-between gap-4">
-          <div className="min-w-0">
-            <h2 className="text-base font-semibold">
-              Sugerir acompanhamentos no carrinho
-            </h2>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Mostra ao cliente, no carrinho, até 3 sugestões de bebidas e
-              sobremesas para complementar o pedido. Desligue se preferir não
-              exibir recomendações automáticas.
-            </p>
-          </div>
-          <Switch
-            checked={form.upsell_habilitado}
-            onCheckedChange={(v) => patch({ upsell_habilitado: v })}
-            aria-label="Sugerir acompanhamentos no carrinho"
+        <TabsContent value="pagamentos" className="space-y-6">
+          <PixForm
+            habilitado={form.pix_habilitado}
+            chave={form.pix_chave}
+            titular={form.pix_nome_titular}
+            onChange={patch}
           />
-        </div>
-      </section>
+          <SaveBtn aba="pagamentos" />
+        </TabsContent>
 
-      <section className="space-y-4 rounded-lg border border-border bg-card p-4">
-        <header>
-          <h2 className="text-base font-semibold">Caixa</h2>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Regras de operação do caixa, alertas e controles de segurança.
-          </p>
-        </header>
-
-        <div className="grid gap-4 sm:grid-cols-2">
-          <div className="space-y-1">
-            <Label>Alerta de turno aberto há (horas)</Label>
-            <Input
-              type="number"
-              min={1}
-              max={72}
-              value={form.caixa_alerta_horas}
-              onChange={(e) =>
-                patch({ caixa_alerta_horas: Number(e.target.value) || 0 })
-              }
-            />
-            <p className="text-xs text-muted-foreground">
-              Avisa quando um turno fica aberto além desse tempo.
-            </p>
-          </div>
-
-          <div className="space-y-1">
-            <Label>Teto de dinheiro em caixa (R$)</Label>
-            <Input
-              inputMode="decimal"
-              placeholder="Sem teto"
-              value={form.caixa_teto_dinheiro}
-              onChange={(e) => patch({ caixa_teto_dinheiro: e.target.value })}
-            />
-            <p className="text-xs text-muted-foreground">
-              Avisa o operador quando o dinheiro acumulado ultrapassa esse
-              valor. Deixe vazio para sem teto.
-            </p>
-          </div>
-        </div>
-
-        <div className="flex items-start justify-between gap-4 rounded-md border border-border p-3">
-          <div className="min-w-0">
-            <div className="text-sm font-medium">Conferência cega no fechamento</div>
-            <p className="mt-1 text-xs text-muted-foreground">
-              Esconde o saldo esperado durante o fechamento; o operador conta o
-              dinheiro sem ver o sistema. A diferença aparece somente após o
-              fechamento.
-            </p>
-          </div>
-          <Switch
-            checked={form.caixa_conferencia_cega}
-            onCheckedChange={(v) => patch({ caixa_conferencia_cega: v })}
-            aria-label="Conferência cega"
+        <TabsContent value="taxas" className="space-y-6">
+          <TaxaServicoForm
+            habilitada={form.taxa_servico_habilitada}
+            percentual={form.taxa_servico_percentual}
+            descricao={form.taxa_servico_descricao}
+            repasseHabilitado={form.taxa_servico_repasse_habilitado}
+            repassePercentual={form.taxa_servico_repasse_percentual}
+            onChange={patch}
           />
-        </div>
+          <CouvertForm
+            mesaHabilitado={form.couvert_mesa_habilitado}
+            mesaValor={form.couvert_mesa_valor}
+            mesaDescricao={form.couvert_mesa_descricao}
+            artisticoHabilitado={form.couvert_artistico_habilitado}
+            artisticoValor={form.couvert_artistico_valor}
+            artisticoDescricao={form.couvert_artistico_descricao}
+            repasseHabilitado={form.couvert_artistico_repasse_habilitado}
+            repassePercentual={form.couvert_artistico_repasse_percentual}
+            onChange={patch}
+          />
+          <SaveBtn aba="taxas" />
+        </TabsContent>
 
-        <div className="flex items-start justify-between gap-4 rounded-md border border-border p-3">
-          <div className="min-w-0">
-            <div className="text-sm font-medium">
-              Exigir caixa aberto para confirmar pagamento
+        <TabsContent value="comissoes" className="space-y-6">
+          <ComissaoModoForm
+            modo={form.comissao_modo}
+            rateioTrocaTurno={form.comissao_rateio_troca_turno}
+            pagarPedidoCliente={form.comissao_pedido_cliente}
+            percentualPedidoCliente={form.comissao_pedido_cliente_percentual}
+            onChange={patch}
+            semGarcons={semGarcons}
+            todosGarconsZerados={todosGarconsZerados}
+            mesasSemGarcom={mesasSemGarcom}
+            onValidityChange={setComissaoFormValido}
+          />
+          <section className="rounded-lg border border-border bg-card p-4">
+            <div className="flex items-start justify-between gap-4">
+              <div className="min-w-0">
+                <h2 className="text-base font-semibold">
+                  Atendimento cruzado entre garçons
+                </h2>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Permite que um garçom lance pedidos em mesas que não foram
+                  atribuídas a ele. A comissão sempre vai para quem lançou o
+                  pedido. Quando desligado, cada garçom só atende suas próprias
+                  mesas.
+                </p>
+              </div>
+              <Switch
+                checked={form.permitir_atendimento_cruzado}
+                onCheckedChange={(v) =>
+                  patch({ permitir_atendimento_cruzado: v })
+                }
+                aria-label="Permitir atendimento cruzado"
+              />
             </div>
-            <p className="mt-1 text-xs text-muted-foreground">
-              Bloqueia a confirmação de pagamentos quando não há turno de caixa
-              aberto.
-            </p>
-          </div>
-          <Switch
-            checked={form.caixa_obrigatorio_para_pagamento}
-            onCheckedChange={(v) =>
-              patch({ caixa_obrigatorio_para_pagamento: v })
-            }
-            aria-label="Caixa obrigatório para pagamento"
-          />
-        </div>
-      </section>
+          </section>
+          <SaveBtn aba="comissoes" />
+        </TabsContent>
 
-      <div className="flex justify-end">
-        <Button
-          onClick={save}
-          disabled={atualizar.isPending || !comissaoFormValido}
-          className="h-11 px-6"
-        >
-          {atualizar.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-          Salvar alterações
-        </Button>
-      </div>
+        <TabsContent value="caixa" className="space-y-6">
+          <section className="space-y-4 rounded-lg border border-border bg-card p-4">
+            <header>
+              <h2 className="text-base font-semibold">Caixa</h2>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Regras de operação do caixa, alertas e controles de segurança.
+              </p>
+            </header>
+
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="space-y-1">
+                <Label>Alerta de turno aberto há (horas)</Label>
+                <Input
+                  type="number"
+                  min={1}
+                  max={72}
+                  value={form.caixa_alerta_horas}
+                  onChange={(e) =>
+                    patch({ caixa_alerta_horas: Number(e.target.value) || 0 })
+                  }
+                />
+                <p className="text-xs text-muted-foreground">
+                  Avisa quando um turno fica aberto além desse tempo.
+                </p>
+              </div>
+
+              <div className="space-y-1">
+                <Label>Teto de dinheiro em caixa (R$)</Label>
+                <Input
+                  inputMode="decimal"
+                  placeholder="Sem teto"
+                  value={form.caixa_teto_dinheiro}
+                  onChange={(e) => patch({ caixa_teto_dinheiro: e.target.value })}
+                />
+                <p className="text-xs text-muted-foreground">
+                  Avisa o operador quando o dinheiro acumulado ultrapassa esse
+                  valor. Deixe vazio para sem teto.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-start justify-between gap-4 rounded-md border border-border p-3">
+              <div className="min-w-0">
+                <div className="text-sm font-medium">Conferência cega no fechamento</div>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Esconde o saldo esperado durante o fechamento; o operador conta o
+                  dinheiro sem ver o sistema. A diferença aparece somente após o
+                  fechamento.
+                </p>
+              </div>
+              <Switch
+                checked={form.caixa_conferencia_cega}
+                onCheckedChange={(v) => patch({ caixa_conferencia_cega: v })}
+                aria-label="Conferência cega"
+              />
+            </div>
+
+            <div className="flex items-start justify-between gap-4 rounded-md border border-border p-3">
+              <div className="min-w-0">
+                <div className="text-sm font-medium">
+                  Exigir caixa aberto para confirmar pagamento
+                </div>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Bloqueia a confirmação de pagamentos quando não há turno de caixa
+                  aberto.
+                </p>
+              </div>
+              <Switch
+                checked={form.caixa_obrigatorio_para_pagamento}
+                onCheckedChange={(v) =>
+                  patch({ caixa_obrigatorio_para_pagamento: v })
+                }
+                aria-label="Caixa obrigatório para pagamento"
+              />
+            </div>
+          </section>
+          <SaveBtn aba="caixa" />
+        </TabsContent>
+
+        <TabsContent value="cardapio" className="space-y-6">
+          <section className="rounded-lg border border-border bg-card p-4">
+            <div className="flex items-start justify-between gap-4">
+              <div className="min-w-0">
+                <h2 className="text-base font-semibold">
+                  Sugerir acompanhamentos no carrinho
+                </h2>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Mostra ao cliente, no carrinho, até 3 sugestões de bebidas e
+                  sobremesas para complementar o pedido. Desligue se preferir não
+                  exibir recomendações automáticas. Alterações são salvas
+                  automaticamente.
+                </p>
+              </div>
+              <Switch
+                checked={form.upsell_habilitado}
+                disabled={abaSalvando === "cardapio"}
+                onCheckedChange={(v) => {
+                  patch({ upsell_habilitado: v });
+                  salvar("cardapio", { upsell_habilitado: v });
+                }}
+                aria-label="Sugerir acompanhamentos no carrinho"
+              />
+            </div>
+          </section>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
