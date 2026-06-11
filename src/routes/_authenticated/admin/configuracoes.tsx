@@ -1,5 +1,6 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
+import { z } from "zod";
 import { useAuth } from "@/hooks/use-auth";
 import { useMeuRestaurante } from "@/hooks/use-restaurante";
 import { useAtualizarConfiguracoes, useValidarPix } from "@/hooks/use-configuracoes";
@@ -15,8 +16,24 @@ import { CouvertForm } from "@/components/configuracoes/couvert-form";
 import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+
+type TabId =
+  | "identidade"
+  | "pagamentos"
+  | "taxas"
+  | "comissoes"
+  | "caixa"
+  | "cardapio";
+
+const searchSchema = z.object({
+  tab: z
+    .enum(["identidade", "pagamentos", "taxas", "comissoes", "caixa", "cardapio"])
+    .default("identidade"),
+});
 
 export const Route = createFileRoute("/_authenticated/admin/configuracoes")({
+  validateSearch: searchSchema,
   component: Configuracoes,
 });
 
@@ -30,6 +47,9 @@ function Configuracoes() {
     restaurante?.id,
   );
   const [comissaoFormValido, setComissaoFormValido] = useState(true);
+  const { tab } = Route.useSearch();
+  const navigate = useNavigate({ from: Route.fullPath });
+  const [abaSalvando, setAbaSalvando] = useState<TabId | null>(null);
 
   const [form, setForm] = useState({
     nome: "",
@@ -140,31 +160,28 @@ function Configuracoes() {
     (a) => a.garcons.length === 0,
   ).length;
 
-  async function save() {
+  async function salvar(aba: TabId, overrides?: Partial<typeof form>) {
     if (!restaurante) return;
-    if (form.nome.trim().length < 2) {
-      toast.error("Nome muito curto");
-      return;
-    }
-    try {
-      await validarPix.mutateAsync({
-        pix_habilitado: form.pix_habilitado,
-        pix_chave: form.pix_chave.trim() || null,
-        pix_nome_titular: form.pix_nome_titular.trim() || null,
-      });
-    } catch (e: any) {
-      toast.error(e?.message ?? "PIX inválido");
-      return;
-    }
-    const percCliente = form.comissao_pedido_cliente_percentual.trim();
-    let percClienteNum: number | null = null;
-    if (percCliente !== "") {
-      const n = Number(percCliente.replace(",", "."));
-      if (!Number.isFinite(n) || n < 0 || n > 100) {
-        toast.error("Percentual de pedido do cliente deve estar entre 0 e 100");
+    const f = overrides ? { ...form, ...overrides } : form;
+
+    // Validações por aba
+    if (aba === "identidade") {
+      if (f.nome.trim().length < 2) {
+        toast.error("Nome muito curto");
         return;
       }
-      percClienteNum = n;
+    }
+    if (aba === "pagamentos") {
+      try {
+        await validarPix.mutateAsync({
+          pix_habilitado: f.pix_habilitado,
+          pix_chave: f.pix_chave.trim() || null,
+          pix_nome_titular: f.pix_nome_titular.trim() || null,
+        });
+      } catch (e: any) {
+        toast.error(e?.message ?? "PIX inválido");
+        return;
+      }
     }
 
     function parseNumOrNull(raw: string, max: number, label: string): number | null | "ERR" {
@@ -177,106 +194,172 @@ function Configuracoes() {
       }
       return n;
     }
-    const taxaPerc = parseNumOrNull(form.taxa_servico_percentual, 30, "Taxa de serviço (%)");
-    if (taxaPerc === "ERR") return;
-    const couvertMesaVal = parseNumOrNull(form.couvert_mesa_valor, 1000, "Couvert de mesa (R$)");
-    if (couvertMesaVal === "ERR") return;
-    const couvertArtVal = parseNumOrNull(form.couvert_artistico_valor, 1000, "Couvert artístico (R$)");
-    if (couvertArtVal === "ERR") return;
-    const repassePerc = parseNumOrNull(form.taxa_servico_repasse_percentual, 100, "Repasse aos garçons (%)");
-    if (repassePerc === "ERR") return;
-    const repasseCouvertPerc = parseNumOrNull(
-      form.couvert_artistico_repasse_percentual,
-      100,
-      "Repasse aos artistas (%)",
-    );
-    if (repasseCouvertPerc === "ERR") return;
 
-    if (form.taxa_servico_habilitada && (taxaPerc == null || taxaPerc <= 0)) {
-      toast.error("Informe o percentual da taxa de serviço.");
+    // Parse silencioso (sem toast) para os campos que NÃO pertencem à aba salva,
+    // reaproveitando o estado atual do form (já validado em saves anteriores).
+    function parseSilent(raw: string): number | null {
+      const t = raw.trim();
+      if (t === "") return null;
+      const n = Number(t.replace(",", "."));
+      return Number.isFinite(n) ? n : null;
+    }
+
+    // --- Percentual de pedido do cliente (Comissões) ---
+    let percClienteNum: number | null = null;
+    if (aba === "comissoes") {
+      const percCliente = f.comissao_pedido_cliente_percentual.trim();
+      if (percCliente !== "") {
+        const n = Number(percCliente.replace(",", "."));
+        if (!Number.isFinite(n) || n < 0 || n > 100) {
+          toast.error("Percentual de pedido do cliente deve estar entre 0 e 100");
+          return;
+        }
+        percClienteNum = n;
+      }
+    } else {
+      percClienteNum = parseSilent(f.comissao_pedido_cliente_percentual);
+    }
+
+    // --- Campos da aba "Taxas e couverts" ---
+    let taxaPerc: number | null;
+    let couvertMesaVal: number | null;
+    let couvertArtVal: number | null;
+    let repassePerc: number | null;
+    let repasseCouvertPerc: number | null;
+    if (aba === "taxas") {
+      const r1 = parseNumOrNull(f.taxa_servico_percentual, 30, "Taxa de serviço (%)");
+      if (r1 === "ERR") return;
+      taxaPerc = r1;
+      const r2 = parseNumOrNull(f.couvert_mesa_valor, 1000, "Couvert de mesa (R$)");
+      if (r2 === "ERR") return;
+      couvertMesaVal = r2;
+      const r3 = parseNumOrNull(f.couvert_artistico_valor, 1000, "Couvert artístico (R$)");
+      if (r3 === "ERR") return;
+      couvertArtVal = r3;
+      const r4 = parseNumOrNull(f.taxa_servico_repasse_percentual, 100, "Repasse aos garçons (%)");
+      if (r4 === "ERR") return;
+      repassePerc = r4;
+      const r5 = parseNumOrNull(f.couvert_artistico_repasse_percentual, 100, "Repasse aos artistas (%)");
+      if (r5 === "ERR") return;
+      repasseCouvertPerc = r5;
+
+      if (f.taxa_servico_habilitada && (taxaPerc == null || taxaPerc <= 0)) {
+        toast.error("Informe o percentual da taxa de serviço.");
+        return;
+      }
+      if (f.couvert_mesa_habilitado && (couvertMesaVal == null || couvertMesaVal <= 0)) {
+        toast.error("Informe o valor do couvert de mesa.");
+        return;
+      }
+      if (f.couvert_artistico_habilitado && (couvertArtVal == null || couvertArtVal <= 0)) {
+        toast.error("Informe o valor por pessoa do couvert artístico.");
+        return;
+      }
+      if (
+        f.taxa_servico_habilitada &&
+        f.taxa_servico_repasse_habilitado &&
+        (repassePerc == null || repassePerc <= 0)
+      ) {
+        toast.error("Informe o percentual de repasse aos garçons.");
+        return;
+      }
+      if (
+        f.couvert_artistico_habilitado &&
+        f.couvert_artistico_repasse_habilitado &&
+        (repasseCouvertPerc == null || repasseCouvertPerc <= 0)
+      ) {
+        toast.error("Informe o percentual de repasse aos artistas.");
+        return;
+      }
+    } else {
+      taxaPerc = parseSilent(f.taxa_servico_percentual);
+      couvertMesaVal = parseSilent(f.couvert_mesa_valor);
+      couvertArtVal = parseSilent(f.couvert_artistico_valor);
+      repassePerc = parseSilent(f.taxa_servico_repasse_percentual);
+      repasseCouvertPerc = parseSilent(f.couvert_artistico_repasse_percentual);
+    }
+
+    if (aba === "comissoes" && !comissaoFormValido) {
+      toast.error("Verifique os campos de comissões.");
       return;
     }
-    if (form.couvert_mesa_habilitado && (couvertMesaVal == null || couvertMesaVal <= 0)) {
-      toast.error("Informe o valor do couvert de mesa.");
-      return;
-    }
-    if (form.couvert_artistico_habilitado && (couvertArtVal == null || couvertArtVal <= 0)) {
-      toast.error("Informe o valor por pessoa do couvert artístico.");
-      return;
-    }
-    if (
-      form.taxa_servico_habilitada &&
-      form.taxa_servico_repasse_habilitado &&
-      (repassePerc == null || repassePerc <= 0)
-    ) {
-      toast.error("Informe o percentual de repasse aos garçons.");
-      return;
-    }
-    if (
-      form.couvert_artistico_habilitado &&
-      form.couvert_artistico_repasse_habilitado &&
-      (repasseCouvertPerc == null || repasseCouvertPerc <= 0)
-    ) {
-      toast.error("Informe o percentual de repasse aos artistas.");
-      return;
-    }
+
+    setAbaSalvando(aba);
     try {
       await atualizar.mutateAsync({
         restauranteId: restaurante.id,
-        nome: form.nome.trim(),
-        cor_primaria: form.cor_primaria,
-        logo_url: form.logo_url,
-        pix_habilitado: form.pix_habilitado,
-        pix_chave: form.pix_chave.trim() || null,
-        pix_nome_titular: form.pix_nome_titular.trim() || null,
-        comissao_modo: form.comissao_modo,
-        permitir_atendimento_cruzado: form.permitir_atendimento_cruzado,
+        nome: f.nome.trim(),
+        cor_primaria: f.cor_primaria,
+        logo_url: f.logo_url,
+        pix_habilitado: f.pix_habilitado,
+        pix_chave: f.pix_chave.trim() || null,
+        pix_nome_titular: f.pix_nome_titular.trim() || null,
+        comissao_modo: f.comissao_modo,
+        permitir_atendimento_cruzado: f.permitir_atendimento_cruzado,
         caixa_alerta_horas: Math.min(
           72,
-          Math.max(1, Math.round(Number(form.caixa_alerta_horas) || 12)),
+          Math.max(1, Math.round(Number(f.caixa_alerta_horas) || 12)),
         ),
         caixa_teto_dinheiro:
-          form.caixa_teto_dinheiro.trim() === ""
+          f.caixa_teto_dinheiro.trim() === ""
             ? null
-            : Math.max(0, Number(form.caixa_teto_dinheiro.replace(",", "."))),
-        caixa_conferencia_cega: form.caixa_conferencia_cega,
+            : Math.max(0, Number(f.caixa_teto_dinheiro.replace(",", "."))),
+        caixa_conferencia_cega: f.caixa_conferencia_cega,
         caixa_obrigatorio_para_pagamento:
-          form.caixa_obrigatorio_para_pagamento,
-        comissao_rateio_troca_turno: form.comissao_rateio_troca_turno,
-        comissao_pedido_cliente: form.comissao_pedido_cliente,
+          f.caixa_obrigatorio_para_pagamento,
+        comissao_rateio_troca_turno: f.comissao_rateio_troca_turno,
+        comissao_pedido_cliente: f.comissao_pedido_cliente,
         comissao_pedido_cliente_percentual: percClienteNum,
-        upsell_habilitado: form.upsell_habilitado,
-        taxa_servico_habilitada: form.taxa_servico_habilitada,
+        upsell_habilitado: f.upsell_habilitado,
+        taxa_servico_habilitada: f.taxa_servico_habilitada,
         taxa_servico_percentual: taxaPerc,
-        taxa_servico_descricao: form.taxa_servico_descricao.trim() || null,
-        couvert_mesa_habilitado: form.couvert_mesa_habilitado,
+        taxa_servico_descricao: f.taxa_servico_descricao.trim() || null,
+        couvert_mesa_habilitado: f.couvert_mesa_habilitado,
         couvert_mesa_valor: couvertMesaVal,
-        couvert_mesa_descricao: form.couvert_mesa_descricao.trim() || null,
-        couvert_artistico_habilitado: form.couvert_artistico_habilitado,
+        couvert_mesa_descricao: f.couvert_mesa_descricao.trim() || null,
+        couvert_artistico_habilitado: f.couvert_artistico_habilitado,
         couvert_artistico_valor: couvertArtVal,
-        couvert_artistico_descricao: form.couvert_artistico_descricao.trim() || null,
+        couvert_artistico_descricao: f.couvert_artistico_descricao.trim() || null,
         taxa_servico_repasse_habilitado:
-          form.taxa_servico_habilitada && form.taxa_servico_repasse_habilitado,
-        taxa_servico_repasse_percentual: form.taxa_servico_habilitada
+          f.taxa_servico_habilitada && f.taxa_servico_repasse_habilitado,
+        taxa_servico_repasse_percentual: f.taxa_servico_habilitada
           ? repassePerc
           : null,
         couvert_artistico_repasse_habilitado:
-          form.couvert_artistico_habilitado &&
-          form.couvert_artistico_repasse_habilitado,
-        couvert_artistico_repasse_percentual: form.couvert_artistico_habilitado
+          f.couvert_artistico_habilitado &&
+          f.couvert_artistico_repasse_habilitado,
+        couvert_artistico_repasse_percentual: f.couvert_artistico_habilitado
           ? repasseCouvertPerc
           : null,
       });
       toast.success("Configurações salvas");
     } catch (e: any) {
       toast.error(e?.message ?? "Erro ao salvar");
+    } finally {
+      setAbaSalvando(null);
     }
   }
 
   if (isLoading || !restaurante) return <div className="text-sm text-muted-foreground">Carregando…</div>;
 
+  const SaveBtn = ({ aba }: { aba: TabId }) => (
+    <div className="flex justify-end">
+      <Button
+        onClick={() => salvar(aba)}
+        disabled={
+          abaSalvando === aba ||
+          (aba === "comissoes" && !comissaoFormValido)
+        }
+        className="h-11 px-6"
+      >
+        {abaSalvando === aba && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+        Salvar alterações
+      </Button>
+    </div>
+  );
+
   return (
-    <div className="max-w-2xl space-y-8">
+    <div className="max-w-2xl space-y-6">
       <header>
         <h1 className="text-3xl font-bold tracking-tight">Configurações</h1>
         <p className="mt-1 text-sm text-muted-foreground">
@@ -284,183 +367,206 @@ function Configuracoes() {
         </p>
       </header>
 
-      <IdentidadeForm
-        restauranteId={restaurante.id}
-        nome={form.nome}
-        corPrimaria={form.cor_primaria}
-        logoUrl={form.logo_url}
-        onChange={patch}
-      />
+      <Tabs
+        value={tab}
+        onValueChange={(v) => navigate({ search: { tab: v as TabId } })}
+      >
+        <TabsList className="flex w-full flex-wrap justify-start gap-1">
+          <TabsTrigger value="identidade">Identidade</TabsTrigger>
+          <TabsTrigger value="pagamentos">Pagamentos</TabsTrigger>
+          <TabsTrigger value="taxas">Taxas e couverts</TabsTrigger>
+          <TabsTrigger value="comissoes">Comissões</TabsTrigger>
+          <TabsTrigger value="caixa">Caixa</TabsTrigger>
+          <TabsTrigger value="cardapio">Cardápio</TabsTrigger>
+        </TabsList>
 
-      <PixForm
-        habilitado={form.pix_habilitado}
-        chave={form.pix_chave}
-        titular={form.pix_nome_titular}
-        onChange={patch}
-      />
-
-      <TaxaServicoForm
-        habilitada={form.taxa_servico_habilitada}
-        percentual={form.taxa_servico_percentual}
-        descricao={form.taxa_servico_descricao}
-        repasseHabilitado={form.taxa_servico_repasse_habilitado}
-        repassePercentual={form.taxa_servico_repasse_percentual}
-        onChange={patch}
-      />
-
-      <CouvertForm
-        mesaHabilitado={form.couvert_mesa_habilitado}
-        mesaValor={form.couvert_mesa_valor}
-        mesaDescricao={form.couvert_mesa_descricao}
-        artisticoHabilitado={form.couvert_artistico_habilitado}
-        artisticoValor={form.couvert_artistico_valor}
-        artisticoDescricao={form.couvert_artistico_descricao}
-        repasseHabilitado={form.couvert_artistico_repasse_habilitado}
-        repassePercentual={form.couvert_artistico_repasse_percentual}
-        onChange={patch}
-      />
-
-      <ComissaoModoForm
-        modo={form.comissao_modo}
-        rateioTrocaTurno={form.comissao_rateio_troca_turno}
-        pagarPedidoCliente={form.comissao_pedido_cliente}
-        percentualPedidoCliente={form.comissao_pedido_cliente_percentual}
-        onChange={patch}
-        semGarcons={semGarcons}
-        todosGarconsZerados={todosGarconsZerados}
-        mesasSemGarcom={mesasSemGarcom}
-        onValidityChange={setComissaoFormValido}
-      />
-
-      <section className="rounded-lg border border-border bg-card p-4">
-        <div className="flex items-start justify-between gap-4">
-          <div className="min-w-0">
-            <h2 className="text-base font-semibold">
-              Atendimento cruzado entre garçons
-            </h2>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Permite que um garçom lance pedidos em mesas que não foram
-              atribuídas a ele. A comissão sempre vai para quem lançou o
-              pedido. Quando desligado, cada garçom só atende suas próprias
-              mesas.
-            </p>
-          </div>
-          <Switch
-            checked={form.permitir_atendimento_cruzado}
-            onCheckedChange={(v) =>
-              patch({ permitir_atendimento_cruzado: v })
-            }
-            aria-label="Permitir atendimento cruzado"
+        <TabsContent value="identidade" className="space-y-6">
+          <IdentidadeForm
+            restauranteId={restaurante.id}
+            nome={form.nome}
+            corPrimaria={form.cor_primaria}
+            logoUrl={form.logo_url}
+            onChange={patch}
           />
-        </div>
-      </section>
+          <SaveBtn aba="identidade" />
+        </TabsContent>
 
-      <section className="rounded-lg border border-border bg-card p-4">
-        <div className="flex items-start justify-between gap-4">
-          <div className="min-w-0">
-            <h2 className="text-base font-semibold">
-              Sugerir acompanhamentos no carrinho
-            </h2>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Mostra ao cliente, no carrinho, até 3 sugestões de bebidas e
-              sobremesas para complementar o pedido. Desligue se preferir não
-              exibir recomendações automáticas.
-            </p>
-          </div>
-          <Switch
-            checked={form.upsell_habilitado}
-            onCheckedChange={(v) => patch({ upsell_habilitado: v })}
-            aria-label="Sugerir acompanhamentos no carrinho"
+        <TabsContent value="pagamentos" className="space-y-6">
+          <PixForm
+            habilitado={form.pix_habilitado}
+            chave={form.pix_chave}
+            titular={form.pix_nome_titular}
+            onChange={patch}
           />
-        </div>
-      </section>
+          <SaveBtn aba="pagamentos" />
+        </TabsContent>
 
-      <section className="space-y-4 rounded-lg border border-border bg-card p-4">
-        <header>
-          <h2 className="text-base font-semibold">Caixa</h2>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Regras de operação do caixa, alertas e controles de segurança.
-          </p>
-        </header>
-
-        <div className="grid gap-4 sm:grid-cols-2">
-          <div className="space-y-1">
-            <Label>Alerta de turno aberto há (horas)</Label>
-            <Input
-              type="number"
-              min={1}
-              max={72}
-              value={form.caixa_alerta_horas}
-              onChange={(e) =>
-                patch({ caixa_alerta_horas: Number(e.target.value) || 0 })
-              }
-            />
-            <p className="text-xs text-muted-foreground">
-              Avisa quando um turno fica aberto além desse tempo.
-            </p>
-          </div>
-
-          <div className="space-y-1">
-            <Label>Teto de dinheiro em caixa (R$)</Label>
-            <Input
-              inputMode="decimal"
-              placeholder="Sem teto"
-              value={form.caixa_teto_dinheiro}
-              onChange={(e) => patch({ caixa_teto_dinheiro: e.target.value })}
-            />
-            <p className="text-xs text-muted-foreground">
-              Avisa o operador quando o dinheiro acumulado ultrapassa esse
-              valor. Deixe vazio para sem teto.
-            </p>
-          </div>
-        </div>
-
-        <div className="flex items-start justify-between gap-4 rounded-md border border-border p-3">
-          <div className="min-w-0">
-            <div className="text-sm font-medium">Conferência cega no fechamento</div>
-            <p className="mt-1 text-xs text-muted-foreground">
-              Esconde o saldo esperado durante o fechamento; o operador conta o
-              dinheiro sem ver o sistema. A diferença aparece somente após o
-              fechamento.
-            </p>
-          </div>
-          <Switch
-            checked={form.caixa_conferencia_cega}
-            onCheckedChange={(v) => patch({ caixa_conferencia_cega: v })}
-            aria-label="Conferência cega"
+        <TabsContent value="taxas" className="space-y-6">
+          <TaxaServicoForm
+            habilitada={form.taxa_servico_habilitada}
+            percentual={form.taxa_servico_percentual}
+            descricao={form.taxa_servico_descricao}
+            repasseHabilitado={form.taxa_servico_repasse_habilitado}
+            repassePercentual={form.taxa_servico_repasse_percentual}
+            onChange={patch}
           />
-        </div>
+          <CouvertForm
+            mesaHabilitado={form.couvert_mesa_habilitado}
+            mesaValor={form.couvert_mesa_valor}
+            mesaDescricao={form.couvert_mesa_descricao}
+            artisticoHabilitado={form.couvert_artistico_habilitado}
+            artisticoValor={form.couvert_artistico_valor}
+            artisticoDescricao={form.couvert_artistico_descricao}
+            repasseHabilitado={form.couvert_artistico_repasse_habilitado}
+            repassePercentual={form.couvert_artistico_repasse_percentual}
+            onChange={patch}
+          />
+          <SaveBtn aba="taxas" />
+        </TabsContent>
 
-        <div className="flex items-start justify-between gap-4 rounded-md border border-border p-3">
-          <div className="min-w-0">
-            <div className="text-sm font-medium">
-              Exigir caixa aberto para confirmar pagamento
+        <TabsContent value="comissoes" className="space-y-6">
+          <ComissaoModoForm
+            modo={form.comissao_modo}
+            rateioTrocaTurno={form.comissao_rateio_troca_turno}
+            pagarPedidoCliente={form.comissao_pedido_cliente}
+            percentualPedidoCliente={form.comissao_pedido_cliente_percentual}
+            onChange={patch}
+            semGarcons={semGarcons}
+            todosGarconsZerados={todosGarconsZerados}
+            mesasSemGarcom={mesasSemGarcom}
+            onValidityChange={setComissaoFormValido}
+          />
+          <section className="rounded-lg border border-border bg-card p-4">
+            <div className="flex items-start justify-between gap-4">
+              <div className="min-w-0">
+                <h2 className="text-base font-semibold">
+                  Atendimento cruzado entre garçons
+                </h2>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Permite que um garçom lance pedidos em mesas que não foram
+                  atribuídas a ele. A comissão sempre vai para quem lançou o
+                  pedido. Quando desligado, cada garçom só atende suas próprias
+                  mesas.
+                </p>
+              </div>
+              <Switch
+                checked={form.permitir_atendimento_cruzado}
+                onCheckedChange={(v) =>
+                  patch({ permitir_atendimento_cruzado: v })
+                }
+                aria-label="Permitir atendimento cruzado"
+              />
             </div>
-            <p className="mt-1 text-xs text-muted-foreground">
-              Bloqueia a confirmação de pagamentos quando não há turno de caixa
-              aberto.
-            </p>
-          </div>
-          <Switch
-            checked={form.caixa_obrigatorio_para_pagamento}
-            onCheckedChange={(v) =>
-              patch({ caixa_obrigatorio_para_pagamento: v })
-            }
-            aria-label="Caixa obrigatório para pagamento"
-          />
-        </div>
-      </section>
+          </section>
+          <SaveBtn aba="comissoes" />
+        </TabsContent>
 
-      <div className="flex justify-end">
-        <Button
-          onClick={save}
-          disabled={atualizar.isPending || !comissaoFormValido}
-          className="h-11 px-6"
-        >
-          {atualizar.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-          Salvar alterações
-        </Button>
-      </div>
+        <TabsContent value="caixa" className="space-y-6">
+          <section className="space-y-4 rounded-lg border border-border bg-card p-4">
+            <header>
+              <h2 className="text-base font-semibold">Caixa</h2>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Regras de operação do caixa, alertas e controles de segurança.
+              </p>
+            </header>
+
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="space-y-1">
+                <Label>Alerta de turno aberto há (horas)</Label>
+                <Input
+                  type="number"
+                  min={1}
+                  max={72}
+                  value={form.caixa_alerta_horas}
+                  onChange={(e) =>
+                    patch({ caixa_alerta_horas: Number(e.target.value) || 0 })
+                  }
+                />
+                <p className="text-xs text-muted-foreground">
+                  Avisa quando um turno fica aberto além desse tempo.
+                </p>
+              </div>
+
+              <div className="space-y-1">
+                <Label>Teto de dinheiro em caixa (R$)</Label>
+                <Input
+                  inputMode="decimal"
+                  placeholder="Sem teto"
+                  value={form.caixa_teto_dinheiro}
+                  onChange={(e) => patch({ caixa_teto_dinheiro: e.target.value })}
+                />
+                <p className="text-xs text-muted-foreground">
+                  Avisa o operador quando o dinheiro acumulado ultrapassa esse
+                  valor. Deixe vazio para sem teto.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-start justify-between gap-4 rounded-md border border-border p-3">
+              <div className="min-w-0">
+                <div className="text-sm font-medium">Conferência cega no fechamento</div>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Esconde o saldo esperado durante o fechamento; o operador conta o
+                  dinheiro sem ver o sistema. A diferença aparece somente após o
+                  fechamento.
+                </p>
+              </div>
+              <Switch
+                checked={form.caixa_conferencia_cega}
+                onCheckedChange={(v) => patch({ caixa_conferencia_cega: v })}
+                aria-label="Conferência cega"
+              />
+            </div>
+
+            <div className="flex items-start justify-between gap-4 rounded-md border border-border p-3">
+              <div className="min-w-0">
+                <div className="text-sm font-medium">
+                  Exigir caixa aberto para confirmar pagamento
+                </div>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Bloqueia a confirmação de pagamentos quando não há turno de caixa
+                  aberto.
+                </p>
+              </div>
+              <Switch
+                checked={form.caixa_obrigatorio_para_pagamento}
+                onCheckedChange={(v) =>
+                  patch({ caixa_obrigatorio_para_pagamento: v })
+                }
+                aria-label="Caixa obrigatório para pagamento"
+              />
+            </div>
+          </section>
+          <SaveBtn aba="caixa" />
+        </TabsContent>
+
+        <TabsContent value="cardapio" className="space-y-6">
+          <section className="rounded-lg border border-border bg-card p-4">
+            <div className="flex items-start justify-between gap-4">
+              <div className="min-w-0">
+                <h2 className="text-base font-semibold">
+                  Sugerir acompanhamentos no carrinho
+                </h2>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Mostra ao cliente, no carrinho, até 3 sugestões de bebidas e
+                  sobremesas para complementar o pedido. Desligue se preferir não
+                  exibir recomendações automáticas. Alterações são salvas
+                  automaticamente.
+                </p>
+              </div>
+              <Switch
+                checked={form.upsell_habilitado}
+                disabled={abaSalvando === "cardapio"}
+                onCheckedChange={(v) => {
+                  patch({ upsell_habilitado: v });
+                  salvar("cardapio", { upsell_habilitado: v });
+                }}
+                aria-label="Sugerir acompanhamentos no carrinho"
+              />
+            </div>
+          </section>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
