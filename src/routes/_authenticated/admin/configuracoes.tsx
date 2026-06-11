@@ -1,5 +1,6 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
+import { z } from "zod";
 import { useAuth } from "@/hooks/use-auth";
 import { useMeuRestaurante } from "@/hooks/use-restaurante";
 import { useAtualizarConfiguracoes, useValidarPix } from "@/hooks/use-configuracoes";
@@ -15,8 +16,24 @@ import { CouvertForm } from "@/components/configuracoes/couvert-form";
 import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+
+type TabId =
+  | "identidade"
+  | "pagamentos"
+  | "taxas"
+  | "comissoes"
+  | "caixa"
+  | "cardapio";
+
+const searchSchema = z.object({
+  tab: z
+    .enum(["identidade", "pagamentos", "taxas", "comissoes", "caixa", "cardapio"])
+    .default("identidade"),
+});
 
 export const Route = createFileRoute("/_authenticated/admin/configuracoes")({
+  validateSearch: searchSchema,
   component: Configuracoes,
 });
 
