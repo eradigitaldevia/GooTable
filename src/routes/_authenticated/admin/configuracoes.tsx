@@ -47,6 +47,9 @@ function Configuracoes() {
     restaurante?.id,
   );
   const [comissaoFormValido, setComissaoFormValido] = useState(true);
+  const { tab } = Route.useSearch();
+  const navigate = useNavigate({ from: Route.fullPath });
+  const [abaSalvando, setAbaSalvando] = useState<TabId | null>(null);
 
   const [form, setForm] = useState({
     nome: "",
