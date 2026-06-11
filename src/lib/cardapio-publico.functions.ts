@@ -7,6 +7,9 @@ export interface RestaurantePublico {
   nome: string;
   logo_url: string | null;
   cor_primaria: string | null;
+  cor_secundaria: string | null;
+  cor_acento: string | null;
+  tema_cardapio: string | null;
   ativo: boolean;
   upsell_habilitado: boolean;
 }
@@ -59,7 +62,9 @@ export const carregarCardapioPublicoFn = createServerFn({ method: "POST" })
     const [{ data: r }, { data: cats }, { data: prods }] = await Promise.all([
       supabaseAdmin
         .from("restaurantes")
-        .select("id, nome, logo_url, cor_primaria, ativo, upsell_habilitado")
+        .select(
+          "id, nome, logo_url, cor_primaria, cor_secundaria, cor_acento, tema_cardapio, ativo, upsell_habilitado",
+        )
         .eq("id", m.restaurante_id)
         .maybeSingle(),
       supabaseAdmin

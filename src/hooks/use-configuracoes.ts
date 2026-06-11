@@ -18,6 +18,9 @@ export type ConfigPayload =
       aba: "identidade";
       nome: string;
       cor_primaria: string;
+      cor_secundaria: string;
+      cor_acento: string;
+      tema_cardapio: "claro" | "escuro";
       logo_url: string | null;
     })
   | (Base & {

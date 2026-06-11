@@ -29,6 +29,9 @@ const configSchema = z.discriminatedUnion("aba", [
     restauranteId: z.string().uuid(),
     nome: z.string().trim().min(2).max(100),
     cor_primaria: z.string().regex(/^#[0-9a-fA-F]{6}$/, "Cor inválida"),
+    cor_secundaria: z.string().regex(/^#[0-9a-fA-F]{6}$/, "Cor inválida"),
+    cor_acento: z.string().regex(/^#[0-9a-fA-F]{6}$/, "Cor inválida"),
+    tema_cardapio: z.enum(["claro", "escuro"]),
     logo_url: z.string().nullable(),
   }),
   z.object({
@@ -93,6 +96,9 @@ export const atualizarConfiguracoesFn = createServerFn({ method: "POST" })
         update = {
           nome: data.nome,
           cor_primaria: data.cor_primaria,
+          cor_secundaria: data.cor_secundaria,
+          cor_acento: data.cor_acento,
+          tema_cardapio: data.tema_cardapio,
           logo_url: data.logo_url,
         };
         break;
