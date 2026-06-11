@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import type { TablesUpdate } from "@/integrations/supabase/types";
 import { assertAcessoRestaurante } from "./auth.server";
 
 /* ---------- Validação PIX (chamada no submit) ---------- */
@@ -85,7 +86,7 @@ export const atualizarConfiguracoesFn = createServerFn({ method: "POST" })
     const { supabase, userId } = context;
     await assertAcessoRestaurante(supabase, userId, data.restauranteId);
 
-    let update: Record<string, unknown> = {};
+    let update: TablesUpdate<"restaurantes"> = {};
 
     switch (data.aba) {
       case "identidade": {
