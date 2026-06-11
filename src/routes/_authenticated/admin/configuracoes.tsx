@@ -151,6 +151,116 @@ function Configuracoes() {
     setForm((f) => ({ ...f, ...p }));
   }
 
+  const snapshot = useMemo(() => {
+    if (!restaurante) return null;
+    return {
+      nome: restaurante.nome,
+      cor_primaria: restaurante.cor_primaria || "#c2410c",
+      logo_url: restaurante.logo_url,
+      pix_habilitado: restaurante.pix_habilitado,
+      pix_chave: restaurante.pix_chave ?? "",
+      pix_nome_titular: restaurante.pix_nome_titular ?? "",
+      comissao_modo: restaurante.comissao_modo ?? "pedido",
+      permitir_atendimento_cruzado: restaurante.permitir_atendimento_cruzado ?? true,
+      caixa_alerta_horas: restaurante.caixa_alerta_horas ?? 12,
+      caixa_teto_dinheiro:
+        restaurante.caixa_teto_dinheiro != null
+          ? String(restaurante.caixa_teto_dinheiro)
+          : "",
+      caixa_conferencia_cega: restaurante.caixa_conferencia_cega ?? false,
+      caixa_obrigatorio_para_pagamento:
+        restaurante.caixa_obrigatorio_para_pagamento ?? false,
+      comissao_rateio_troca_turno: restaurante.comissao_rateio_troca_turno ?? false,
+      comissao_pedido_cliente: restaurante.comissao_pedido_cliente ?? true,
+      comissao_pedido_cliente_percentual:
+        restaurante.comissao_pedido_cliente_percentual != null
+          ? String(restaurante.comissao_pedido_cliente_percentual)
+          : "",
+      upsell_habilitado: restaurante.upsell_habilitado ?? true,
+      taxa_servico_habilitada: restaurante.taxa_servico_habilitada ?? false,
+      taxa_servico_percentual:
+        restaurante.taxa_servico_percentual != null
+          ? String(restaurante.taxa_servico_percentual)
+          : "",
+      taxa_servico_descricao: restaurante.taxa_servico_descricao ?? "",
+      couvert_mesa_habilitado: restaurante.couvert_mesa_habilitado ?? false,
+      couvert_mesa_valor:
+        restaurante.couvert_mesa_valor != null
+          ? String(restaurante.couvert_mesa_valor)
+          : "",
+      couvert_mesa_descricao: restaurante.couvert_mesa_descricao ?? "",
+      couvert_artistico_habilitado: restaurante.couvert_artistico_habilitado ?? false,
+      couvert_artistico_valor:
+        restaurante.couvert_artistico_valor != null
+          ? String(restaurante.couvert_artistico_valor)
+          : "",
+      couvert_artistico_descricao: restaurante.couvert_artistico_descricao ?? "",
+      taxa_servico_repasse_habilitado:
+        restaurante.taxa_servico_repasse_habilitado ?? false,
+      taxa_servico_repasse_percentual:
+        restaurante.taxa_servico_repasse_percentual != null
+          ? String(restaurante.taxa_servico_repasse_percentual)
+          : "",
+      couvert_artistico_repasse_habilitado:
+        restaurante.couvert_artistico_repasse_habilitado ?? false,
+      couvert_artistico_repasse_percentual:
+        restaurante.couvert_artistico_repasse_percentual != null
+          ? String(restaurante.couvert_artistico_repasse_percentual)
+          : "",
+    } as typeof form;
+  }, [restaurante]);
+
+  const CAMPOS_POR_ABA: Record<TabId, (keyof typeof form)[]> = {
+    identidade: ["nome", "cor_primaria", "logo_url"],
+    pagamentos: ["pix_habilitado", "pix_chave", "pix_nome_titular"],
+    taxas: [
+      "taxa_servico_habilitada",
+      "taxa_servico_percentual",
+      "taxa_servico_descricao",
+      "taxa_servico_repasse_habilitado",
+      "taxa_servico_repasse_percentual",
+      "couvert_mesa_habilitado",
+      "couvert_mesa_valor",
+      "couvert_mesa_descricao",
+      "couvert_artistico_habilitado",
+      "couvert_artistico_valor",
+      "couvert_artistico_descricao",
+      "couvert_artistico_repasse_habilitado",
+      "couvert_artistico_repasse_percentual",
+    ],
+    comissoes: [
+      "comissao_modo",
+      "comissao_rateio_troca_turno",
+      "comissao_pedido_cliente",
+      "comissao_pedido_cliente_percentual",
+      "permitir_atendimento_cruzado",
+    ],
+    caixa: [
+      "caixa_alerta_horas",
+      "caixa_teto_dinheiro",
+      "caixa_conferencia_cega",
+      "caixa_obrigatorio_para_pagamento",
+    ],
+    cardapio: ["upsell_habilitado"],
+  };
+
+  const abasSujas = useMemo(() => {
+    const r: Record<TabId, boolean> = {
+      identidade: false,
+      pagamentos: false,
+      taxas: false,
+      comissoes: false,
+      caixa: false,
+      cardapio: false,
+    };
+    if (!snapshot) return r;
+    (Object.keys(CAMPOS_POR_ABA) as TabId[]).forEach((aba) => {
+      r[aba] = CAMPOS_POR_ABA[aba].some((k) => form[k] !== snapshot[k]);
+    });
+    return r;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [form, snapshot]);
+
   const semGarcons = garconsAtivos.length === 0;
   const todosGarconsZerados =
     garconsAtivos.length > 0 &&
