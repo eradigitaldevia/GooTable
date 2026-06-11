@@ -11,38 +11,56 @@ export function useValidarPix() {
   });
 }
 
-type ConfigPayload = {
-  restauranteId: string;
-  nome: string;
-  cor_primaria: string;
-  logo_url: string | null;
-  pix_habilitado: boolean;
-  pix_chave: string | null;
-  pix_nome_titular: string | null;
-  comissao_modo: "pedido" | "item";
-  permitir_atendimento_cruzado: boolean;
-  caixa_alerta_horas: number;
-  caixa_teto_dinheiro: number | null;
-  caixa_conferencia_cega: boolean;
-  caixa_obrigatorio_para_pagamento: boolean;
-  comissao_rateio_troca_turno: boolean;
-  comissao_pedido_cliente: boolean;
-  comissao_pedido_cliente_percentual: number | null;
-  upsell_habilitado: boolean;
-  taxa_servico_habilitada: boolean;
-  taxa_servico_percentual: number | null;
-  taxa_servico_descricao: string | null;
-  couvert_mesa_habilitado: boolean;
-  couvert_mesa_valor: number | null;
-  couvert_mesa_descricao: string | null;
-  couvert_artistico_habilitado: boolean;
-  couvert_artistico_valor: number | null;
-  couvert_artistico_descricao: string | null;
-  taxa_servico_repasse_habilitado: boolean;
-  taxa_servico_repasse_percentual: number | null;
-  couvert_artistico_repasse_habilitado: boolean;
-  couvert_artistico_repasse_percentual: number | null;
-};
+type Base = { restauranteId: string };
+
+export type ConfigPayload =
+  | (Base & {
+      aba: "identidade";
+      nome: string;
+      cor_primaria: string;
+      logo_url: string | null;
+    })
+  | (Base & {
+      aba: "pagamentos";
+      pix_habilitado: boolean;
+      pix_chave: string | null;
+      pix_nome_titular: string | null;
+    })
+  | (Base & {
+      aba: "taxas";
+      taxa_servico_habilitada: boolean;
+      taxa_servico_percentual: number | null;
+      taxa_servico_descricao: string | null;
+      taxa_servico_repasse_habilitado: boolean;
+      taxa_servico_repasse_percentual: number | null;
+      couvert_mesa_habilitado: boolean;
+      couvert_mesa_valor: number | null;
+      couvert_mesa_descricao: string | null;
+      couvert_artistico_habilitado: boolean;
+      couvert_artistico_valor: number | null;
+      couvert_artistico_descricao: string | null;
+      couvert_artistico_repasse_habilitado: boolean;
+      couvert_artistico_repasse_percentual: number | null;
+    })
+  | (Base & {
+      aba: "comissoes";
+      comissao_modo: "pedido" | "item";
+      comissao_rateio_troca_turno: boolean;
+      comissao_pedido_cliente: boolean;
+      comissao_pedido_cliente_percentual: number | null;
+      permitir_atendimento_cruzado: boolean;
+    })
+  | (Base & {
+      aba: "caixa";
+      caixa_alerta_horas: number;
+      caixa_teto_dinheiro: number | null;
+      caixa_conferencia_cega: boolean;
+      caixa_obrigatorio_para_pagamento: boolean;
+    })
+  | (Base & {
+      aba: "cardapio";
+      upsell_habilitado: boolean;
+    });
 
 export function useAtualizarConfiguracoes(userId: string | undefined) {
   const fn = useServerFn(atualizarConfiguracoesFn);
