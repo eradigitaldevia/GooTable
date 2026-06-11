@@ -1657,7 +1657,9 @@ export type Database = {
           comissao_pedido_cliente: boolean
           comissao_pedido_cliente_percentual: number | null
           comissao_rateio_troca_turno: boolean
+          cor_acento: string | null
           cor_primaria: string | null
+          cor_secundaria: string | null
           couvert_artistico_descricao: string | null
           couvert_artistico_habilitado: boolean
           couvert_artistico_repasse_habilitado: boolean
@@ -1680,6 +1682,7 @@ export type Database = {
           taxa_servico_percentual: number | null
           taxa_servico_repasse_habilitado: boolean
           taxa_servico_repasse_percentual: number | null
+          tema_cardapio: string
           upsell_habilitado: boolean
         }
         Insert: {
@@ -1692,7 +1695,9 @@ export type Database = {
           comissao_pedido_cliente?: boolean
           comissao_pedido_cliente_percentual?: number | null
           comissao_rateio_troca_turno?: boolean
+          cor_acento?: string | null
           cor_primaria?: string | null
+          cor_secundaria?: string | null
           couvert_artistico_descricao?: string | null
           couvert_artistico_habilitado?: boolean
           couvert_artistico_repasse_habilitado?: boolean
@@ -1715,6 +1720,7 @@ export type Database = {
           taxa_servico_percentual?: number | null
           taxa_servico_repasse_habilitado?: boolean
           taxa_servico_repasse_percentual?: number | null
+          tema_cardapio?: string
           upsell_habilitado?: boolean
         }
         Update: {
@@ -1727,7 +1733,9 @@ export type Database = {
           comissao_pedido_cliente?: boolean
           comissao_pedido_cliente_percentual?: number | null
           comissao_rateio_troca_turno?: boolean
+          cor_acento?: string | null
           cor_primaria?: string | null
+          cor_secundaria?: string | null
           couvert_artistico_descricao?: string | null
           couvert_artistico_habilitado?: boolean
           couvert_artistico_repasse_habilitado?: boolean
@@ -1750,6 +1758,7 @@ export type Database = {
           taxa_servico_percentual?: number | null
           taxa_servico_repasse_habilitado?: boolean
           taxa_servico_repasse_percentual?: number | null
+          tema_cardapio?: string
           upsell_habilitado?: boolean
         }
         Relationships: []

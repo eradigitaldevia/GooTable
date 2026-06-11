@@ -13,6 +13,7 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Search } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { TemaCardapioProvider } from "@/components/cliente/tema-cardapio-provider";
 
 export const Route = createFileRoute("/_authenticated/admin/cardapio-preview")({
   component: CardapioPreview,
@@ -126,7 +127,7 @@ function CardapioPreview() {
               : { width: "100%", height: "min(844px, 80vh)" }
           }
         >
-          <div className="h-full overflow-y-auto bg-background">
+          <TemaCardapioProvider restaurante={restaurante} className="h-full overflow-y-auto">
             <header className="sticky top-0 z-10 border-b bg-background/95 backdrop-blur">
               <div className="mx-auto flex max-w-2xl items-center gap-3 px-4 py-3">
                 {restaurante.logo_url ? (
@@ -168,7 +169,7 @@ function CardapioPreview() {
                 readOnly
               />
             </main>
-          </div>
+          </TemaCardapioProvider>
         </div>
       </div>
     </div>

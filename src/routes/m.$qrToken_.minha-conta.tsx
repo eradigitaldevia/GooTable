@@ -19,6 +19,8 @@ import {
 import { useRealtimeMesa } from "@/hooks/use-realtime";
 import { formatBRL } from "@/lib/cart";
 import { CarrinhoPersistente } from "@/components/cliente/carrinho-persistente";
+import { useCardapioPublico } from "@/hooks/use-cardapio-publico";
+import { TemaCardapioProvider } from "@/components/cliente/tema-cardapio-provider";
 
 export const Route = createFileRoute("/m/$qrToken_/minha-conta")({
   component: MinhaConta,
@@ -49,12 +51,15 @@ function MinhaConta() {
   });
 
   useRealtimeMesa(qrToken, identidade?.sessaoId);
+  const { data: cardapio } = useCardapioPublico(qrToken);
+  const restauranteTema =
+    cardapio && !("erro" in cardapio) ? cardapio.restaurante : null;
 
   const totalPages = data ? Math.max(1, Math.ceil(data.visitas_total / PAGE_SIZE)) : 1;
 
 
   return (
-    <div className="min-h-screen bg-background pb-12">
+    <TemaCardapioProvider restaurante={restauranteTema} className="min-h-screen pb-12">
       <header className="sticky top-0 z-30 flex items-center gap-2 border-b bg-background/90 px-4 py-3 backdrop-blur">
         <Link to="/m/$qrToken" params={{ qrToken }} className="rounded-full p-2 hover:bg-accent">
           <ArrowLeft className="h-5 w-5" />
@@ -219,7 +224,7 @@ function MinhaConta() {
         )}
       </main>
       <CarrinhoPersistente qrToken={qrToken} />
-    </div>
+    </TemaCardapioProvider>
   );
 }
 

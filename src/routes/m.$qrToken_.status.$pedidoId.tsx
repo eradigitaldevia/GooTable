@@ -14,6 +14,8 @@ import { useClienteMesa } from "@/hooks/use-cliente-mesa";
 import { usePedidosComanda } from "@/hooks/use-pedidos-comanda";
 import { useRealtimePedidoPublico } from "@/hooks/use-realtime";
 import { useNotificarPedidoPronto } from "@/hooks/use-notificar-pedido-pronto";
+import { useCardapioPublico } from "@/hooks/use-cardapio-publico";
+import { TemaCardapioProvider } from "@/components/cliente/tema-cardapio-provider";
 
 export const Route = createFileRoute("/m/$qrToken_/status/$pedidoId")({
   component: Status,
@@ -32,6 +34,9 @@ function Status() {
   useNotificarPedidoPronto(pedidoId, data?.pedido?.status);
 
   const { data: pedidosComanda } = usePedidosComanda(qrToken, identidade?.comandaId);
+  const { data: cardapio } = useCardapioPublico(qrToken);
+  const restauranteTema =
+    cardapio && !("erro" in cardapio) ? cardapio.restaurante : null;
 
   if (isLoading) {
     return <StatusTimelineSkeleton />;
@@ -47,12 +52,12 @@ function Status() {
 
   if (pedido.status === "cancelado") {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center px-6 text-center">
+      <TemaCardapioProvider restaurante={restauranteTema} className="flex min-h-screen flex-col items-center justify-center px-6 text-center">
         <h1 className="text-2xl font-bold text-destructive">Pedido cancelado</h1>
         <Link to="/m/$qrToken" params={{ qrToken }} className="mt-4">
           <Button>Voltar ao cardápio</Button>
         </Link>
-      </div>
+      </TemaCardapioProvider>
     );
   }
 
@@ -61,7 +66,7 @@ function Status() {
     pedidosComanda && !("erro" in pedidosComanda) ? pedidosComanda.pedidos ?? [] : [];
 
   return (
-    <div className="min-h-screen bg-background pb-28">
+    <TemaCardapioProvider restaurante={restauranteTema} className="min-h-screen pb-28">
       <header className="border-b bg-card px-4 py-5">
         <div className="mx-auto max-w-2xl">
           <p className="text-xs uppercase tracking-wide text-muted-foreground">Pedido</p>
@@ -122,6 +127,6 @@ function Status() {
           bottomOffset
         />
       )}
-    </div>
+    </TemaCardapioProvider>
   );
 }

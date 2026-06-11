@@ -24,6 +24,7 @@ import {
   transferirClienteParaMesaFn,
 } from "@/lib/cliente-mesa.functions";
 import { ConflitoMesaModal } from "@/components/cliente/conflito-mesa-modal";
+import { TemaCardapioProvider } from "@/components/cliente/tema-cardapio-provider";
 
 export const Route = createFileRoute("/m/$qrToken")({
   component: ClienteMenu,
@@ -256,29 +257,29 @@ function ClienteMenu() {
 
   if (isLoading || !hidratado) {
     return (
-      <div className="min-h-screen bg-background pb-28">
+      <TemaCardapioProvider restaurante={restaurante} className="min-h-screen pb-28">
         <HeaderClienteSkeleton />
         <main className="mx-auto max-w-2xl px-4 py-4">
           <ProdutosListaSkeleton count={4} />
         </main>
-      </div>
+      </TemaCardapioProvider>
     );
   }
 
   if (erro) {
     return (
-      <div className="flex min-h-screen items-center justify-center px-6 text-center">
+      <TemaCardapioProvider restaurante={restaurante} className="flex min-h-screen items-center justify-center px-6 text-center">
         <div>
           <h1 className="text-2xl font-bold">Ops!</h1>
           <p className="mt-2 text-muted-foreground">{erro}</p>
         </div>
-      </div>
+      </TemaCardapioProvider>
     );
   }
 
   if (!identidade) {
     return (
-      <>
+      <TemaCardapioProvider restaurante={restaurante}>
         {conflito ? (
           <ConflitoMesaModal
             clienteNome={conflito.nome}
@@ -297,12 +298,12 @@ function ClienteMenu() {
         ) : (
           <IdentificacaoModal onSubmit={handleIdentificar} enviando={enviando} />
         )}
-      </>
+      </TemaCardapioProvider>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background pb-28">
+    <TemaCardapioProvider restaurante={restaurante} className="min-h-screen pb-28">
       <ClienteHeader
         restaurante={restaurante}
         mesa={mesa}
@@ -346,6 +347,6 @@ function ClienteMenu() {
           requestAnimationFrame(() => toast.success("Adicionado ao carrinho"));
         }}
       />
-    </div>
+    </TemaCardapioProvider>
   );
 }

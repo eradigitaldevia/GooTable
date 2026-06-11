@@ -14,6 +14,7 @@ import { useClienteMesa } from "@/hooks/use-cliente-mesa";
 import { useCardapioPublico } from "@/hooks/use-cardapio-publico";
 import { UpsellCarrinho } from "@/components/cliente/upsell-carrinho";
 import { usePedidosComanda } from "@/hooks/use-pedidos-comanda";
+import { TemaCardapioProvider } from "@/components/cliente/tema-cardapio-provider";
 
 export const Route = createFileRoute("/m/$qrToken_/carrinho")({
   component: Carrinho,
@@ -24,6 +25,8 @@ function Carrinho() {
   const navigate = useNavigate();
   const { identidade, hidratado } = useClienteMesa(qrToken);
   const { data: cardapio } = useCardapioPublico(qrToken);
+  const restauranteTema =
+    cardapio && !("erro" in cardapio) ? cardapio.restaurante : null;
   const { data: pedidosComanda } = usePedidosComanda(qrToken, identidade?.comandaId);
   const [items, setItems] = useState<CartItem[]>([]);
   const [obsGeral, setObsGeral] = useState("");
@@ -89,7 +92,7 @@ function Carrinho() {
   };
 
   return (
-    <div className="min-h-screen bg-background pb-28">
+    <TemaCardapioProvider restaurante={restauranteTema} className="min-h-screen pb-28">
       <header className="sticky top-0 z-30 flex items-center gap-2 border-b bg-background/90 px-4 py-3 backdrop-blur">
         <Link to="/m/$qrToken" params={{ qrToken }} className="rounded-full p-2 hover:bg-accent">
           <ArrowLeft className="h-5 w-5" />
@@ -163,6 +166,6 @@ function Carrinho() {
           </div>
         </div>
       )}
-    </div>
+    </TemaCardapioProvider>
   );
 }

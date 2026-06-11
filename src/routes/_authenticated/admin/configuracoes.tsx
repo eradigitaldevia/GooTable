@@ -54,6 +54,9 @@ function Configuracoes() {
   const [form, setForm] = useState({
     nome: "",
     cor_primaria: "#c2410c",
+    cor_secundaria: "#1f2937",
+    cor_acento: "#f59e0b",
+    tema_cardapio: "claro" as "claro" | "escuro",
     logo_url: null as string | null,
     pix_habilitado: false,
     pix_chave: "",
@@ -90,6 +93,10 @@ function Configuracoes() {
     const next: typeof form = {
       nome: restaurante.nome,
       cor_primaria: restaurante.cor_primaria || "#c2410c",
+      cor_secundaria: restaurante.cor_secundaria || "#1f2937",
+      cor_acento: restaurante.cor_acento || "#f59e0b",
+      tema_cardapio:
+        restaurante.tema_cardapio === "escuro" ? "escuro" : "claro",
       logo_url: restaurante.logo_url,
       pix_habilitado: restaurante.pix_habilitado,
       pix_chave: restaurante.pix_chave ?? "",
@@ -175,6 +182,10 @@ function Configuracoes() {
     return {
       nome: restaurante.nome,
       cor_primaria: restaurante.cor_primaria || "#c2410c",
+      cor_secundaria: restaurante.cor_secundaria || "#1f2937",
+      cor_acento: restaurante.cor_acento || "#f59e0b",
+      tema_cardapio:
+        restaurante.tema_cardapio === "escuro" ? "escuro" : "claro",
       logo_url: restaurante.logo_url,
       pix_habilitado: restaurante.pix_habilitado,
       pix_chave: restaurante.pix_chave ?? "",
@@ -230,7 +241,14 @@ function Configuracoes() {
   }, [restaurante]);
 
   const CAMPOS_POR_ABA: Record<TabId, (keyof typeof form)[]> = {
-    identidade: ["nome", "cor_primaria", "logo_url"],
+    identidade: [
+      "nome",
+      "cor_primaria",
+      "cor_secundaria",
+      "cor_acento",
+      "tema_cardapio",
+      "logo_url",
+    ],
     pagamentos: ["pix_habilitado", "pix_chave", "pix_nome_titular"],
     taxas: [
       "taxa_servico_habilitada",
@@ -332,6 +350,9 @@ function Configuracoes() {
         restauranteId: restaurante.id,
         nome: f.nome.trim(),
         cor_primaria: f.cor_primaria,
+        cor_secundaria: f.cor_secundaria,
+        cor_acento: f.cor_acento,
+        tema_cardapio: f.tema_cardapio,
         logo_url: f.logo_url,
       };
     } else if (aba === "pagamentos") {
@@ -521,6 +542,9 @@ function Configuracoes() {
             restauranteId={restaurante.id}
             nome={form.nome}
             corPrimaria={form.cor_primaria}
+            corSecundaria={form.cor_secundaria}
+            corAcento={form.cor_acento}
+            tema={form.tema_cardapio}
             logoUrl={form.logo_url}
             onChange={patch}
           />
