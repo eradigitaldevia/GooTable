@@ -1,134 +1,116 @@
-## Plano final — papel Cumim (Runner)
+## Análise
 
-Cumins são uma **entidade própria**, com cadastro, login e ciclo de vida separados dos garçons (sem comissão, sem mesas atribuídas, sem turnos de comissão). A estrutura espelha `garcons` mas vive numa tabela e numa página de cadastro próprias.
+No mobile (390 px) em `/admin/configuracoes`, dois conjuntos de abas têm o mesmo defeito:
 
-### 1. Banco (uma migration)
+### A) Abas principais (`Configuracoes`) — 6 abas
 
-```sql
--- Tabela própria de cumins (espelha garcons, sem comissão)
-CREATE TABLE public.cumins (
-  id              uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  restaurante_id  uuid NOT NULL REFERENCES public.restaurantes(id) ON DELETE CASCADE,
-  user_id         uuid REFERENCES auth.users(id),
-  nome            text NOT NULL,
-  telefone        text,
-  ativo           boolean NOT NULL DEFAULT true,
-  criado_em       timestamptz NOT NULL DEFAULT now(),
-  atualizado_em   timestamptz NOT NULL DEFAULT now()
-);
-CREATE INDEX idx_cumins_restaurante ON public.cumins(restaurante_id) WHERE ativo;
-CREATE UNIQUE INDEX uq_cumins_user_id ON public.cumins(user_id) WHERE user_id IS NOT NULL;
+`src/routes/_authenticated/admin/configuracoes.tsx`, linha 533:
 
-GRANT SELECT, INSERT, UPDATE, DELETE ON public.cumins TO authenticated;
-GRANT ALL ON public.cumins TO service_role;
-
-ALTER TABLE public.cumins ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "cumins_rw_membro" ON public.cumins
-  TO authenticated
-  USING (is_restaurante_membro(auth.uid(), restaurante_id) OR is_platform_admin(auth.uid()))
-  WITH CHECK (is_restaurante_membro(auth.uid(), restaurante_id) OR is_platform_admin(auth.uid()));
-
-CREATE TRIGGER trg_cumins_touch BEFORE UPDATE ON public.cumins
-  FOR EACH ROW EXECUTE FUNCTION touch_atualizado_em();
-
-ALTER PUBLICATION supabase_realtime ADD TABLE public.cumins;
-
--- Rastreio da entrega no pedido (cumim OU garçom que cobriu)
-ALTER TABLE public.pedidos
-  ADD COLUMN entregue_por_cumim_id  uuid REFERENCES public.cumins(id),
-  ADD COLUMN entregue_por_garcom_id uuid REFERENCES public.garcons(id),
-  ADD COLUMN entregue_em            timestamptz;
-
-CREATE INDEX idx_pedidos_entregue_cumim  ON public.pedidos(restaurante_id, entregue_por_cumim_id);
-CREATE INDEX idx_pedidos_entregue_garcom ON public.pedidos(restaurante_id, entregue_por_garcom_id);
-
--- Flag no restaurante
-ALTER TABLE public.restaurantes
-  ADD COLUMN usa_cumim boolean NOT NULL DEFAULT false;
+```tsx
+<TabsList className="flex w-full flex-wrap justify-start gap-1">
 ```
 
-Sem `tarefas_salao`, sem triggers automáticos (já justificado: `mesas` não tem `status` e auto-geração polui mais do que ajuda). Sem alterar `garcons`.
+Com `flex-wrap` e rótulos de larguras diferentes (ex.: "Taxas e couverts" vs "Caixa"), as 6 abas quebram em linhas irregulares (3+2+1), sem alinhamento.
 
-### 2. Server functions
+### B) Abas de paleta (`PaletasTabs`) — 3 abas
 
-**`src/lib/cumins.functions.ts`** (CRUD, espelhando `garcons.functions.ts`), todas com `requireSupabaseAuth` + checagem de `restaurante_id`:
-- `listarCuminsFn({ restauranteId })`
-- `criarCumimFn({ restauranteId, nome, telefone? })`
-- `atualizarCumimFn({ id, nome?, telefone?, ativo? })`
-- `removerCumimFn({ id })` (soft delete: `ativo=false`)
-- `vincularUsuarioCumimFn({ id, email })` — convite/associa `user_id` (espelha o fluxo existente de vincular usuário ao garçom)
+`src/components/configuracoes/identidade/paletas-tabs.tsx`, linha ~62:
 
-**`src/lib/cumim.functions.ts`** (operacional, para o display):
-- `carregarCumimDadosFn()` — resolve o cumim pelo `user_id` logado; retorna `cumim {id, nome, restaurante_id}`, `pedidos_prontos` (mesma forma de `SalaPedidoPronto`), `entregas_turno`, `tempo_medio_entrega_min`, `ultimas_entregas` (10).
-- `carregarCumimAdminFn({ cumimId })` — admin enxerga como aquele cumim (read-only).
-- `confirmarEntregaCumimFn({ pedidoId })` — UPDATE atômico: `status='entregue'`, `entregue_por_cumim_id`, `entregue_em=now()` WHERE `status='pronto'` AND `restaurante_id=...`.
+```tsx
+<TabsList className="flex w-full flex-wrap justify-start gap-1">
+  <TabsTrigger value="prontas">Paletas prontas</TabsTrigger>
+  <TabsTrigger value="gerar">Gerar da minha cor</TabsTrigger>
+  <TabsTrigger value="manual">Cores manuais</TabsTrigger>
+</TabsList>
+```
 
-No `atualizarStatusPedidoFn` existente (usado pelo `/sala`), branch `entregue`: gravar `entregue_por_garcom_id` (garçom do user logado) e `entregue_em`. Cobre o caso "garçom cobriu o cumim". `entregue_por_cumim_id` fica nulo nesse caminho.
+Mesma situação: três rótulos longos e desiguais que quebram em 2+1.
 
-### 3. Área do Cumim — rota `/cumim`
+### C) Sobreposição com a seção "Identidade"
 
-`src/routes/_authenticated/cumim.tsx`. Mobile-first. Acesso: usuário cujo `user_id` está em `cumins.ativo=true`. Se for garçom, redireciona para `/sala`. Senão, vai para `/admin`.
+O `<Tabs>` pai (linha 529 de `configuracoes.tsx`) não tem `gap`/`space-y`, então a `TabsList` cresce em altura ao quebrar e visualmente cola no topo do cartão `<IdentidadeForm />` (que tem `rounded-2xl border p-6`).
 
-**Layout (top → bottom):**
+## Proposta (somente UI, escopo mínimo)
 
-a) **Header fixo** (`<CumimHeader />`, novo):
-   - Esquerda: nome do cumim + chip "Runner".
-   - Direita: três métricas compactas — **Prontos agora**, **Entregas no turno** (desde 00h local), **Tempo médio de entrega (min)**.
-   - Cumim **não tem turno de comissão**, então o painel não exibe abrir/encerrar turno.
+### 1) `configuracoes.tsx` — abas em grade 2×3 no mobile
 
-b) **Banner de alerta** quando há prato pronto há mais de 5 minutos: tarja vermelha "X prato(s) atrasado(s)" no topo da lista.
+Linha 533 — trocar:
 
-c) **Lista única "Pratos prontos para entregar"** — reaproveita `<PratosProntosList />` (zero duplicação visual):
-   - Cards com **Mesa**, itens, observações, cronômetro "pronto há N min" e cor de urgência (verde < 2 min, âmbar 2–5 min, vermelho ≥ 5 min — limiares já existentes em `pratos-prontos-list.tsx`).
-   - Botão único largura total **"Confirmar entrega"** → `confirmarEntregaCumimFn`. Loading no botão clicado.
-   - Estado vazio: card discreto "Nenhum prato pronto. Aguardando a cozinha."
+```tsx
+<TabsList className="flex w-full flex-wrap justify-start gap-1">
+```
 
-d) **Histórico do turno** (collapsible no rodapé, fechado por padrão): últimas 10 entregas do cumim — Mesa, horário, tempo entre pronto e entregue.
+por:
 
-**Realtime e som:**
-- Hook `useRealtimeCumim(restauranteId)` (espelho enxuto de `useRealtimeSala`, escutando só `pedidos`). Invalida a query `['cumim-dados']` em mudanças.
-- Beep no novo `pronto` reaproveitando o utilitário de `use-notificar-pedido-pronto.ts`.
+```tsx
+<TabsList className="grid h-auto w-full grid-cols-2 gap-1 sm:flex sm:flex-wrap sm:justify-start">
+```
 
-**Bloqueios:** o cumim só vê pratos prontos. Sem mesas, comandas, chamados, fechamento, cozinha, admin.
+Linha 544 — em `TabsTrigger`:
 
-### 4. Rota `/admin/cumim` (configuração + cadastro + visualização)
+```tsx
+<TabsTrigger key={id} value={id} className="w-full sm:w-auto">
+```
 
-`src/routes/_authenticated/admin/cumim.tsx` — página única, sem abas:
+Resultado: mobile = grade 2×3 alinhada; ≥640 px = comportamento atual.
 
-- **Topo:** `Switch` **"Usar função de runner (cumim)"** ligado a `restaurantes.usa_cumim`. Persistido via `atualizarRestauranteFn` (incluir campo no validator). **Toggle mora aqui**, não em `/admin/configuracoes`. Texto auxiliar curto + `Alert` informativo.
-- **Desligado:** restante da página esmaecido com mensagem "Ative para cadastrar e acompanhar seus cumins".
-- **Ligado:**
-  - **Cadastro de cumins** (`<CuminsRoster />`, novo componente em `src/components/admin/cumins/cumins-roster.tsx`, espelhando `garcons-roster.tsx` mas sem campo de comissão):
-    - Linha: nome, telefone, status do vínculo de login (sem usuário / convidar / vinculado), botão **Visualizar tela** → `/admin/cumins/$cumimId/display`, botão **Editar**, switch **Ativo**.
-    - Botão **Novo cumim** abre dialog com nome + telefone.
-    - Dialog **Vincular usuário** com campo e-mail (mesmo fluxo já usado para garçom).
-  - **Bloco "Últimas entregas"** (top 10 do restaurante): cumim, mesa, horário (read-only).
+### 2) `configuracoes.tsx` — respiro entre TabsList e conteúdo
 
-### 5. Rota admin de visualização do display do cumim (read-only)
+Linha 529 — adicionar `className="space-y-4"` no `<Tabs>`:
 
-`src/routes/_authenticated/admin/cumins_.$cumimId.display.tsx` — espelha `admin/garcons_.$garcomId.sala.tsx`, mas renderiza o shell de `/cumim` em modo `readOnly` (botão Confirmar entrega desabilitado — já suportado por `PratosProntosList`). Faixa âmbar "Visualizando como X — modo somente leitura" + Voltar para `/admin/cumim`.
+```tsx
+<Tabs
+  value={tab}
+  onValueChange={(v) => navigate({ search: { tab: v as TabId } })}
+  className="space-y-4"
+>
+```
 
-### 6. Tela do garçom (`/sala`)
+Elimina a sensação de sobreposição entre a barra de abas e o cartão da Identidade (e demais).
 
-**Nenhuma mudança visual.** Aba "Prontos" permanece para todos — o garçom continua podendo cobrir entregas. Única mudança invisível: `atualizarStatusPedidoFn` passa a gravar `entregue_por_garcom_id` e `entregue_em`. As métricas de "tempo médio" no `/cumim` consideram apenas entregas com `entregue_por_cumim_id IS NOT NULL`; entregas feitas pelo garçom alimentam relatório futuro mas não distorcem o painel do cumim.
+### 3) `paletas-tabs.tsx` — 3 abas em grade no mobile
 
-### 7. Menu admin
+Linha ~62 — trocar:
 
-`src/components/admin/admin-sidebar.tsx` — item **"Cumim"** sempre visível, apontando para `/admin/cumim`. A própria página decide o que mostrar conforme `usa_cumim`.
+```tsx
+<TabsList className="flex w-full flex-wrap justify-start gap-1">
+```
 
-### 8. Login do cumim
+por:
 
-Cumins entram pelo mesmo `/login` que garçons. O `beforeLoad` de `/cumim` resolve via `user_id` na tabela `cumins`. Sem alteração no fluxo de login.
+```tsx
+<TabsList className="grid h-auto w-full grid-cols-3 gap-1 sm:flex sm:flex-wrap sm:justify-start">
+```
+
+E em cada `TabsTrigger`:
+
+```tsx
+<TabsTrigger value="prontas" className="w-full sm:w-auto">Paletas prontas</TabsTrigger>
+<TabsTrigger value="gerar" className="w-full sm:w-auto">Gerar da minha cor</TabsTrigger>
+<TabsTrigger value="manual" className="w-full sm:w-auto">Cores manuais</TabsTrigger>
+```
+
+Resultado: mobile = 3 abas lado a lado, mesma largura e altura, sem quebra; ≥640 px = comportamento atual. O texto pode ficar mais apertado em 390 px, mas legível (cabe em uma linha em cada coluna ≈ 120 px).
+
+Observação técnica: o `TabsList` shadcn fixa `h-10`. A classe `h-auto` é necessária para grades que ocupam mais de uma linha (caso A); no caso C (1 linha) é inócuo mas mantém consistência.
 
 ## Fora de escopo
 
-- Comissão, bônus, metas e turnos de comissão para cumim.
-- Tabela `tarefas_salao` e triggers de limpeza/montagem/retirada.
-- Papel `operador` (caixa).
-- Estado `em_transporte`.
-- Mudanças visuais em `/sala`, `/admin/configuracoes`, `/admin/garcons` ou outras telas.
+- Não renomear rótulos.
+- Não alterar cores, tipografia, espaçamentos internos dos cartões.
+- Não tocar no componente shadcn `Tabs` nem em outras páginas.
+- Não modificar o conteúdo das abas (`IdentidadeForm`, `PaletaPicker`, etc.).
 
-## Efeito visível
+&nbsp;
 
-- **`usa_cumim = false`** (default): nada muda. `/admin/cumim` aparece com switch desligado e resto esmaecido. Garçom segue confirmando pela aba "Prontos". `entregue_por_garcom_id`/`entregue_em` já passam a ser gravados (base para relatórios).
-- **`usa_cumim = true`**: admin cadastra cumins em `/admin/cumim` (nome, telefone, vínculo de login). O cumim faz login e entra em `/cumim` — tela enxuta, mobile, só com pratos prontos, timer, urgência colorida, métricas no header, alerta de atrasos, beep e histórico recolhível. Admin acompanha em `/admin/cumim` (cadastro + últimas entregas) e pode espiar a tela de qualquer cumim em modo somente leitura. Garçom **continua** com a aba "Prontos" disponível para cobrir.
+IMPORTANTE:
+
+Execute APENAS a alteração explicitamente solicitada.
+
+NÃO refatore, otimize, melhore ou modifique código não relacionado.
+
+NÃO faça suposições.
+
+Se algo não estiver claro, PARE e pergunte antes de alterar qualquer coisa.
+
+Preserve 100% do comportamento e da funcionalidade existentes.
