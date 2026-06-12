@@ -1,4 +1,5 @@
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { useState } from "react";
 import { PaletaPicker } from "./paleta-picker";
 import { PaletaGerador } from "./paleta-gerador";
 import { CoresManuaisForm } from "./cores-manuais-form";
@@ -35,6 +36,17 @@ export function PaletasTabs({
         p.tema === tema,
     )?.id ?? null;
 
+  const [abaInicial] = useState<"prontas" | "gerar" | "manual">(() => {
+    const match = PALETAS_PRESETS.find(
+      (p) =>
+        p.cor_primaria.toLowerCase() === corPrimaria.toLowerCase() &&
+        p.cor_secundaria.toLowerCase() === corSecundaria.toLowerCase() &&
+        p.cor_acento.toLowerCase() === corAcento.toLowerCase() &&
+        p.tema === tema,
+    );
+    return match ? "prontas" : "manual";
+  });
+
   function aplicarPaleta(p: PaletaPreset) {
     onChange({
       cor_primaria: p.cor_primaria,
@@ -45,7 +57,7 @@ export function PaletasTabs({
   }
 
   return (
-    <Tabs defaultValue="prontas" className="space-y-4">
+    <Tabs defaultValue={abaInicial} className="space-y-4">
       <TabsList className="flex w-full flex-wrap justify-start gap-1">
         <TabsTrigger value="prontas">Paletas prontas</TabsTrigger>
         <TabsTrigger value="gerar">Gerar da minha cor</TabsTrigger>
