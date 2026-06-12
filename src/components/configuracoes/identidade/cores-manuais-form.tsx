@@ -87,7 +87,13 @@ function CampoCor({
         />
         <Input
           value={rascunho}
-          onChange={(e) => setRascunho(e.target.value)}
+          onChange={(e) => {
+            const v = e.target.value;
+            setRascunho(v);
+            if (isValidHex(v) && v.toLowerCase() !== value.toLowerCase()) {
+              onChange(v);
+            }
+          }}
           onBlur={commitTexto}
           onKeyDown={(e) => {
             if (e.key === "Enter") {
