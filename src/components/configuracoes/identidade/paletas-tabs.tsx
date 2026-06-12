@@ -79,6 +79,9 @@ export function PaletasTabs({
       </TabsContent>
 
       <TabsContent value="manual">
+        <p className="mb-3 text-xs text-muted-foreground">
+          Ajuste fino sobre a paleta atual. As cores exibidas são as que estão ativas no cardápio agora.
+        </p>
         <CoresManuaisForm
           primaria={corPrimaria}
           secundaria={corSecundaria}

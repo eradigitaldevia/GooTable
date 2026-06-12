@@ -1,5 +1,8 @@
+import { useEffect, useState } from "react";
+import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { isValidHex } from "@/lib/cor-utils";
 
 export function CoresManuaisForm({
   primaria,
@@ -51,6 +54,23 @@ function CampoCor({
   value: string;
   onChange: (v: string) => void;
 }) {
+  const [rascunho, setRascunho] = useState(value);
+
+  useEffect(() => {
+    setRascunho(value);
+  }, [value]);
+
+  function commitTexto() {
+    const v = rascunho.trim();
+    if (v.toLowerCase() === value.toLowerCase()) return;
+    if (isValidHex(v)) {
+      onChange(v);
+    } else {
+      setRascunho(value);
+      toast.error("Cor inválida. Use o formato #RRGGBB (ex.: #c2410c).");
+    }
+  }
+
   return (
     <div className="space-y-1.5">
       <Label>{label}</Label>
@@ -58,13 +78,23 @@ function CampoCor({
         <input
           type="color"
           value={value}
-          onChange={(e) => onChange(e.target.value)}
+          onChange={(e) => {
+            setRascunho(e.target.value);
+            onChange(e.target.value);
+          }}
           className="h-10 w-12 cursor-pointer rounded-md border border-border bg-transparent"
           aria-label={`Cor ${label}`}
         />
         <Input
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
+          value={rascunho}
+          onChange={(e) => setRascunho(e.target.value)}
+          onBlur={commitTexto}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              commitTexto();
+            }
+          }}
           className="h-10 flex-1 font-mono text-xs uppercase"
         />
       </div>
