@@ -678,6 +678,47 @@ export type Database = {
           },
         ]
       }
+      cumins: {
+        Row: {
+          ativo: boolean
+          atualizado_em: string
+          criado_em: string
+          id: string
+          nome: string
+          restaurante_id: string
+          telefone: string | null
+          user_id: string | null
+        }
+        Insert: {
+          ativo?: boolean
+          atualizado_em?: string
+          criado_em?: string
+          id?: string
+          nome: string
+          restaurante_id: string
+          telefone?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          ativo?: boolean
+          atualizado_em?: string
+          criado_em?: string
+          id?: string
+          nome?: string
+          restaurante_id?: string
+          telefone?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cumins_restaurante_id_fkey"
+            columns: ["restaurante_id"]
+            isOneToOne: false
+            referencedRelation: "restaurantes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       cupons: {
         Row: {
           ativo: boolean
@@ -1330,6 +1371,9 @@ export type Database = {
           cliente_nome: string | null
           comanda_id: string | null
           criado_em: string
+          entregue_em: string | null
+          entregue_por_cumim_id: string | null
+          entregue_por_garcom_id: string | null
           garcom_id: string | null
           id: string
           mesa_id: string
@@ -1348,6 +1392,9 @@ export type Database = {
           cliente_nome?: string | null
           comanda_id?: string | null
           criado_em?: string
+          entregue_em?: string | null
+          entregue_por_cumim_id?: string | null
+          entregue_por_garcom_id?: string | null
           garcom_id?: string | null
           id?: string
           mesa_id: string
@@ -1366,6 +1413,9 @@ export type Database = {
           cliente_nome?: string | null
           comanda_id?: string | null
           criado_em?: string
+          entregue_em?: string | null
+          entregue_por_cumim_id?: string | null
+          entregue_por_garcom_id?: string | null
           garcom_id?: string | null
           id?: string
           mesa_id?: string
@@ -1389,6 +1439,20 @@ export type Database = {
             columns: ["comanda_id"]
             isOneToOne: false
             referencedRelation: "comandas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pedidos_entregue_por_cumim_id_fkey"
+            columns: ["entregue_por_cumim_id"]
+            isOneToOne: false
+            referencedRelation: "cumins"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pedidos_entregue_por_garcom_id_fkey"
+            columns: ["entregue_por_garcom_id"]
+            isOneToOne: false
+            referencedRelation: "garcons"
             referencedColumns: ["id"]
           },
           {
@@ -1684,6 +1748,7 @@ export type Database = {
           taxa_servico_repasse_percentual: number | null
           tema_cardapio: string
           upsell_habilitado: boolean
+          usa_cumim: boolean
         }
         Insert: {
           ativo?: boolean
@@ -1722,6 +1787,7 @@ export type Database = {
           taxa_servico_repasse_percentual?: number | null
           tema_cardapio?: string
           upsell_habilitado?: boolean
+          usa_cumim?: boolean
         }
         Update: {
           ativo?: boolean
@@ -1760,6 +1826,7 @@ export type Database = {
           taxa_servico_repasse_percentual?: number | null
           tema_cardapio?: string
           upsell_habilitado?: boolean
+          usa_cumim?: boolean
         }
         Relationships: []
       }
@@ -2079,7 +2146,14 @@ export type Database = {
       }
     }
     Enums: {
-      app_role: "admin" | "staff" | "cozinheiro" | "garcom" | "bar" | "caixa"
+      app_role:
+        | "admin"
+        | "staff"
+        | "cozinheiro"
+        | "garcom"
+        | "bar"
+        | "caixa"
+        | "cumim"
       campanha_canal: "whatsapp" | "email" | "sms"
       campanha_status:
         | "rascunho"
@@ -2234,7 +2308,15 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["admin", "staff", "cozinheiro", "garcom", "bar", "caixa"],
+      app_role: [
+        "admin",
+        "staff",
+        "cozinheiro",
+        "garcom",
+        "bar",
+        "caixa",
+        "cumim",
+      ],
       campanha_canal: ["whatsapp", "email", "sms"],
       campanha_status: [
         "rascunho",

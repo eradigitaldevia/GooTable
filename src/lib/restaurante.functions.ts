@@ -40,6 +40,7 @@ export interface Restaurante {
   taxa_servico_repasse_percentual: number | null;
   couvert_artistico_repasse_habilitado: boolean;
   couvert_artistico_repasse_percentual: number | null;
+  usa_cumim: boolean;
 }
 
 /** Restaurante do usuário autenticado (primeiro vínculo). */
