@@ -529,8 +529,9 @@ function Configuracoes() {
       <Tabs
         value={tab}
         onValueChange={(v) => navigate({ search: { tab: v as TabId } })}
+        className="space-y-4"
       >
-        <TabsList className="flex w-full flex-wrap justify-start gap-1">
+        <TabsList className="grid h-auto w-full grid-cols-2 gap-1 sm:flex sm:flex-wrap sm:justify-start">
           {(
             [
               ["identidade", "Identidade"],
@@ -541,7 +542,7 @@ function Configuracoes() {
               ["cardapio", "Cardápio"],
             ] as [TabId, string][]
           ).map(([id, label]) => (
-            <TabsTrigger key={id} value={id}>
+            <TabsTrigger key={id} value={id} className="w-full sm:w-auto">
               {label}
               {abasSujas[id] && (
                 <span
