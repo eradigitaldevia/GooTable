@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import type { TablesUpdate } from "@/integrations/supabase/types";
 import { assertAcessoRestaurante } from "./auth.server";
 import { sanitizarComandasOrfas } from "./sessoes.server";
 
