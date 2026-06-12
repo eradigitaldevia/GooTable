@@ -127,7 +127,7 @@ export const atualizarStatusPedidoFn = createServerFn({ method: "POST" })
   .handler(async ({ context, data }) => {
     const { supabase, userId } = context;
     await assertAcessoRestaurante(supabase, userId, data.restauranteId);
-    const update: Record<string, unknown> = {
+    const update: TablesUpdate<"pedidos"> = {
       status: data.status,
       atualizado_em: new Date().toISOString(),
     };
