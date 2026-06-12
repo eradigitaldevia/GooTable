@@ -1,34 +1,34 @@
 ## Objetivo
 
-Corrigir o erro de hex inválido na aba "Cores manuais" e deixar explícito que ela ajusta a paleta atual.
+Tornar o upsell no carrinho **estritamente manual**: só aparecem produtos marcados com "Sugerir no carrinho (upsell)" (`destaque_upsell = true`). Se não houver nenhum marcado, a seção simplesmente não aparece — sem complementação automática por bebida, sobremesa ou populares.
 
-## Mudanças
+## Diagnóstico atual
 
-### 1. `src/components/configuracoes/identidade/cores-manuais-form.tsx`
+`src/lib/upsell.ts` → função `sugerirUpsell` usa 3 camadas:
+- **A (manual)**: produtos com `destaque_upsell = true`
+- **B (contextual)**: bebida se faltar, sobremesa se houver prato e faltar sobremesa — por regex no nome da categoria
+- **C (fallback)**: qualquer outro produto disponível ordenado por menos visto + preço
 
-**Validação onBlur no campo de texto do hex** (o `<input type="color">` continua igual — ele já garante valor válido):
+As camadas B e C explicam a "complementação automática" que você quer remover. O componente `upsell-carrinho.tsx` já esconde a seção quando `sugestoes.length === 0`, então basta a função devolver array vazio quando não houver destaques.
 
-- Cada `CampoCor` mantém um estado local `rascunho` (string que o usuário digita).
-- `useEffect` sincroniza `rascunho` quando o `value` externo muda (ex.: usuário trocou de aba, escolheu paleta pronta).
-- Digitar atualiza apenas `rascunho` (não propaga).
-- `onBlur` (ou Enter):
-  - Se `isValidHex(rascunho)` → propaga via `onChange(rascunho)`.
-  - Senão → reverte `rascunho` para o `value` válido atual e mostra `toast.error("Cor inválida. Use o formato #RRGGBB (ex.: #c2410c).")`.
-- O `<input type="color">` continua propagando direto (sempre válido) e também atualiza `rascunho`.
+## Mudança proposta
 
-Resultado: impossível ficar com hex incompleto no estado salvo → fim do `ZodError "Cor inválida"` ao clicar Salvar.
+**Arquivo único:** `src/lib/upsell.ts`
 
-### 2. `src/components/configuracoes/identidade/paletas-tabs.tsx`
-
-Adicionar uma linha curta de ajuda **dentro do `TabsContent value="manual"`**, acima do `<CoresManuaisForm>`:
-
-> "Ajuste fino sobre a paleta atual. As cores exibidas são as que estão ativas no cardápio agora."
-
-Classes: `text-xs text-muted-foreground` (padrão já usado em outras explicações do form).
+1. Remover as camadas B (contextual) e C (fallback) da função `sugerirUpsell`.
+2. Manter apenas a camada A: filtrar `candidatos` por `destaque_upsell === true`, com a ordenação atual (menos visto → tipo novo no carrinho → menor preço), dedup e `max`.
+3. Manter assinatura da função e o tipo `SugestaoUpsell` — todos os retornos passam a ter `motivo: "destaque"`.
+4. O tipo `MotivoUpsell` pode permanecer como está (união com `"bebida" | "sobremesa" | "popular"`) para não mexer em `upsell-carrinho.tsx`; esses valores simplesmente deixam de ocorrer em runtime. Sem mudança no componente, sem mudança no schema, sem mudança no backend.
 
 ## Fora de escopo
 
-- Não mudar arquitetura de abas (continuam compartilhando o estado).
-- Não mudar `paleta-presets.ts`, `paleta-gerador.tsx`, `paleta-picker.tsx`, `identidade-form.tsx`, schemas Zod do backend, nem `configuracoes.functions.ts`.
-- Não alterar layout, cores, tokens ou tipografia.
-- Não tocar no aviso de upsell já existente na aba Cardápio.
+- Componente `upsell-carrinho.tsx`, labels, layout, cores.
+- `produto-form-fields.tsx` e o toggle "Sugerir no carrinho (upsell)" no cadastro.
+- Tabela `produtos`, RLS, server functions, tipos do Supabase.
+- Texto de ajuda na tela de Configurações (a frase atual continua válida na primeira parte; se quiser, posso ajustá-la num passo separado para refletir "sem complementação automática").
+
+## Efeito visível
+
+- Sem nenhum produto marcado → bloco "Que tal acompanhar?" não aparece.
+- Com 1, 2 ou 3 produtos marcados → aparecem apenas eles, ordenados pelos mesmos critérios de hoje.
+- Com mais de 3 marcados → mostra os 3 melhores pelo critério atual.
