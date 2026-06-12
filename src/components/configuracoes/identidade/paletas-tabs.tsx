@@ -58,10 +58,10 @@ export function PaletasTabs({
 
   return (
     <Tabs defaultValue={abaInicial} className="space-y-4">
-      <TabsList className="flex w-full flex-wrap justify-start gap-1">
-        <TabsTrigger value="prontas">Paletas prontas</TabsTrigger>
-        <TabsTrigger value="gerar">Gerar da minha cor</TabsTrigger>
-        <TabsTrigger value="manual">Cores manuais</TabsTrigger>
+      <TabsList className="grid h-auto w-full grid-cols-3 gap-1 sm:flex sm:flex-wrap sm:justify-start">
+        <TabsTrigger value="prontas" className="w-full sm:w-auto">Paletas prontas</TabsTrigger>
+        <TabsTrigger value="gerar" className="w-full sm:w-auto">Gerar da minha cor</TabsTrigger>
+        <TabsTrigger value="manual" className="w-full sm:w-auto">Cores manuais</TabsTrigger>
       </TabsList>
 
       <TabsContent value="prontas">
