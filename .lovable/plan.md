@@ -1,39 +1,34 @@
 ## Objetivo
 
-Dois ajustes pontuais na página **Configurações**:
+Corrigir o erro de hex inválido na aba "Cores manuais" e deixar explícito que ela ajusta a paleta atual.
 
-1. Na aba **Identidade**, o seletor de paletas deve abrir já na aba que corresponde à cor atualmente definida.
-2. Na aba **Cardápio**, deixar claro **onde** são definidos os itens que aparecem como sugestão de acompanhamentos (upsell).
+## Mudanças
 
-Sem persistência da origem da paleta, sem mudanças visuais, sem alterações de backend ou regras de negócio.
+### 1. `src/components/configuracoes/identidade/cores-manuais-form.tsx`
 
-## Mudanças propostas
+**Validação onBlur no campo de texto do hex** (o `<input type="color">` continua igual — ele já garante valor válido):
 
-### 1. `src/components/configuracoes/identidade/paletas-tabs.tsx` — aba inicial reflete a fonte da cor
+- Cada `CampoCor` mantém um estado local `rascunho` (string que o usuário digita).
+- `useEffect` sincroniza `rascunho` quando o `value` externo muda (ex.: usuário trocou de aba, escolheu paleta pronta).
+- Digitar atualiza apenas `rascunho` (não propaga).
+- `onBlur` (ou Enter):
+  - Se `isValidHex(rascunho)` → propaga via `onChange(rascunho)`.
+  - Senão → reverte `rascunho` para o `value` válido atual e mostra `toast.error("Cor inválida. Use o formato #RRGGBB (ex.: #c2410c).")`.
+- O `<input type="color">` continua propagando direto (sempre válido) e também atualiza `rascunho`.
 
-- Hoje o componente usa `defaultValue="prontas"`, abrindo sempre em "Paletas prontas".
-- Alterar para calcular a aba inicial **uma única vez na montagem**, via `useState(() => ...)`:
-  - Se as cores atuais (`corPrimaria`/`corSecundaria`/`corAcento` + `tema`) **coincidirem com algum preset** de `PALETAS_PRESETS` → abrir em `"prontas"`.
-  - Caso contrário → abrir em `"manual"` (cobre tanto cores manuais quanto cores geradas; a aba "Gerar da minha cor" não é selecionável automaticamente porque a origem não é persistida).
-- Reaproveitar a mesma comparação já usada para `paletaAtivaId` (case-insensitive nas três cores + tema).
-- Manter `defaultValue` (não controlado), para o usuário poder navegar livremente entre as abas depois.
+Resultado: impossível ficar com hex incompleto no estado salvo → fim do `ZodError "Cor inválida"` ao clicar Salvar.
 
-### 2. `src/routes/_authenticated/admin/configuracoes.tsx` — explicar origem dos itens de upsell
+### 2. `src/components/configuracoes/identidade/paletas-tabs.tsx`
 
-- Abaixo do texto explicativo atual do switch **"Sugestão de acompanhamentos no carrinho"**, adicionar um parágrafo `text-xs text-muted-foreground` com o seguinte conteúdo:
+Adicionar uma linha curta de ajuda **dentro do `TabsContent value="manual"`**, acima do `<CoresManuaisForm>`:
 
-  > "Os itens sugeridos são os produtos marcados com **'Sugerir no carrinho (upsell)'** no cadastro do produto (aba **Cardápio** → editar produto). Sem itens marcados, o sistema completa automaticamente com bebidas, sobremesas e itens populares."
+> "Ajuste fino sobre a paleta atual. As cores exibidas são as que estão ativas no cardápio agora."
 
-- Sem alterar o switch, o estado, o hook ou o comportamento atual.
-
-## Arquivos afetados
-
-- `src/components/configuracoes/identidade/paletas-tabs.tsx`
-- `src/routes/_authenticated/admin/configuracoes.tsx`
+Classes: `text-xs text-muted-foreground` (padrão já usado em outras explicações do form).
 
 ## Fora de escopo
 
-- Persistir / lembrar qual aba (prontas / gerar / manual) originou a cor (descartado por baixo ROI).
-- Mudanças visuais, de tokens, layout ou textos fora dos dois pontos acima.
-- Alterações em `upsell.ts`, no cadastro de produto, no cardápio público ou em qualquer regra de negócio.
-- Mudanças de schema, migrations ou server functions.
+- Não mudar arquitetura de abas (continuam compartilhando o estado).
+- Não mudar `paleta-presets.ts`, `paleta-gerador.tsx`, `paleta-picker.tsx`, `identidade-form.tsx`, schemas Zod do backend, nem `configuracoes.functions.ts`.
+- Não alterar layout, cores, tokens ou tipografia.
+- Não tocar no aviso de upsell já existente na aba Cardápio.
