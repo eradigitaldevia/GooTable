@@ -42,9 +42,15 @@ export function IdentidadeForm({
   const uploading = uploadMut.isPending;
   const [previewOpen, setPreviewOpen] = useState(false);
 
+  const ACCEPTED_TYPES = ["image/png", "image/svg+xml", "image/jpeg", "image/webp"];
+
   async function handleUpload(file: File) {
+    if (!ACCEPTED_TYPES.includes(file.type)) {
+      toast.error("Formato não suportado. Por favor, envie PNG, SVG, JPG ou WebP.");
+      return;
+    }
     if (file.size > 2 * 1024 * 1024) {
-      toast.error("Logo maior que 2MB");
+      toast.error("A logo deve ter no máximo 2 MB. Comprima a imagem ou envie outro arquivo.");
       return;
     }
     try {
@@ -64,38 +70,48 @@ export function IdentidadeForm({
         </p>
       </div>
 
-      <div className="flex items-center gap-4">
-        <div className="relative flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-border bg-muted">
-          {logoUrl ? (
-            <img src={logoUrl} alt="" className="h-full w-full object-cover" />
-          ) : (
-            <ImageIcon className="h-7 w-7 text-muted-foreground" />
-          )}
-          {uploading && (
-            <div className="absolute inset-0 flex items-center justify-center bg-background/70">
-              <Loader2 className="h-5 w-5 animate-spin" />
+      <div className="space-y-3">
+        <Label>Logo</Label>
+        <div className="flex items-start gap-4">
+          <div className="relative flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-border bg-muted">
+            {logoUrl ? (
+              <img src={logoUrl} alt="Logo do restaurante" className="h-full w-full object-cover" />
+            ) : (
+              <ImageIcon className="h-7 w-7 text-muted-foreground" />
+            )}
+            {uploading && (
+              <div className="absolute inset-0 flex items-center justify-center bg-background/70">
+                <Loader2 className="h-5 w-5 animate-spin" />
+              </div>
+            )}
+          </div>
+          <div className="flex flex-1 flex-col gap-2">
+            <input
+              ref={fileRef}
+              type="file"
+              accept="image/png,image/svg+xml,image/jpeg,image/webp"
+              className="hidden"
+              onChange={(e) => {
+                const f = e.target.files?.[0];
+                if (f) handleUpload(f);
+              }}
+            />
+            <div className="flex gap-2">
+              <Button type="button" variant="outline" size="sm" onClick={() => fileRef.current?.click()}>
+                {logoUrl ? "Trocar logo" : "Enviar logo"}
+              </Button>
+              {logoUrl && (
+                <Button type="button" variant="ghost" size="sm" onClick={() => onChange({ logo_url: null })}>
+                  Remover
+                </Button>
+              )}
             </div>
-          )}
-        </div>
-        <div className="flex flex-col gap-2">
-          <input
-            ref={fileRef}
-            type="file"
-            accept="image/*"
-            className="hidden"
-            onChange={(e) => {
-              const f = e.target.files?.[0];
-              if (f) handleUpload(f);
-            }}
-          />
-          <Button type="button" variant="outline" size="sm" onClick={() => fileRef.current?.click()}>
-            {logoUrl ? "Trocar logo" : "Enviar logo"}
-          </Button>
-          {logoUrl && (
-            <Button type="button" variant="ghost" size="sm" onClick={() => onChange({ logo_url: null })}>
-              Remover
-            </Button>
-          )}
+            <p className="text-xs leading-relaxed text-muted-foreground">
+              Recomendamos imagem <strong className="font-medium text-foreground">quadrada (proporção 1:1)</strong> para melhor encaixe no topo do cardápio.
+              <br />
+              PNG ou SVG transparente · 512×512 px recomendado · até 2 MB
+            </p>
+          </div>
         </div>
       </div>
 
