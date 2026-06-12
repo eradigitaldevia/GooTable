@@ -17,6 +17,8 @@ import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { useUnsavedChangesGuard } from "@/hooks/use-unsaved-changes-guard";
+import { UnsavedChangesDialog } from "@/components/configuracoes/unsaved-changes-dialog";
 
 type TabId =
   | "identidade"
@@ -298,6 +300,9 @@ function Configuracoes() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [form, snapshot]);
 
+  const isDirty = Object.values(abasSujas).some(Boolean);
+  const guard = useUnsavedChangesGuard({ isDirty });
+
   const semGarcons = garconsAtivos.length === 0;
   const todosGarconsZerados =
     garconsAtivos.length > 0 &&
@@ -503,6 +508,17 @@ function Configuracoes() {
 
   return (
     <div className="max-w-2xl space-y-6">
+      <UnsavedChangesDialog
+        open={guard.status === "blocked"}
+        onCancel={() => guard.reset?.()}
+        onDiscard={() => {
+          if (snapshot) {
+            setForm(snapshot);
+            prevSnapshotRef.current = snapshot;
+          }
+          guard.proceed?.();
+        }}
+      />
       <header>
         <h1 className="text-3xl font-bold tracking-tight">Configurações</h1>
         <p className="mt-1 text-sm text-muted-foreground">
