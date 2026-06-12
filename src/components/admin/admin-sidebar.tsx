@@ -152,7 +152,7 @@ export function AdminSidebar({
     <TooltipProvider delayDuration={0}>
       <div
         className={cn(
-          "flex h-16 items-center gap-3 border-b border-sidebar-border",
+          "flex h-16 shrink-0 items-center gap-3 border-b border-sidebar-border",
           collapsed ? "justify-center px-0" : "px-5",
         )}
       >
@@ -167,7 +167,7 @@ export function AdminSidebar({
         )}
       </div>
 
-      <nav className={cn("flex-1 space-y-1", collapsed ? "p-2" : "p-3")}>
+      <nav className={cn("flex-1 space-y-1 overflow-y-auto", collapsed ? "p-2" : "p-3")}>
         {navGroups.map((group, groupIdx) => {
           const renderedItems = group.items.map((item) => {
           const active = item.exact ? path === item.to : path.startsWith(item.to);
@@ -233,7 +233,7 @@ export function AdminSidebar({
         })}
       </nav>
 
-      <div className={cn("border-t border-sidebar-border", collapsed ? "p-2" : "p-3")}>
+      <div className={cn("shrink-0 border-t border-sidebar-border", collapsed ? "p-2" : "p-3")}>
         {isPlatformAdmin && (
           collapsed ? (
             <Tooltip>
