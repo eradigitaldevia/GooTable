@@ -5,13 +5,15 @@ import { cn } from "@/lib/utils";
 export function PaletaPicker({
   selecionadaId,
   onSelect,
+  paletas = PALETAS_PRESETS,
 }: {
   selecionadaId: string | null;
   onSelect: (p: PaletaPreset) => void;
+  paletas?: PaletaPreset[];
 }) {
   return (
     <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-      {PALETAS_PRESETS.map((p) => {
+      {paletas.map((p) => {
         const ativa = selecionadaId === p.id;
         return (
           <button

@@ -9,6 +9,8 @@ import { PaletaPicker } from "./identidade/paleta-picker";
 import { CoresForm } from "./identidade/cores-form";
 import { PALETAS_PRESETS } from "./identidade/paleta-presets";
 import { PreviewDrawer } from "./identidade/preview-drawer";
+import { PaletaGerador } from "./identidade/paleta-gerador";
+import { cn } from "@/lib/utils";
 
 type IdentidadePatch = {
   nome?: string;
@@ -42,6 +44,7 @@ export function IdentidadeForm({
   const uploadMut = useUploadLogo();
   const uploading = uploadMut.isPending;
   const [previewOpen, setPreviewOpen] = useState(false);
+  const [modoPaleta, setModoPaleta] = useState<"prontas" | "gerar">("prontas");
 
   const paletaAtivaId =
     PALETAS_PRESETS.find(
@@ -115,23 +118,68 @@ export function IdentidadeForm({
       </div>
 
       <div className="space-y-3 border-t border-border pt-6">
-        <div>
-          <h3 className="text-sm font-semibold">Paletas prontas</h3>
-          <p className="mt-0.5 text-xs text-muted-foreground">
-            Clique em uma paleta para aplicar, ou ajuste as cores manualmente abaixo.
-          </p>
+        <div className="flex flex-wrap items-end justify-between gap-3">
+          <div>
+            <h3 className="text-sm font-semibold">Paletas</h3>
+            <p className="mt-0.5 text-xs text-muted-foreground">
+              Clique em uma paleta para aplicar, ou ajuste as cores manualmente abaixo.
+            </p>
+          </div>
+          <div className="inline-flex rounded-lg border border-border bg-muted/40 p-1">
+            <button
+              type="button"
+              onClick={() => setModoPaleta("prontas")}
+              className={cn(
+                "rounded-md px-3 py-1.5 text-xs font-medium transition",
+                modoPaleta === "prontas"
+                  ? "bg-background shadow-sm text-foreground"
+                  : "text-muted-foreground hover:text-foreground",
+              )}
+            >
+              Paletas prontas
+            </button>
+            <button
+              type="button"
+              onClick={() => setModoPaleta("gerar")}
+              className={cn(
+                "rounded-md px-3 py-1.5 text-xs font-medium transition",
+                modoPaleta === "gerar"
+                  ? "bg-background shadow-sm text-foreground"
+                  : "text-muted-foreground hover:text-foreground",
+              )}
+            >
+              Gerar da minha cor
+            </button>
+          </div>
         </div>
-        <PaletaPicker
-          selecionadaId={paletaAtivaId}
-          onSelect={(p) =>
-            onChange({
-              cor_primaria: p.cor_primaria,
-              cor_secundaria: p.cor_secundaria,
-              cor_acento: p.cor_acento,
-              tema_cardapio: p.tema,
-            })
-          }
-        />
+        {modoPaleta === "prontas" ? (
+          <PaletaPicker
+            selecionadaId={paletaAtivaId}
+            onSelect={(p) =>
+              onChange({
+                cor_primaria: p.cor_primaria,
+                cor_secundaria: p.cor_secundaria,
+                cor_acento: p.cor_acento,
+                tema_cardapio: p.tema,
+              })
+            }
+          />
+        ) : (
+          <PaletaGerador
+            corPrimariaAtual={corPrimaria}
+            corSecundariaAtual={corSecundaria}
+            corAcentoAtual={corAcento}
+            temaAtual={tema}
+            onSelect={(p) =>
+              onChange({
+                cor_primaria: p.cor_primaria,
+                cor_secundaria: p.cor_secundaria,
+                cor_acento: p.cor_acento,
+                tema_cardapio: p.tema,
+              })
+            }
+          />
+        )}
       </div>
 
       <div className="space-y-4 border-t border-border pt-6">
