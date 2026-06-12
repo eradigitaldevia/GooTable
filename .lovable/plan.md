@@ -1,62 +1,59 @@
-# Plano — Prévia ao vivo no drawer (aba Identidade)
-
 ## Objetivo
 
-Substituir o botão **"Abrir prévia completa"** (que abre `/admin/cardapio-preview` em nova aba) por um **drawer lateral** que renderiza a prévia do cardápio usando as cores **atuais do formulário** (ainda não salvas), com feedback instantâneo a cada ajuste.
+Avisar o usuário antes de sair da página `/admin/configuracoes` quando houver alterações não salvas em qualquer aba, com um dialog simples de 2 ações.
 
-## Decisões confirmadas
+## Comportamento
 
-1. **Remover** o mini-preview embutido (`PreviewAmostra`).
-2. Renderizar a prévia **apenas em mobile (390px)** — caso real de uso do cardápio do cliente. Sem toggle de dispositivo.
-3. **Manter** a rota `/admin/cardapio-preview` intacta (acessível pelo menu, útil para inspeção/QR/compartilhar). Continua com seu próprio toggle de dispositivo — não é alterada.
-4. **Mobile do admin**: drawer **full-screen**.
+- **Dispara apenas ao sair da página `/admin/configuracoes`** (ex.: clicar em outro item da sidebar, voltar do navegador, fechar a aba).
+- **Não dispara** ao trocar entre abas internas (Identidade ↔ Pagamentos ↔ Taxas etc.) — o pontinho na aba já indica o estado.
+- **Não dispara** se nenhuma aba estiver suja.
 
-## Mudanças
+## Dialog (AlertDialog do shadcn)
 
-### 1. Novo componente de conteúdo da prévia (escopo do drawer)
+Título: **Você tem alterações não salvas**
 
-**Novo:** `src/components/configuracoes/identidade/preview-cardapio-mobile.tsx`
-- Recebe `restauranteId` e override de tema (`cor_primaria`, `cor_secundaria`, `cor_acento`, `tema_cardapio`).
-- Renderiza o mesmo cardápio público que `/admin/cardapio-preview` usa, **fixo em 390px de largura** (frame mobile centralizado), sem toggle.
-- Usa `TemaCardapioProvider` com as cores override → reflete mudanças não salvas em tempo real.
+Texto:
+> As alterações realizadas só serão efetivadas após você clicar em **Salvar** dentro de cada aba destacada com um ponto (•).
 
-Não vou refatorar `/admin/cardapio-preview` — ela permanece como está (escopo mínimo).
-
-### 2. Drawer na aba Identidade
-
-**Novo:** `src/components/configuracoes/identidade/preview-drawer.tsx`
-- Usa `Sheet` do shadcn (`side="right"`).
-- Largura: `w-full sm:max-w-md` (cabe um frame mobile de 390px confortavelmente; full-screen no mobile do admin).
-- Conteúdo: `<PreviewCardapioMobile restauranteId={...} {...overrideCores} />`.
-
-### 3. Atualizar `IdentidadeForm`
-
-`src/components/configuracoes/identidade-form.tsx`:
-- Remover import/uso de `PreviewAmostra` e a seção "Amostra" completa (título, descrição e nota sobre "salve antes de abrir").
-- Substituir o botão `window.open(...)` por **"Ver prévia ao vivo"** que abre o `PreviewDrawer`.
-- Estado local `previewOpen` controla o drawer.
-
-### 4. `PreviewAmostra` (arquivo morto)
-
-Após remover o uso, deletar `src/components/configuracoes/identidade/preview-amostra.tsx` para não deixar código órfão.
+Ações:
+- **Voltar e salvar** (primary) — fecha o dialog, mantém o usuário na página.
+- **Sair sem salvar** (destructive/ghost) — descarta alterações (reset do form para o snapshot) e prossegue com a navegação.
+- ESC / clique fora = equivalente a "Voltar e salvar" (cancela navegação).
 
 ## Arquivos afetados
 
-**Novos:**
-- `src/components/configuracoes/identidade/preview-cardapio-mobile.tsx`
-- `src/components/configuracoes/identidade/preview-drawer.tsx`
+### Novo: `src/hooks/use-unsaved-changes-guard.ts`
+Hook genérico que recebe `{ isDirty: boolean, currentPathname: string }` e:
+- Usa `useBlocker({ withResolver: true, shouldBlockFn: ({ next, current }) => isDirty && next.pathname !== current.pathname })` do TanStack Router — assim navegação que mantém o mesmo `pathname` (troca de aba interna via `search`) não é bloqueada.
+- Registra/remove listener `beforeunload` para cobrir fechar aba / recarregar / fechar navegador.
+- Retorna `{ status, proceed, reset }` para a UI controlar o dialog.
 
-**Editados:**
-- `src/components/configuracoes/identidade-form.tsx`
+### Novo: `src/components/configuracoes/unsaved-changes-dialog.tsx`
+Componente `AlertDialog` controlado por `open`/`onCancel`/`onConfirm`. Texto e botões conforme acima. Componente pequeno, focado apenas em renderização.
 
-**Removido:**
-- `src/components/configuracoes/identidade/preview-amostra.tsx`
+### Edit: `src/routes/_authenticated/admin/configuracoes.tsx`
+- Calcular `isDirty = Object.values(abasSujas).some(Boolean)`.
+- Chamar `useUnsavedChangesGuard({ isDirty, currentPathname: "/admin/configuracoes" })`.
+- Quando `status === "blocked"`, renderizar `<UnsavedChangesDialog>`:
+  - **Voltar e salvar** → `reset()` (fecha dialog, permanece na página).
+  - **Sair sem salvar** → resetar `form` para `snapshot`, atualizar `prevSnapshotRef.current` para evitar re-mesclagem, e chamar `proceed()`.
+
+## Detalhes técnicos
+
+- `useBlocker` com `withResolver: true` não dispara o confirm nativo; a UI é 100% controlada pelo `AlertDialog`.
+- `beforeunload` é nativo do browser; mostra o alerta padrão ao fechar aba/recarregar (só funciona após interação real do usuário, regra do browser).
+- A comparação `next.pathname !== current.pathname` garante que mudanças apenas em `search` (que é como as abas internas funcionam via `navigate({ search: { tab } })`) não disparem o bloqueio.
+- "Sair sem salvar" não chama nenhuma mutation/backend — apenas reseta o estado local do form.
 
 ## Fora de escopo
 
-- Não toco em `/admin/cardapio-preview`, `TemaCardapioProvider`, `cor-utils`, paletas, validação, salvar/hook/backend, outras abas, menu admin.
+- Outras páginas com formulários (somente `/admin/configuracoes`).
+- Auto-save.
+- Refatoração de `abasSujas`, `snapshot`, ou da lógica de `salvar(aba)` existente.
+- Mudanças no visual do pontinho ou nas abas.
+- Mudanças em backend, mutations ou validações.
 
-## Risco
+## Riscos
 
-- **Performance**: drawer só monta quando aberto. Mudanças de cor não disparam refetch — só re-render do provider (CSS vars).
-- **Isolamento**: override é passado por props ao `TemaCardapioProvider`; o cache de cardápio público não é afetado.
+- `beforeunload` exibe texto genérico do browser (não dá pra customizar) — comportamento esperado e padrão da web.
+- Se o usuário tiver alterações em mais de uma aba e escolher "Sair sem salvar", todas serão descartadas — coerente com a ação escolhida.
