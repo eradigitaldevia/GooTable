@@ -21,6 +21,7 @@ import { Route as SuperadminRestaurantesRouteImport } from './routes/superadmin.
 import { Route as SuperadminLogsRouteImport } from './routes/superadmin.logs'
 import { Route as MQrTokenRouteImport } from './routes/m.$qrToken'
 import { Route as AuthenticatedSalaRouteImport } from './routes/_authenticated/sala'
+import { Route as AuthenticatedCumimRouteImport } from './routes/_authenticated/cumim'
 import { Route as AuthenticatedCozinhaRouteImport } from './routes/_authenticated/cozinha'
 import { Route as AuthenticatedCaixaRouteImport } from './routes/_authenticated/caixa'
 import { Route as AuthenticatedBarRouteImport } from './routes/_authenticated/bar'
@@ -41,6 +42,7 @@ import { Route as AuthenticatedAdminFidelidadeRouteImport } from './routes/_auth
 import { Route as AuthenticatedAdminEquipeRouteImport } from './routes/_authenticated/admin/equipe'
 import { Route as AuthenticatedAdminDestinosPreparoRouteImport } from './routes/_authenticated/admin/destinos-preparo'
 import { Route as AuthenticatedAdminCuponsRouteImport } from './routes/_authenticated/admin/cupons'
+import { Route as AuthenticatedAdminCumimRouteImport } from './routes/_authenticated/admin/cumim'
 import { Route as AuthenticatedAdminCouvertArtisticoRouteImport } from './routes/_authenticated/admin/couvert-artistico'
 import { Route as AuthenticatedAdminConfiguracoesRouteImport } from './routes/_authenticated/admin/configuracoes'
 import { Route as AuthenticatedAdminClientesRouteImport } from './routes/_authenticated/admin/clientes'
@@ -53,6 +55,7 @@ import { Route as AuthenticatedSalaNovaComandaMesaIdRouteImport } from './routes
 import { Route as AuthenticatedSalaMesaMesaIdRouteImport } from './routes/_authenticated/sala_.mesa.$mesaId'
 import { Route as AuthenticatedAdminClientesIdRouteImport } from './routes/_authenticated/admin/clientes.$id'
 import { Route as AuthenticatedAdminGarconsGarcomIdSalaRouteImport } from './routes/_authenticated/admin/garcons_.$garcomId.sala'
+import { Route as AuthenticatedAdminCuminsCumimIdDisplayRouteImport } from './routes/_authenticated/admin/cumins_.$cumimId.display'
 
 const SuperadminRoute = SuperadminRouteImport.update({
   id: '/superadmin',
@@ -111,6 +114,11 @@ const MQrTokenRoute = MQrTokenRouteImport.update({
 const AuthenticatedSalaRoute = AuthenticatedSalaRouteImport.update({
   id: '/sala',
   path: '/sala',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedCumimRoute = AuthenticatedCumimRouteImport.update({
+  id: '/cumim',
+  path: '/cumim',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
 const AuthenticatedCozinhaRoute = AuthenticatedCozinhaRouteImport.update({
@@ -223,6 +231,11 @@ const AuthenticatedAdminCuponsRoute =
     path: '/cupons',
     getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
+const AuthenticatedAdminCumimRoute = AuthenticatedAdminCumimRouteImport.update({
+  id: '/cumim',
+  path: '/cumim',
+  getParentRoute: () => AuthenticatedAdminRoute,
+} as any)
 const AuthenticatedAdminCouvertArtisticoRoute =
   AuthenticatedAdminCouvertArtisticoRouteImport.update({
     id: '/couvert-artistico',
@@ -293,6 +306,12 @@ const AuthenticatedAdminGarconsGarcomIdSalaRoute =
     path: '/garcons/$garcomId/sala',
     getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
+const AuthenticatedAdminCuminsCumimIdDisplayRoute =
+  AuthenticatedAdminCuminsCumimIdDisplayRouteImport.update({
+    id: '/cumins_/$cumimId/display',
+    path: '/cumins/$cumimId/display',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -305,6 +324,7 @@ export interface FileRoutesByFullPath {
   '/bar': typeof AuthenticatedBarRoute
   '/caixa': typeof AuthenticatedCaixaRouteWithChildren
   '/cozinha': typeof AuthenticatedCozinhaRoute
+  '/cumim': typeof AuthenticatedCumimRoute
   '/sala': typeof AuthenticatedSalaRoute
   '/m/$qrToken': typeof MQrTokenRoute
   '/superadmin/logs': typeof SuperadminLogsRoute
@@ -317,6 +337,7 @@ export interface FileRoutesByFullPath {
   '/admin/clientes': typeof AuthenticatedAdminClientesRouteWithChildren
   '/admin/configuracoes': typeof AuthenticatedAdminConfiguracoesRoute
   '/admin/couvert-artistico': typeof AuthenticatedAdminCouvertArtisticoRoute
+  '/admin/cumim': typeof AuthenticatedAdminCumimRoute
   '/admin/cupons': typeof AuthenticatedAdminCuponsRoute
   '/admin/destinos-preparo': typeof AuthenticatedAdminDestinosPreparoRoute
   '/admin/equipe': typeof AuthenticatedAdminEquipeRoute
@@ -337,6 +358,7 @@ export interface FileRoutesByFullPath {
   '/sala/mesa/$mesaId': typeof AuthenticatedSalaMesaMesaIdRoute
   '/sala/nova-comanda/$mesaId': typeof AuthenticatedSalaNovaComandaMesaIdRoute
   '/m/$qrToken/status/$pedidoId': typeof MQrTokenStatusPedidoIdRoute
+  '/admin/cumins/$cumimId/display': typeof AuthenticatedAdminCuminsCumimIdDisplayRoute
   '/admin/garcons/$garcomId/sala': typeof AuthenticatedAdminGarconsGarcomIdSalaRoute
 }
 export interface FileRoutesByTo {
@@ -347,6 +369,7 @@ export interface FileRoutesByTo {
   '/reset-password': typeof ResetPasswordRoute
   '/bar': typeof AuthenticatedBarRoute
   '/cozinha': typeof AuthenticatedCozinhaRoute
+  '/cumim': typeof AuthenticatedCumimRoute
   '/sala': typeof AuthenticatedSalaRoute
   '/m/$qrToken': typeof MQrTokenRoute
   '/superadmin/logs': typeof SuperadminLogsRoute
@@ -359,6 +382,7 @@ export interface FileRoutesByTo {
   '/admin/clientes': typeof AuthenticatedAdminClientesRouteWithChildren
   '/admin/configuracoes': typeof AuthenticatedAdminConfiguracoesRoute
   '/admin/couvert-artistico': typeof AuthenticatedAdminCouvertArtisticoRoute
+  '/admin/cumim': typeof AuthenticatedAdminCumimRoute
   '/admin/cupons': typeof AuthenticatedAdminCuponsRoute
   '/admin/destinos-preparo': typeof AuthenticatedAdminDestinosPreparoRoute
   '/admin/equipe': typeof AuthenticatedAdminEquipeRoute
@@ -379,6 +403,7 @@ export interface FileRoutesByTo {
   '/sala/mesa/$mesaId': typeof AuthenticatedSalaMesaMesaIdRoute
   '/sala/nova-comanda/$mesaId': typeof AuthenticatedSalaNovaComandaMesaIdRoute
   '/m/$qrToken/status/$pedidoId': typeof MQrTokenStatusPedidoIdRoute
+  '/admin/cumins/$cumimId/display': typeof AuthenticatedAdminCuminsCumimIdDisplayRoute
   '/admin/garcons/$garcomId/sala': typeof AuthenticatedAdminGarconsGarcomIdSalaRoute
 }
 export interface FileRoutesById {
@@ -394,6 +419,7 @@ export interface FileRoutesById {
   '/_authenticated/bar': typeof AuthenticatedBarRoute
   '/_authenticated/caixa': typeof AuthenticatedCaixaRouteWithChildren
   '/_authenticated/cozinha': typeof AuthenticatedCozinhaRoute
+  '/_authenticated/cumim': typeof AuthenticatedCumimRoute
   '/_authenticated/sala': typeof AuthenticatedSalaRoute
   '/m/$qrToken': typeof MQrTokenRoute
   '/superadmin/logs': typeof SuperadminLogsRoute
@@ -406,6 +432,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/clientes': typeof AuthenticatedAdminClientesRouteWithChildren
   '/_authenticated/admin/configuracoes': typeof AuthenticatedAdminConfiguracoesRoute
   '/_authenticated/admin/couvert-artistico': typeof AuthenticatedAdminCouvertArtisticoRoute
+  '/_authenticated/admin/cumim': typeof AuthenticatedAdminCumimRoute
   '/_authenticated/admin/cupons': typeof AuthenticatedAdminCuponsRoute
   '/_authenticated/admin/destinos-preparo': typeof AuthenticatedAdminDestinosPreparoRoute
   '/_authenticated/admin/equipe': typeof AuthenticatedAdminEquipeRoute
@@ -426,6 +453,7 @@ export interface FileRoutesById {
   '/_authenticated/sala_/mesa/$mesaId': typeof AuthenticatedSalaMesaMesaIdRoute
   '/_authenticated/sala_/nova-comanda/$mesaId': typeof AuthenticatedSalaNovaComandaMesaIdRoute
   '/m/$qrToken_/status/$pedidoId': typeof MQrTokenStatusPedidoIdRoute
+  '/_authenticated/admin/cumins_/$cumimId/display': typeof AuthenticatedAdminCuminsCumimIdDisplayRoute
   '/_authenticated/admin/garcons_/$garcomId/sala': typeof AuthenticatedAdminGarconsGarcomIdSalaRoute
 }
 export interface FileRouteTypes {
@@ -441,6 +469,7 @@ export interface FileRouteTypes {
     | '/bar'
     | '/caixa'
     | '/cozinha'
+    | '/cumim'
     | '/sala'
     | '/m/$qrToken'
     | '/superadmin/logs'
@@ -453,6 +482,7 @@ export interface FileRouteTypes {
     | '/admin/clientes'
     | '/admin/configuracoes'
     | '/admin/couvert-artistico'
+    | '/admin/cumim'
     | '/admin/cupons'
     | '/admin/destinos-preparo'
     | '/admin/equipe'
@@ -473,6 +503,7 @@ export interface FileRouteTypes {
     | '/sala/mesa/$mesaId'
     | '/sala/nova-comanda/$mesaId'
     | '/m/$qrToken/status/$pedidoId'
+    | '/admin/cumins/$cumimId/display'
     | '/admin/garcons/$garcomId/sala'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -483,6 +514,7 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/bar'
     | '/cozinha'
+    | '/cumim'
     | '/sala'
     | '/m/$qrToken'
     | '/superadmin/logs'
@@ -495,6 +527,7 @@ export interface FileRouteTypes {
     | '/admin/clientes'
     | '/admin/configuracoes'
     | '/admin/couvert-artistico'
+    | '/admin/cumim'
     | '/admin/cupons'
     | '/admin/destinos-preparo'
     | '/admin/equipe'
@@ -515,6 +548,7 @@ export interface FileRouteTypes {
     | '/sala/mesa/$mesaId'
     | '/sala/nova-comanda/$mesaId'
     | '/m/$qrToken/status/$pedidoId'
+    | '/admin/cumins/$cumimId/display'
     | '/admin/garcons/$garcomId/sala'
   id:
     | '__root__'
@@ -529,6 +563,7 @@ export interface FileRouteTypes {
     | '/_authenticated/bar'
     | '/_authenticated/caixa'
     | '/_authenticated/cozinha'
+    | '/_authenticated/cumim'
     | '/_authenticated/sala'
     | '/m/$qrToken'
     | '/superadmin/logs'
@@ -541,6 +576,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/clientes'
     | '/_authenticated/admin/configuracoes'
     | '/_authenticated/admin/couvert-artistico'
+    | '/_authenticated/admin/cumim'
     | '/_authenticated/admin/cupons'
     | '/_authenticated/admin/destinos-preparo'
     | '/_authenticated/admin/equipe'
@@ -561,6 +597,7 @@ export interface FileRouteTypes {
     | '/_authenticated/sala_/mesa/$mesaId'
     | '/_authenticated/sala_/nova-comanda/$mesaId'
     | '/m/$qrToken_/status/$pedidoId'
+    | '/_authenticated/admin/cumins_/$cumimId/display'
     | '/_authenticated/admin/garcons_/$garcomId/sala'
   fileRoutesById: FileRoutesById
 }
@@ -663,6 +700,13 @@ declare module '@tanstack/react-router' {
       path: '/sala'
       fullPath: '/sala'
       preLoaderRoute: typeof AuthenticatedSalaRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/cumim': {
+      id: '/_authenticated/cumim'
+      path: '/cumim'
+      fullPath: '/cumim'
+      preLoaderRoute: typeof AuthenticatedCumimRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/cozinha': {
@@ -805,6 +849,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminCuponsRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
+    '/_authenticated/admin/cumim': {
+      id: '/_authenticated/admin/cumim'
+      path: '/cumim'
+      fullPath: '/admin/cumim'
+      preLoaderRoute: typeof AuthenticatedAdminCumimRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
     '/_authenticated/admin/couvert-artistico': {
       id: '/_authenticated/admin/couvert-artistico'
       path: '/couvert-artistico'
@@ -889,6 +940,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminGarconsGarcomIdSalaRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
+    '/_authenticated/admin/cumins_/$cumimId/display': {
+      id: '/_authenticated/admin/cumins_/$cumimId/display'
+      path: '/cumins/$cumimId/display'
+      fullPath: '/admin/cumins/$cumimId/display'
+      preLoaderRoute: typeof AuthenticatedAdminCuminsCumimIdDisplayRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
   }
 }
 
@@ -914,6 +972,7 @@ interface AuthenticatedAdminRouteChildren {
   AuthenticatedAdminClientesRoute: typeof AuthenticatedAdminClientesRouteWithChildren
   AuthenticatedAdminConfiguracoesRoute: typeof AuthenticatedAdminConfiguracoesRoute
   AuthenticatedAdminCouvertArtisticoRoute: typeof AuthenticatedAdminCouvertArtisticoRoute
+  AuthenticatedAdminCumimRoute: typeof AuthenticatedAdminCumimRoute
   AuthenticatedAdminCuponsRoute: typeof AuthenticatedAdminCuponsRoute
   AuthenticatedAdminDestinosPreparoRoute: typeof AuthenticatedAdminDestinosPreparoRoute
   AuthenticatedAdminEquipeRoute: typeof AuthenticatedAdminEquipeRoute
@@ -922,6 +981,7 @@ interface AuthenticatedAdminRouteChildren {
   AuthenticatedAdminMesasRoute: typeof AuthenticatedAdminMesasRoute
   AuthenticatedAdminPedidosRoute: typeof AuthenticatedAdminPedidosRoute
   AuthenticatedAdminIndexRoute: typeof AuthenticatedAdminIndexRoute
+  AuthenticatedAdminCuminsCumimIdDisplayRoute: typeof AuthenticatedAdminCuminsCumimIdDisplayRoute
   AuthenticatedAdminGarconsGarcomIdSalaRoute: typeof AuthenticatedAdminGarconsGarcomIdSalaRoute
 }
 
@@ -935,6 +995,7 @@ const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
   AuthenticatedAdminConfiguracoesRoute: AuthenticatedAdminConfiguracoesRoute,
   AuthenticatedAdminCouvertArtisticoRoute:
     AuthenticatedAdminCouvertArtisticoRoute,
+  AuthenticatedAdminCumimRoute: AuthenticatedAdminCumimRoute,
   AuthenticatedAdminCuponsRoute: AuthenticatedAdminCuponsRoute,
   AuthenticatedAdminDestinosPreparoRoute:
     AuthenticatedAdminDestinosPreparoRoute,
@@ -944,6 +1005,8 @@ const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
   AuthenticatedAdminMesasRoute: AuthenticatedAdminMesasRoute,
   AuthenticatedAdminPedidosRoute: AuthenticatedAdminPedidosRoute,
   AuthenticatedAdminIndexRoute: AuthenticatedAdminIndexRoute,
+  AuthenticatedAdminCuminsCumimIdDisplayRoute:
+    AuthenticatedAdminCuminsCumimIdDisplayRoute,
   AuthenticatedAdminGarconsGarcomIdSalaRoute:
     AuthenticatedAdminGarconsGarcomIdSalaRoute,
 }
@@ -973,6 +1036,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedBarRoute: typeof AuthenticatedBarRoute
   AuthenticatedCaixaRoute: typeof AuthenticatedCaixaRouteWithChildren
   AuthenticatedCozinhaRoute: typeof AuthenticatedCozinhaRoute
+  AuthenticatedCumimRoute: typeof AuthenticatedCumimRoute
   AuthenticatedSalaRoute: typeof AuthenticatedSalaRoute
   AuthenticatedSalaMesaMesaIdRoute: typeof AuthenticatedSalaMesaMesaIdRoute
   AuthenticatedSalaNovaComandaMesaIdRoute: typeof AuthenticatedSalaNovaComandaMesaIdRoute
@@ -983,6 +1047,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedBarRoute: AuthenticatedBarRoute,
   AuthenticatedCaixaRoute: AuthenticatedCaixaRouteWithChildren,
   AuthenticatedCozinhaRoute: AuthenticatedCozinhaRoute,
+  AuthenticatedCumimRoute: AuthenticatedCumimRoute,
   AuthenticatedSalaRoute: AuthenticatedSalaRoute,
   AuthenticatedSalaMesaMesaIdRoute: AuthenticatedSalaMesaMesaIdRoute,
   AuthenticatedSalaNovaComandaMesaIdRoute:

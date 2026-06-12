@@ -26,6 +26,7 @@ import {
   ChefHat,
   UserCog,
   UsersRound,
+  Footprints,
   Wallet,
   Music,
 } from "lucide-react";
@@ -52,6 +53,7 @@ const NAV = [
   { to: "/admin/configuracoes", label: "Configurações", icon: Settings, exact: false },
   { to: "/admin/equipe", label: "Equipe", icon: UserCog, exact: false },
   { to: "/admin/garcons", label: "Garçons", icon: UsersRound, exact: false },
+  { to: "/admin/cumim", label: "Cumim", icon: Footprints, exact: false },
   { to: "/admin/couvert-artistico", label: "Couvert artístico", icon: Music, exact: false },
 ] as const;
 
