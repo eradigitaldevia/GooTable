@@ -1,59 +1,77 @@
 ## Objetivo
 
-Avisar o usuário antes de sair da página `/admin/configuracoes` quando houver alterações não salvas em qualquer aba, com um dialog simples de 2 ações.
+Adicionar um gerador de paletas a partir de uma cor primária digitada pelo usuário, sem alterar as paletas prontas existentes nem o formulário manual de cores.
 
-## Comportamento
+## UX
 
-- **Dispara apenas ao sair da página `/admin/configuracoes`** (ex.: clicar em outro item da sidebar, voltar do navegador, fechar a aba).
-- **Não dispara** ao trocar entre abas internas (Identidade ↔ Pagamentos ↔ Taxas etc.) — o pontinho na aba já indica o estado.
-- **Não dispara** se nenhuma aba estiver suja.
+Na seção "Paletas prontas" da aba **Identidade**, substituir o título por um **toggle de 2 opções** acima da grade:
 
-## Dialog (AlertDialog do shadcn)
+```
+[ Paletas prontas ]  [ Gerar da minha cor ]
+```
 
-Título: **Você tem alterações não salvas**
+- **Paletas prontas** (default): mostra a grade atual com os 8 presets (`PALETAS_PRESETS`). Comportamento idêntico ao de hoje.
+- **Gerar da minha cor**: mostra um campo de cor (color picker + input hex) + grade com **8 paletas geradas** (4 esquemas harmônicos × 2 temas: claro e escuro).
 
-Texto:
-> As alterações realizadas só serão efetivadas após você clicar em **Salvar** dentro de cada aba destacada com um ponto (•).
+A seção "Tema do cardápio" (toggle Claro/Escuro) e os 3 campos manuais (Primária / Secundária / Acento) continuam intactos.
 
-Ações:
-- **Voltar e salvar** (primary) — fecha o dialog, mantém o usuário na página.
-- **Sair sem salvar** (destructive/ghost) — descarta alterações (reset do form para o snapshot) e prossegue com a navegação.
-- ESC / clique fora = equivalente a "Voltar e salvar" (cancela navegação).
+## Esquemas gerados
+
+A partir da cor digitada (convertida HSL), gera 4 esquemas com `{cor_primaria, cor_secundaria, cor_acento}`:
+
+| Esquema | Secundária (matiz) | Acento (matiz) |
+|---|---|---|
+| **Análoga** | hue +30° | hue −30° |
+| **Complementar** | hue +180° | hue +30° |
+| **Triádica** | hue +120° | hue +240° |
+| **Monocromática** | mesmo hue, S/L ajustados | mesmo hue, S/L ajustados |
+
+Para cada esquema gera **2 variantes** (`tema: "claro"` e `tema: "escuro"`), ajustando saturação/luminosidade das cores secundária e acento conforme o tema, para garantir legibilidade.
+
+Total: **8 cards** na grade (mesmo layout `grid-cols-2 sm:grid-cols-4` do picker atual).
+
+Cada card mostra: stripe das 3 cores + nome do esquema + sufixo do tema (ex.: "Análoga — Claro").
 
 ## Arquivos afetados
 
-### Novo: `src/hooks/use-unsaved-changes-guard.ts`
-Hook genérico que recebe `{ isDirty: boolean, currentPathname: string }` e:
-- Usa `useBlocker({ withResolver: true, shouldBlockFn: ({ next, current }) => isDirty && next.pathname !== current.pathname })` do TanStack Router — assim navegação que mantém o mesmo `pathname` (troca de aba interna via `search`) não é bloqueada.
-- Registra/remove listener `beforeunload` para cobrir fechar aba / recarregar / fechar navegador.
-- Retorna `{ status, proceed, reset }` para a UI controlar o dialog.
+### Novo: `src/lib/paleta-generator.ts`
+Funções puras:
+- `hexToHsl(hex) → {h, s, l}`
+- `hslToHex({h, s, l}) → string`
+- `gerarPaletas(corPrimaria: string): PaletaPreset[]` — retorna 8 paletas (4 esquemas × 2 temas), com `id` único do tipo `gen-analoga-claro`, `nome`, `descricao`, `tema`, `cor_primaria`, `cor_secundaria`, `cor_acento`. Reusa o tipo `PaletaPreset` existente.
 
-### Novo: `src/components/configuracoes/unsaved-changes-dialog.tsx`
-Componente `AlertDialog` controlado por `open`/`onCancel`/`onConfirm`. Texto e botões conforme acima. Componente pequeno, focado apenas em renderização.
+### Novo: `src/components/configuracoes/identidade/paleta-gerador.tsx`
+- Estado local: cor digitada (default = `corPrimaria` recebida via prop).
+- Campo: `<input type="color">` + `<Input>` hex (mesmo padrão de `CampoCor`).
+- Chama `gerarPaletas(cor)` e renderiza o `<PaletaPicker>` existente passando as paletas geradas + `selecionadaId` calculado por comparação de hex+tema (mesma lógica de `paletaAtivaId`).
+- `onSelect` propaga para o `onChange` do `IdentidadeForm`.
 
-### Edit: `src/routes/_authenticated/admin/configuracoes.tsx`
-- Calcular `isDirty = Object.values(abasSujas).some(Boolean)`.
-- Chamar `useUnsavedChangesGuard({ isDirty, currentPathname: "/admin/configuracoes" })`.
-- Quando `status === "blocked"`, renderizar `<UnsavedChangesDialog>`:
-  - **Voltar e salvar** → `reset()` (fecha dialog, permanece na página).
-  - **Sair sem salvar** → resetar `form` para `snapshot`, atualizar `prevSnapshotRef.current` para evitar re-mesclagem, e chamar `proceed()`.
+### Edit: `src/components/configuracoes/identidade/paleta-picker.tsx`
+Aceitar prop opcional `paletas?: PaletaPreset[]` (default: `PALETAS_PRESETS`). Sem mudança visual ou comportamental.
+
+### Edit: `src/components/configuracoes/identidade-form.tsx`
+- Adicionar estado local `modoPaleta: "prontas" | "gerar"` (default `"prontas"`).
+- Renderizar toggle (mesmo padrão visual do toggle Claro/Escuro em `CoresForm`, com `inline-flex rounded-lg border bg-muted/40 p-1`).
+- Conforme o modo, renderizar `<PaletaPicker>` (paletas prontas) ou `<PaletaGerador>`.
+- `onSelect` de ambos chama o mesmo `onChange` (já existe).
 
 ## Detalhes técnicos
 
-- `useBlocker` com `withResolver: true` não dispara o confirm nativo; a UI é 100% controlada pelo `AlertDialog`.
-- `beforeunload` é nativo do browser; mostra o alerta padrão ao fechar aba/recarregar (só funciona após interação real do usuário, regra do browser).
-- A comparação `next.pathname !== current.pathname` garante que mudanças apenas em `search` (que é como as abas internas funcionam via `navigate({ search: { tab } })`) não disparem o bloqueio.
-- "Sair sem salvar" não chama nenhuma mutation/backend — apenas reseta o estado local do form.
+- Tudo no frontend, sem backend nem nova dependência.
+- Conversões HSL ↔ hex implementadas manualmente em `paleta-generator.ts` (algoritmo padrão, sem libs).
+- Para o tema **escuro**, secundária/acento usam L mais alto (cores claras sobre fundo escuro); para o **claro**, L mais baixo. Saturação ajustada para evitar cores lavadas demais.
+- Validação: se hex digitado for inválido (`isValidHex` de `cor-utils.ts`), grade não renderiza (mostra mensagem curta "Digite uma cor válida em hex").
+- O `selecionadaId` no modo "gerar" só destaca um card se as 3 cores + tema atualmente no form baterem exatamente com uma paleta gerada — caso contrário, nenhum card fica destacado (idêntico ao comportamento atual).
 
 ## Fora de escopo
 
-- Outras páginas com formulários (somente `/admin/configuracoes`).
-- Auto-save.
-- Refatoração de `abasSujas`, `snapshot`, ou da lógica de `salvar(aba)` existente.
-- Mudanças no visual do pontinho ou nas abas.
-- Mudanças em backend, mutations ou validações.
+- Mudanças nas paletas prontas (`PALETAS_PRESETS`) ou no `CoresForm`.
+- Persistência da cor digitada (estado puramente local; reseta ao trocar de aba).
+- Geração de mais de 4 esquemas ou variantes além de claro/escuro.
+- Validação WCAG nas paletas geradas (avisos de contraste em `CoresForm` continuam cobrindo após aplicação).
+- Mudanças no preview, no backend ou na lógica de salvar.
 
 ## Riscos
 
-- `beforeunload` exibe texto genérico do browser (não dá pra customizar) — comportamento esperado e padrão da web.
-- Se o usuário tiver alterações em mais de uma aba e escolher "Sair sem salvar", todas serão descartadas — coerente com a ação escolhida.
+- Paletas geradas podem ocasionalmente ter contraste fraco — o aviso existente em `CoresForm` cobre esse caso após aplicação.
+- 8 cards em telas pequenas (mobile) usam 2 colunas → 4 linhas; aceitável e consistente com a grade atual.
