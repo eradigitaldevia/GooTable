@@ -221,7 +221,7 @@ export function AdminSidebar({
                 groupIdx > 0 && <div className="my-2 border-t border-sidebar-border/60" />
               ) : (
                 <div className={cn(
-                  "px-3 pb-1.5 text-[10px] font-bold uppercase tracking-wider text-muted-foreground",
+                  "px-3 pb-1.5 text-[11px] font-bold uppercase tracking-wider text-primary",
                   groupIdx === 0 ? "pt-1" : "pt-4",
                 )}>
                   {group.label}
