@@ -1,116 +1,59 @@
-## Análise
+# Plano de Trabalho: Reorganização Visual do Sidebar em Grupos
 
-No mobile (390 px) em `/admin/configuracoes`, dois conjuntos de abas têm o mesmo defeito:
+Este plano descreve as alterações necessárias para reorganizar os itens do menu lateral (sidebar) em grupos visuais com cabeçalhos (headers) simples e não colapsáveis, conforme especificado na proposta de agrupamento.
 
-### A) Abas principais (`Configuracoes`) — 6 abas
+---
 
-`src/routes/_authenticated/admin/configuracoes.tsx`, linha 533:
+## 1. Escopo das Alterações
 
-```tsx
-<TabsList className="flex w-full flex-wrap justify-start gap-1">
-```
+### Arquivos Afetados
+- `src/components/admin/admin-sidebar.tsx`: Arquivo principal que renderiza a barra lateral.
 
-Com `flex-wrap` e rótulos de larguras diferentes (ex.: "Taxas e couverts" vs "Caixa"), as 6 abas quebram em linhas irregulares (3+2+1), sem alinhamento.
+### O que NÃO será feito (para segurança e controle de escopo)
+- Nenhuma rota, permissão ou redirecionamento será alterado.
+- Nenhuma fusão de páginas será realizada nesta etapa.
+- Não haverá adição de botões colapsáveis ou interações de colapso nos grupos.
+- Nenhuma alteração de cores, tipografia global ou comportamento de autenticação/superadmin.
 
-### B) Abas de paleta (`PaletasTabs`) — 3 abas
+---
 
-`src/components/configuracoes/identidade/paletas-tabs.tsx`, linha ~62:
+## 2. Detalhes Técnicos da Implementação
 
-```tsx
-<TabsList className="flex w-full flex-wrap justify-start gap-1">
-  <TabsTrigger value="prontas">Paletas prontas</TabsTrigger>
-  <TabsTrigger value="gerar">Gerar da minha cor</TabsTrigger>
-  <TabsTrigger value="manual">Cores manuais</TabsTrigger>
-</TabsList>
-```
+### Modificação em `src/components/admin/admin-sidebar.tsx`
 
-Mesma situação: três rótulos longos e desiguais que quebram em 2+1.
+1. **Definição da estrutura de grupos**:
+   Substituiremos a lista plana `NAV` por uma estrutura de dados agrupada ou adaptaremos o mapeamento do renderizador para processar grupos definidos.
 
-### C) Sobreposição com a seção "Identidade"
+   A estrutura de grupos definida é:
+   - **OPERAÇÃO**
+     - Dashboard (`/admin`)
+     - Pedidos (`/admin/pedidos`)
+     - Chamados (`/admin/chamados`)
+     - Caixa (`/caixa`)
+   - **MESAS & CARDÁPIO**
+     - Mesas (`/admin/mesas`)
+     - Cardápio (`/admin/cardapio`)
+     - Prévia do cardápio (`/admin/cardapio-preview`)
+     - Destinos de preparo (`/admin/destinos-preparo`)
+   - **CLIENTES**
+     - Clientes (`/admin/clientes`)
+     - Fidelidade (`/admin/fidelidade`)
+     - Cupons (`/admin/cupons`)
+   - **SHOW & EVENTOS**
+     - Couvert artístico (`/admin/couvert-artistico`)
+   - **DISPLAYS**
+     - Display de cozinha (`/cozinha`)
+     - Display do bar (`/bar`)
+   - **EQUIPE & AJUSTES**
+     - Equipe (`/admin/equipe`)
+     - Garçons (`/admin/garcons`)
+     - Cumim (`/admin/cumim`)
+     - Configurações (`/admin/configuracoes`)
 
-O `<Tabs>` pai (linha 529 de `configuracoes.tsx`) não tem `gap`/`space-y`, então a `TabsList` cresce em altura ao quebrar e visualmente cola no topo do cartão `<IdentidadeForm />` (que tem `rounded-2xl border p-6`).
+2. **Renderização de Headers**:
+   - Quando o sidebar estiver **expandido** (`collapsed = false`), cada grupo exibirá um cabeçalho de texto simples (ex: `text-[10px] font-bold tracking-wider text-muted-foreground uppercase px-3 pt-4 pb-1.5`).
+   - Quando o sidebar estiver **minimizado** (`collapsed = true`), os cabeçalhos simples não serão renderizados ou serão substituídos por um divisor sutil (`border-t my-2`) para separar visualmente as seções de ícones, preservando a compactação do layout.
+   - O espaçamento interno (`space-y-1`) será mantido em cada grupo.
 
-## Proposta (somente UI, escopo mínimo)
-
-### 1) `configuracoes.tsx` — abas em grade 2×3 no mobile
-
-Linha 533 — trocar:
-
-```tsx
-<TabsList className="flex w-full flex-wrap justify-start gap-1">
-```
-
-por:
-
-```tsx
-<TabsList className="grid h-auto w-full grid-cols-2 gap-1 sm:flex sm:flex-wrap sm:justify-start">
-```
-
-Linha 544 — em `TabsTrigger`:
-
-```tsx
-<TabsTrigger key={id} value={id} className="w-full sm:w-auto">
-```
-
-Resultado: mobile = grade 2×3 alinhada; ≥640 px = comportamento atual.
-
-### 2) `configuracoes.tsx` — respiro entre TabsList e conteúdo
-
-Linha 529 — adicionar `className="space-y-4"` no `<Tabs>`:
-
-```tsx
-<Tabs
-  value={tab}
-  onValueChange={(v) => navigate({ search: { tab: v as TabId } })}
-  className="space-y-4"
->
-```
-
-Elimina a sensação de sobreposição entre a barra de abas e o cartão da Identidade (e demais).
-
-### 3) `paletas-tabs.tsx` — 3 abas em grade no mobile
-
-Linha ~62 — trocar:
-
-```tsx
-<TabsList className="flex w-full flex-wrap justify-start gap-1">
-```
-
-por:
-
-```tsx
-<TabsList className="grid h-auto w-full grid-cols-3 gap-1 sm:flex sm:flex-wrap sm:justify-start">
-```
-
-E em cada `TabsTrigger`:
-
-```tsx
-<TabsTrigger value="prontas" className="w-full sm:w-auto">Paletas prontas</TabsTrigger>
-<TabsTrigger value="gerar" className="w-full sm:w-auto">Gerar da minha cor</TabsTrigger>
-<TabsTrigger value="manual" className="w-full sm:w-auto">Cores manuais</TabsTrigger>
-```
-
-Resultado: mobile = 3 abas lado a lado, mesma largura e altura, sem quebra; ≥640 px = comportamento atual. O texto pode ficar mais apertado em 390 px, mas legível (cabe em uma linha em cada coluna ≈ 120 px).
-
-Observação técnica: o `TabsList` shadcn fixa `h-10`. A classe `h-auto` é necessária para grades que ocupam mais de uma linha (caso A); no caso C (1 linha) é inócuo mas mantém consistência.
-
-## Fora de escopo
-
-- Não renomear rótulos.
-- Não alterar cores, tipografia, espaçamentos internos dos cartões.
-- Não tocar no componente shadcn `Tabs` nem em outras páginas.
-- Não modificar o conteúdo das abas (`IdentidadeForm`, `PaletaPicker`, etc.).
-
-&nbsp;
-
-IMPORTANTE:
-
-Execute APENAS a alteração explicitamente solicitada.
-
-NÃO refatore, otimize, melhore ou modifique código não relacionado.
-
-NÃO faça suposições.
-
-Se algo não estiver claro, PARE e pergunte antes de alterar qualquer coisa.
-
-Preserve 100% do comportamento e da funcionalidade existentes.
+3. **Manutenção de Regras e Permissões Existentes**:
+   - A filtragem de itens baseada em `podeVerEquipe`, `podeAcessarCaixa` e `restaurante.couvert_artistico_habilitado` continuará funcionando da mesma forma. Se um grupo ficar vazio devido às permissões do usuário logado, o cabeçalho desse grupo não será exibido.
