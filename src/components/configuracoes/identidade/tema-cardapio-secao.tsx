@@ -1,28 +1,25 @@
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { AlertTriangle, Sun, Moon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { foregroundOn, passesAA } from "@/lib/cor-utils";
+import { MiniPrevia } from "./mini-previa";
 
 type Tema = "claro" | "escuro";
 
-export function CoresForm({
+export function TemaCardapioSecao({
   primaria,
   secundaria,
   acento,
   tema,
+  nome,
   onChange,
 }: {
   primaria: string;
   secundaria: string;
   acento: string;
   tema: Tema;
-  onChange: (patch: {
-    cor_primaria?: string;
-    cor_secundaria?: string;
-    cor_acento?: string;
-    tema_cardapio?: Tema;
-  }) => void;
+  nome: string;
+  onChange: (patch: { tema_cardapio?: Tema }) => void;
 }) {
   const bgRef = tema === "escuro" ? "#18181b" : "#fafafa";
   const avisos: string[] = [];
@@ -65,24 +62,20 @@ export function CoresForm({
         </div>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-3">
-        <CampoCor
-          label="Primária"
-          ajuda="Botões, destaques, preço"
-          value={primaria}
-          onChange={(v) => onChange({ cor_primaria: v })}
-        />
-        <CampoCor
-          label="Secundária"
-          ajuda="Cabeçalhos e tons de apoio"
-          value={secundaria}
-          onChange={(v) => onChange({ cor_secundaria: v })}
-        />
-        <CampoCor
-          label="Acento"
-          ajuda="Badges e detalhes"
-          value={acento}
-          onChange={(v) => onChange({ cor_acento: v })}
+      <div className="grid gap-3 sm:grid-cols-3">
+        <Swatch label="Primária" cor={primaria} />
+        <Swatch label="Secundária" cor={secundaria} />
+        <Swatch label="Acento" cor={acento} />
+      </div>
+
+      <div>
+        <Label className="mb-2 block">Prévia</Label>
+        <MiniPrevia
+          primaria={primaria}
+          secundaria={secundaria}
+          acento={acento}
+          tema={tema}
+          nome={nome}
         />
       </div>
 
@@ -100,35 +93,20 @@ export function CoresForm({
   );
 }
 
-function CampoCor({
-  label,
-  ajuda,
-  value,
-  onChange,
-}: {
-  label: string;
-  ajuda: string;
-  value: string;
-  onChange: (v: string) => void;
-}) {
+function Swatch({ label, cor }: { label: string; cor: string }) {
   return (
-    <div className="space-y-1.5">
-      <Label>{label}</Label>
-      <div className="flex items-center gap-2">
-        <input
-          type="color"
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          className="h-10 w-12 cursor-pointer rounded-md border border-border bg-transparent"
-          aria-label={`Cor ${label}`}
-        />
-        <Input
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          className="h-10 flex-1 font-mono text-xs uppercase"
-        />
+    <div className="flex items-center gap-3 rounded-lg border border-border p-2.5">
+      <span
+        className="h-10 w-10 shrink-0 rounded-md border border-border"
+        style={{ backgroundColor: cor }}
+        aria-hidden="true"
+      />
+      <div className="min-w-0">
+        <div className="text-xs font-medium">{label}</div>
+        <div className="font-mono text-[11px] uppercase text-muted-foreground">
+          {cor}
+        </div>
       </div>
-      <p className="text-[11px] text-muted-foreground">{ajuda}</p>
     </div>
   );
 }

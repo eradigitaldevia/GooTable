@@ -1,77 +1,90 @@
 ## Objetivo
 
-Adicionar um gerador de paletas a partir de uma cor primária digitada pelo usuário, sem alterar as paletas prontas existentes nem o formulário manual de cores.
+Reorganizar a seleção de cores em **3 abas** (Paletas prontas / Gerar da minha cor / Cores manuais) acima da seção "Tema do cardápio". A seção "Tema do cardápio" mantém o **toggle Claro/Escuro** (controle único do tema) e ganha **swatches do estado atual + mini-prévia + avisos de contraste**. Os 3 campos manuais de cor (Primária/Secundária/Acento) saem dali e vão para a nova aba "Cores manuais".
 
 ## UX
 
-Na seção "Paletas prontas" da aba **Identidade**, substituir o título por um **toggle de 2 opções** acima da grade:
-
 ```
-[ Paletas prontas ]  [ Gerar da minha cor ]
+┌─ Identidade ───────────────────────────────────────┐
+│  Logo  |  Nome do restaurante                       │
+│                                                     │
+│  Cores                                              │
+│  [ Paletas prontas ] [ Gerar da minha cor ] [ Cores manuais ]
+│  ┌─ conteúdo da aba ativa ─────────────────────┐    │
+│  │ Paletas prontas → grade de presets          │    │
+│  │ Gerar           → input cor + grade gerada  │    │
+│  │ Cores manuais   → 3 campos editáveis        │    │
+│  └─────────────────────────────────────────────┘    │
+│                                                     │
+│  ── Tema do cardápio ──                            │
+│  Tema: ( ☀ Claro )( 🌙 Escuro )    ← único editor  │
+│                                                     │
+│  Swatches:  [Primária] [Secundária] [Acento]       │
+│             #c2410c    #1f2937      #f59e0b        │
+│                                                     │
+│  ┌─ Mini-prévia ─────────────┐                     │
+│  │ Header (cor primária)     │                     │
+│  │ Item de exemplo • R$ 24   │                     │
+│  │ [ Adicionar ] badge       │                     │
+│  └───────────────────────────┘                     │
+│                                                     │
+│  ⚠ Avisos de contraste (se houver)                 │
+└─────────────────────────────────────────────────────┘
 ```
 
-- **Paletas prontas** (default): mostra a grade atual com os 8 presets (`PALETAS_PRESETS`). Comportamento idêntico ao de hoje.
-- **Gerar da minha cor**: mostra um campo de cor (color picker + input hex) + grade com **8 paletas geradas** (4 esquemas harmônicos × 2 temas: claro e escuro).
-
-A seção "Tema do cardápio" (toggle Claro/Escuro) e os 3 campos manuais (Primária / Secundária / Acento) continuam intactos.
-
-## Esquemas gerados
-
-A partir da cor digitada (convertida HSL), gera 4 esquemas com `{cor_primaria, cor_secundaria, cor_acento}`:
-
-| Esquema | Secundária (matiz) | Acento (matiz) |
-|---|---|---|
-| **Análoga** | hue +30° | hue −30° |
-| **Complementar** | hue +180° | hue +30° |
-| **Triádica** | hue +120° | hue +240° |
-| **Monocromática** | mesmo hue, S/L ajustados | mesmo hue, S/L ajustados |
-
-Para cada esquema gera **2 variantes** (`tema: "claro"` e `tema: "escuro"`), ajustando saturação/luminosidade das cores secundária e acento conforme o tema, para garantir legibilidade.
-
-Total: **8 cards** na grade (mesmo layout `grid-cols-2 sm:grid-cols-4` do picker atual).
-
-Cada card mostra: stripe das 3 cores + nome do esquema + sufixo do tema (ex.: "Análoga — Claro").
+### Comportamento
+- **Tema** é editado apenas no toggle da seção "Tema do cardápio".
+- Clicar num **preset** ou numa **paleta gerada** aplica o tema do card (sobrescreve o toggle) — mesmo comportamento de hoje.
+- Aba **Cores manuais**: edita só as 3 cores. Não tem toggle de tema (o tema vigente continua sendo o do toggle abaixo).
+- A seção abaixo do tema mostra **sempre** o estado atual (swatches + mini-prévia), independente da aba ativa.
 
 ## Arquivos afetados
 
-### Novo: `src/lib/paleta-generator.ts`
-Funções puras:
-- `hexToHsl(hex) → {h, s, l}`
-- `hslToHex({h, s, l}) → string`
-- `gerarPaletas(corPrimaria: string): PaletaPreset[]` — retorna 8 paletas (4 esquemas × 2 temas), com `id` único do tipo `gen-analoga-claro`, `nome`, `descricao`, `tema`, `cor_primaria`, `cor_secundaria`, `cor_acento`. Reusa o tipo `PaletaPreset` existente.
-
-### Novo: `src/components/configuracoes/identidade/paleta-gerador.tsx`
-- Estado local: cor digitada (default = `corPrimaria` recebida via prop).
-- Campo: `<input type="color">` + `<Input>` hex (mesmo padrão de `CampoCor`).
-- Chama `gerarPaletas(cor)` e renderiza o `<PaletaPicker>` existente passando as paletas geradas + `selecionadaId` calculado por comparação de hex+tema (mesma lógica de `paletaAtivaId`).
-- `onSelect` propaga para o `onChange` do `IdentidadeForm`.
-
-### Edit: `src/components/configuracoes/identidade/paleta-picker.tsx`
-Aceitar prop opcional `paletas?: PaletaPreset[]` (default: `PALETAS_PRESETS`). Sem mudança visual ou comportamental.
-
 ### Edit: `src/components/configuracoes/identidade-form.tsx`
-- Adicionar estado local `modoPaleta: "prontas" | "gerar"` (default `"prontas"`).
-- Renderizar toggle (mesmo padrão visual do toggle Claro/Escuro em `CoresForm`, com `inline-flex rounded-lg border bg-muted/40 p-1`).
-- Conforme o modo, renderizar `<PaletaPicker>` (paletas prontas) ou `<PaletaGerador>`.
-- `onSelect` de ambos chama o mesmo `onChange` (já existe).
+- Substituir o bloco atual (paletas prontas + gerador via `modoPaleta`) por `<PaletasTabs>`.
+- Substituir o atual `<CoresForm>` por `<TemaCardapioSecao>`.
+- Remover estado local `modoPaleta` (vira estado interno do `PaletasTabs`).
+- Arquivo fica curto (~80 linhas): logo + nome + `<PaletasTabs>` + `<TemaCardapioSecao>` + botão prévia + `<PreviewDrawer>`.
+
+### Novo: `src/components/configuracoes/identidade/paletas-tabs.tsx`
+- `Tabs` (shadcn) com 3 abas: `prontas` / `gerar` / `manual`.
+- Conteúdo:
+  - `prontas`: `<PaletaPicker>` existente (presets).
+  - `gerar`: `<PaletaGerador>` existente.
+  - `manual`: novo `<CoresManuaisForm>`.
+- Recebe `corPrimaria`, `corSecundaria`, `corAcento`, `tema`, `onChange` por prop.
+
+### Novo: `src/components/configuracoes/identidade/cores-manuais-form.tsx`
+- 3 `CampoCor` (Primária / Secundária / Acento), extraídos do atual `cores-form.tsx`.
+- Sem toggle de tema, sem avisos.
+
+### Novo: `src/components/configuracoes/identidade/tema-cardapio-secao.tsx`
+- Toggle Claro/Escuro (mesmo visual do atual em `cores-form.tsx`).
+- Swatches grandes: 3 quadrados com label (Primária/Secundária/Acento) + hex.
+- Renderiza `<MiniPrevia>` internamente.
+- Avisos WCAG abaixo (reusa `foregroundOn` / `passesAA` de `cor-utils.ts`).
+
+### Novo: `src/components/configuracoes/identidade/mini-previa.tsx`
+- Card pequeno (~80 linhas), puramente apresentacional.
+- Simula header + 1 item de produto + botão + badge, usando as cores via `style={{ backgroundColor }}` (cores são dados do form, não tokens — exceção justificada).
+- Fundo conforme tema: `#fafafa` claro / `#18181b` escuro.
+
+### Delete (após verificar referências): `src/components/configuracoes/identidade/cores-form.tsx`
+- Se ninguém mais importar, deletar. Verificar com `rg "cores-form"` antes.
 
 ## Detalhes técnicos
 
-- Tudo no frontend, sem backend nem nova dependência.
-- Conversões HSL ↔ hex implementadas manualmente em `paleta-generator.ts` (algoritmo padrão, sem libs).
-- Para o tema **escuro**, secundária/acento usam L mais alto (cores claras sobre fundo escuro); para o **claro**, L mais baixo. Saturação ajustada para evitar cores lavadas demais.
-- Validação: se hex digitado for inválido (`isValidHex` de `cor-utils.ts`), grade não renderiza (mostra mensagem curta "Digite uma cor válida em hex").
-- O `selecionadaId` no modo "gerar" só destaca um card se as 3 cores + tema atualmente no form baterem exatamente com uma paleta gerada — caso contrário, nenhum card fica destacado (idêntico ao comportamento atual).
+- `Tabs` do shadcn já é usado em `configuracoes.tsx` — padrão consistente.
+- Nenhuma mudança no backend, no payload `salvar`, no `abasSujas`, no `snapshot` ou no guard de alterações não salvas.
+- `<MiniPrevia>` recebe as cores como props e renderiza em tempo real conforme o usuário edita (já que `form` é estado controlado).
 
 ## Fora de escopo
 
-- Mudanças nas paletas prontas (`PALETAS_PRESETS`) ou no `CoresForm`.
-- Persistência da cor digitada (estado puramente local; reseta ao trocar de aba).
-- Geração de mais de 4 esquemas ou variantes além de claro/escuro.
-- Validação WCAG nas paletas geradas (avisos de contraste em `CoresForm` continuam cobrindo após aplicação).
-- Mudanças no preview, no backend ou na lógica de salvar.
+- Mudanças nas paletas prontas, no gerador, ou nas conversões HSL.
+- Mudanças no `PreviewDrawer` ("Ver prévia ao vivo" continua igual).
+- Mudanças no backend, schema, validações, ou fluxo de upload de logo.
 
-## Riscos
+## Riscos (mitigados)
 
-- Paletas geradas podem ocasionalmente ter contraste fraco — o aviso existente em `CoresForm` cobre esse caso após aplicação.
-- 8 cards em telas pequenas (mobile) usam 2 colunas → 4 linhas; aceitável e consistente com a grade atual.
+- **Tamanho de arquivo**: extração de 4 componentes (`PaletasTabs`, `CoresManuaisForm`, `TemaCardapioSecao`, `MiniPrevia`) mantém cada arquivo bem abaixo de 150 linhas.
+- **Confusão sobre onde editar tema**: eliminada — toggle único na seção dedicada, abas só editam cores.
