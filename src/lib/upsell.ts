@@ -23,11 +23,8 @@ export function classificarCategoria(nome: string | undefined | null): TipoCateg
 }
 
 /**
- * Lógica em 3 camadas:
- * A) Destaques manuais (destaque_upsell = true)
- * B) Contextual: bebida se faltar; sobremesa se houver prato e faltar sobremesa
- * C) Fallback: qualquer outro disponível
- * Dedup e limita a `max` (default 3).
+ * Upsell estritamente manual: apenas produtos com destaque_upsell = true.
+ * Sem complementação automática. Dedup e limita a `max` (default 3).
  */
 export function sugerirUpsell(
   produtos: ProdutoPublico[],
@@ -39,7 +36,11 @@ export function sugerirUpsell(
 ): SugestaoUpsell[] {
   const idsNoCarrinho = new Set(carrinho.map((i) => i.produto_id));
   const candidatos = produtos.filter(
-    (p) => p.disponivel && !idsNoCarrinho.has(p.id) && !idsExcluidos?.has(p.id),
+    (p) =>
+      p.disponivel &&
+      p.destaque_upsell &&
+      !idsNoCarrinho.has(p.id) &&
+      !idsExcluidos?.has(p.id),
   );
 
   const catById = new Map(categorias.map((c) => [c.id, c]));
@@ -60,47 +61,13 @@ export function sugerirUpsell(
 
   const vista = (id: string) => (impressoes?.[id] ?? 0) >= 2 ? 1 : 0;
 
-  // Camada A — destaques
-  const destaques = candidatos
-    .filter((p) => p.destaque_upsell)
-    .sort((a, b) => {
-      const aV = vista(a.id);
-      const bV = vista(b.id);
-      if (aV !== bV) return aV - bV;
-      const aNovo = tiposJaConsumidos.has(tipoDe(a)) ? 1 : 0;
-      const bNovo = tiposJaConsumidos.has(tipoDe(b)) ? 1 : 0;
-      if (aNovo !== bNovo) return aNovo - bNovo;
-      return Number(a.preco) - Number(b.preco);
-    });
-
-  // Camada B — contextual
-  const contextuais: SugestaoUpsell[] = [];
-  const pickMenosVisto = (tipo: TipoCategoria) => {
-    const opts = candidatos.filter((p) => !p.destaque_upsell && tipoDe(p) === tipo);
-    opts.sort((a, b) => {
-      const d = vista(a.id) - vista(b.id);
-      if (d !== 0) return d;
-      return Number(a.preco) - Number(b.preco);
-    });
-    return opts[0];
-  };
-  if (!tiposJaConsumidos.has("bebida")) {
-    const b = pickMenosVisto("bebida");
-    if (b) contextuais.push({ produto: b, motivo: "bebida" });
-  }
-  if (tiposJaConsumidos.has("prato") && !tiposJaConsumidos.has("sobremesa")) {
-    const s = pickMenosVisto("sobremesa");
-    if (s) contextuais.push({ produto: s, motivo: "sobremesa" });
-  }
-
-  // Camada C — fallback
-  const idsContextuais = new Set(contextuais.map((c) => c.produto.id));
-  const fallback = candidatos.filter(
-    (p) => !p.destaque_upsell && !idsContextuais.has(p.id),
-  );
-  fallback.sort((a, b) => {
-    const d = vista(a.id) - vista(b.id);
-    if (d !== 0) return d;
+  const destaques = candidatos.sort((a, b) => {
+    const aV = vista(a.id);
+    const bV = vista(b.id);
+    if (aV !== bV) return aV - bV;
+    const aNovo = tiposJaConsumidos.has(tipoDe(a)) ? 1 : 0;
+    const bNovo = tiposJaConsumidos.has(tipoDe(b)) ? 1 : 0;
+    if (aNovo !== bNovo) return aNovo - bNovo;
     return Number(a.preco) - Number(b.preco);
   });
 
@@ -108,8 +75,6 @@ export function sugerirUpsell(
   const out: SugestaoUpsell[] = [];
   const sequence: SugestaoUpsell[] = [
     ...destaques.map((p) => ({ produto: p, motivo: "destaque" as const })),
-    ...contextuais,
-    ...fallback.map((p) => ({ produto: p, motivo: "popular" as const })),
   ];
   for (const s of sequence) {
     if (seen.has(s.produto.id)) continue;
