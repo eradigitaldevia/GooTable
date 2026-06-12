@@ -36,25 +36,55 @@ import type { Restaurante } from "@/lib/restaurante.functions";
 import { listarChamadosFn } from "@/lib/chamados.functions";
 import type { PapelMembro } from "@/lib/equipe.functions";
 
-const NAV = [
-  { to: "/admin", label: "Dashboard", icon: LayoutDashboard, exact: true },
-  { to: "/admin/pedidos", label: "Pedidos", icon: ClipboardList, exact: false },
-  { to: "/caixa", label: "Caixa", icon: Wallet, exact: false, target: "_blank" as const },
-  { to: "/admin/cardapio", label: "Cardápio", icon: UtensilsCrossed, exact: true },
-  { to: "/admin/cardapio-preview", label: "Prévia do cardápio", icon: Eye, exact: false },
-  { to: "/admin/destinos-preparo", label: "Destinos de preparo", icon: ChefHat, exact: false },
-  { to: "/admin/mesas", label: "Mesas", icon: QrCode, exact: false },
-  { to: "/admin/chamados", label: "Chamados", icon: Bell, exact: false },
-  { to: "/cozinha", label: "Display de cozinha", icon: ChefHat, exact: false, target: "_blank" as const },
-  { to: "/bar", label: "Display do bar", icon: ChefHat, exact: false, target: "_blank" as const },
-  { to: "/admin/clientes", label: "Clientes", icon: Users, exact: false },
-  { to: "/admin/fidelidade", label: "Fidelidade", icon: Gift, exact: false },
-  { to: "/admin/cupons", label: "Cupons", icon: Ticket, exact: false },
-  { to: "/admin/configuracoes", label: "Configurações", icon: Settings, exact: false },
-  { to: "/admin/equipe", label: "Equipe", icon: UserCog, exact: false },
-  { to: "/admin/garcons", label: "Garçons", icon: UsersRound, exact: false },
-  { to: "/admin/cumim", label: "Cumim", icon: Footprints, exact: false },
-  { to: "/admin/couvert-artistico", label: "Couvert artístico", icon: Music, exact: false },
+const NAV_GROUPS = [
+  {
+    label: "Operação",
+    items: [
+      { to: "/admin", label: "Dashboard", icon: LayoutDashboard, exact: true },
+      { to: "/admin/pedidos", label: "Pedidos", icon: ClipboardList, exact: false },
+      { to: "/admin/chamados", label: "Chamados", icon: Bell, exact: false },
+      { to: "/caixa", label: "Caixa", icon: Wallet, exact: false, target: "_blank" as const },
+    ],
+  },
+  {
+    label: "Mesas & Cardápio",
+    items: [
+      { to: "/admin/mesas", label: "Mesas", icon: QrCode, exact: false },
+      { to: "/admin/cardapio", label: "Cardápio", icon: UtensilsCrossed, exact: true },
+      { to: "/admin/cardapio-preview", label: "Prévia do cardápio", icon: Eye, exact: false },
+      { to: "/admin/destinos-preparo", label: "Destinos de preparo", icon: ChefHat, exact: false },
+    ],
+  },
+  {
+    label: "Clientes",
+    items: [
+      { to: "/admin/clientes", label: "Clientes", icon: Users, exact: false },
+      { to: "/admin/fidelidade", label: "Fidelidade", icon: Gift, exact: false },
+      { to: "/admin/cupons", label: "Cupons", icon: Ticket, exact: false },
+    ],
+  },
+  {
+    label: "Show & Eventos",
+    items: [
+      { to: "/admin/couvert-artistico", label: "Couvert artístico", icon: Music, exact: false },
+    ],
+  },
+  {
+    label: "Displays",
+    items: [
+      { to: "/cozinha", label: "Display de cozinha", icon: ChefHat, exact: false, target: "_blank" as const },
+      { to: "/bar", label: "Display do bar", icon: ChefHat, exact: false, target: "_blank" as const },
+    ],
+  },
+  {
+    label: "Equipe & Ajustes",
+    items: [
+      { to: "/admin/equipe", label: "Equipe", icon: UserCog, exact: false },
+      { to: "/admin/garcons", label: "Garçons", icon: UsersRound, exact: false },
+      { to: "/admin/cumim", label: "Cumim", icon: Footprints, exact: false },
+      { to: "/admin/configuracoes", label: "Configurações", icon: Settings, exact: false },
+    ],
+  },
 ] as const;
 
 function useChamadosPendentesCount(restauranteId: string) {
@@ -108,14 +138,16 @@ export function AdminSidebar({
   const podeVerEquipe = isPlatformAdmin || papel === "admin";
   const podeAcessarCaixa =
     isPlatformAdmin || papel === "admin" || papel === "caixa";
-  const navItems = NAV.filter(
-    (item) => {
-      if (item.to === "/admin/equipe" && !podeVerEquipe) return false;
-      if (item.to === "/caixa" && !podeAcessarCaixa) return false;
-      if (item.to === "/admin/couvert-artistico" && !restaurante.couvert_artistico_habilitado) return false;
-      return true;
-    },
-  );
+  const filterItem = (to: string) => {
+    if (to === "/admin/equipe" && !podeVerEquipe) return false;
+    if (to === "/caixa" && !podeAcessarCaixa) return false;
+    if (to === "/admin/couvert-artistico" && !restaurante.couvert_artistico_habilitado) return false;
+    return true;
+  };
+  const navGroups = NAV_GROUPS.map((group) => ({
+    ...group,
+    items: group.items.filter((item) => filterItem(item.to)),
+  })).filter((group) => group.items.length > 0);
   return (
     <TooltipProvider delayDuration={0}>
       <div
@@ -136,7 +168,8 @@ export function AdminSidebar({
       </div>
 
       <nav className={cn("flex-1 space-y-1", collapsed ? "p-2" : "p-3")}>
-        {navItems.map((item) => {
+        {navGroups.map((group, groupIdx) => {
+          const renderedItems = group.items.map((item) => {
           const active = item.exact ? path === item.to : path.startsWith(item.to);
           const showBadge = item.to === "/admin/chamados" && pendentes > 0;
           const link = (
@@ -181,6 +214,22 @@ export function AdminSidebar({
             );
           }
           return link;
+          });
+          return (
+            <div key={group.label} className="space-y-1">
+              {collapsed ? (
+                groupIdx > 0 && <div className="my-2 border-t border-sidebar-border/60" />
+              ) : (
+                <div className={cn(
+                  "px-3 pb-1.5 text-[10px] font-bold uppercase tracking-wider text-muted-foreground",
+                  groupIdx === 0 ? "pt-1" : "pt-4",
+                )}>
+                  {group.label}
+                </div>
+              )}
+              {renderedItems}
+            </div>
+          );
         })}
       </nav>
 
