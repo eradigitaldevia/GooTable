@@ -729,6 +729,14 @@ function Configuracoes() {
                   exibir recomendações automáticas. Alterações são salvas
                   automaticamente.
                 </p>
+                <p className="mt-2 text-xs text-muted-foreground">
+                  Os itens sugeridos são os produtos marcados com{" "}
+                  <strong className="font-medium text-foreground">
+                    "Sugerir no carrinho (upsell)"
+                  </strong>{" "}
+                  no cadastro do produto (aba <strong className="font-medium text-foreground">Cardápio</strong> → editar produto).
+                  Sem itens marcados, o sistema completa automaticamente com bebidas, sobremesas e itens populares.
+                </p>
               </div>
               <Switch
                 checked={form.upsell_habilitado}
