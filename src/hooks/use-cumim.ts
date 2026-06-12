@@ -1,4 +1,4 @@
-import { useEffect, useId } from "react";
+import { useEffect, useId, useRef } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { QueryKey } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -70,6 +70,10 @@ export function useRealtimeCumim(
 ) {
   const qc = useQueryClient();
   const instanceId = useId();
+  const keyRef = useRef<QueryKey>(queryKey);
+  useEffect(() => {
+    keyRef.current = queryKey;
+  }, [queryKey]);
 
   useEffect(() => {
     if (!restauranteId) return;
@@ -89,12 +93,12 @@ export function useRealtimeCumim(
           if (novo?.status === "pronto" && antigo?.status !== "pronto") {
             playBeep(880);
           }
-          qc.invalidateQueries({ queryKey });
+          qc.invalidateQueries({ queryKey: keyRef.current });
         },
       )
       .subscribe();
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [restauranteId, qc, instanceId, queryKey]);
+  }, [restauranteId, qc, instanceId]);
 }
