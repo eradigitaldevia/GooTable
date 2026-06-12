@@ -724,18 +724,19 @@ function Configuracoes() {
                   Sugerir acompanhamentos no carrinho
                 </h2>
                 <p className="mt-1 text-sm text-muted-foreground">
-                  Mostra ao cliente, no carrinho, até 3 sugestões de bebidas e
-                  sobremesas para complementar o pedido. Desligue se preferir não
-                  exibir recomendações automáticas. Alterações são salvas
-                  automaticamente.
+                  Mostra ao cliente, no carrinho, até 3 sugestões de itens para
+                  complementar o pedido. Desligue se preferir não exibir as
+                  recomendações. Alterações são salvas automaticamente.
                 </p>
                 <p className="mt-2 text-xs text-muted-foreground">
                   Os itens sugeridos são os produtos marcados com{" "}
                   <strong className="font-medium text-foreground">
                     "Sugerir no carrinho (upsell)"
                   </strong>{" "}
-                  no cadastro do produto (aba <strong className="font-medium text-foreground">Cardápio</strong> → editar produto).
-                  Sem itens marcados, o sistema completa automaticamente com bebidas, sobremesas e itens populares.
+                  no cadastro do produto (aba{" "}
+                  <strong className="font-medium text-foreground">Cardápio</strong>{" "}
+                  → editar produto). Sem itens marcados, o bloco de sugestões
+                  não será exibido no carrinho.
                 </p>
               </div>
               <Switch
