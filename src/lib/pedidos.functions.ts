@@ -127,9 +127,27 @@ export const atualizarStatusPedidoFn = createServerFn({ method: "POST" })
   .handler(async ({ context, data }) => {
     const { supabase, userId } = context;
     await assertAcessoRestaurante(supabase, userId, data.restauranteId);
+    const update: Record<string, unknown> = {
+      status: data.status,
+      atualizado_em: new Date().toISOString(),
+    };
+    if (data.status === "entregue") {
+      update.entregue_em = new Date().toISOString();
+      // Se o usuário logado é um garçom do restaurante, registra o
+      // garçom que cobriu a entrega. Cumins usam um endpoint próprio
+      // (confirmarEntregaCumimFn) que grava entregue_por_cumim_id.
+      const { data: garcom } = await supabase
+        .from("garcons")
+        .select("id")
+        .eq("user_id", userId)
+        .eq("restaurante_id", data.restauranteId)
+        .eq("ativo", true)
+        .maybeSingle();
+      if (garcom?.id) update.entregue_por_garcom_id = garcom.id as string;
+    }
     const { error } = await supabase
       .from("pedidos")
-      .update({ status: data.status, atualizado_em: new Date().toISOString() })
+      .update(update)
       .eq("id", data.id)
       .eq("restaurante_id", data.restauranteId);
     if (error) throw new Error(error.message);
