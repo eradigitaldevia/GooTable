@@ -20,12 +20,9 @@ As camadas B e C explicam a "complementação automática" que você quer remove
 3. Manter assinatura da função e o tipo `SugestaoUpsell` — todos os retornos passam a ter `motivo: "destaque"`.
 4. O tipo `MotivoUpsell` pode permanecer como está (união com `"bebida" | "sobremesa" | "popular"`) para não mexer em `upsell-carrinho.tsx`; esses valores simplesmente deixam de ocorrer em runtime. Sem mudança no componente, sem mudança no schema, sem mudança no backend.
 
-## Fora de escopo
+## Outras alterações realizadas
 
-- Componente `upsell-carrinho.tsx`, labels, layout, cores.
-- `produto-form-fields.tsx` e o toggle "Sugerir no carrinho (upsell)" no cadastro.
-- Tabela `produtos`, RLS, server functions, tipos do Supabase.
-- Texto de ajuda na tela de Configurações (a frase atual continua válida na primeira parte; se quiser, posso ajustá-la num passo separado para refletir "sem complementação automática").
+- Texto de ajuda na aba Cardápio da tela de Configurações atualizado em `src/routes/_authenticated/admin/configuracoes.tsx` para refletir que o sistema não faz complementação automática e que o bloco não aparece se nenhum produto estiver marcado.
 
 ## Efeito visível
 
