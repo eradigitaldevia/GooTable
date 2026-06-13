@@ -17,7 +17,7 @@ function AdminMesaDetalhePage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="sticky top-0 z-20 border-b border-amber-500/40 bg-amber-500/10 px-4 py-2">
+      <div className="border-b border-amber-500/40 bg-amber-500/10 px-4 py-2">
         <div className="mx-auto flex max-w-3xl items-center justify-between gap-3">
           <div className="flex items-center gap-2 text-sm text-amber-700 dark:text-amber-400">
             <Eye className="h-4 w-4" />
