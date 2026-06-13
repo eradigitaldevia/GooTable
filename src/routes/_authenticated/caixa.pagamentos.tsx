@@ -1,5 +1,7 @@
 import { useMemo, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { useQuery } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -17,7 +19,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { Loader2, Receipt, Search, Tv, X, LayoutGrid } from "lucide-react";
+import { Loader2, Receipt, Search, Tv, X, LayoutGrid, Printer } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { useMeuRestaurante } from "@/hooks/use-restaurante";
 import { useComandasPagamentoPendente } from "@/hooks/use-pagamentos";
@@ -26,6 +28,10 @@ import { useVerificarPlatformAdmin } from "@/hooks/use-superadmin";
 import { ConfirmarPagamentoDialog } from "@/components/admin/confirmar-pagamento-dialog";
 import { formatBRL } from "@/lib/cart";
 import { useTick } from "@/hooks/use-tick";
+import { ComprovanteConta } from "@/components/impressao/comprovante-conta";
+import { useImprimir } from "@/hooks/use-imprimir";
+import { resumoComandaImpressaoFn } from "@/lib/pedidos.functions";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/caixa/pagamentos")({
   component: CaixaPagamentosPage,
