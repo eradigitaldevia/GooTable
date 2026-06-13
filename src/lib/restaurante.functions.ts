@@ -41,6 +41,16 @@ export interface Restaurante {
   couvert_artistico_repasse_habilitado: boolean;
   couvert_artistico_repasse_percentual: number | null;
   usa_cumim: boolean;
+  delivery_ativo?: boolean;
+  delivery_retirada_ativa?: boolean;
+  delivery_slug?: string | null;
+  delivery_taxa_entrega?: number;
+  delivery_pedido_minimo?: number;
+  delivery_tempo_estimado_min?: number;
+  delivery_raio_km?: number | null;
+  delivery_aceita_dinheiro?: boolean;
+  delivery_aceita_cartao_entrega?: boolean;
+  delivery_aceita_pix?: boolean;
 }
 
 /** Restaurante do usuário autenticado (primeiro vínculo). */
