@@ -286,38 +286,57 @@ export const carregarSalaAdminFn = createServerFn({ method: "POST" })
     const permitirCruzadoAdmin =
       (restAdmin?.permitir_atendimento_cruzado as boolean | undefined) ?? true;
 
-    const { data: atribs, error: aErr } = await supabase
-      .from("mesa_garcom")
-      .select("mesa_id, atribuido_em")
-      .eq("restaurante_id", restauranteId)
-      .eq("garcom_id", garcom.id as string)
-      .is("liberado_em", null);
-    if (aErr) throw new Error(aErr.message);
-
-    const mesaIdsAtrib = Array.from(
-      new Set((atribs ?? []).map((a) => a.mesa_id as string)),
-    );
-    const atribuidoEmByMesa = new Map<string, string>();
-    for (const a of atribs ?? []) {
-      atribuidoEmByMesa.set(a.mesa_id as string, a.atribuido_em as string);
-    }
-
     let mesas: SalaMesa[] = [];
-    if (mesaIdsAtrib.length) {
+    if (permitirCruzadoAdmin) {
       const { data: ms, error: mErr } = await supabase
         .from("mesas")
         .select("id, numero")
-        .in("id", mesaIdsAtrib);
+        .eq("restaurante_id", restauranteId)
+        .eq("ativa", true)
+        .eq("is_virtual", false);
       if (mErr) throw new Error(mErr.message);
       mesas = (ms ?? [])
         .map((m) => ({
           id: m.id as string,
           numero: m.numero as string,
-          atribuido_em: atribuidoEmByMesa.get(m.id as string) ?? "",
+          atribuido_em: "",
         }))
         .sort((x, y) =>
           x.numero.localeCompare(y.numero, "pt-BR", { numeric: true }),
         );
+    } else {
+      const { data: atribs, error: aErr } = await supabase
+        .from("mesa_garcom")
+        .select("mesa_id, atribuido_em")
+        .eq("restaurante_id", restauranteId)
+        .eq("garcom_id", garcom.id as string)
+        .is("liberado_em", null);
+      if (aErr) throw new Error(aErr.message);
+
+      const mesaIdsAtrib = Array.from(
+        new Set((atribs ?? []).map((a) => a.mesa_id as string)),
+      );
+      const atribuidoEmByMesa = new Map<string, string>();
+      for (const a of atribs ?? []) {
+        atribuidoEmByMesa.set(a.mesa_id as string, a.atribuido_em as string);
+      }
+
+      if (mesaIdsAtrib.length) {
+        const { data: ms, error: mErr } = await supabase
+          .from("mesas")
+          .select("id, numero")
+          .in("id", mesaIdsAtrib);
+        if (mErr) throw new Error(mErr.message);
+        mesas = (ms ?? [])
+          .map((m) => ({
+            id: m.id as string,
+            numero: m.numero as string,
+            atribuido_em: atribuidoEmByMesa.get(m.id as string) ?? "",
+          }))
+          .sort((x, y) =>
+            x.numero.localeCompare(y.numero, "pt-BR", { numeric: true }),
+          );
+      }
     }
 
     const mesaIds = mesas.map((m) => m.id);
