@@ -344,6 +344,24 @@ function CaixaPagamentosPage() {
                           </Link>
                         </Button>
                       )}
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="ml-2"
+                        title="Imprimir conta"
+                        disabled={
+                          carregandoImpressao &&
+                          imprimirComandaId === c.comanda_id
+                        }
+                        onClick={() => dispararImpressao(c.comanda_id)}
+                      >
+                        {carregandoImpressao &&
+                        imprimirComandaId === c.comanda_id ? (
+                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        ) : (
+                          <Printer className="h-3.5 w-3.5" />
+                        )}
+                      </Button>
                     </td>
                   </tr>
                 ))}
@@ -361,6 +379,27 @@ function CaixaPagamentosPage() {
           comandaId={selecionada.comandaId}
           saldoSugerido={selecionada.restante}
         />
+      )}
+
+      {dadosImpressao && (
+        <div data-print-comanda-id={dadosImpressao.comanda.id}>
+          <ComprovanteConta
+            restaurante={dadosImpressao.restaurante}
+            contexto={{
+              tipo: "comanda",
+              mesaNumero: dadosImpressao.mesa_numero,
+              comandaTitular: dadosImpressao.comanda.titular_nome,
+              garcomNome: dadosImpressao.garcom_nome,
+            }}
+            itens={dadosImpressao.itens}
+            couverts={dadosImpressao.couverts}
+            totais={dadosImpressao.totais}
+            pagamentos={dadosImpressao.pagamentos}
+            variante={
+              dadosImpressao.totais.saldo <= 0 ? "pago" : "rascunho"
+            }
+          />
+        </div>
       )}
     </div>
   );
