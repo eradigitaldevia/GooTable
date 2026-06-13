@@ -63,9 +63,49 @@ function CaixaPagamentosPage() {
   const [selecionada, setSelecionada] = useState<
     { comandaId: string; restante: number } | null
   >(null);
+  const [imprimirComandaId, setImprimirComandaId] = useState<string | null>(null);
   const [busca, setBusca] = useState("");
   const [garcomFiltro, setGarcomFiltro] = useState<string>("todos");
   const [modoTv, setModoTv] = useState(false);
+
+  const resumoFn = useServerFn(resumoComandaImpressaoFn);
+  const imprimir = useImprimir();
+  const { data: dadosImpressao, isFetching: carregandoImpressao } = useQuery({
+    queryKey: ["resumo-comanda-impressao", imprimirComandaId, restaurante?.id],
+    queryFn: () =>
+      resumoFn({
+        data: {
+          restauranteId: restaurante!.id,
+          comandaId: imprimirComandaId!,
+        },
+      }),
+    enabled: !!imprimirComandaId && !!restaurante?.id,
+  });
+
+  function dispararImpressao(comandaId: string) {
+    if (imprimirComandaId === comandaId && dadosImpressao) {
+      imprimir();
+      return;
+    }
+    setImprimirComandaId(comandaId);
+    // Aguarda a próxima query e imprime quando os dados chegarem.
+    const start = Date.now();
+    const tick = () => {
+      if (Date.now() - start > 10000) {
+        toast.error("Não foi possível carregar a conta para impressão.");
+        return;
+      }
+      const node = document.querySelector(
+        `[data-print-comanda-id="${comandaId}"]`,
+      );
+      if (node) {
+        imprimir();
+      } else {
+        setTimeout(tick, 100);
+      }
+    };
+    setTimeout(tick, 100);
+  }
 
   const todas = comandas ?? [];
   const garcons = useMemo(() => {
