@@ -391,6 +391,7 @@ export type Database = {
           atualizado_em: string
           cashback_saldo: number
           criado_em: string
+          enderecos: Json
           id: string
           nome: string
           pedidos_count: number
@@ -404,6 +405,7 @@ export type Database = {
           atualizado_em?: string
           cashback_saldo?: number
           criado_em?: string
+          enderecos?: Json
           id?: string
           nome: string
           pedidos_count?: number
@@ -417,6 +419,7 @@ export type Database = {
           atualizado_em?: string
           cashback_saldo?: number
           criado_em?: string
+          enderecos?: Json
           id?: string
           nome?: string
           pedidos_count?: number
@@ -1101,6 +1104,7 @@ export type Database = {
           ativa: boolean
           criado_em: string
           id: string
+          is_virtual: boolean
           numero: string
           qr_token: string
           restaurante_id: string
@@ -1109,6 +1113,7 @@ export type Database = {
           ativa?: boolean
           criado_em?: string
           id?: string
+          is_virtual?: boolean
           numero: string
           qr_token?: string
           restaurante_id: string
@@ -1117,6 +1122,7 @@ export type Database = {
           ativa?: boolean
           criado_em?: string
           id?: string
+          is_virtual?: boolean
           numero?: string
           qr_token?: string
           restaurante_id?: string
@@ -1365,12 +1371,22 @@ export type Database = {
       pedidos: {
         Row: {
           atualizado_em: string
+          canal: string
           cashback_gerado: number
           cashback_resgatado: number
           cliente_id: string | null
           cliente_nome: string | null
+          cliente_telefone: string | null
           comanda_id: string | null
           criado_em: string
+          endereco_bairro: string | null
+          endereco_cep: string | null
+          endereco_cidade: string | null
+          endereco_complemento: string | null
+          endereco_numero: string | null
+          endereco_referencia: string | null
+          endereco_rua: string | null
+          endereco_uf: string | null
           entregue_em: string | null
           entregue_por_cumim_id: string | null
           entregue_por_garcom_id: string | null
@@ -1379,19 +1395,31 @@ export type Database = {
           mesa_id: string
           observacao: string | null
           origem: string
+          previsao_entrega_min: number | null
           restaurante_id: string
           sessao_id: string | null
           status: Database["public"]["Enums"]["pedido_status"]
+          taxa_entrega: number
           total: number
         }
         Insert: {
           atualizado_em?: string
+          canal?: string
           cashback_gerado?: number
           cashback_resgatado?: number
           cliente_id?: string | null
           cliente_nome?: string | null
+          cliente_telefone?: string | null
           comanda_id?: string | null
           criado_em?: string
+          endereco_bairro?: string | null
+          endereco_cep?: string | null
+          endereco_cidade?: string | null
+          endereco_complemento?: string | null
+          endereco_numero?: string | null
+          endereco_referencia?: string | null
+          endereco_rua?: string | null
+          endereco_uf?: string | null
           entregue_em?: string | null
           entregue_por_cumim_id?: string | null
           entregue_por_garcom_id?: string | null
@@ -1400,19 +1428,31 @@ export type Database = {
           mesa_id: string
           observacao?: string | null
           origem?: string
+          previsao_entrega_min?: number | null
           restaurante_id: string
           sessao_id?: string | null
           status?: Database["public"]["Enums"]["pedido_status"]
+          taxa_entrega?: number
           total?: number
         }
         Update: {
           atualizado_em?: string
+          canal?: string
           cashback_gerado?: number
           cashback_resgatado?: number
           cliente_id?: string | null
           cliente_nome?: string | null
+          cliente_telefone?: string | null
           comanda_id?: string | null
           criado_em?: string
+          endereco_bairro?: string | null
+          endereco_cep?: string | null
+          endereco_cidade?: string | null
+          endereco_complemento?: string | null
+          endereco_numero?: string | null
+          endereco_referencia?: string | null
+          endereco_rua?: string | null
+          endereco_uf?: string | null
           entregue_em?: string | null
           entregue_por_cumim_id?: string | null
           entregue_por_garcom_id?: string | null
@@ -1421,9 +1461,11 @@ export type Database = {
           mesa_id?: string
           observacao?: string | null
           origem?: string
+          previsao_entrega_min?: number | null
           restaurante_id?: string
           sessao_id?: string | null
           status?: Database["public"]["Enums"]["pedido_status"]
+          taxa_entrega?: number
           total?: number
         }
         Relationships: [
@@ -1733,6 +1775,17 @@ export type Database = {
           couvert_mesa_habilitado: boolean
           couvert_mesa_valor: number | null
           criado_em: string
+          delivery_aceita_cartao_entrega: boolean
+          delivery_aceita_dinheiro: boolean
+          delivery_aceita_pix: boolean
+          delivery_ativo: boolean
+          delivery_pedido_minimo: number
+          delivery_raio_km: number | null
+          delivery_retirada_ativa: boolean
+          delivery_slug: string | null
+          delivery_taxa_entrega: number
+          delivery_tempo_estimado_min: number
+          delivery_whatsapp: string | null
           id: string
           logo_url: string | null
           nome: string
@@ -1772,6 +1825,17 @@ export type Database = {
           couvert_mesa_habilitado?: boolean
           couvert_mesa_valor?: number | null
           criado_em?: string
+          delivery_aceita_cartao_entrega?: boolean
+          delivery_aceita_dinheiro?: boolean
+          delivery_aceita_pix?: boolean
+          delivery_ativo?: boolean
+          delivery_pedido_minimo?: number
+          delivery_raio_km?: number | null
+          delivery_retirada_ativa?: boolean
+          delivery_slug?: string | null
+          delivery_taxa_entrega?: number
+          delivery_tempo_estimado_min?: number
+          delivery_whatsapp?: string | null
           id?: string
           logo_url?: string | null
           nome: string
@@ -1811,6 +1875,17 @@ export type Database = {
           couvert_mesa_habilitado?: boolean
           couvert_mesa_valor?: number | null
           criado_em?: string
+          delivery_aceita_cartao_entrega?: boolean
+          delivery_aceita_dinheiro?: boolean
+          delivery_aceita_pix?: boolean
+          delivery_ativo?: boolean
+          delivery_pedido_minimo?: number
+          delivery_raio_km?: number | null
+          delivery_retirada_ativa?: boolean
+          delivery_slug?: string | null
+          delivery_taxa_entrega?: number
+          delivery_tempo_estimado_min?: number
+          delivery_whatsapp?: string | null
           id?: string
           logo_url?: string | null
           nome?: string
@@ -2135,6 +2210,7 @@ export type Database = {
       }
       resumo_comissoes: { Args: { _restaurante_id: string }; Returns: Json }
       totais_turno_caixa: { Args: { _turno_id: string }; Returns: Json }
+      unaccent: { Args: { "": string }; Returns: string }
       validar_cupom: {
         Args: {
           _cliente_id?: string
