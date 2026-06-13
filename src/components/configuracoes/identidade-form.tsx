@@ -16,6 +16,9 @@ type IdentidadePatch = {
   cor_acento?: string;
   tema_cardapio?: "claro" | "escuro";
   logo_url?: string | null;
+  cnpj?: string | null;
+  telefone?: string | null;
+  endereco?: string | null;
 };
 
 export function IdentidadeForm({
@@ -26,6 +29,9 @@ export function IdentidadeForm({
   corAcento,
   tema,
   logoUrl,
+  cnpj,
+  telefone,
+  endereco,
   onChange,
 }: {
   restauranteId: string;
@@ -35,6 +41,9 @@ export function IdentidadeForm({
   corAcento: string;
   tema: "claro" | "escuro";
   logoUrl: string | null;
+  cnpj: string;
+  telefone: string;
+  endereco: string;
   onChange: (patch: IdentidadePatch) => void;
 }) {
   const fileRef = useRef<HTMLInputElement>(null);
