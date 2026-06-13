@@ -486,6 +486,61 @@ function Configuracoes() {
         restauranteId: restaurante.id,
         upsell_habilitado: f.upsell_habilitado,
       };
+    } else if (aba === "delivery") {
+      function parseNum(raw: string, max: number, label: string, integer = false): number | "ERR" {
+        const t = raw.trim();
+        if (t === "") return 0;
+        const n = integer ? parseInt(t, 10) : Number(t.replace(",", "."));
+        if (!Number.isFinite(n) || n < 0 || n > max) {
+          toast.error(`${label} inválido (0–${max})`);
+          return "ERR";
+        }
+        return n;
+      }
+      const taxa = parseNum(f.delivery_taxa_entrega, 500, "Taxa de entrega");
+      if (taxa === "ERR") return;
+      const minimo = parseNum(f.delivery_pedido_minimo, 10000, "Pedido mínimo");
+      if (minimo === "ERR") return;
+      const tempo = parseNum(f.delivery_tempo_estimado_min, 600, "Tempo estimado", true);
+      if (tempo === "ERR") return;
+      let raio: number | null = null;
+      if (f.delivery_raio_km.trim() !== "") {
+        const r = parseNum(f.delivery_raio_km, 200, "Raio");
+        if (r === "ERR") return;
+        raio = r;
+      }
+      const slug = f.delivery_slug.trim() || null;
+      if (f.delivery_ativo && !slug) {
+        toast.error("Informe o endereço público (slug) para ativar o delivery.");
+        return;
+      }
+      if (slug && !/^[a-z0-9-]{2,80}$/i.test(slug)) {
+        toast.error("Slug inválido. Use letras, números e hífen (2–80).");
+        return;
+      }
+      if (
+        f.delivery_ativo &&
+        !f.delivery_aceita_dinheiro &&
+        !f.delivery_aceita_cartao_entrega &&
+        !f.delivery_aceita_pix
+      ) {
+        toast.error("Habilite ao menos uma forma de pagamento.");
+        return;
+      }
+      payload = {
+        aba: "delivery",
+        restauranteId: restaurante.id,
+        delivery_ativo: f.delivery_ativo,
+        delivery_retirada_ativa: f.delivery_retirada_ativa,
+        delivery_slug: slug,
+        delivery_taxa_entrega: taxa,
+        delivery_pedido_minimo: minimo,
+        delivery_tempo_estimado_min: tempo,
+        delivery_raio_km: raio,
+        delivery_aceita_dinheiro: f.delivery_aceita_dinheiro,
+        delivery_aceita_cartao_entrega: f.delivery_aceita_cartao_entrega,
+        delivery_aceita_pix: f.delivery_aceita_pix,
+      };
     }
 
     if (!payload) return;
@@ -553,6 +608,7 @@ function Configuracoes() {
               ["comissoes", "Comissões"],
               ["caixa", "Caixa"],
               ["cardapio", "Cardápio"],
+              ["delivery", "Delivery"],
             ] as [TabId, string][]
           ).map(([id, label]) => (
             <TabsTrigger key={id} value={id} className="w-full sm:w-auto">
