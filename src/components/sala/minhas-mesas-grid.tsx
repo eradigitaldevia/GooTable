@@ -7,11 +7,13 @@ export function MinhasMesasGrid({
   prontosPorMesa,
   chamadosPorMesa,
   readOnly,
+  adminGarcomId,
 }: {
   mesas: SalaMesa[];
   prontosPorMesa: Map<string, number>;
   chamadosPorMesa: Map<string, number>;
   readOnly?: boolean;
+  adminGarcomId?: string;
 }) {
   if (mesas.length === 0) {
     return (
@@ -68,17 +70,30 @@ export function MinhasMesasGrid({
             </div>
           </>
         );
-        return (
-          <Link
-            key={m.id}
-            to="/sala/mesa/$mesaId"
-            params={{ mesaId: m.id }}
-            aria-label={`Ver detalhes da mesa ${m.numero}`}
-            className="relative block rounded-xl border border-border bg-card p-4 text-center shadow-sm transition hover:border-primary"
-          >
-            {conteudo}
-          </Link>
-        );
+        const mesaLink = adminGarcomId
+          ? (
+              <Link
+                key={m.id}
+                to="/admin/garcons/$garcomId/sala/mesa/$mesaId"
+                params={{ garcomId: adminGarcomId, mesaId: m.id }}
+                aria-label={`Ver detalhes da mesa ${m.numero}`}
+                className="relative block rounded-xl border border-border bg-card p-4 text-center shadow-sm transition hover:border-primary"
+              >
+                {conteudo}
+              </Link>
+            )
+          : (
+              <Link
+                key={m.id}
+                to="/sala/mesa/$mesaId"
+                params={{ mesaId: m.id }}
+                aria-label={`Ver detalhes da mesa ${m.numero}`}
+                className="relative block rounded-xl border border-border bg-card p-4 text-center shadow-sm transition hover:border-primary"
+              >
+                {conteudo}
+              </Link>
+            );
+        return mesaLink;
       })}
     </div>
   );
