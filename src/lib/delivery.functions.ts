@@ -4,6 +4,7 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { assertAcessoRestaurante } from "./auth.server";
 import { gerarPixPayload } from "./pix";
+import type { Json } from "@/integrations/supabase/types";
 import type {
   CategoriaPublica,
   ProdutoPublico,
@@ -109,7 +110,7 @@ type RestauranteDeliveryRow = RestauranteDeliveryPublico & {
 async function carregarRestaurantePorSlug(slug: string): Promise<RestauranteDeliveryRow> {
   const { data, error } = await supabaseAdmin
     .from("restaurantes")
-    .select(SELECT_RESTAURANTE_DELIVERY)
+    .select("*")
     .eq("delivery_slug", slug)
     .maybeSingle();
   if (error) throw new Error(error.message);
