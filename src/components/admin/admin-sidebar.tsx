@@ -141,7 +141,6 @@ export function AdminSidebar({
   const filterItem = (to: string) => {
     if (to === "/admin/equipe" && !podeVerEquipe) return false;
     if (to === "/caixa" && !podeAcessarCaixa) return false;
-    if (to === "/admin/couvert-artistico" && !restaurante.couvert_artistico_habilitado) return false;
     return true;
   };
   const navGroups = NAV_GROUPS.map((group) => ({
