@@ -1,13 +1,13 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { Loader2, MapPin, MessageCircle, Clock, Phone } from "lucide-react";
+import { Loader2, MapPin, MessageCircle, Clock, Phone, Copy, QrCode } from "lucide-react";
+import { QRCodeSVG } from "qrcode.react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { TemaCardapioProvider } from "@/components/cliente/tema-cardapio-provider";
-import { PixPanel } from "@/components/cliente/pix-panel";
 import { DeliveryHeader } from "@/components/delivery/delivery-header";
 import { RastreioTimeline } from "@/components/delivery/rastreio-timeline";
 import { getPedidoRastreioFn } from "@/lib/delivery.functions";
@@ -30,7 +30,6 @@ function formatTelefoneBR(raw: string) {
 
 function RastreioPage() {
   const { slug, pedidoId } = Route.useParams();
-  const navigate = useNavigate();
   const fn = useServerFn(getPedidoRastreioFn);
 
   const [telefone, setTelefone] = useState<string | null>(null);
@@ -162,12 +161,7 @@ function RastreioPage() {
         </section>
 
         {pix_payload && pagamento_status === "pendente" && (
-          <PixPanel
-            chave="—"
-            titular={restaurante.nome}
-            valor={total}
-            descricao={`Pedido ${id.slice(0, 8)}`}
-          />
+          <PixBlock payload={pix_payload} valor={total} />
         )}
 
         {modo === "delivery" && endereco_resumo && (
@@ -238,7 +232,6 @@ function RastreioPage() {
           params={{ slug }}
           search={{ step: "identificacao" }}
           className="block"
-          onClick={() => navigate}
         >
           <Button variant="ghost" className="h-11 w-full">
             Fazer outro pedido
@@ -246,5 +239,40 @@ function RastreioPage() {
         </Link>
       </main>
     </TemaCardapioProvider>
+  );
+}
+
+function PixBlock({ payload, valor }: { payload: string; valor: number }) {
+  const copiar = async () => {
+    try {
+      await navigator.clipboard.writeText(payload);
+      toast.success("Código PIX copiado!");
+    } catch {
+      toast.error("Não foi possível copiar");
+    }
+  };
+  return (
+    <section className="rounded-2xl border bg-card p-5 shadow-[var(--shadow-soft)]">
+      <div className="mb-3 flex items-center gap-2">
+        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-success/15 text-success">
+          <QrCode className="h-4 w-4" />
+        </div>
+        <h2 className="font-semibold">Pague com PIX</h2>
+      </div>
+      <p className="text-sm text-muted-foreground">
+        Escaneie o QR ou copie o código abaixo e finalize no seu banco.
+      </p>
+      <div className="mt-4 flex flex-col items-center gap-4 rounded-xl bg-background p-4">
+        <QRCodeSVG value={payload} size={200} level="M" />
+        <div className="text-center">
+          <div className="text-xs text-muted-foreground">Total</div>
+          <div className="text-2xl font-bold text-primary">{formatBRL(valor)}</div>
+        </div>
+      </div>
+      <Button onClick={copiar} className="mt-4 h-12 w-full rounded-2xl">
+        <Copy className="mr-2 h-4 w-4" />
+        Copiar código PIX
+      </Button>
+    </section>
   );
 }
