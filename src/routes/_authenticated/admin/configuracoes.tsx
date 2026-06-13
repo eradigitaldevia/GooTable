@@ -647,6 +647,9 @@ function Configuracoes() {
             corAcento={form.cor_acento}
             tema={form.tema_cardapio}
             logoUrl={form.logo_url}
+            cnpj={form.cnpj}
+            telefone={form.telefone}
+            endereco={form.endereco}
             onChange={patch}
           />
           <SaveBtn aba="identidade" />
