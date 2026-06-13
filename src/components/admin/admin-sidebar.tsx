@@ -18,7 +18,6 @@ import {
   Settings,
   LogOut,
   Shield,
-  Eye,
   Users,
   Gift,
   Ticket,
@@ -51,8 +50,6 @@ const NAV_GROUPS = [
     items: [
       { to: "/admin/mesas", label: "Mesas", icon: QrCode, exact: false },
       { to: "/admin/cardapio", label: "Cardápio", icon: UtensilsCrossed, exact: true },
-      { to: "/admin/cardapio-preview", label: "Prévia do cardápio", icon: Eye, exact: false },
-      { to: "/admin/destinos-preparo", label: "Destinos de preparo", icon: ChefHat, exact: false },
     ],
   },
   {
