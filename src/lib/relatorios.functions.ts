@@ -190,7 +190,7 @@ export const gerarRelatorioComissoesFn = createServerFn({ method: "POST" })
     }
 
     const pedidosVistos = new Map<string, Set<string>>();
-    for (const c of comissoesRows ?? []) {
+    for (const c of comissoesFiltradas) {
       const slot = map.get(c.garcom_id);
       if (!slot) continue;
       const valor = Number(c.valor_comissao);
