@@ -24,6 +24,17 @@ export interface Pedido {
   comanda_id: string | null;
   garcom_id: string | null;
   canal?: string;
+  cliente_nome?: string | null;
+  cliente_telefone?: string | null;
+  taxa_entrega?: number | null;
+  endereco_cep?: string | null;
+  endereco_rua?: string | null;
+  endereco_numero?: string | null;
+  endereco_complemento?: string | null;
+  endereco_bairro?: string | null;
+  endereco_cidade?: string | null;
+  endereco_uf?: string | null;
+  endereco_referencia?: string | null;
 }
 export interface PedidoItem {
   id: string;
@@ -62,7 +73,9 @@ export const listarPedidosDoDiaFn = createServerFn({ method: "POST" })
 
     const { data: peds, error: pErr } = await supabase
       .from("pedidos")
-      .select("id, status, total, observacao, criado_em, mesa_id, restaurante_id, comanda_id, garcom_id, canal")
+      .select(
+        "id, status, total, observacao, criado_em, mesa_id, restaurante_id, comanda_id, garcom_id, canal, cliente_nome, cliente_telefone, taxa_entrega, endereco_cep, endereco_rua, endereco_numero, endereco_complemento, endereco_bairro, endereco_cidade, endereco_uf, endereco_referencia",
+      )
       .eq("restaurante_id", data.restauranteId)
       .gte("criado_em", inicio.toISOString())
       .order("criado_em", { ascending: true });

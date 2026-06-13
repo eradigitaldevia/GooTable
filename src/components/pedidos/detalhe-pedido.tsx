@@ -1,4 +1,6 @@
 import { useState } from "react";
+import { useServerFn } from "@tanstack/react-start";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   Dialog,
   DialogContent,
@@ -17,7 +19,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { X, Wallet, CheckCircle2, Trash2, ChefHat, Wine } from "lucide-react";
+import { X, Wallet, CheckCircle2, Trash2, ChefHat, Wine, QrCode } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { formatBRL } from "@/lib/cart";
 import { usePagamentosComanda } from "@/hooks/use-pagamentos";
@@ -25,6 +27,8 @@ import { ConfirmarPagamentoDialog } from "@/components/admin/confirmar-pagamento
 import { GarcomBadge } from "@/components/garcons/garcom-badge";
 import { useCancelarPedido, useCancelarItemPedido } from "@/hooks/use-pedidos";
 import { toast } from "sonner";
+import { DeliveryInfoSection } from "@/components/pedidos/delivery-info-section";
+import { confirmarPagamentoPixDeliveryFn } from "@/lib/delivery.functions";
 
 type StatusPedido = "recebido" | "em_preparo" | "pronto" | "entregue" | "cancelado";
 
@@ -37,6 +41,18 @@ interface Pedido {
   mesa_id: string;
   restaurante_id: string;
   comanda_id: string | null;
+  canal?: string | null;
+  cliente_nome?: string | null;
+  cliente_telefone?: string | null;
+  taxa_entrega?: number | null;
+  endereco_cep?: string | null;
+  endereco_rua?: string | null;
+  endereco_numero?: string | null;
+  endereco_complemento?: string | null;
+  endereco_bairro?: string | null;
+  endereco_cidade?: string | null;
+  endereco_uf?: string | null;
+  endereco_referencia?: string | null;
 }
 interface Item {
   id: string;
@@ -77,6 +93,7 @@ export function DetalhePedido({
   garcomNome,
   destinoStatus,
   mostrarPagamento = true,
+  deliverySlug,
 }: {
   pedido: Pedido | null;
   itens: Item[];
@@ -85,6 +102,7 @@ export function DetalhePedido({
   garcomNome?: string | null;
   destinoStatus?: DestinoStatusInfo[];
   mostrarPagamento?: boolean;
+  deliverySlug?: string | null;
 }) {
   const [pagOpen, setPagOpen] = useState(false);
   const [cancelarPedidoOpen, setCancelarPedidoOpen] = useState(false);
@@ -100,6 +118,23 @@ export function DetalhePedido({
     pedido?.comanda_id ?? undefined,
   );
 
+  const confirmarPix = useServerFn(confirmarPagamentoPixDeliveryFn);
+  const qc = useQueryClient();
+  const confirmarPixMut = useMutation({
+    mutationFn: (vars: { restauranteId: string; pagamentoId: string }) =>
+      confirmarPix({ data: vars }),
+    onSuccess: () => {
+      toast.success("Pagamento PIX confirmado");
+      if (pedido?.comanda_id) {
+        qc.invalidateQueries({
+          queryKey: ["pagamentos-comanda", pedido.restaurante_id, pedido.comanda_id],
+        });
+      }
+    },
+    onError: (e) =>
+      toast.error(e instanceof Error ? e.message : "Erro ao confirmar PIX"),
+  });
+
   if (!pedido) return null;
 
   const grupos = new Map<string, Item[]>();
@@ -113,6 +148,10 @@ export function DetalhePedido({
   const totalPago = pagInfo?.total_pago ?? 0;
   const saldo = pagInfo?.saldo ?? 0;
   const quitada = totalComanda > 0 && totalPago >= totalComanda;
+
+  const pixPendente =
+    (pedido.canal === "delivery" || pedido.canal === "retirada") &&
+    pagInfo?.pagamentos.find((p) => p.metodo === "pix" && p.status === "pendente");
 
   const algumItemPronto = itens.some((it) => (it.quantidade_pronta ?? 0) > 0);
   const pedidoEmAndamento = pedido.status === "em_preparo" || pedido.status === "pronto";
@@ -198,6 +237,9 @@ export function DetalhePedido({
             {pedido.observacao}
           </div>
         )}
+
+        <DeliveryInfoSection pedido={pedido} deliverySlug={deliverySlug} />
+
         <div className="space-y-3 max-h-[40vh] overflow-y-auto">
           {[...grupos.entries()].map(([nome, lista]) => {
             const sub = lista.reduce((s, it) => s + Number(it.preco_unit) * it.quantidade, 0);
@@ -244,6 +286,25 @@ export function DetalhePedido({
           <span className="font-semibold">Total do pedido</span>
           <span className="text-xl font-bold text-primary">{formatBRL(Number(pedido.total))}</span>
         </div>
+
+        {pixPendente && (
+          <Button
+            variant="outline"
+            className="w-full"
+            disabled={confirmarPixMut.isPending}
+            onClick={() =>
+              confirmarPixMut.mutate({
+                restauranteId: pedido.restaurante_id,
+                pagamentoId: pixPendente.id,
+              })
+            }
+          >
+            <QrCode className="mr-2 h-4 w-4" />
+            {confirmarPixMut.isPending
+              ? "Confirmando…"
+              : `Confirmar PIX ${formatBRL(Number(pixPendente.valor))}`}
+          </Button>
+        )}
 
         {pedido.comanda_id && mostrarPagamento && pedido.status !== "cancelado" && (
           <div className="space-y-2 rounded-xl border bg-muted/30 p-3">
