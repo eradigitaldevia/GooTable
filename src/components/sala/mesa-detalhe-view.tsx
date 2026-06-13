@@ -580,6 +580,54 @@ export function MesaDetalheView({
           }}
         />
       )}
+
+      {imprimirMesaPendente && data && data.sessao && restaurante && (
+        <ComprovanteConta
+          restaurante={{
+            nome: restaurante.nome,
+            cnpj: (restaurante as any).cnpj ?? null,
+            endereco: (restaurante as any).endereco ?? null,
+            telefone: (restaurante as any).telefone ?? null,
+            logo_url: restaurante.logo_url ?? null,
+          }}
+          contexto={{
+            tipo: "mesa",
+            mesaNumero: data.mesa.numero,
+          }}
+          itens={itensConsolidados}
+          couverts={couvertsConsolidados}
+          totais={{
+            subtotal: data.totais.subtotal,
+            couvert: couvertTotalConsolidado,
+            desconto:
+              (data.totais.desconto_cupom ?? 0) +
+              (data.totais.cashback_resgatado ?? 0),
+            total: data.totais.total,
+            total_pago: data.totais.total_pago,
+            saldo: data.totais.saldo,
+          }}
+          variante="rascunho"
+        />
+      )}
+
+      {!imprimirMesaPendente && dadosComanda && (
+        <div data-print-comanda-id={dadosComanda.comanda.id}>
+          <ComprovanteConta
+            restaurante={dadosComanda.restaurante}
+            contexto={{
+              tipo: "comanda",
+              mesaNumero: dadosComanda.mesa_numero,
+              comandaTitular: dadosComanda.comanda.titular_nome,
+              garcomNome: dadosComanda.garcom_nome,
+            }}
+            itens={dadosComanda.itens}
+            couverts={dadosComanda.couverts}
+            totais={dadosComanda.totais}
+            pagamentos={dadosComanda.pagamentos}
+            variante={dadosComanda.totais.saldo <= 0 ? "pago" : "rascunho"}
+          />
+        </div>
+      )}
     </div>
   );
 }
