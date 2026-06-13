@@ -88,6 +88,79 @@ export function MesaDetalheView({
   const [couvertComandaId, setCouvertComandaId] = useState<string | null>(null);
   const removerCouvert = useRemoverCouvert();
 
+  // Impressão
+  const imprimir = useImprimir();
+  const [imprimirComandaId, setImprimirComandaId] = useState<string | null>(
+    null,
+  );
+  const [imprimirMesaPendente, setImprimirMesaPendente] = useState(false);
+  const resumoFn = useServerFn(resumoComandaImpressaoFn);
+  const { data: dadosComanda, isFetching: carregandoComanda } = useQuery({
+    queryKey: [
+      "resumo-comanda-impressao",
+      imprimirComandaId,
+      restauranteId,
+    ],
+    queryFn: () =>
+      resumoFn({
+        data: {
+          restauranteId: restauranteId!,
+          comandaId: imprimirComandaId!,
+        },
+      }),
+    enabled: !!imprimirComandaId && !!restauranteId,
+  });
+
+  function pedirImpressaoComanda(comandaId: string) {
+    if (imprimirComandaId === comandaId && dadosComanda) {
+      setImprimirMesaPendente(false);
+      imprimir();
+      return;
+    }
+    setImprimirMesaPendente(false);
+    setImprimirComandaId(comandaId);
+    const start = Date.now();
+    const tick = () => {
+      if (Date.now() - start > 10000) return;
+      const node = document.querySelector(
+        `[data-print-comanda-id="${comandaId}"]`,
+      );
+      if (node) imprimir();
+      else setTimeout(tick, 100);
+    };
+    setTimeout(tick, 100);
+  }
+
+  // Conta consolidada da mesa, montada a partir do estado já carregado.
+  const itensConsolidados = data
+    ? data.pedidos.flatMap((p) =>
+        p.itens.map((it) => ({
+          nome: it.nome_produto,
+          quantidade: it.quantidade,
+          preco_unit: it.preco_unit,
+          observacao: it.observacao ?? null,
+        })),
+      )
+    : [];
+  const couvertsConsolidados = data
+    ? data.comandas.flatMap((c) =>
+        (c.couverts ?? []).map((cv) => ({
+          descricao: `${cv.tipo === "mesa" ? "Couvert mesa" : "Couvert artístico"} (${cv.quantidade}× ${formatBRL(cv.valor_unitario)})`,
+          total: cv.total,
+        })),
+      )
+    : [];
+  const couvertTotalConsolidado = couvertsConsolidados.reduce(
+    (a, c) => a + c.total,
+    0,
+  );
+
+  function pedirImpressaoMesa() {
+    setImprimirComandaId(null);
+    setImprimirMesaPendente(true);
+    setTimeout(() => imprimir(), 150);
+  }
+
   const couvertAtivo =
     !readOnly &&
     ((restaurante?.couvert_mesa_habilitado ?? false) ||
