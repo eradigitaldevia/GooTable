@@ -13,6 +13,7 @@ import { PixForm } from "@/components/configuracoes/pix-form";
 import { ComissaoModoForm } from "@/components/configuracoes/comissao-modo-form";
 import { TaxaServicoForm } from "@/components/configuracoes/taxa-servico-form";
 import { CouvertMesaForm } from "@/components/configuracoes/couvert-form";
+import { DeliveryForm } from "@/components/configuracoes/delivery-form";
 import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -26,11 +27,12 @@ type TabId =
   | "taxas"
   | "comissoes"
   | "caixa"
-  | "cardapio";
+  | "cardapio"
+  | "delivery";
 
 const searchSchema = z.object({
   tab: z
-    .enum(["identidade", "pagamentos", "taxas", "comissoes", "caixa", "cardapio"])
+    .enum(["identidade", "pagamentos", "taxas", "comissoes", "caixa", "cardapio", "delivery"])
     .default("identidade"),
 });
 
@@ -81,6 +83,16 @@ function Configuracoes() {
     couvert_mesa_descricao: "",
     taxa_servico_repasse_habilitado: false,
     taxa_servico_repasse_percentual: "" as string,
+    delivery_ativo: false,
+    delivery_retirada_ativa: true,
+    delivery_slug: "" as string,
+    delivery_taxa_entrega: "" as string,
+    delivery_pedido_minimo: "" as string,
+    delivery_tempo_estimado_min: "45" as string,
+    delivery_raio_km: "" as string,
+    delivery_aceita_dinheiro: true,
+    delivery_aceita_cartao_entrega: true,
+    delivery_aceita_pix: true,
   });
 
   const prevSnapshotRef = useRef<typeof form | null>(null);
