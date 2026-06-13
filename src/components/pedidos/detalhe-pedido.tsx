@@ -41,7 +41,7 @@ interface Pedido {
   mesa_id: string;
   restaurante_id: string;
   comanda_id: string | null;
-  canal?: string;
+  canal?: string | null;
   cliente_nome?: string | null;
   cliente_telefone?: string | null;
   taxa_entrega?: number | null;
