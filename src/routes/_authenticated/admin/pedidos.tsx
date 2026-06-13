@@ -5,6 +5,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { useMeuRestaurante } from "@/hooks/use-restaurante";
 import { supabase } from "@/integrations/supabase/client";
 import { Clock, ChefHat, Bell, PackageCheck } from "lucide-react";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PageHeaderSkeleton } from "@/components/admin/skeletons/page-header-skeleton";
 import { CardsGridSkeleton } from "@/components/admin/skeletons/cards-grid-skeleton";
 import { toast } from "sonner";
@@ -43,6 +44,7 @@ interface Pedido {
   restaurante_id: string;
   comanda_id: string | null;
   garcom_id?: string | null;
+  canal?: string | null;
 }
 interface Item {
   id: string;
@@ -69,11 +71,27 @@ function PedidosPainel() {
   const { data: restaurante } = useMeuRestaurante(user?.id);
   const restauranteId = restaurante?.id ?? null;
   const [aberto, setAberto] = useState<Pedido | null>(null);
+  const [filtroCanal, setFiltroCanal] = useState<"todos" | "mesa" | "delivery" | "retirada">("todos");
 
   const { data, isLoading } = usePedidosDoDia(restauranteId ?? undefined);
   const { nomeDoPedido } = useGarcomLookup(restauranteId ?? undefined);
 
-  const pedidos = (data?.pedidos ?? []) as Pedido[];
+  const pedidosAll = (data?.pedidos ?? []) as Pedido[];
+  const pedidos = useMemo(
+    () =>
+      filtroCanal === "todos"
+        ? pedidosAll
+        : pedidosAll.filter((p) => (p.canal ?? "mesa") === filtroCanal),
+    [pedidosAll, filtroCanal],
+  );
+  const contagensCanal = useMemo(() => {
+    const c = { mesa: 0, delivery: 0, retirada: 0 };
+    for (const p of pedidosAll) {
+      const k = (p.canal ?? "mesa") as keyof typeof c;
+      if (k in c) c[k]++;
+    }
+    return c;
+  }, [pedidosAll]);
   const itens = (data?.itens ?? []) as Item[];
   const destinoStatusList = (data?.destinoStatus ?? []) as Array<{
     pedido_id: string;
@@ -170,6 +188,15 @@ function PedidosPainel() {
           Painel realtime — visualize os pedidos do dia. O avanço de status é feito pela cozinha/bar e pelo garçom ao entregar.
         </p>
       </header>
+
+      <Tabs value={filtroCanal} onValueChange={(v) => setFiltroCanal(v as typeof filtroCanal)}>
+        <TabsList>
+          <TabsTrigger value="todos">Todos ({pedidosAll.length})</TabsTrigger>
+          <TabsTrigger value="mesa">Salão ({contagensCanal.mesa})</TabsTrigger>
+          <TabsTrigger value="delivery">Delivery ({contagensCanal.delivery})</TabsTrigger>
+          <TabsTrigger value="retirada">Retirada ({contagensCanal.retirada})</TabsTrigger>
+        </TabsList>
+      </Tabs>
 
       <PedidosKanban
         colunas={COLUNAS}
