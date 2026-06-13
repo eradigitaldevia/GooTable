@@ -816,6 +816,25 @@ function Configuracoes() {
             </div>
           </section>
         </TabsContent>
+
+        <TabsContent value="delivery" className="space-y-6">
+          <DeliveryForm
+            values={{
+              delivery_ativo: form.delivery_ativo,
+              delivery_retirada_ativa: form.delivery_retirada_ativa,
+              delivery_slug: form.delivery_slug,
+              delivery_taxa_entrega: form.delivery_taxa_entrega,
+              delivery_pedido_minimo: form.delivery_pedido_minimo,
+              delivery_tempo_estimado_min: form.delivery_tempo_estimado_min,
+              delivery_raio_km: form.delivery_raio_km,
+              delivery_aceita_dinheiro: form.delivery_aceita_dinheiro,
+              delivery_aceita_cartao_entrega: form.delivery_aceita_cartao_entrega,
+              delivery_aceita_pix: form.delivery_aceita_pix,
+            }}
+            onChange={patch}
+          />
+          <SaveBtn aba="delivery" />
+        </TabsContent>
       </Tabs>
     </div>
   );
