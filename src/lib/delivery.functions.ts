@@ -442,7 +442,10 @@ export const criarPedidoDeliveryFn = createServerFn({ method: "POST" })
         0,
         3,
       );
-      await supabaseAdmin.from("clientes").update({ enderecos: novaLista }).eq("id", clienteId);
+      await supabaseAdmin
+        .from("clientes")
+        .update({ enderecos: novaLista as unknown as Json })
+        .eq("id", clienteId);
     }
 
     // 12. Lê comanda final (cupom pode ter ajustado total) e cria pagamento pendente
@@ -545,11 +548,7 @@ export const getPedidoRastreioFn = createServerFn({ method: "POST" })
 
     const { data: ped, error } = await supabaseAdmin
       .from("pedidos")
-      .select(
-        "id, status, criado_em, canal, total, taxa_entrega, previsao_entrega_min, comanda_id, " +
-          "cliente_telefone, endereco_rua, endereco_numero, endereco_complemento, endereco_bairro, " +
-          "endereco_cidade, endereco_uf",
-      )
+      .select("*")
       .eq("id", data.pedidoId)
       .eq("restaurante_id", r.id)
       .maybeSingle();
