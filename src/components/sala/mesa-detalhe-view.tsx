@@ -1,6 +1,17 @@
 import { Link } from "@tanstack/react-router";
-import { ArrowLeft, Clock, Merge, Split, Coffee, Trash2 } from "lucide-react";
+import {
+  ArrowLeft,
+  Clock,
+  Merge,
+  Split,
+  Coffee,
+  Trash2,
+  Printer,
+  Loader2,
+} from "lucide-react";
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
 import { useMeuRestaurante } from "@/hooks/use-restaurante";
@@ -12,6 +23,9 @@ import { DetalhePedido } from "@/components/pedidos/detalhe-pedido";
 import { LancarCouvertDialog } from "@/components/sala/lancar-couvert-dialog";
 import { useRemoverCouvert } from "@/hooks/use-couvert";
 import { toast } from "sonner";
+import { ComprovanteConta } from "@/components/impressao/comprovante-conta";
+import { useImprimir } from "@/hooks/use-imprimir";
+import { resumoComandaImpressaoFn } from "@/lib/pedidos.functions";
 
 type StatusPedido =
   | "recebido"
@@ -74,6 +88,79 @@ export function MesaDetalheView({
   const [couvertComandaId, setCouvertComandaId] = useState<string | null>(null);
   const removerCouvert = useRemoverCouvert();
 
+  // Impressão
+  const imprimir = useImprimir();
+  const [imprimirComandaId, setImprimirComandaId] = useState<string | null>(
+    null,
+  );
+  const [imprimirMesaPendente, setImprimirMesaPendente] = useState(false);
+  const resumoFn = useServerFn(resumoComandaImpressaoFn);
+  const { data: dadosComanda, isFetching: carregandoComanda } = useQuery({
+    queryKey: [
+      "resumo-comanda-impressao",
+      imprimirComandaId,
+      restauranteId,
+    ],
+    queryFn: () =>
+      resumoFn({
+        data: {
+          restauranteId: restauranteId!,
+          comandaId: imprimirComandaId!,
+        },
+      }),
+    enabled: !!imprimirComandaId && !!restauranteId,
+  });
+
+  function pedirImpressaoComanda(comandaId: string) {
+    if (imprimirComandaId === comandaId && dadosComanda) {
+      setImprimirMesaPendente(false);
+      imprimir();
+      return;
+    }
+    setImprimirMesaPendente(false);
+    setImprimirComandaId(comandaId);
+    const start = Date.now();
+    const tick = () => {
+      if (Date.now() - start > 10000) return;
+      const node = document.querySelector(
+        `[data-print-comanda-id="${comandaId}"]`,
+      );
+      if (node) imprimir();
+      else setTimeout(tick, 100);
+    };
+    setTimeout(tick, 100);
+  }
+
+  // Conta consolidada da mesa, montada a partir do estado já carregado.
+  const itensConsolidados = data
+    ? data.pedidos.flatMap((p) =>
+        p.itens.map((it) => ({
+          nome: it.nome_produto,
+          quantidade: it.quantidade,
+          preco_unit: it.preco_unit,
+          observacao: it.observacao ?? null,
+        })),
+      )
+    : [];
+  const couvertsConsolidados = data
+    ? data.comandas.flatMap((c) =>
+        (c.couverts ?? []).map((cv) => ({
+          descricao: `${cv.tipo === "mesa" ? "Couvert mesa" : "Couvert artístico"} (${cv.quantidade}× ${formatBRL(cv.valor_unitario)})`,
+          total: cv.total,
+        })),
+      )
+    : [];
+  const couvertTotalConsolidado = couvertsConsolidados.reduce(
+    (a, c) => a + c.total,
+    0,
+  );
+
+  function pedirImpressaoMesa() {
+    setImprimirComandaId(null);
+    setImprimirMesaPendente(true);
+    setTimeout(() => imprimir(), 150);
+  }
+
   const couvertAtivo =
     !readOnly &&
     ((restaurante?.couvert_mesa_habilitado ?? false) ||
@@ -102,6 +189,17 @@ export function MesaDetalheView({
           <Button asChild size="sm" variant="ghost">
             {backLink}
           </Button>
+          {data?.sessao && data.comandas.length > 0 && (
+            <Button
+              size="sm"
+              variant="outline"
+              className="ml-2"
+              onClick={pedirImpressaoMesa}
+            >
+              <Printer className="mr-1 h-3.5 w-3.5" />
+              Imprimir conta
+            </Button>
+          )}
           <div className="ml-auto text-right">
             <div className="text-[10px] uppercase tracking-wide text-muted-foreground">
               Mesa
@@ -272,6 +370,25 @@ export function MesaDetalheView({
                           </Button>
                         </div>
                       )}
+                      <div className="mt-2 flex justify-end">
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => pedirImpressaoComanda(c.id)}
+                          disabled={
+                            carregandoComanda && imprimirComandaId === c.id
+                          }
+                          title="Imprimir esta comanda"
+                        >
+                          {carregandoComanda &&
+                          imprimirComandaId === c.id ? (
+                            <Loader2 className="mr-1 h-3 w-3 animate-spin" />
+                          ) : (
+                            <Printer className="mr-1 h-3 w-3" />
+                          )}
+                          Imprimir
+                        </Button>
+                      </div>
                     </li>
                   ))}
                 </ul>
@@ -462,6 +579,54 @@ export function MesaDetalheView({
             couvert_artistico_valor: restaurante.couvert_artistico_valor,
           }}
         />
+      )}
+
+      {imprimirMesaPendente && data && data.sessao && restaurante && (
+        <ComprovanteConta
+          restaurante={{
+            nome: restaurante.nome,
+            cnpj: (restaurante as any).cnpj ?? null,
+            endereco: (restaurante as any).endereco ?? null,
+            telefone: (restaurante as any).telefone ?? null,
+            logo_url: restaurante.logo_url ?? null,
+          }}
+          contexto={{
+            tipo: "mesa",
+            mesaNumero: data.mesa.numero,
+          }}
+          itens={itensConsolidados}
+          couverts={couvertsConsolidados}
+          totais={{
+            subtotal: data.totais.subtotal,
+            couvert: couvertTotalConsolidado,
+            desconto:
+              (data.totais.desconto_cupom ?? 0) +
+              (data.totais.cashback_resgatado ?? 0),
+            total: data.totais.total,
+            total_pago: data.totais.total_pago,
+            saldo: data.totais.saldo,
+          }}
+          variante="rascunho"
+        />
+      )}
+
+      {!imprimirMesaPendente && dadosComanda && (
+        <div data-print-comanda-id={dadosComanda.comanda.id}>
+          <ComprovanteConta
+            restaurante={dadosComanda.restaurante}
+            contexto={{
+              tipo: "comanda",
+              mesaNumero: dadosComanda.mesa_numero,
+              comandaTitular: dadosComanda.comanda.titular_nome,
+              garcomNome: dadosComanda.garcom_nome,
+            }}
+            itens={dadosComanda.itens}
+            couverts={dadosComanda.couverts}
+            totais={dadosComanda.totais}
+            pagamentos={dadosComanda.pagamentos}
+            variante={dadosComanda.totais.saldo <= 0 ? "pago" : "rascunho"}
+          />
+        </div>
       )}
     </div>
   );

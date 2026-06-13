@@ -1229,3 +1229,203 @@ export const resumoContaMesaFn = createServerFn({ method: "POST" })
       totais,
     };
   });
+
+/* ============================================================
+ * Resumo de comanda específico para impressão (caixa)
+ * ============================================================
+ * Retorna restaurante (com dados cadastrais), mesa, itens da comanda,
+ * couverts, totais e pagamentos confirmados — tudo em uma chamada.
+ */
+export interface ResumoComandaImpressao {
+  restaurante: {
+    nome: string;
+    cnpj: string | null;
+    endereco: string | null;
+    telefone: string | null;
+    logo_url: string | null;
+  };
+  mesa_numero: string | null;
+  comanda: {
+    id: string;
+    titular_nome: string | null;
+  };
+  garcom_nome: string | null;
+  itens: Array<{
+    nome: string;
+    quantidade: number;
+    preco_unit: number;
+    observacao: string | null;
+  }>;
+  couverts: Array<{ descricao: string; total: number }>;
+  totais: {
+    subtotal: number;
+    couvert: number;
+    desconto: number;
+    total: number;
+    total_pago: number;
+    saldo: number;
+  };
+  pagamentos: Array<{ metodo: string; valor: number; quando: string }>;
+}
+
+export const resumoComandaImpressaoFn = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) =>
+    z
+      .object({
+        restauranteId: z.string().uuid(),
+        comandaId: z.string().uuid(),
+      })
+      .parse(d),
+  )
+  .handler(async ({ context, data }): Promise<ResumoComandaImpressao> => {
+    const { supabase, userId } = context;
+    await assertAcessoRestaurante(supabase, userId, data.restauranteId);
+
+    const [{ data: rest }, { data: com, error: cErr }] = await Promise.all([
+      supabaseAdmin
+        .from("restaurantes")
+        .select("nome, cnpj, endereco, telefone, logo_url")
+        .eq("id", data.restauranteId)
+        .maybeSingle(),
+      supabaseAdmin
+        .from("comandas")
+        .select(
+          "id, sessao_id, titular_cliente_id, subtotal, desconto_cupom, cashback_resgatado, total, total_pago",
+        )
+        .eq("id", data.comandaId)
+        .maybeSingle(),
+    ]);
+    if (cErr) throw new Error(cErr.message);
+    if (!rest) throw new Error("Restaurante não encontrado");
+    if (!com) throw new Error("Comanda não encontrada");
+
+    const restauranteInfo = rest as {
+      nome: string;
+      cnpj: string | null;
+      endereco: string | null;
+      telefone: string | null;
+      logo_url: string | null;
+    };
+
+    let mesaNumero: string | null = null;
+    if (com.sessao_id) {
+      const { data: sess } = await supabaseAdmin
+        .from("mesa_sessoes")
+        .select("mesa_id")
+        .eq("id", com.sessao_id as string)
+        .maybeSingle();
+      const mesaId = (sess?.mesa_id as string | undefined) ?? null;
+      if (mesaId) {
+        const { data: mesa } = await supabaseAdmin
+          .from("mesas")
+          .select("numero")
+          .eq("id", mesaId)
+          .maybeSingle();
+        mesaNumero = (mesa?.numero as string | undefined) ?? null;
+      }
+    }
+
+    let titularNome: string | null = null;
+    if (com.titular_cliente_id) {
+      const { data: cli } = await supabaseAdmin
+        .from("clientes")
+        .select("nome")
+        .eq("id", com.titular_cliente_id as string)
+        .maybeSingle();
+      titularNome = (cli?.nome as string | undefined) ?? null;
+    }
+
+    // Pedidos não cancelados da comanda
+    const { data: peds, error: pErr } = await supabaseAdmin
+      .from("pedidos")
+      .select("id, garcom_id")
+      .eq("comanda_id", com.id as string)
+      .neq("status", "cancelado")
+      .order("criado_em", { ascending: true });
+    if (pErr) throw new Error(pErr.message);
+    const pedidoIds = (peds ?? []).map((p) => p.id as string);
+
+    let itens: ResumoComandaImpressao["itens"] = [];
+    if (pedidoIds.length) {
+      const { data: its, error: iErr } = await supabaseAdmin
+        .from("pedido_itens")
+        .select("nome_produto, quantidade, preco_unit, observacao")
+        .in("pedido_id", pedidoIds);
+      if (iErr) throw new Error(iErr.message);
+      itens = (its ?? []).map((it) => ({
+        nome: it.nome_produto as string,
+        quantidade: Number(it.quantidade),
+        preco_unit: Number(it.preco_unit),
+        observacao: (it.observacao as string | null) ?? null,
+      }));
+    }
+
+    let garcomNome: string | null = null;
+    const primGarcomId = (peds ?? [])
+      .map((p) => p.garcom_id as string | null)
+      .find((g): g is string => !!g);
+    if (primGarcomId) {
+      const { data: g } = await supabaseAdmin
+        .from("garcons")
+        .select("nome")
+        .eq("id", primGarcomId)
+        .maybeSingle();
+      garcomNome = (g?.nome as string | undefined) ?? null;
+    }
+
+    // Couverts
+    const { data: covs } = await supabaseAdmin
+      .from("comanda_couverts")
+      .select("tipo, quantidade, valor_unitario, descricao")
+      .eq("comanda_id", com.id as string)
+      .order("criado_em", { ascending: true });
+    let couvertTotal = 0;
+    const couverts = (covs ?? []).map((cv) => {
+      const q = Number(cv.quantidade);
+      const v = Number(cv.valor_unitario);
+      const total = q * v;
+      couvertTotal += total;
+      const label =
+        (cv.descricao as string | null) ??
+        (cv.tipo === "mesa" ? "Couvert mesa" : "Couvert artístico");
+      return { descricao: `${label} (${q}× ${v.toFixed(2)})`, total };
+    });
+
+    // Pagamentos confirmados
+    const { data: pags } = await supabaseAdmin
+      .from("pagamentos")
+      .select("metodo, valor, status, criado_em, confirmado_em")
+      .eq("comanda_id", com.id as string)
+      .eq("status", "confirmado")
+      .order("criado_em", { ascending: true });
+    const pagamentos = (pags ?? []).map((p) => ({
+      metodo: p.metodo as string,
+      valor: Number(p.valor),
+      quando: ((p.confirmado_em as string | null) ?? (p.criado_em as string)),
+    }));
+
+    const subtotal = Number(com.subtotal ?? 0);
+    const desconto =
+      Number(com.desconto_cupom ?? 0) + Number(com.cashback_resgatado ?? 0);
+    const total = Number(com.total ?? 0);
+    const total_pago = Number(com.total_pago ?? 0);
+
+    return {
+      restaurante: restauranteInfo,
+      mesa_numero: mesaNumero,
+      comanda: { id: com.id as string, titular_nome: titularNome },
+      garcom_nome: garcomNome,
+      itens,
+      couverts,
+      totais: {
+        subtotal,
+        couvert: couvertTotal,
+        desconto,
+        total,
+        total_pago,
+        saldo: Math.max(0, total - total_pago),
+      },
+      pagamentos,
+    };
+  });

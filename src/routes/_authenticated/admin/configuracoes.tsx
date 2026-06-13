@@ -62,6 +62,9 @@ function Configuracoes() {
     cor_acento: "#f59e0b",
     tema_cardapio: "claro" as "claro" | "escuro",
     logo_url: null as string | null,
+    cnpj: "",
+    telefone: "",
+    endereco: "",
     pix_habilitado: false,
     pix_chave: "",
     pix_nome_titular: "",
@@ -107,6 +110,9 @@ function Configuracoes() {
       tema_cardapio:
         restaurante.tema_cardapio === "escuro" ? "escuro" : "claro",
       logo_url: restaurante.logo_url,
+      cnpj: (restaurante as any).cnpj ?? "",
+      telefone: (restaurante as any).telefone ?? "",
+      endereco: (restaurante as any).endereco ?? "",
       pix_habilitado: restaurante.pix_habilitado,
       pix_chave: restaurante.pix_chave ?? "",
       pix_nome_titular: restaurante.pix_nome_titular ?? "",
@@ -205,6 +211,9 @@ function Configuracoes() {
       tema_cardapio:
         restaurante.tema_cardapio === "escuro" ? "escuro" : "claro",
       logo_url: restaurante.logo_url,
+      cnpj: (restaurante as any).cnpj ?? "",
+      telefone: (restaurante as any).telefone ?? "",
+      endereco: (restaurante as any).endereco ?? "",
       pix_habilitado: restaurante.pix_habilitado,
       pix_chave: restaurante.pix_chave ?? "",
       pix_nome_titular: restaurante.pix_nome_titular ?? "",
@@ -277,6 +286,9 @@ function Configuracoes() {
       "cor_acento",
       "tema_cardapio",
       "logo_url",
+      "cnpj",
+      "telefone",
+      "endereco",
     ],
     pagamentos: ["pix_habilitado", "pix_chave", "pix_nome_titular"],
     taxas: [
@@ -394,6 +406,9 @@ function Configuracoes() {
         cor_acento: f.cor_acento,
         tema_cardapio: f.tema_cardapio,
         logo_url: f.logo_url,
+        cnpj: f.cnpj.trim() || null,
+        telefone: f.telefone.trim() || null,
+        endereco: f.endereco.trim() || null,
       };
     } else if (aba === "pagamentos") {
       payload = {
@@ -632,6 +647,9 @@ function Configuracoes() {
             corAcento={form.cor_acento}
             tema={form.tema_cardapio}
             logoUrl={form.logo_url}
+            cnpj={form.cnpj}
+            telefone={form.telefone}
+            endereco={form.endereco}
             onChange={patch}
           />
           <SaveBtn aba="identidade" />

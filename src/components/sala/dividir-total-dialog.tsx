@@ -23,10 +23,14 @@ import {
   TabsList,
   TabsTrigger,
 } from "@/components/ui/tabs";
-import { Loader2, Split } from "lucide-react";
+import { Loader2, Split, Printer } from "lucide-react";
 import { toast } from "sonner";
 import { useGerarDivisaoConta } from "@/hooks/use-comandas-acoes";
 import { formatBRL } from "@/lib/cart";
+import { useImprimir } from "@/hooks/use-imprimir";
+import { useMeuRestaurante } from "@/hooks/use-restaurante";
+import { useAuth } from "@/hooks/use-auth";
+import { ComprovanteConta } from "@/components/impressao/comprovante-conta";
 import type {
   DivisaoContaResultado,
   ModoDivisao,
@@ -96,6 +100,10 @@ export function DividirTotalDialog({
 
   const [resultado, setResultado] = useState<DivisaoContaResultado | null>(null);
   const gerar = useGerarDivisaoConta(restauranteId);
+  const imprimir = useImprimir();
+  const { user } = useAuth();
+  const { data: restaurante } = useMeuRestaurante(user?.id);
+  const [imprimirPendente, setImprimirPendente] = useState(false);
 
   const toggleComanda = (id: string) => {
     setSel((prev) => {
@@ -295,11 +303,47 @@ export function DividirTotalDialog({
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Fechar
           </Button>
+          {resultado && modo === "igual" && restaurante && (
+            <Button
+              variant="outline"
+              onClick={() => {
+                setImprimirPendente(true);
+                setTimeout(() => imprimir(), 150);
+              }}
+            >
+              <Printer className="mr-2 h-4 w-4" />
+              Imprimir conta com divisão
+            </Button>
+          )}
           <Button onClick={submit} disabled={gerar.isPending}>
             {gerar.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             Calcular divisão
           </Button>
         </DialogFooter>
+
+        {imprimirPendente && resultado && modo === "igual" && restaurante && (
+          <ComprovanteConta
+            restaurante={{
+              nome: restaurante.nome,
+              cnpj: (restaurante as any).cnpj ?? null,
+              endereco: (restaurante as any).endereco ?? null,
+              telefone: (restaurante as any).telefone ?? null,
+              logo_url: restaurante.logo_url ?? null,
+            }}
+            contexto={{ tipo: "mesa" }}
+            itens={itens.map((it) => ({
+              nome: it.nome,
+              quantidade: it.quantidade,
+              preco_unit: it.preco_unit,
+            }))}
+            totais={{
+              subtotal: resultado.total,
+              total: resultado.total,
+            }}
+            divisao={{ pessoas: n, valorPorPessoa: resultado.total / n }}
+            variante="rascunho"
+          />
+        )}
       </DialogContent>
     </Dialog>
   );

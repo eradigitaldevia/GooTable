@@ -1,60 +1,115 @@
+## Impressão da conta — Garçom e Caixa
 
-## Contexto
+Implementação simples baseada em `window.print()` com layout dedicado para impressora térmica (80mm). **Sem agente externo, sem novas tabelas operacionais** — reusa os dados já carregados pelas telas atuais. Funciona em qualquer impressora instalada no SO (térmica USB, rede via spooler, ou A4) através do diálogo de impressão do navegador.
 
-A rota `/admin/garcons/$garcomId/sala` permite que o admin visualize a área do garçom em modo "somente leitura". Hoje:
+---
 
-- Os cards de mesa em `MinhasMesasGrid` navegam para `/sala/mesa/$mesaId` (rota do próprio garçom), saindo do contexto admin.
-- `MesaDetalhePage` (`/sala/mesa/$mesaId`) sempre volta para `/sala` e expõe ações de escrita (cancelar pedido/item, dividir, juntar, lançar couvert, confirmar pagamento) — sem flag `readOnly`.
-- O header da página de detalhe da mesa não é `sticky` (apenas o `SalaHeader` é).
-- `carregarSalaAdminFn` sempre lista só as mesas atribuídas via `mesa_garcom`, ignorando `permitir_atendimento_cruzado=true`. Já a `carregarSalaFn` (garçom) mostra todas as mesas ativas quando cruzado está ON.
+### 1) Dados cadastrais do restaurante (pré-requisito para o cabeçalho)
 
-## Mudanças
+Hoje a tabela `restaurantes` só tem `nome` e `logo_url` — não há `cnpj`, `endereco`, `telefone`. Precisamos criar:
 
-### 1) Voltar para a área do garçom (admin)
+**Migration:** adicionar em `public.restaurantes` as colunas:
+- `cnpj` text NULL
+- `telefone` text NULL
+- `endereco` text NULL  (linha única livre, ex.: "Rua X, 123 - Bairro - Cidade/UF")
 
-- Adicionar prop `readOnly?: boolean` em `MinhasMesasGrid` que troca o `<Link>` do card por um `<Link>` para `/admin/garcons/$garcomId/sala/mesa/$mesaId` (nova rota — ver passo 2). O botão "+" de novo pedido já fica desabilitado em readOnly (comportamento atual).
-- Em `src/routes/_authenticated/admin/garcons_.$garcomId.sala.tsx`, passar `garcomId` para `MinhasMesasGrid` para montar o link admin.
+**UI:** editar `src/components/configuracoes/identidade-form.tsx` — adicionar uma seção **"Dados para impressão"** logo abaixo do campo "Nome do restaurante", com três inputs (CNPJ, Telefone, Endereço). Todos opcionais; o que estiver vazio simplesmente não aparece no comprovante. Reaproveita o mesmo botão "Salvar" da aba Identidade (sem nova tab, sem nova rota).
 
-### 2) Detalhe da mesa em modo readOnly (admin)
+Atualizar `src/lib/configuracoes.functions.ts` (ou a fn que salva identidade) para persistir os três campos novos.
 
-Criar nova rota admin que reaproveita o componente de detalhe:
+---
 
-- Novo arquivo `src/routes/_authenticated/admin/garcons_.$garcomId.sala_.mesa.$mesaId.tsx` — render igual a `sala_.mesa.$mesaId.tsx`, porém:
-  - banner amarelo "Visualizando como X — somente leitura" (igual ao de `garcons_.$garcomId.sala`).
-  - botão Voltar → `/admin/garcons/$garcomId/sala`.
-  - passa `readOnly` para `DetalhePedido` e oculta botões "Juntar comandas", "Dividir total", "Lançar couvert", "Remover couvert".
+### 2) Componente compartilhado de comprovante
 
-Refatorar `MesaDetalhePage` para extrair o conteúdo num componente compartilhado `MesaDetalheView` (em `src/components/sala/mesa-detalhe-view.tsx`) com prop `readOnly` e prop opcional `backTo` ({ to, params }). As duas rotas (garçom e admin) renderizam esse componente.
+**Novo** `src/components/impressao/comprovante-conta.tsx`
 
-### 3) Header `DetalhePedido` em modo readOnly
+Componente "print-only" que renderiza a conta para 80mm em fonte monospace. Recebe props já disponíveis nas telas atuais (mesa-detalhe-view, caixa.pagamentos):
 
-Adicionar prop `readOnly?: boolean` em `DetalhePedido`:
+```ts
+type Props = {
+  restaurante: { nome; cnpj?; endereco?; telefone?; logo_url? };
+  contexto: { tipo: "mesa" | "comanda"; mesaNumero?; comandaTitular?; garcomNome?: string | null };
+  itens: Array<{ nome; quantidade; preco_unit; observacao?: string | null }>;
+  couverts?: Array<{ descricao; total }>;
+  totais: { subtotal; couvert?; taxa_servico?; desconto?; total; total_pago?; saldo? };
+  pagamentos?: Array<{ metodo; valor; quando }>; // só quando "comprovante pago"
+  divisao?: { pessoas: number; valorPorPessoa: number }; // opcional, rodapé
+  variante: "rascunho" | "pago"; // "pago" carimba PAGO no rodapé
+};
+```
 
-- Quando `true`: ocultar botão "Cancelar pedido", botão "Trash" por item, botão "Confirmar pagamento" e botão "Confirmar PIX".
-- A área admin (passo 2) passa `readOnly`.
+Cabeçalho com logo (opcional), nome, CNPJ/endereço/telefone (cada um só aparece se preenchido). Identificação Mesa/Comanda + garçom. Tabela de itens (qtd × nome — preço). Couverts. Totais. Pagamentos (variante "pago"). Divisão por pessoa quando informada. Rodapé com data/hora e "Não é documento fiscal".
 
-### 4) Header fixo na página de detalhe da mesa
+**Novo** `src/styles/print.css` (importado uma vez em `__root.tsx`):
 
-No header da `MesaDetalheView` (extraído no passo 2), aplicar `sticky top-0 z-10 bg-card/95 backdrop-blur` (mesmo padrão de `SalaHeader`). Vale para garçom e admin.
+```css
+@media screen { .print-only { display: none; } }
+@media print {
+  body * { visibility: hidden; }
+  .print-only, .print-only * { visibility: visible; }
+  .print-only { position: absolute; inset: 0; width: 80mm; }
+  @page { size: 80mm auto; margin: 4mm; }
+}
+```
 
-### 5) Listagem de mesas no admin respeitando `permitir_atendimento_cruzado`
+**Novo** `src/hooks/use-imprimir.ts` — wrapper trivial em torno de `window.print()`.
 
-Em `src/lib/sala.functions.ts` → `carregarSalaAdminFn`:
+---
 
-- Ler `permitir_atendimento_cruzado` do restaurante (já lido) e, quando `true`, listar todas as mesas ativas do restaurante com `is_virtual=false` (mesmo SELECT já usado em `carregarSalaFn`), ordenando por número. Quando `false`, manter o comportamento atual (somente atribuídas via `mesa_garcom`).
-- Preservar o cálculo de `pedidos_prontos` e `chamados_pendentes` (já depende de `mesaIds`, então passa a refletir todas as mesas quando cruzado está ON, idêntico ao garçom).
+### 3) Garçom — botões no detalhe da mesa
 
-## Arquivos afetados
+**Editar** `src/components/sala/mesa-detalhe-view.tsx`:
 
-- `src/lib/sala.functions.ts` (passo 5)
-- `src/components/sala/minhas-mesas-grid.tsx` (passo 1 — prop `adminGarcomId?`)
-- `src/components/sala/mesa-detalhe-view.tsx` (novo — extração do conteúdo atual de `MesaDetalhePage`)
-- `src/components/pedidos/detalhe-pedido.tsx` (passo 3 — prop `readOnly`)
-- `src/routes/_authenticated/sala_.mesa.$mesaId.tsx` (passa a usar `MesaDetalheView`; header sticky)
-- `src/routes/_authenticated/admin/garcons_.$garcomId.sala.tsx` (passa `adminGarcomId` ao grid)
-- `src/routes/_authenticated/admin/garcons_.$garcomId.sala_.mesa.$mesaId.tsx` (novo — usa `MesaDetalheView` em readOnly)
+- Botão **"Imprimir conta"** no header (ao lado de Dividir total / Juntar comandas). Visível também em `readOnly`.
+- Botão **"Imprimir"** (ícone) dentro de cada card de comanda no accordion, para imprimir a comanda individual.
+- Renderiza `<ComprovanteConta variante="rascunho">` oculto via `print-only` com os dados do contexto clicado.
 
-## Fora de escopo
+**Editar** `src/components/sala/dividir-total-dialog.tsx`:
+- Adicionar botão **"Imprimir conta com divisão"** que imprime **uma única via** com o detalhamento completo e, no rodapé, "Dividido por N pessoas: R$ X por pessoa". (Sem múltiplas vias — economia de papel; se o cliente quiser vias separadas, usa "Imprimir" por comanda.)
 
-- Erro de hidratação `<a>` aninhado em `MinhasMesasGrid` (Link dentro de Link). Não foi pedido; deixo para um PR específico.
-- Mudanças visuais/de estilo além do `sticky` do header.
+Sem novos server functions — todos os dados já vêm de `useCarregarMesa`.
+
+---
+
+### 4) Caixa — botão na lista e comprovante pós-pagamento
+
+**Editar** `src/routes/_authenticated/caixa.pagamentos.tsx`:
+- Na coluna de ações da tabela, adicionar **botão-ícone "Imprimir conta"** (ícone `Receipt`) ao lado de "Registrar pagamento" em cada linha, imprimindo a conta rascunho da comanda.
+
+**Editar** `src/components/admin/confirmar-pagamento-dialog-body.tsx`:
+- Após o `registrar.mutateAsync` bem-sucedido, **antes** de fechar o diálogo, exibir um estado de sucesso com botão destacado **"Imprimir comprovante"** (`variante="pago"`, incluindo a linha de pagamentos e carimbo PAGO) + botão "Fechar". Quem não quiser imprimir só fecha.
+
+**Server function nova** (se necessário) em `src/lib/caixa.functions.ts`:
+- `carregarComandaParaImpressaoFn({ comandaId })` → retorna `{ restaurante, comanda, itens, couverts, totais, pagamentos }`. Reusa selects de `sala.functions.ts`. (A confirmar durante implementação se realmente é necessária ou se algo equivalente já existe.)
+
+---
+
+### 5) Arquivos afetados
+
+**Migration:**
+- Nova migration: adicionar `cnpj`, `telefone`, `endereco` em `restaurantes`.
+
+**Novos:**
+- `src/components/impressao/comprovante-conta.tsx`
+- `src/hooks/use-imprimir.ts`
+- `src/styles/print.css`
+
+**Editados:**
+- `src/routes/__root.tsx` (importar `print.css`)
+- `src/components/configuracoes/identidade-form.tsx` (seção "Dados para impressão")
+- `src/lib/configuracoes.functions.ts` (persistir os 3 campos novos)
+- `src/components/sala/mesa-detalhe-view.tsx` (botões + render oculto)
+- `src/components/sala/dividir-total-dialog.tsx` (botão "Imprimir conta com divisão")
+- `src/routes/_authenticated/caixa.pagamentos.tsx` (botão-ícone na linha)
+- `src/components/admin/confirmar-pagamento-dialog-body.tsx` (estado pós-sucesso + botão "Imprimir comprovante")
+- `src/lib/caixa.functions.ts` (apenas se precisar de fn nova de carregamento por comanda)
+
+---
+
+### Fora de escopo
+
+- Agente Node.js local e impressão automática de comanda de cozinha (KDS já cobre).
+- Tabelas `impressoras`, `regras_impressao`, `impressoes_log`, `fila_reimpressao`.
+- Log persistente de impressões/reimpressões.
+- Múltiplas vias na divisão de conta (decisão: 1 via única para economizar papel).
+- Tela de configuração de layout de impressão (largura, toggles). Pode entrar num PR futuro se demandado.

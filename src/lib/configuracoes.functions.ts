@@ -33,6 +33,9 @@ const configSchema = z.discriminatedUnion("aba", [
     cor_acento: z.string().regex(/^#[0-9a-fA-F]{6}$/, "Cor inválida"),
     tema_cardapio: z.enum(["claro", "escuro"]),
     logo_url: z.string().nullable(),
+    cnpj: z.string().trim().max(20).nullable(),
+    telefone: z.string().trim().max(30).nullable(),
+    endereco: z.string().trim().max(200).nullable(),
   }),
   z.object({
     aba: z.literal("pagamentos"),
@@ -118,6 +121,9 @@ export const atualizarConfiguracoesFn = createServerFn({ method: "POST" })
           cor_acento: data.cor_acento,
           tema_cardapio: data.tema_cardapio,
           logo_url: data.logo_url,
+          cnpj: data.cnpj,
+          telefone: data.telefone,
+          endereco: data.endereco,
         };
         break;
       }

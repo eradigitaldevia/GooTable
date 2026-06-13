@@ -1,5 +1,7 @@
 import { useMemo, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { useQuery } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -17,7 +19,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { Loader2, Receipt, Search, Tv, X, LayoutGrid } from "lucide-react";
+import { Loader2, Receipt, Search, Tv, X, LayoutGrid, Printer } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { useMeuRestaurante } from "@/hooks/use-restaurante";
 import { useComandasPagamentoPendente } from "@/hooks/use-pagamentos";
@@ -26,6 +28,10 @@ import { useVerificarPlatformAdmin } from "@/hooks/use-superadmin";
 import { ConfirmarPagamentoDialog } from "@/components/admin/confirmar-pagamento-dialog";
 import { formatBRL } from "@/lib/cart";
 import { useTick } from "@/hooks/use-tick";
+import { ComprovanteConta } from "@/components/impressao/comprovante-conta";
+import { useImprimir } from "@/hooks/use-imprimir";
+import { resumoComandaImpressaoFn } from "@/lib/pedidos.functions";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/caixa/pagamentos")({
   component: CaixaPagamentosPage,
@@ -57,9 +63,49 @@ function CaixaPagamentosPage() {
   const [selecionada, setSelecionada] = useState<
     { comandaId: string; restante: number } | null
   >(null);
+  const [imprimirComandaId, setImprimirComandaId] = useState<string | null>(null);
   const [busca, setBusca] = useState("");
   const [garcomFiltro, setGarcomFiltro] = useState<string>("todos");
   const [modoTv, setModoTv] = useState(false);
+
+  const resumoFn = useServerFn(resumoComandaImpressaoFn);
+  const imprimir = useImprimir();
+  const { data: dadosImpressao, isFetching: carregandoImpressao } = useQuery({
+    queryKey: ["resumo-comanda-impressao", imprimirComandaId, restaurante?.id],
+    queryFn: () =>
+      resumoFn({
+        data: {
+          restauranteId: restaurante!.id,
+          comandaId: imprimirComandaId!,
+        },
+      }),
+    enabled: !!imprimirComandaId && !!restaurante?.id,
+  });
+
+  function dispararImpressao(comandaId: string) {
+    if (imprimirComandaId === comandaId && dadosImpressao) {
+      imprimir();
+      return;
+    }
+    setImprimirComandaId(comandaId);
+    // Aguarda a próxima query e imprime quando os dados chegarem.
+    const start = Date.now();
+    const tick = () => {
+      if (Date.now() - start > 10000) {
+        toast.error("Não foi possível carregar a conta para impressão.");
+        return;
+      }
+      const node = document.querySelector(
+        `[data-print-comanda-id="${comandaId}"]`,
+      );
+      if (node) {
+        imprimir();
+      } else {
+        setTimeout(tick, 100);
+      }
+    };
+    setTimeout(tick, 100);
+  }
 
   const todas = comandas ?? [];
   const garcons = useMemo(() => {
@@ -298,6 +344,24 @@ function CaixaPagamentosPage() {
                           </Link>
                         </Button>
                       )}
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="ml-2"
+                        title="Imprimir conta"
+                        disabled={
+                          carregandoImpressao &&
+                          imprimirComandaId === c.comanda_id
+                        }
+                        onClick={() => dispararImpressao(c.comanda_id)}
+                      >
+                        {carregandoImpressao &&
+                        imprimirComandaId === c.comanda_id ? (
+                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        ) : (
+                          <Printer className="h-3.5 w-3.5" />
+                        )}
+                      </Button>
                     </td>
                   </tr>
                 ))}
@@ -315,6 +379,27 @@ function CaixaPagamentosPage() {
           comandaId={selecionada.comandaId}
           saldoSugerido={selecionada.restante}
         />
+      )}
+
+      {dadosImpressao && (
+        <div data-print-comanda-id={dadosImpressao.comanda.id}>
+          <ComprovanteConta
+            restaurante={dadosImpressao.restaurante}
+            contexto={{
+              tipo: "comanda",
+              mesaNumero: dadosImpressao.mesa_numero,
+              comandaTitular: dadosImpressao.comanda.titular_nome,
+              garcomNome: dadosImpressao.garcom_nome,
+            }}
+            itens={dadosImpressao.itens}
+            couverts={dadosImpressao.couverts}
+            totais={dadosImpressao.totais}
+            pagamentos={dadosImpressao.pagamentos}
+            variante={
+              dadosImpressao.totais.saldo <= 0 ? "pago" : "rascunho"
+            }
+          />
+        </div>
       )}
     </div>
   );
