@@ -23,10 +23,14 @@ import {
   TabsList,
   TabsTrigger,
 } from "@/components/ui/tabs";
-import { Loader2, Split } from "lucide-react";
+import { Loader2, Split, Printer } from "lucide-react";
 import { toast } from "sonner";
 import { useGerarDivisaoConta } from "@/hooks/use-comandas-acoes";
 import { formatBRL } from "@/lib/cart";
+import { useImprimir } from "@/hooks/use-imprimir";
+import { useMeuRestaurante } from "@/hooks/use-restaurante";
+import { useAuth } from "@/hooks/use-auth";
+import { ComprovanteConta } from "@/components/impressao/comprovante-conta";
 import type {
   DivisaoContaResultado,
   ModoDivisao,
@@ -96,6 +100,10 @@ export function DividirTotalDialog({
 
   const [resultado, setResultado] = useState<DivisaoContaResultado | null>(null);
   const gerar = useGerarDivisaoConta(restauranteId);
+  const imprimir = useImprimir();
+  const { user } = useAuth();
+  const { data: restaurante } = useMeuRestaurante(user?.id);
+  const [imprimirPendente, setImprimirPendente] = useState(false);
 
   const toggleComanda = (id: string) => {
     setSel((prev) => {
