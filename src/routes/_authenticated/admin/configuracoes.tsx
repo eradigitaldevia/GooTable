@@ -286,6 +286,9 @@ function Configuracoes() {
       "cor_acento",
       "tema_cardapio",
       "logo_url",
+      "cnpj",
+      "telefone",
+      "endereco",
     ],
     pagamentos: ["pix_habilitado", "pix_chave", "pix_nome_titular"],
     taxas: [
