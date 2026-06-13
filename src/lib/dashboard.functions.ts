@@ -43,6 +43,40 @@ export const dashboardAdminFn = createServerFn({ method: "POST" })
     };
   });
 
+/* ---------- Admin: métricas Delivery (hoje) ---------- */
+
+export interface DashboardDeliveryResumo {
+  pedidosHoje: number;
+  ticketMedio: number;
+  faturamentoHoje: number;
+}
+
+export const dashboardDeliveryFn = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) => z.object({ restauranteId: z.string().uuid() }).parse(d))
+  .handler(async ({ context, data }): Promise<DashboardDeliveryResumo> => {
+    const { supabase, userId } = context;
+    await assertAcessoRestaurante(supabase, userId, data.restauranteId);
+
+    const inicioDia = new Date();
+    inicioDia.setHours(0, 0, 0, 0);
+
+    const { data: peds, error } = await supabase
+      .from("pedidos")
+      .select("total, status, canal")
+      .eq("restaurante_id", data.restauranteId)
+      .eq("canal", "delivery")
+      .gte("criado_em", inicioDia.toISOString());
+    if (error) throw new Error(error.message);
+
+    const lista = peds ?? [];
+    const pedidosHoje = lista.length;
+    const entregues = lista.filter((p) => p.status === "entregue");
+    const faturamentoHoje = entregues.reduce((s, p) => s + Number(p.total ?? 0), 0);
+    const ticketMedio = entregues.length > 0 ? faturamentoHoje / entregues.length : 0;
+    return { pedidosHoje, ticketMedio, faturamentoHoje };
+  });
+
 /* ---------- Admin: métricas operacionais ---------- */
 
 export type DashboardMetricasPeriodo = "hoje" | "7d" | "30d";
