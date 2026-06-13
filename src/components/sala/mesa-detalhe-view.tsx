@@ -189,6 +189,17 @@ export function MesaDetalheView({
           <Button asChild size="sm" variant="ghost">
             {backLink}
           </Button>
+          {data?.sessao && data.comandas.length > 0 && (
+            <Button
+              size="sm"
+              variant="outline"
+              className="ml-2"
+              onClick={pedirImpressaoMesa}
+            >
+              <Printer className="mr-1 h-3.5 w-3.5" />
+              Imprimir conta
+            </Button>
+          )}
           <div className="ml-auto text-right">
             <div className="text-[10px] uppercase tracking-wide text-muted-foreground">
               Mesa
