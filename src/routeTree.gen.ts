@@ -59,6 +59,7 @@ import { Route as AuthenticatedAdminClientesIdRouteImport } from './routes/_auth
 import { Route as AuthenticatedSalaMesaRouteImport } from './routes/_authenticated/sala_.mesa.'
 import { Route as AuthenticatedAdminGarconsGarcomIdSalaRouteImport } from './routes/_authenticated/admin/garcons_.$garcomId.sala'
 import { Route as AuthenticatedAdminCuminsCumimIdDisplayRouteImport } from './routes/_authenticated/admin/cumins_.$cumimId.display'
+import { Route as AuthenticatedAdminGarconsGarcomIdSalaMesaMesaIdRouteImport } from './routes/_authenticated/admin/garcons_.$garcomId.sala_.mesa.$mesaId'
 
 const SuperadminRoute = SuperadminRouteImport.update({
   id: '/superadmin',
@@ -331,6 +332,12 @@ const AuthenticatedAdminCuminsCumimIdDisplayRoute =
     path: '/cumins/$cumimId/display',
     getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
+const AuthenticatedAdminGarconsGarcomIdSalaMesaMesaIdRoute =
+  AuthenticatedAdminGarconsGarcomIdSalaMesaMesaIdRouteImport.update({
+    id: '/garcons_/$garcomId/sala_/mesa/$mesaId',
+    path: '/garcons/$garcomId/sala/mesa/$mesaId',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -382,6 +389,7 @@ export interface FileRoutesByFullPath {
   '/m/$qrToken/status/$pedidoId': typeof MQrTokenStatusPedidoIdRoute
   '/admin/cumins/$cumimId/display': typeof AuthenticatedAdminCuminsCumimIdDisplayRoute
   '/admin/garcons/$garcomId/sala': typeof AuthenticatedAdminGarconsGarcomIdSalaRoute
+  '/admin/garcons/$garcomId/sala/mesa/$mesaId': typeof AuthenticatedAdminGarconsGarcomIdSalaMesaMesaIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -430,6 +438,7 @@ export interface FileRoutesByTo {
   '/m/$qrToken/status/$pedidoId': typeof MQrTokenStatusPedidoIdRoute
   '/admin/cumins/$cumimId/display': typeof AuthenticatedAdminCuminsCumimIdDisplayRoute
   '/admin/garcons/$garcomId/sala': typeof AuthenticatedAdminGarconsGarcomIdSalaRoute
+  '/admin/garcons/$garcomId/sala/mesa/$mesaId': typeof AuthenticatedAdminGarconsGarcomIdSalaMesaMesaIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -483,6 +492,7 @@ export interface FileRoutesById {
   '/m/$qrToken_/status/$pedidoId': typeof MQrTokenStatusPedidoIdRoute
   '/_authenticated/admin/cumins_/$cumimId/display': typeof AuthenticatedAdminCuminsCumimIdDisplayRoute
   '/_authenticated/admin/garcons_/$garcomId/sala': typeof AuthenticatedAdminGarconsGarcomIdSalaRoute
+  '/_authenticated/admin/garcons_/$garcomId/sala_/mesa/$mesaId': typeof AuthenticatedAdminGarconsGarcomIdSalaMesaMesaIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -536,6 +546,7 @@ export interface FileRouteTypes {
     | '/m/$qrToken/status/$pedidoId'
     | '/admin/cumins/$cumimId/display'
     | '/admin/garcons/$garcomId/sala'
+    | '/admin/garcons/$garcomId/sala/mesa/$mesaId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -584,6 +595,7 @@ export interface FileRouteTypes {
     | '/m/$qrToken/status/$pedidoId'
     | '/admin/cumins/$cumimId/display'
     | '/admin/garcons/$garcomId/sala'
+    | '/admin/garcons/$garcomId/sala/mesa/$mesaId'
   id:
     | '__root__'
     | '/'
@@ -636,6 +648,7 @@ export interface FileRouteTypes {
     | '/m/$qrToken_/status/$pedidoId'
     | '/_authenticated/admin/cumins_/$cumimId/display'
     | '/_authenticated/admin/garcons_/$garcomId/sala'
+    | '/_authenticated/admin/garcons_/$garcomId/sala_/mesa/$mesaId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -1007,6 +1020,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminCuminsCumimIdDisplayRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
+    '/_authenticated/admin/garcons_/$garcomId/sala_/mesa/$mesaId': {
+      id: '/_authenticated/admin/garcons_/$garcomId/sala_/mesa/$mesaId'
+      path: '/garcons/$garcomId/sala/mesa/$mesaId'
+      fullPath: '/admin/garcons/$garcomId/sala/mesa/$mesaId'
+      preLoaderRoute: typeof AuthenticatedAdminGarconsGarcomIdSalaMesaMesaIdRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
   }
 }
 
@@ -1043,6 +1063,7 @@ interface AuthenticatedAdminRouteChildren {
   AuthenticatedAdminIndexRoute: typeof AuthenticatedAdminIndexRoute
   AuthenticatedAdminCuminsCumimIdDisplayRoute: typeof AuthenticatedAdminCuminsCumimIdDisplayRoute
   AuthenticatedAdminGarconsGarcomIdSalaRoute: typeof AuthenticatedAdminGarconsGarcomIdSalaRoute
+  AuthenticatedAdminGarconsGarcomIdSalaMesaMesaIdRoute: typeof AuthenticatedAdminGarconsGarcomIdSalaMesaMesaIdRoute
 }
 
 const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
@@ -1069,6 +1090,8 @@ const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
     AuthenticatedAdminCuminsCumimIdDisplayRoute,
   AuthenticatedAdminGarconsGarcomIdSalaRoute:
     AuthenticatedAdminGarconsGarcomIdSalaRoute,
+  AuthenticatedAdminGarconsGarcomIdSalaMesaMesaIdRoute:
+    AuthenticatedAdminGarconsGarcomIdSalaMesaMesaIdRoute,
 }
 
 const AuthenticatedAdminRouteWithChildren =
@@ -1169,3 +1192,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
