@@ -121,6 +121,9 @@ export const atualizarConfiguracoesFn = createServerFn({ method: "POST" })
           cor_acento: data.cor_acento,
           tema_cardapio: data.tema_cardapio,
           logo_url: data.logo_url,
+          cnpj: data.cnpj,
+          telefone: data.telefone,
+          endereco: data.endereco,
         };
         break;
       }
