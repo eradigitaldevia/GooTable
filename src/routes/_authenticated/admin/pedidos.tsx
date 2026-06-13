@@ -45,6 +45,17 @@ interface Pedido {
   comanda_id: string | null;
   garcom_id?: string | null;
   canal?: string | null;
+  cliente_nome?: string | null;
+  cliente_telefone?: string | null;
+  taxa_entrega?: number | null;
+  endereco_cep?: string | null;
+  endereco_rua?: string | null;
+  endereco_numero?: string | null;
+  endereco_complemento?: string | null;
+  endereco_bairro?: string | null;
+  endereco_cidade?: string | null;
+  endereco_uf?: string | null;
+  endereco_referencia?: string | null;
 }
 interface Item {
   id: string;
@@ -222,6 +233,7 @@ function PedidosPainel() {
             : []
         }
         onClose={() => setAberto(null)}
+        deliverySlug={restaurante?.delivery_slug ?? null}
       />
     </div>
   );
