@@ -129,6 +129,45 @@ export function IdentidadeForm({
         <Input value={nome} onChange={(e) => onChange({ nome: e.target.value })} />
       </div>
 
+      <div className="space-y-3 rounded-xl border border-dashed border-border bg-muted/30 p-4">
+        <div>
+          <div className="text-sm font-medium">Dados para impressão</div>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Aparecem no cabeçalho dos comprovantes impressos pelo garçom e pelo
+            caixa. Campos opcionais — só aparece o que estiver preenchido.
+          </p>
+        </div>
+        <div className="grid gap-3 sm:grid-cols-2">
+          <div className="space-y-1">
+            <Label>CNPJ</Label>
+            <Input
+              value={cnpj}
+              maxLength={20}
+              placeholder="00.000.000/0000-00"
+              onChange={(e) => onChange({ cnpj: e.target.value })}
+            />
+          </div>
+          <div className="space-y-1">
+            <Label>Telefone</Label>
+            <Input
+              value={telefone}
+              maxLength={30}
+              placeholder="(11) 99999-9999"
+              onChange={(e) => onChange({ telefone: e.target.value })}
+            />
+          </div>
+        </div>
+        <div className="space-y-1">
+          <Label>Endereço</Label>
+          <Input
+            value={endereco}
+            maxLength={200}
+            placeholder="Rua X, 123 - Bairro - Cidade/UF"
+            onChange={(e) => onChange({ endereco: e.target.value })}
+          />
+        </div>
+      </div>
+
       <div className="space-y-3 border-t border-border pt-6">
         <PaletasTabs
           corPrimaria={corPrimaria}
