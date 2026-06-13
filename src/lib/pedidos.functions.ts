@@ -1291,7 +1291,7 @@ export const resumoComandaImpressaoFn = createServerFn({ method: "POST" })
       supabaseAdmin
         .from("comandas")
         .select(
-          "id, mesa_id, sessao_id, titular_cliente_id, subtotal, desconto_cupom, cashback_resgatado, total, total_pago",
+          "id, sessao_id, titular_cliente_id, subtotal, desconto_cupom, cashback_resgatado, total, total_pago",
         )
         .eq("id", data.comandaId)
         .maybeSingle(),
@@ -1309,13 +1309,21 @@ export const resumoComandaImpressaoFn = createServerFn({ method: "POST" })
     };
 
     let mesaNumero: string | null = null;
-    if (com.mesa_id) {
-      const { data: mesa } = await supabaseAdmin
-        .from("mesas")
-        .select("numero")
-        .eq("id", com.mesa_id as string)
+    if (com.sessao_id) {
+      const { data: sess } = await supabaseAdmin
+        .from("mesa_sessoes")
+        .select("mesa_id")
+        .eq("id", com.sessao_id as string)
         .maybeSingle();
-      mesaNumero = (mesa?.numero as string | undefined) ?? null;
+      const mesaId = (sess?.mesa_id as string | undefined) ?? null;
+      if (mesaId) {
+        const { data: mesa } = await supabaseAdmin
+          .from("mesas")
+          .select("numero")
+          .eq("id", mesaId)
+          .maybeSingle();
+        mesaNumero = (mesa?.numero as string | undefined) ?? null;
+      }
     }
 
     let titularNome: string | null = null;
