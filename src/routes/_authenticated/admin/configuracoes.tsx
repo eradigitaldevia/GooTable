@@ -406,6 +406,9 @@ function Configuracoes() {
         cor_acento: f.cor_acento,
         tema_cardapio: f.tema_cardapio,
         logo_url: f.logo_url,
+        cnpj: f.cnpj.trim() || null,
+        telefone: f.telefone.trim() || null,
+        endereco: f.endereco.trim() || null,
       };
     } else if (aba === "pagamentos") {
       payload = {
