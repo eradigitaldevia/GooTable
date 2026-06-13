@@ -94,6 +94,7 @@ export function DetalhePedido({
   destinoStatus,
   mostrarPagamento = true,
   deliverySlug,
+  readOnly = false,
 }: {
   pedido: Pedido | null;
   itens: Item[];
@@ -103,6 +104,7 @@ export function DetalhePedido({
   destinoStatus?: DestinoStatusInfo[];
   mostrarPagamento?: boolean;
   deliverySlug?: string | null;
+  readOnly?: boolean;
 }) {
   const [pagOpen, setPagOpen] = useState(false);
   const [cancelarPedidoOpen, setCancelarPedidoOpen] = useState(false);
@@ -156,7 +158,8 @@ export function DetalhePedido({
   const algumItemPronto = itens.some((it) => (it.quantidade_pronta ?? 0) > 0);
   const pedidoEmAndamento = pedido.status === "em_preparo" || pedido.status === "pronto";
   const exigeMotivoPedido = pedidoEmAndamento || algumItemPronto;
-  const podeCancelarItem = pedido.status !== "entregue" && pedido.status !== "cancelado";
+  const podeCancelarItem =
+    !readOnly && pedido.status !== "entregue" && pedido.status !== "cancelado";
 
   const handleConfirmarCancelarPedido = () => {
     if (exigeMotivoPedido && motivoPedido.trim().length < 3) {
@@ -287,7 +290,7 @@ export function DetalhePedido({
           <span className="text-xl font-bold text-primary">{formatBRL(Number(pedido.total))}</span>
         </div>
 
-        {pixPendente && (
+        {pixPendente && !readOnly && (
           <Button
             variant="outline"
             className="w-full"
@@ -306,7 +309,7 @@ export function DetalhePedido({
           </Button>
         )}
 
-        {pedido.comanda_id && mostrarPagamento && pedido.status !== "cancelado" && (
+        {pedido.comanda_id && mostrarPagamento && !readOnly && pedido.status !== "cancelado" && (
           <div className="space-y-2 rounded-xl border bg-muted/30 p-3">
             <div className="flex items-center justify-between text-sm">
               <span className="text-muted-foreground">Total da comanda</span>
@@ -350,7 +353,7 @@ export function DetalhePedido({
           </div>
         )}
 
-        {pedido.status !== "cancelado" && pedido.status !== "entregue" && (
+        {!readOnly && pedido.status !== "cancelado" && pedido.status !== "entregue" && (
           <Button
             variant="outline"
             className="text-destructive"
