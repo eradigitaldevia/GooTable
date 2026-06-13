@@ -20,6 +20,7 @@ import { Route as SuperadminIndexRouteImport } from './routes/superadmin.index'
 import { Route as SuperadminRestaurantesRouteImport } from './routes/superadmin.restaurantes'
 import { Route as SuperadminLogsRouteImport } from './routes/superadmin.logs'
 import { Route as MQrTokenRouteImport } from './routes/m.$qrToken'
+import { Route as DeliverySlugRouteImport } from './routes/delivery.$slug'
 import { Route as AuthenticatedSalaRouteImport } from './routes/_authenticated/sala'
 import { Route as AuthenticatedCumimRouteImport } from './routes/_authenticated/cumim'
 import { Route as AuthenticatedCozinhaRouteImport } from './routes/_authenticated/cozinha'
@@ -109,6 +110,11 @@ const SuperadminLogsRoute = SuperadminLogsRouteImport.update({
 const MQrTokenRoute = MQrTokenRouteImport.update({
   id: '/m/$qrToken',
   path: '/m/$qrToken',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DeliverySlugRoute = DeliverySlugRouteImport.update({
+  id: '/delivery/$slug',
+  path: '/delivery/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedSalaRoute = AuthenticatedSalaRouteImport.update({
@@ -326,6 +332,7 @@ export interface FileRoutesByFullPath {
   '/cozinha': typeof AuthenticatedCozinhaRoute
   '/cumim': typeof AuthenticatedCumimRoute
   '/sala': typeof AuthenticatedSalaRoute
+  '/delivery/$slug': typeof DeliverySlugRoute
   '/m/$qrToken': typeof MQrTokenRoute
   '/superadmin/logs': typeof SuperadminLogsRoute
   '/superadmin/restaurantes': typeof SuperadminRestaurantesRouteWithChildren
@@ -371,6 +378,7 @@ export interface FileRoutesByTo {
   '/cozinha': typeof AuthenticatedCozinhaRoute
   '/cumim': typeof AuthenticatedCumimRoute
   '/sala': typeof AuthenticatedSalaRoute
+  '/delivery/$slug': typeof DeliverySlugRoute
   '/m/$qrToken': typeof MQrTokenRoute
   '/superadmin/logs': typeof SuperadminLogsRoute
   '/superadmin/restaurantes': typeof SuperadminRestaurantesRouteWithChildren
@@ -421,6 +429,7 @@ export interface FileRoutesById {
   '/_authenticated/cozinha': typeof AuthenticatedCozinhaRoute
   '/_authenticated/cumim': typeof AuthenticatedCumimRoute
   '/_authenticated/sala': typeof AuthenticatedSalaRoute
+  '/delivery/$slug': typeof DeliverySlugRoute
   '/m/$qrToken': typeof MQrTokenRoute
   '/superadmin/logs': typeof SuperadminLogsRoute
   '/superadmin/restaurantes': typeof SuperadminRestaurantesRouteWithChildren
@@ -471,6 +480,7 @@ export interface FileRouteTypes {
     | '/cozinha'
     | '/cumim'
     | '/sala'
+    | '/delivery/$slug'
     | '/m/$qrToken'
     | '/superadmin/logs'
     | '/superadmin/restaurantes'
@@ -516,6 +526,7 @@ export interface FileRouteTypes {
     | '/cozinha'
     | '/cumim'
     | '/sala'
+    | '/delivery/$slug'
     | '/m/$qrToken'
     | '/superadmin/logs'
     | '/superadmin/restaurantes'
@@ -565,6 +576,7 @@ export interface FileRouteTypes {
     | '/_authenticated/cozinha'
     | '/_authenticated/cumim'
     | '/_authenticated/sala'
+    | '/delivery/$slug'
     | '/m/$qrToken'
     | '/superadmin/logs'
     | '/superadmin/restaurantes'
@@ -609,6 +621,7 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   SuperadminRoute: typeof SuperadminRouteWithChildren
+  DeliverySlugRoute: typeof DeliverySlugRoute
   MQrTokenRoute: typeof MQrTokenRoute
   MQrTokenCarrinhoRoute: typeof MQrTokenCarrinhoRoute
   MQrTokenContaRoute: typeof MQrTokenContaRoute
@@ -693,6 +706,13 @@ declare module '@tanstack/react-router' {
       path: '/m/$qrToken'
       fullPath: '/m/$qrToken'
       preLoaderRoute: typeof MQrTokenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/delivery/$slug': {
+      id: '/delivery/$slug'
+      path: '/delivery/$slug'
+      fullPath: '/delivery/$slug'
+      preLoaderRoute: typeof DeliverySlugRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/sala': {
@@ -1096,6 +1116,7 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   SuperadminRoute: SuperadminRouteWithChildren,
+  DeliverySlugRoute: DeliverySlugRoute,
   MQrTokenRoute: MQrTokenRoute,
   MQrTokenCarrinhoRoute: MQrTokenCarrinhoRoute,
   MQrTokenContaRoute: MQrTokenContaRoute,
