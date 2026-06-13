@@ -33,6 +33,7 @@ interface Pedido {
   restaurante_id: string;
   comanda_id: string | null;
   garcom_id?: string | null;
+  canal?: string | null;
 }
 interface Item {
   id: string;
@@ -299,6 +300,7 @@ function CozinhaKDS() {
                   onMarcarItem={marcarItem}
                   itemPendingId={itemPendingId}
                   garcomNome={nomeDoPedido(p)}
+                  canal={p.canal}
                 />
               ))}
             </Coluna>
@@ -321,6 +323,7 @@ function CozinhaKDS() {
                   onMarcarItem={marcarItem}
                   itemPendingId={itemPendingId}
                   garcomNome={nomeDoPedido(p)}
+                  canal={p.canal}
                 />
               ))}
             </Coluna>
