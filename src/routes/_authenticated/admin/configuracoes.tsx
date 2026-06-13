@@ -243,6 +243,29 @@ function Configuracoes() {
         restaurante.taxa_servico_repasse_percentual != null
           ? String(restaurante.taxa_servico_repasse_percentual)
           : "",
+      delivery_ativo: (restaurante as any).delivery_ativo ?? false,
+      delivery_retirada_ativa: (restaurante as any).delivery_retirada_ativa ?? true,
+      delivery_slug: (restaurante as any).delivery_slug ?? "",
+      delivery_taxa_entrega:
+        (restaurante as any).delivery_taxa_entrega != null
+          ? String((restaurante as any).delivery_taxa_entrega)
+          : "",
+      delivery_pedido_minimo:
+        (restaurante as any).delivery_pedido_minimo != null
+          ? String((restaurante as any).delivery_pedido_minimo)
+          : "",
+      delivery_tempo_estimado_min:
+        (restaurante as any).delivery_tempo_estimado_min != null
+          ? String((restaurante as any).delivery_tempo_estimado_min)
+          : "45",
+      delivery_raio_km:
+        (restaurante as any).delivery_raio_km != null
+          ? String((restaurante as any).delivery_raio_km)
+          : "",
+      delivery_aceita_dinheiro: (restaurante as any).delivery_aceita_dinheiro ?? true,
+      delivery_aceita_cartao_entrega:
+        (restaurante as any).delivery_aceita_cartao_entrega ?? true,
+      delivery_aceita_pix: (restaurante as any).delivery_aceita_pix ?? true,
     } as typeof form;
   }, [restaurante]);
 
@@ -280,6 +303,18 @@ function Configuracoes() {
       "caixa_obrigatorio_para_pagamento",
     ],
     cardapio: ["upsell_habilitado"],
+    delivery: [
+      "delivery_ativo",
+      "delivery_retirada_ativa",
+      "delivery_slug",
+      "delivery_taxa_entrega",
+      "delivery_pedido_minimo",
+      "delivery_tempo_estimado_min",
+      "delivery_raio_km",
+      "delivery_aceita_dinheiro",
+      "delivery_aceita_cartao_entrega",
+      "delivery_aceita_pix",
+    ],
   };
 
   const abasSujas = useMemo(() => {
@@ -290,6 +325,7 @@ function Configuracoes() {
       comissoes: false,
       caixa: false,
       cardapio: false,
+      delivery: false,
     };
     if (!snapshot) return r;
     (Object.keys(CAMPOS_POR_ABA) as TabId[]).forEach((aba) => {
