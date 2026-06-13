@@ -50,6 +50,9 @@ function Cardapio() {
     <div className="space-y-6">
       <header>
         <h1 className="text-3xl font-bold tracking-tight">Cardápio</h1>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Gerencie os produtos, categorias, destinos de preparo e visualize a prévia do seu cardápio.
+        </p>
       </header>
 
       <Tabs
