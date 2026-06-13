@@ -1,87 +1,53 @@
 ## Objetivo
 
-Mover Couvert artístico da página Configurações para a página Couvert artístico (em nova aba "Taxa de couvert"), manter Couvert de mesa em Configurações, deixar a página Couvert artístico sempre visível e **separar completamente o backend** das duas abas — nenhum campo artístico trafega pela aba `taxas`.
+Agrupar **Cardápio**, **Destinos de preparo** e **Prévia do cardápio** em uma única página com abas em `/admin/cardapio`, preservando 100% do comportamento atual. Sidebar passa a ter apenas o item "Cardápio".
 
----
+## Estrutura final
 
-## 1. Backend — separar a aba `taxas` em duas
+```
+/admin/cardapio?tab=itens      → conteúdo atual de cardapio.tsx
+/admin/cardapio?tab=destinos   → conteúdo atual de destinos-preparo.tsx
+/admin/cardapio?tab=previa     → conteúdo atual de cardapio-preview.tsx
+```
 
-### `src/lib/configuracoes.functions.ts`
+Default: `tab=itens`. URLs antigas redirecionam para a nova com a aba correspondente.
 
-- Encolher o ramo `aba: "taxas"` do `configSchema` para conter **apenas**:
-  - `taxa_servico_habilitada`, `taxa_servico_percentual`, `taxa_servico_descricao`
-  - `taxa_servico_repasse_habilitado`, `taxa_servico_repasse_percentual`
-  - `couvert_mesa_habilitado`, `couvert_mesa_valor`, `couvert_mesa_descricao`
-- Adicionar novo ramo `aba: "couvert-artistico"`:
-  - `couvert_artistico_habilitado`, `couvert_artistico_valor`, `couvert_artistico_descricao`
-  - `couvert_artistico_repasse_habilitado`, `couvert_artistico_repasse_percentual`
-- No `handler`, dividir o `case "taxas"` em dois:
-  - `case "taxas"`: validações e `update` apenas dos campos de serviço + couvert mesa.
-  - `case "couvert-artistico"`: validações (valor > 0 quando habilitado; repasse > 0 quando habilitado; zera repasse quando desabilitado) e `update` apenas dos campos artísticos.
+## Arquivos afetados (6)
 
-### `src/hooks/use-configuracoes.ts`
+1. **Criar** `src/components/cardapio/cardapio-itens-panel.tsx` — extrai o corpo de `cardapio.tsx` (todo o conteúdo do `function Cardapio()`, sem `createFileRoute` nem `loader`).
+2. **Criar** `src/components/cardapio/destinos-preparo-panel.tsx` — extrai o corpo de `destinos-preparo.tsx`.
+3. **Criar** `src/components/cardapio/cardapio-previa-panel.tsx` — extrai o corpo de `cardapio-preview.tsx`.
+4. **Reescrever** `src/routes/_authenticated/admin/cardapio.tsx` — vira shell com Tabs (`shadcn/ui Tabs`), `validateSearch` com `tab` via `zodValidator + fallback`, mantém o `loader` que pré-carrega `["cardapio", restauranteId]`. Renderiza o panel ativo conforme `tab`.
+5. **Reescrever** `src/routes/_authenticated/admin/cardapio-preview.tsx` — vira apenas um redirect (`beforeLoad: () => redirect({ to: "/admin/cardapio", search: { tab: "previa" } })`), preservando bookmarks.
+6. **Reescrever** `src/routes/_authenticated/admin/destinos-preparo.tsx` — idem, redirect para `?tab=destinos`.
+7. **Editar** `src/components/admin/admin-sidebar.tsx` — no grupo "Mesas & Cardápio", remover os itens "Prévia do cardápio" e "Destinos de preparo". Manter apenas "Mesas" e "Cardápio".
 
-- Atualizar o tipo `ConfigPayload`:
-  - Remover campos artísticos do membro `aba: "taxas"`.
-  - Acrescentar membro `aba: "couvert-artistico"` com os 5 campos artísticos.
+## Detalhes técnicos
 
----
+- **Tabs**: `shadcn/ui Tabs` (já usado em Couvert artístico, Configurações). Layout: `TabsList` no topo, abaixo do `<h1>` da página, com 3 triggers: "Itens", "Destinos de preparo", "Prévia".
+- **Header da página**: um único `<h1>Cardápio</h1>` no shell. Os panels removem o próprio `<h1>` (Cardápio / Destinos de preparo / Prévia do cardápio) e mantêm apenas o conteúdo (toolbar, ações, tabelas, etc.). Subtítulo descritivo fica na aba ativa quando fizer sentido.
+- **Ações do header (botões "Nova categoria" / "Novo produto")**: ficam dentro do panel "Itens" (continuam visíveis só quando a aba Itens está ativa), preservando comportamento atual.
+- **Search param `tab**`: `validateSearch` com `zodValidator(z.object({ tab: fallback(z.enum(["itens","destinos","previa"]), "itens").default("itens") }))`. Troca de aba via `navigate({ search: { tab } })` — sem reload, mantém cache.
+- **Loader**: mantém `ensureQueryData(["cardapio", restauranteId])` no shell — já cobre as 3 abas (todas usam `useCardapio`).
+- **Redirects**: nas rotas antigas, `beforeLoad` chama `redirect({ to: "/admin/cardapio", search: { tab: "destinos" | "previa" }, replace: true, throw: true })`. Componente fica vazio (`() => null`).
+- **Sidebar**: o item "Cardápio" continua com `exact: true`. Como `?tab=...` é search param, o active state continua funcionando para qualquer aba.
+- **Permissões / gates**: nenhuma das 3 rotas hoje tem gate de papel — nada muda.
 
-## 2. Quebrar `couvert-form.tsx` em dois componentes
+## O que NÃO muda
 
-### `src/components/configuracoes/couvert-form.tsx`
+- Nenhuma regra de negócio, query, mutation, validação ou endpoint backend.
+- Nenhum componente filho (`CategoriaDialog`, `ProdutoDialog`, `CardapioToolbar`, `ProdutoCard`, `ProdutoRow`, `CategoriaChip`, `TemaCardapioProvider`, etc.).
+- Nenhum hook (`useCardapio`, `useMeuRestaurante`, etc.).
+- Layout interno de cada panel — só remove o `<h1>` duplicado.
+- Estilo, cores, espaçamentos, ícones do sidebar dos demais grupos.
 
-- Substituir o `CouvertForm` por **dois componentes exportados** no mesmo arquivo (preserva path de import existente, sem mover código não relacionado):
-  - `CouvertMesaForm` — recebe apenas `mesaHabilitado/mesaValor/mesaDescricao` + `onChange` com as 3 chaves de mesa. Renderiza o bloco "Couvert" com header + somente o card "Couvert de mesa".
-  - `CouvertArtisticoForm` — recebe `artisticoHabilitado/artisticoValor/artisticoDescricao/repasseHabilitado/repassePercentual` + `onChange`. Renderiza o card "Couvert artístico" + bloco "Repasse aos artistas" (sem o link "Gerenciar artistas e apresentações", já que o componente passa a viver dentro da própria página).
-- Manter export legado `CouvertForm` removido (não há outros consumidores além de `configuracoes.tsx`).
+## Pontos a confirmar antes de implementar
 
----
+1. **Header unificado**: ok manter `<h1>Cardápio</h1>` no shell e remover os títulos individuais dos 3 panels? (alternativa: manter o `<h1>` de cada panel, sem título global)
+2. **Botões "Nova categoria / Novo produto"**: confirmar que devem aparecer **apenas** na aba Itens (comportamento mais limpo) — ou mantê-los visíveis sempre no header global?
+3. **Subtítulo de contagem** ("X categorias · Y produtos") da página atual de cardápio: mantenho dentro da aba Itens (junto da seção Produtos) ou subo para o shell ao lado do `<h1>`?
 
-## 3. Página Configurações — manter só Couvert de mesa
-
-### `src/routes/_authenticated/admin/configuracoes.tsx`
-
-- Import: trocar `CouvertForm` por `CouvertMesaForm`.
-- Em `CAMPOS_POR_ABA.taxas`: remover as 5 chaves artísticas (`couvert_artistico_*`).
-- Em `salvar("taxas")`:
-  - Remover validações `r3` e `r5` (valor/repasse artístico).
-  - Remover campos artísticos do `payload`.
-- Substituir o `<CouvertForm ... />` da aba `taxas` por `<CouvertMesaForm ... />` (só props de mesa).
-- Manter rótulo da aba "Taxas e couverts" como está (ou ajustar para "Taxas e couvert" — confirmar item 5).
-
-> Os campos artísticos continuam no `useState form` e no `snapshot` (vêm de `restaurante`) apenas para leitura/inicialização, mas **não são mais enviados** pela aba `taxas`. Alternativa mais limpa: removê-los do `form`/`snapshot` desta página. Ver pergunta abaixo.
-
----
-
-## 4. Página Couvert artístico — sempre visível + nova aba
-
-### `src/routes/_authenticated/admin/couvert-artistico.tsx`
-
-- Remover o early-return quando `!restaurante.couvert_artistico_habilitado` — página sempre acessível.
-- Estender `searchSchema`: `tab: z.enum(["taxa-couvert", "artistas", "apresentacoes", "repasses"]).default("taxa-couvert")`.
-- Adicionar `<TabsTrigger value="taxa-couvert">Taxa de couvert</TabsTrigger>` como primeira aba.
-- Criar novo componente `src/components/couvert-artistico/taxa-couvert-tab.tsx` que:
-  - Usa `useMeuRestaurante` + `useAtualizarConfiguracoes` (mesmo hook) com novo `aba: "couvert-artistico"`.
-  - Reutiliza `CouvertArtisticoForm`.
-  - Tem seu próprio estado local + botão "Salvar" + validações (espelhando as que estavam em `salvar("taxas")` para campos artísticos).
-- Quando `restaurante.couvert_artistico_habilitado === false`: ocultar `<TabsTrigger>` de Artistas/Apresentações/Repasses (mantém só "Taxa de couvert"), e se a URL pedir aba oculta, redirecionar para `taxa-couvert`.
-
-### `src/components/admin/admin-sidebar.tsx`
-
-- Verificar/remover qualquer gate que esconde o item "Couvert artístico" do menu quando `couvert_artistico_habilitado` é falso (se existir). *Este passo só altera o gate; não mexe em estilo.*
-
----
-
-## 5. Perguntas antes de implementar
-
-1. **Limpeza do estado em Configurações:** posso remover os 5 campos `couvert_artistico_*` do `useState form` e do `snapshot` em `configuracoes.tsx` (já que não são mais usados ali)? Isso é a opção mais coerente com "totalmente independente", mas envolve excluir linhas existentes nesses dois blocos.
-  - **A)** Sim, remover (recomendado).
-  - **B)** Não, manter no state mesmo sem uso.
-2. **Rótulo da aba em Configurações:** manter "Taxas e couverts" (plural) ou trocar para "Taxas e couvert" (apenas mesa)?
-3. **Sidebar gate do item "Couvert artístico":** confirmar se devo conferir/remover gate de visibilidade no menu (caso exista) para garantir que o item apareça sempre. Posso alterar apenas o gate, sem tocar em estilos.
-
-Respostas:  
-1. **A)** Sim, remover (recomendado).  
-2. Trocar para "Taxa e couvert" (apenas mesa).  
-3. Sim, conferir/remover gate de visibilidade no menu (caso exista) para garantir que o item apareça sempre.
+Confirmações:  
+1. ok manter `<h1>Cardápio</h1>` no shell e remover os títulos individuais dos 3 panels  
+2. devem aparecer **apenas** na aba Itens (comportamento mais limpo)   
+3. manter dentro da aba Itens
