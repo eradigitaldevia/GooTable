@@ -370,6 +370,25 @@ export function MesaDetalheView({
                           </Button>
                         </div>
                       )}
+                      <div className="mt-2 flex justify-end">
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => pedirImpressaoComanda(c.id)}
+                          disabled={
+                            carregandoComanda && imprimirComandaId === c.id
+                          }
+                          title="Imprimir esta comanda"
+                        >
+                          {carregandoComanda &&
+                          imprimirComandaId === c.id ? (
+                            <Loader2 className="mr-1 h-3 w-3 animate-spin" />
+                          ) : (
+                            <Printer className="mr-1 h-3 w-3" />
+                          )}
+                          Imprimir
+                        </Button>
+                      </div>
                     </li>
                   ))}
                 </ul>
