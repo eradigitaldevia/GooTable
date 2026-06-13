@@ -211,6 +211,9 @@ function Configuracoes() {
       tema_cardapio:
         restaurante.tema_cardapio === "escuro" ? "escuro" : "claro",
       logo_url: restaurante.logo_url,
+      cnpj: (restaurante as any).cnpj ?? "",
+      telefone: (restaurante as any).telefone ?? "",
+      endereco: (restaurante as any).endereco ?? "",
       pix_habilitado: restaurante.pix_habilitado,
       pix_chave: restaurante.pix_chave ?? "",
       pix_nome_titular: restaurante.pix_nome_titular ?? "",
