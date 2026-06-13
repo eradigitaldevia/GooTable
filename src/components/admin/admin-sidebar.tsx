@@ -18,7 +18,6 @@ import {
   Settings,
   LogOut,
   Shield,
-  Eye,
   Users,
   Gift,
   Ticket,
