@@ -22,6 +22,9 @@ export type ConfigPayload =
       cor_acento: string;
       tema_cardapio: "claro" | "escuro";
       logo_url: string | null;
+      cnpj: string | null;
+      telefone: string | null;
+      endereco: string | null;
     })
   | (Base & {
       aba: "pagamentos";
