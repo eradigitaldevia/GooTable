@@ -1,6 +1,17 @@
 import { Link } from "@tanstack/react-router";
-import { ArrowLeft, Clock, Merge, Split, Coffee, Trash2 } from "lucide-react";
+import {
+  ArrowLeft,
+  Clock,
+  Merge,
+  Split,
+  Coffee,
+  Trash2,
+  Printer,
+  Loader2,
+} from "lucide-react";
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
 import { useMeuRestaurante } from "@/hooks/use-restaurante";
@@ -12,6 +23,9 @@ import { DetalhePedido } from "@/components/pedidos/detalhe-pedido";
 import { LancarCouvertDialog } from "@/components/sala/lancar-couvert-dialog";
 import { useRemoverCouvert } from "@/hooks/use-couvert";
 import { toast } from "sonner";
+import { ComprovanteConta } from "@/components/impressao/comprovante-conta";
+import { useImprimir } from "@/hooks/use-imprimir";
+import { resumoComandaImpressaoFn } from "@/lib/pedidos.functions";
 
 type StatusPedido =
   | "recebido"
