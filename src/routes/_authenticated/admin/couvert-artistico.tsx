@@ -6,9 +6,12 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { ArtistasTab } from "@/components/couvert-artistico/artistas-tab";
 import { ApresentacoesTab } from "@/components/couvert-artistico/apresentacoes-tab";
 import { RepassesTab } from "@/components/couvert-artistico/repasses-tab";
+import { TaxaCouvertTab } from "@/components/couvert-artistico/taxa-couvert-tab";
 
 const searchSchema = z.object({
-  tab: z.enum(["artistas", "apresentacoes", "repasses"]).default("artistas"),
+  tab: z
+    .enum(["taxa-couvert", "artistas", "apresentacoes", "repasses"])
+    .default("taxa-couvert"),
 });
 
 export const Route = createFileRoute("/_authenticated/admin/couvert-artistico")({
@@ -26,20 +29,9 @@ function CouvertArtisticoPage() {
     return <div className="text-sm text-muted-foreground">Carregando…</div>;
   }
 
-  if (!restaurante.couvert_artistico_habilitado) {
-    return (
-      <div className="max-w-2xl space-y-4">
-        <h1 className="text-3xl font-bold tracking-tight">Couvert artístico</h1>
-        <div className="rounded-lg border border-dashed border-border bg-card p-6 text-sm text-muted-foreground">
-          O couvert artístico está desabilitado. Ative em{" "}
-          <a href="/admin/configuracoes" className="font-medium text-primary hover:underline">
-            Configurações → Couvert
-          </a>{" "}
-          para gerenciar artistas, apresentações e repasses.
-        </div>
-      </div>
-    );
-  }
+  const habilitado = restaurante.couvert_artistico_habilitado ?? false;
+  const activeTab =
+    !habilitado && tab !== "taxa-couvert" ? "taxa-couvert" : tab;
 
   return (
     <div className="max-w-5xl space-y-6">
@@ -52,16 +44,28 @@ function CouvertArtisticoPage() {
       </header>
 
       <Tabs
-        value={tab}
+        value={activeTab}
         onValueChange={(v) =>
-          navigate({ search: { tab: v as "artistas" | "apresentacoes" | "repasses" } })
+          navigate({
+            search: {
+              tab: v as "taxa-couvert" | "artistas" | "apresentacoes" | "repasses",
+            },
+          })
         }
       >
         <TabsList>
-          <TabsTrigger value="artistas">Artistas</TabsTrigger>
-          <TabsTrigger value="apresentacoes">Apresentações</TabsTrigger>
-          <TabsTrigger value="repasses">Repasses</TabsTrigger>
+          <TabsTrigger value="taxa-couvert">Taxa de couvert</TabsTrigger>
+          {habilitado && <TabsTrigger value="artistas">Artistas</TabsTrigger>}
+          {habilitado && (
+            <TabsTrigger value="apresentacoes">Apresentações</TabsTrigger>
+          )}
+          {habilitado && <TabsTrigger value="repasses">Repasses</TabsTrigger>}
         </TabsList>
+        <TabsContent value="taxa-couvert" className="mt-4">
+          <TaxaCouvertTab />
+        </TabsContent>
+        {habilitado && (
+          <>
         <TabsContent value="artistas" className="mt-4">
           <ArtistasTab restauranteId={restaurante.id} />
         </TabsContent>
@@ -71,6 +75,8 @@ function CouvertArtisticoPage() {
         <TabsContent value="repasses" className="mt-4">
           <RepassesTab restauranteId={restaurante.id} />
         </TabsContent>
+          </>
+        )}
       </Tabs>
     </div>
   );

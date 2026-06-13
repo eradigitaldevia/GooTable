@@ -52,6 +52,10 @@ const configSchema = z.discriminatedUnion("aba", [
     couvert_mesa_habilitado: z.boolean(),
     couvert_mesa_valor: z.number().min(0).max(1000).nullable(),
     couvert_mesa_descricao: z.string().trim().max(300).nullable(),
+  }),
+  z.object({
+    aba: z.literal("couvert-artistico"),
+    restauranteId: z.string().uuid(),
     couvert_artistico_habilitado: z.boolean(),
     couvert_artistico_valor: z.number().min(0).max(1000).nullable(),
     couvert_artistico_descricao: z.string().trim().max(300).nullable(),
@@ -121,9 +125,6 @@ export const atualizarConfiguracoesFn = createServerFn({ method: "POST" })
         if (data.couvert_mesa_habilitado && (data.couvert_mesa_valor == null || data.couvert_mesa_valor <= 0)) {
           throw new Error("Informe o valor do couvert de mesa (> 0).");
         }
-        if (data.couvert_artistico_habilitado && (data.couvert_artistico_valor == null || data.couvert_artistico_valor <= 0)) {
-          throw new Error("Informe o valor por pessoa do couvert artístico (> 0).");
-        }
         let repasseHab = data.taxa_servico_repasse_habilitado;
         let repassePerc = data.taxa_servico_repasse_percentual;
         if (!data.taxa_servico_habilitada) {
@@ -131,14 +132,6 @@ export const atualizarConfiguracoesFn = createServerFn({ method: "POST" })
           repassePerc = null;
         } else if (repasseHab && (repassePerc == null || repassePerc <= 0)) {
           throw new Error("Informe o percentual de repasse aos garçons (> 0).");
-        }
-        let repCouvHab = data.couvert_artistico_repasse_habilitado;
-        let repCouvPerc = data.couvert_artistico_repasse_percentual;
-        if (!data.couvert_artistico_habilitado) {
-          repCouvHab = false;
-          repCouvPerc = null;
-        } else if (repCouvHab && (repCouvPerc == null || repCouvPerc <= 0)) {
-          throw new Error("Informe o percentual de repasse aos artistas (> 0).");
         }
         update = {
           taxa_servico_habilitada: data.taxa_servico_habilitada,
@@ -149,6 +142,22 @@ export const atualizarConfiguracoesFn = createServerFn({ method: "POST" })
           couvert_mesa_habilitado: data.couvert_mesa_habilitado,
           couvert_mesa_valor: data.couvert_mesa_valor,
           couvert_mesa_descricao: data.couvert_mesa_descricao,
+        };
+        break;
+      }
+      case "couvert-artistico": {
+        if (data.couvert_artistico_habilitado && (data.couvert_artistico_valor == null || data.couvert_artistico_valor <= 0)) {
+          throw new Error("Informe o valor por pessoa do couvert artístico (> 0).");
+        }
+        let repCouvHab = data.couvert_artistico_repasse_habilitado;
+        let repCouvPerc = data.couvert_artistico_repasse_percentual;
+        if (!data.couvert_artistico_habilitado) {
+          repCouvHab = false;
+          repCouvPerc = null;
+        } else if (repCouvHab && (repCouvPerc == null || repCouvPerc <= 0)) {
+          throw new Error("Informe o percentual de repasse aos artistas (> 0).");
+        }
+        update = {
           couvert_artistico_habilitado: data.couvert_artistico_habilitado,
           couvert_artistico_valor: data.couvert_artistico_valor,
           couvert_artistico_descricao: data.couvert_artistico_descricao,

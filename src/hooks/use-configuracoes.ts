@@ -39,6 +39,9 @@ export type ConfigPayload =
       couvert_mesa_habilitado: boolean;
       couvert_mesa_valor: number | null;
       couvert_mesa_descricao: string | null;
+    })
+  | (Base & {
+      aba: "couvert-artistico";
       couvert_artistico_habilitado: boolean;
       couvert_artistico_valor: number | null;
       couvert_artistico_descricao: string | null;
