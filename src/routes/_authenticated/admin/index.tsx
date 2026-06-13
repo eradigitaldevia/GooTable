@@ -4,8 +4,9 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/use-auth";
 import { useMeuRestaurante } from "@/hooks/use-restaurante";
 import { useDashboardAdmin } from "@/hooks/use-dashboard";
+import { useDashboardDelivery } from "@/hooks/use-dashboard";
 import { supabase } from "@/integrations/supabase/client";
-import { ClipboardList, CheckCircle2, Users, DollarSign } from "lucide-react";
+import { ClipboardList, CheckCircle2, Users, DollarSign, Bike, Receipt } from "lucide-react";
 import { formatBRL } from "@/lib/cart";
 import { dashboardAdminFn } from "@/lib/dashboard.functions";
 import { PageHeaderSkeleton } from "@/components/admin/skeletons/page-header-skeleton";
@@ -39,6 +40,8 @@ function Dashboard() {
   const { data: restaurante } = useMeuRestaurante(user?.id);
   const restauranteId = restaurante?.id;
   const { data: resumo, isLoading } = useDashboardAdmin(restauranteId);
+  const deliveryAtivo = !!restaurante?.delivery_ativo;
+  const { data: deliveryResumo } = useDashboardDelivery(deliveryAtivo ? restauranteId : undefined);
   const qc = useQueryClient();
 
   useEffect(() => {
@@ -49,6 +52,7 @@ function Dashboard() {
       timeout = setTimeout(() => {
         qc.invalidateQueries({ queryKey: ["dashboard-admin", restauranteId] });
         qc.invalidateQueries({ queryKey: ["dashboard-metricas", restauranteId] });
+        qc.invalidateQueries({ queryKey: ["dashboard-delivery", restauranteId] });
         timeout = null;
       }, 1500);
     };
@@ -103,6 +107,23 @@ function Dashboard() {
     },
   ];
 
+  const deliveryCards = deliveryAtivo
+    ? [
+        {
+          label: "Pedidos delivery hoje",
+          value: deliveryResumo?.pedidosHoje ?? 0,
+          icon: Bike,
+          color: "text-chart-4",
+        },
+        {
+          label: "Ticket médio delivery",
+          value: formatBRL(deliveryResumo?.ticketMedio ?? 0),
+          icon: Receipt,
+          color: "text-chart-5",
+        },
+      ]
+    : [];
+
   return (
     <div className="space-y-8">
       <header>
@@ -129,6 +150,24 @@ function Dashboard() {
           </div>
         ))}
       </div>
+
+      {deliveryCards.length > 0 && (
+        <div className="grid gap-4 sm:grid-cols-2">
+          {deliveryCards.map((c) => (
+            <div key={c.label} className="rounded-2xl border border-border bg-card p-5 shadow-[var(--shadow-soft)]">
+              <div className="flex items-start justify-between">
+                <div>
+                  <div className="text-sm text-muted-foreground">{c.label}</div>
+                  <div className="mt-2 text-3xl font-bold tracking-tight">{c.value}</div>
+                </div>
+                <div className={`flex h-10 w-10 items-center justify-center rounded-xl bg-accent ${c.color}`}>
+                  <c.icon className="h-5 w-5" />
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
 
       <div className="rounded-2xl border bg-card p-5 shadow-[var(--shadow-soft)]">
         <h2 className="mb-1 font-semibold">Faturamento — últimos 7 dias</h2>

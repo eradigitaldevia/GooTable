@@ -70,6 +70,9 @@ export const gerarRelatorioComissoesFn = createServerFn({ method: "POST" })
         garcomId: z.string().uuid().optional(),
         inicio: z.string().min(10),
         fim: z.string().min(10),
+        canais: z
+          .array(z.enum(["mesa", "balcao", "delivery", "retirada"]))
+          .optional(),
       })
       .parse(d),
   )
@@ -105,6 +108,22 @@ export const gerarRelatorioComissoesFn = createServerFn({ method: "POST" })
     if (data.garcomId) qc = qc.eq("garcom_id", data.garcomId);
     const { data: comissoesRows, error: cErr } = await qc;
     if (cErr) throw new Error(cErr.message);
+
+    // Filtro por canal (delivery / mesa / etc) — requer lookup em pedidos
+    let comissoesFiltradas = comissoesRows ?? [];
+    const pedidoCanalMap = new Map<string, string>();
+    if (data.canais && data.canais.length > 0 && comissoesFiltradas.length > 0) {
+      const pedidoIds = Array.from(new Set(comissoesFiltradas.map((c) => c.pedido_id)));
+      const { data: pedsCanal } = await supabase
+        .from("pedidos")
+        .select("id, canal")
+        .in("id", pedidoIds);
+      for (const p of pedsCanal ?? []) pedidoCanalMap.set(p.id, p.canal ?? "mesa");
+      const allowed = new Set(data.canais);
+      comissoesFiltradas = comissoesFiltradas.filter((c) =>
+        allowed.has((pedidoCanalMap.get(c.pedido_id) ?? "mesa") as typeof data.canais[number]),
+      );
+    }
 
     let qb = supabase
       .from("garcom_bonus")
@@ -171,7 +190,7 @@ export const gerarRelatorioComissoesFn = createServerFn({ method: "POST" })
     }
 
     const pedidosVistos = new Map<string, Set<string>>();
-    for (const c of comissoesRows ?? []) {
+    for (const c of comissoesFiltradas) {
       const slot = map.get(c.garcom_id);
       if (!slot) continue;
       const valor = Number(c.valor_comissao);
