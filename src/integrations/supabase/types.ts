@@ -1759,6 +1759,7 @@ export type Database = {
           caixa_conferencia_cega: boolean
           caixa_obrigatorio_para_pagamento: boolean
           caixa_teto_dinheiro: number | null
+          cnpj: string | null
           comissao_modo: string
           comissao_pedido_cliente: boolean
           comissao_pedido_cliente_percentual: number | null
@@ -1786,6 +1787,7 @@ export type Database = {
           delivery_taxa_entrega: number
           delivery_tempo_estimado_min: number
           delivery_whatsapp: string | null
+          endereco: string | null
           id: string
           logo_url: string | null
           nome: string
@@ -1799,6 +1801,7 @@ export type Database = {
           taxa_servico_percentual: number | null
           taxa_servico_repasse_habilitado: boolean
           taxa_servico_repasse_percentual: number | null
+          telefone: string | null
           tema_cardapio: string
           upsell_habilitado: boolean
           usa_cumim: boolean
@@ -1809,6 +1812,7 @@ export type Database = {
           caixa_conferencia_cega?: boolean
           caixa_obrigatorio_para_pagamento?: boolean
           caixa_teto_dinheiro?: number | null
+          cnpj?: string | null
           comissao_modo?: string
           comissao_pedido_cliente?: boolean
           comissao_pedido_cliente_percentual?: number | null
@@ -1836,6 +1840,7 @@ export type Database = {
           delivery_taxa_entrega?: number
           delivery_tempo_estimado_min?: number
           delivery_whatsapp?: string | null
+          endereco?: string | null
           id?: string
           logo_url?: string | null
           nome: string
@@ -1849,6 +1854,7 @@ export type Database = {
           taxa_servico_percentual?: number | null
           taxa_servico_repasse_habilitado?: boolean
           taxa_servico_repasse_percentual?: number | null
+          telefone?: string | null
           tema_cardapio?: string
           upsell_habilitado?: boolean
           usa_cumim?: boolean
@@ -1859,6 +1865,7 @@ export type Database = {
           caixa_conferencia_cega?: boolean
           caixa_obrigatorio_para_pagamento?: boolean
           caixa_teto_dinheiro?: number | null
+          cnpj?: string | null
           comissao_modo?: string
           comissao_pedido_cliente?: boolean
           comissao_pedido_cliente_percentual?: number | null
@@ -1886,6 +1893,7 @@ export type Database = {
           delivery_taxa_entrega?: number
           delivery_tempo_estimado_min?: number
           delivery_whatsapp?: string | null
+          endereco?: string | null
           id?: string
           logo_url?: string | null
           nome?: string
@@ -1899,6 +1907,7 @@ export type Database = {
           taxa_servico_percentual?: number | null
           taxa_servico_repasse_habilitado?: boolean
           taxa_servico_repasse_percentual?: number | null
+          telefone?: string | null
           tema_cardapio?: string
           upsell_habilitado?: boolean
           usa_cumim?: boolean
