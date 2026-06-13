@@ -178,6 +178,7 @@ export const listarAtribuicoesMesasFn = createServerFn({ method: "POST" })
       .select("id, numero")
       .eq("restaurante_id", data.restauranteId)
       .eq("ativa", true)
+      .eq("is_virtual", false)
       .order("numero", { ascending: true });
     if (mErr) throw new Error(mErr.message);
 
@@ -230,6 +231,7 @@ export const listarAtribuicoesMesasMultiFn = createServerFn({ method: "POST" })
       .select("id, numero")
       .eq("restaurante_id", data.restauranteId)
       .eq("ativa", true)
+      .eq("is_virtual", false)
       .order("numero", { ascending: true });
     if (mErr) throw new Error(mErr.message);
 

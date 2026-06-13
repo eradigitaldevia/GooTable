@@ -20,6 +20,7 @@ export const listarMesasFn = createServerFn({ method: "POST" })
       .from("mesas")
       .select("*")
       .eq("restaurante_id", data.restauranteId)
+      .eq("is_virtual", false)
       .order("numero");
     if (error) throw new Error(error.message);
     return (rows ?? []) as Mesa[];
