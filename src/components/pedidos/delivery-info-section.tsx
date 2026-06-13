@@ -4,7 +4,7 @@ import { toast } from "sonner";
 
 interface DeliveryPedido {
   id: string;
-  canal?: string;
+  canal?: string | null;
   cliente_nome?: string | null;
   cliente_telefone?: string | null;
   endereco_cep?: string | null;
