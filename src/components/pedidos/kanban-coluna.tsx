@@ -13,6 +13,7 @@ interface Pedido {
   restaurante_id: string;
   comanda_id: string | null;
   garcom_id?: string | null;
+  canal?: string | null;
 }
 interface Item {
   id: string;

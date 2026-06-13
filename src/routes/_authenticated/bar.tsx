@@ -25,6 +25,7 @@ interface Pedido {
   status: "recebido" | "em_preparo" | "pronto" | "entregue" | "cancelado";
   criado_em: string;
   mesa_id: string;
+  canal?: string | null;
 }
 interface ItemRaw extends BarItem {
   pedido_id: string;
@@ -199,6 +200,7 @@ function BarPanel() {
                     marcar(it.id, it.status === "pronto" ? 0 : it.quantidade)
                   }
                   onDecrementar={() => marcar(it.id, Math.max(0, it.quantidade_pronta - 1))}
+                  canal={p?.canal}
                 />
               );
             })}

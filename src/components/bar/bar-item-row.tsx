@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Check, Minus, Undo2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { CanalBadge } from "@/components/pedidos/canal-badge";
 
 type ItemStatus = "pendente" | "em_preparo" | "pronto";
 
@@ -20,6 +21,7 @@ export function BarItemRow({
   pending,
   onMarcarTodas,
   onDecrementar,
+  canal,
 }: {
   item: BarItem;
   mesa: string;
@@ -27,6 +29,7 @@ export function BarItemRow({
   pending: boolean;
   onMarcarTodas: () => void;
   onDecrementar: () => void;
+  canal?: string | null;
 }) {
   const minutos = Math.max(
     0,
@@ -53,9 +56,12 @@ export function BarItemRow({
     >
       <div className="flex w-14 shrink-0 flex-col items-center">
         <span className="text-[10px] font-medium uppercase text-muted-foreground">
-          Mesa
+          {canal === "delivery" ? "Deliv." : canal === "retirada" ? "Retir." : "Mesa"}
         </span>
-        <span className="text-lg font-bold leading-none tabular-nums">{mesa}</span>
+        <span className="text-lg font-bold leading-none tabular-nums">
+          {canal === "delivery" || canal === "retirada" ? "•" : mesa}
+        </span>
+        <CanalBadge canal={canal} showLabel={false} className="mt-1" />
       </div>
 
       <div className="min-w-0 flex-1">

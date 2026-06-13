@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { formatBRL } from "@/lib/cart";
 import { GarcomBadge } from "@/components/garcons/garcom-badge";
+import { CanalBadge } from "@/components/pedidos/canal-badge";
 
 type StatusPedido = "recebido" | "em_preparo" | "pronto" | "entregue" | "cancelado";
 
@@ -14,6 +15,7 @@ interface Pedido {
   restaurante_id: string;
   comanda_id: string | null;
   garcom_id?: string | null;
+  canal?: string | null;
 }
 interface Item {
   id: string;
@@ -84,7 +86,18 @@ export function PedidoCard({
       onClick={onClick}
     >
       <div className="flex items-center justify-between">
-        <span className="text-sm font-bold">Mesa {mesaNumero ?? "?"}</span>
+        <div className="flex items-center gap-2">
+          <span className="text-sm font-bold">
+            {pedido.canal && pedido.canal !== "mesa"
+              ? pedido.canal === "delivery"
+                ? "Delivery"
+                : pedido.canal === "retirada"
+                  ? "Retirada"
+                  : `Mesa ${mesaNumero ?? "?"}`
+              : `Mesa ${mesaNumero ?? "?"}`}
+          </span>
+          <CanalBadge canal={pedido.canal} showLabel={false} />
+        </div>
         <span className="text-xs text-muted-foreground">{minutos}min</span>
       </div>
       {garcomNome && (

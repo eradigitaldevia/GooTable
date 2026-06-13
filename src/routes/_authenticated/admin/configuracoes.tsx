@@ -13,6 +13,7 @@ import { PixForm } from "@/components/configuracoes/pix-form";
 import { ComissaoModoForm } from "@/components/configuracoes/comissao-modo-form";
 import { TaxaServicoForm } from "@/components/configuracoes/taxa-servico-form";
 import { CouvertMesaForm } from "@/components/configuracoes/couvert-form";
+import { DeliveryForm } from "@/components/configuracoes/delivery-form";
 import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -26,11 +27,12 @@ type TabId =
   | "taxas"
   | "comissoes"
   | "caixa"
-  | "cardapio";
+  | "cardapio"
+  | "delivery";
 
 const searchSchema = z.object({
   tab: z
-    .enum(["identidade", "pagamentos", "taxas", "comissoes", "caixa", "cardapio"])
+    .enum(["identidade", "pagamentos", "taxas", "comissoes", "caixa", "cardapio", "delivery"])
     .default("identidade"),
 });
 
@@ -81,6 +83,16 @@ function Configuracoes() {
     couvert_mesa_descricao: "",
     taxa_servico_repasse_habilitado: false,
     taxa_servico_repasse_percentual: "" as string,
+    delivery_ativo: false,
+    delivery_retirada_ativa: true,
+    delivery_slug: "" as string,
+    delivery_taxa_entrega: "" as string,
+    delivery_pedido_minimo: "" as string,
+    delivery_tempo_estimado_min: "45" as string,
+    delivery_raio_km: "" as string,
+    delivery_aceita_dinheiro: true,
+    delivery_aceita_cartao_entrega: true,
+    delivery_aceita_pix: true,
   });
 
   const prevSnapshotRef = useRef<typeof form | null>(null);
@@ -136,6 +148,29 @@ function Configuracoes() {
         restaurante.taxa_servico_repasse_percentual != null
           ? String(restaurante.taxa_servico_repasse_percentual)
           : "",
+      delivery_ativo: (restaurante as any).delivery_ativo ?? false,
+      delivery_retirada_ativa: (restaurante as any).delivery_retirada_ativa ?? true,
+      delivery_slug: (restaurante as any).delivery_slug ?? "",
+      delivery_taxa_entrega:
+        (restaurante as any).delivery_taxa_entrega != null
+          ? String((restaurante as any).delivery_taxa_entrega)
+          : "",
+      delivery_pedido_minimo:
+        (restaurante as any).delivery_pedido_minimo != null
+          ? String((restaurante as any).delivery_pedido_minimo)
+          : "",
+      delivery_tempo_estimado_min:
+        (restaurante as any).delivery_tempo_estimado_min != null
+          ? String((restaurante as any).delivery_tempo_estimado_min)
+          : "45",
+      delivery_raio_km:
+        (restaurante as any).delivery_raio_km != null
+          ? String((restaurante as any).delivery_raio_km)
+          : "",
+      delivery_aceita_dinheiro: (restaurante as any).delivery_aceita_dinheiro ?? true,
+      delivery_aceita_cartao_entrega:
+        (restaurante as any).delivery_aceita_cartao_entrega ?? true,
+      delivery_aceita_pix: (restaurante as any).delivery_aceita_pix ?? true,
     };
     const prev = prevSnapshotRef.current;
     if (prev == null) {
@@ -208,6 +243,29 @@ function Configuracoes() {
         restaurante.taxa_servico_repasse_percentual != null
           ? String(restaurante.taxa_servico_repasse_percentual)
           : "",
+      delivery_ativo: (restaurante as any).delivery_ativo ?? false,
+      delivery_retirada_ativa: (restaurante as any).delivery_retirada_ativa ?? true,
+      delivery_slug: (restaurante as any).delivery_slug ?? "",
+      delivery_taxa_entrega:
+        (restaurante as any).delivery_taxa_entrega != null
+          ? String((restaurante as any).delivery_taxa_entrega)
+          : "",
+      delivery_pedido_minimo:
+        (restaurante as any).delivery_pedido_minimo != null
+          ? String((restaurante as any).delivery_pedido_minimo)
+          : "",
+      delivery_tempo_estimado_min:
+        (restaurante as any).delivery_tempo_estimado_min != null
+          ? String((restaurante as any).delivery_tempo_estimado_min)
+          : "45",
+      delivery_raio_km:
+        (restaurante as any).delivery_raio_km != null
+          ? String((restaurante as any).delivery_raio_km)
+          : "",
+      delivery_aceita_dinheiro: (restaurante as any).delivery_aceita_dinheiro ?? true,
+      delivery_aceita_cartao_entrega:
+        (restaurante as any).delivery_aceita_cartao_entrega ?? true,
+      delivery_aceita_pix: (restaurante as any).delivery_aceita_pix ?? true,
     } as typeof form;
   }, [restaurante]);
 
@@ -245,6 +303,18 @@ function Configuracoes() {
       "caixa_obrigatorio_para_pagamento",
     ],
     cardapio: ["upsell_habilitado"],
+    delivery: [
+      "delivery_ativo",
+      "delivery_retirada_ativa",
+      "delivery_slug",
+      "delivery_taxa_entrega",
+      "delivery_pedido_minimo",
+      "delivery_tempo_estimado_min",
+      "delivery_raio_km",
+      "delivery_aceita_dinheiro",
+      "delivery_aceita_cartao_entrega",
+      "delivery_aceita_pix",
+    ],
   };
 
   const abasSujas = useMemo(() => {
@@ -255,6 +325,7 @@ function Configuracoes() {
       comissoes: false,
       caixa: false,
       cardapio: false,
+      delivery: false,
     };
     if (!snapshot) return r;
     (Object.keys(CAMPOS_POR_ABA) as TabId[]).forEach((aba) => {
@@ -415,6 +486,61 @@ function Configuracoes() {
         restauranteId: restaurante.id,
         upsell_habilitado: f.upsell_habilitado,
       };
+    } else if (aba === "delivery") {
+      function parseNum(raw: string, max: number, label: string, integer = false): number | "ERR" {
+        const t = raw.trim();
+        if (t === "") return 0;
+        const n = integer ? parseInt(t, 10) : Number(t.replace(",", "."));
+        if (!Number.isFinite(n) || n < 0 || n > max) {
+          toast.error(`${label} inválido (0–${max})`);
+          return "ERR";
+        }
+        return n;
+      }
+      const taxa = parseNum(f.delivery_taxa_entrega, 500, "Taxa de entrega");
+      if (taxa === "ERR") return;
+      const minimo = parseNum(f.delivery_pedido_minimo, 10000, "Pedido mínimo");
+      if (minimo === "ERR") return;
+      const tempo = parseNum(f.delivery_tempo_estimado_min, 600, "Tempo estimado", true);
+      if (tempo === "ERR") return;
+      let raio: number | null = null;
+      if (f.delivery_raio_km.trim() !== "") {
+        const r = parseNum(f.delivery_raio_km, 200, "Raio");
+        if (r === "ERR") return;
+        raio = r;
+      }
+      const slug = f.delivery_slug.trim() || null;
+      if (f.delivery_ativo && !slug) {
+        toast.error("Informe o endereço público (slug) para ativar o delivery.");
+        return;
+      }
+      if (slug && !/^[a-z0-9-]{2,80}$/i.test(slug)) {
+        toast.error("Slug inválido. Use letras, números e hífen (2–80).");
+        return;
+      }
+      if (
+        f.delivery_ativo &&
+        !f.delivery_aceita_dinheiro &&
+        !f.delivery_aceita_cartao_entrega &&
+        !f.delivery_aceita_pix
+      ) {
+        toast.error("Habilite ao menos uma forma de pagamento.");
+        return;
+      }
+      payload = {
+        aba: "delivery",
+        restauranteId: restaurante.id,
+        delivery_ativo: f.delivery_ativo,
+        delivery_retirada_ativa: f.delivery_retirada_ativa,
+        delivery_slug: slug,
+        delivery_taxa_entrega: taxa,
+        delivery_pedido_minimo: minimo,
+        delivery_tempo_estimado_min: tempo,
+        delivery_raio_km: raio,
+        delivery_aceita_dinheiro: f.delivery_aceita_dinheiro,
+        delivery_aceita_cartao_entrega: f.delivery_aceita_cartao_entrega,
+        delivery_aceita_pix: f.delivery_aceita_pix,
+      };
     }
 
     if (!payload) return;
@@ -482,6 +608,7 @@ function Configuracoes() {
               ["comissoes", "Comissões"],
               ["caixa", "Caixa"],
               ["cardapio", "Cardápio"],
+              ["delivery", "Delivery"],
             ] as [TabId, string][]
           ).map(([id, label]) => (
             <TabsTrigger key={id} value={id} className="w-full sm:w-auto">
@@ -688,6 +815,25 @@ function Configuracoes() {
               />
             </div>
           </section>
+        </TabsContent>
+
+        <TabsContent value="delivery" className="space-y-6">
+          <DeliveryForm
+            values={{
+              delivery_ativo: form.delivery_ativo,
+              delivery_retirada_ativa: form.delivery_retirada_ativa,
+              delivery_slug: form.delivery_slug,
+              delivery_taxa_entrega: form.delivery_taxa_entrega,
+              delivery_pedido_minimo: form.delivery_pedido_minimo,
+              delivery_tempo_estimado_min: form.delivery_tempo_estimado_min,
+              delivery_raio_km: form.delivery_raio_km,
+              delivery_aceita_dinheiro: form.delivery_aceita_dinheiro,
+              delivery_aceita_cartao_entrega: form.delivery_aceita_cartao_entrega,
+              delivery_aceita_pix: form.delivery_aceita_pix,
+            }}
+            onChange={patch}
+          />
+          <SaveBtn aba="delivery" />
         </TabsContent>
       </Tabs>
     </div>

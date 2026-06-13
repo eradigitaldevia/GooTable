@@ -84,6 +84,20 @@ const configSchema = z.discriminatedUnion("aba", [
     restauranteId: z.string().uuid(),
     upsell_habilitado: z.boolean(),
   }),
+  z.object({
+    aba: z.literal("delivery"),
+    restauranteId: z.string().uuid(),
+    delivery_ativo: z.boolean(),
+    delivery_retirada_ativa: z.boolean(),
+    delivery_slug: z.string().trim().min(2).max(80).regex(/^[a-z0-9-]+$/i).nullable(),
+    delivery_taxa_entrega: z.number().min(0).max(500),
+    delivery_pedido_minimo: z.number().min(0).max(10_000),
+    delivery_tempo_estimado_min: z.number().int().min(0).max(600),
+    delivery_raio_km: z.number().min(0).max(200).nullable(),
+    delivery_aceita_dinheiro: z.boolean(),
+    delivery_aceita_cartao_entrega: z.boolean(),
+    delivery_aceita_pix: z.boolean(),
+  }),
 ]);
 
 export const atualizarConfiguracoesFn = createServerFn({ method: "POST" })
@@ -187,6 +201,29 @@ export const atualizarConfiguracoesFn = createServerFn({ method: "POST" })
       }
       case "cardapio": {
         update = { upsell_habilitado: data.upsell_habilitado };
+        break;
+      }
+      case "delivery": {
+        if (
+          data.delivery_ativo &&
+          !data.delivery_aceita_dinheiro &&
+          !data.delivery_aceita_cartao_entrega &&
+          !data.delivery_aceita_pix
+        ) {
+          throw new Error("Habilite pelo menos uma forma de pagamento para delivery.");
+        }
+        update = {
+          delivery_ativo: data.delivery_ativo,
+          delivery_retirada_ativa: data.delivery_retirada_ativa,
+          delivery_slug: data.delivery_slug,
+          delivery_taxa_entrega: data.delivery_taxa_entrega,
+          delivery_pedido_minimo: data.delivery_pedido_minimo,
+          delivery_tempo_estimado_min: data.delivery_tempo_estimado_min,
+          delivery_raio_km: data.delivery_raio_km,
+          delivery_aceita_dinheiro: data.delivery_aceita_dinheiro,
+          delivery_aceita_cartao_entrega: data.delivery_aceita_cartao_entrega,
+          delivery_aceita_pix: data.delivery_aceita_pix,
+        };
         break;
       }
     }

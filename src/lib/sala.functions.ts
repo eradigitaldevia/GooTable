@@ -109,7 +109,8 @@ export const carregarSalaFn = createServerFn({ method: "POST" })
         .from("mesas")
         .select("id, numero")
         .eq("restaurante_id", restauranteId)
-        .eq("ativa", true);
+        .eq("ativa", true)
+        .eq("is_virtual", false);
       if (mErr) throw new Error(mErr.message);
       mesas = (ms ?? [])
         .map((m) => ({
@@ -462,7 +463,8 @@ export const listarMesasRestauranteFn = createServerFn({ method: "POST" })
         .from("mesas")
         .select("id, numero")
         .eq("restaurante_id", data.restauranteId)
-        .eq("ativa", true);
+        .eq("ativa", true)
+        .eq("is_virtual", false);
       if (mErr) throw new Error(mErr.message);
 
       const mesaIds = (mesas ?? []).map((m) => m.id as string);

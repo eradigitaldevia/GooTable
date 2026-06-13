@@ -172,7 +172,7 @@ export const listarRestaurantesAdminFn = createServerFn({ method: "POST" })
         .from("pedidos")
         .select("restaurante_id, total, status, criado_em")
         .gte("criado_em", inicioMes.toISOString()),
-      supabaseAdmin.from("mesas").select("restaurante_id"),
+      supabaseAdmin.from("mesas").select("restaurante_id").eq("is_virtual", false),
     ]);
 
     const mesasByRest: Record<string, number> = {};
