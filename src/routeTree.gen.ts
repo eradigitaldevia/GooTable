@@ -56,6 +56,7 @@ import { Route as DeliverySlugPedidoPedidoIdRouteImport } from './routes/deliver
 import { Route as AuthenticatedSalaNovaComandaMesaIdRouteImport } from './routes/_authenticated/sala_.nova-comanda.$mesaId'
 import { Route as AuthenticatedSalaMesaMesaIdRouteImport } from './routes/_authenticated/sala_.mesa.$mesaId'
 import { Route as AuthenticatedAdminClientesIdRouteImport } from './routes/_authenticated/admin/clientes.$id'
+import { Route as AuthenticatedSalaMesaRouteImport } from './routes/_authenticated/sala_.mesa.'
 import { Route as AuthenticatedAdminGarconsGarcomIdSalaRouteImport } from './routes/_authenticated/admin/garcons_.$garcomId.sala'
 import { Route as AuthenticatedAdminCuminsCumimIdDisplayRouteImport } from './routes/_authenticated/admin/cumins_.$cumimId.display'
 
@@ -313,6 +314,11 @@ const AuthenticatedAdminClientesIdRoute =
     path: '/$id',
     getParentRoute: () => AuthenticatedAdminClientesRoute,
   } as any)
+const AuthenticatedSalaMesaRoute = AuthenticatedSalaMesaRouteImport.update({
+  id: '/sala_/mesa/',
+  path: '/sala/mesa/',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
 const AuthenticatedAdminGarconsGarcomIdSalaRoute =
   AuthenticatedAdminGarconsGarcomIdSalaRouteImport.update({
     id: '/garcons_/$garcomId/sala',
@@ -368,6 +374,7 @@ export interface FileRoutesByFullPath {
   '/superadmin/restaurantes/$id': typeof SuperadminRestaurantesIdRoute
   '/admin/': typeof AuthenticatedAdminIndexRoute
   '/caixa/': typeof AuthenticatedCaixaIndexRoute
+  '/sala/mesa/': typeof AuthenticatedSalaMesaRoute
   '/admin/clientes/$id': typeof AuthenticatedAdminClientesIdRoute
   '/sala/mesa/$mesaId': typeof AuthenticatedSalaMesaMesaIdRoute
   '/sala/nova-comanda/$mesaId': typeof AuthenticatedSalaNovaComandaMesaIdRoute
@@ -415,6 +422,7 @@ export interface FileRoutesByTo {
   '/superadmin/restaurantes/$id': typeof SuperadminRestaurantesIdRoute
   '/admin': typeof AuthenticatedAdminIndexRoute
   '/caixa': typeof AuthenticatedCaixaIndexRoute
+  '/sala/mesa': typeof AuthenticatedSalaMesaRoute
   '/admin/clientes/$id': typeof AuthenticatedAdminClientesIdRoute
   '/sala/mesa/$mesaId': typeof AuthenticatedSalaMesaMesaIdRoute
   '/sala/nova-comanda/$mesaId': typeof AuthenticatedSalaNovaComandaMesaIdRoute
@@ -467,6 +475,7 @@ export interface FileRoutesById {
   '/superadmin/restaurantes/$id': typeof SuperadminRestaurantesIdRoute
   '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
   '/_authenticated/caixa/': typeof AuthenticatedCaixaIndexRoute
+  '/_authenticated/sala_/mesa/': typeof AuthenticatedSalaMesaRoute
   '/_authenticated/admin/clientes/$id': typeof AuthenticatedAdminClientesIdRoute
   '/_authenticated/sala_/mesa/$mesaId': typeof AuthenticatedSalaMesaMesaIdRoute
   '/_authenticated/sala_/nova-comanda/$mesaId': typeof AuthenticatedSalaNovaComandaMesaIdRoute
@@ -519,6 +528,7 @@ export interface FileRouteTypes {
     | '/superadmin/restaurantes/$id'
     | '/admin/'
     | '/caixa/'
+    | '/sala/mesa/'
     | '/admin/clientes/$id'
     | '/sala/mesa/$mesaId'
     | '/sala/nova-comanda/$mesaId'
@@ -566,6 +576,7 @@ export interface FileRouteTypes {
     | '/superadmin/restaurantes/$id'
     | '/admin'
     | '/caixa'
+    | '/sala/mesa'
     | '/admin/clientes/$id'
     | '/sala/mesa/$mesaId'
     | '/sala/nova-comanda/$mesaId'
@@ -617,6 +628,7 @@ export interface FileRouteTypes {
     | '/superadmin/restaurantes/$id'
     | '/_authenticated/admin/'
     | '/_authenticated/caixa/'
+    | '/_authenticated/sala_/mesa/'
     | '/_authenticated/admin/clientes/$id'
     | '/_authenticated/sala_/mesa/$mesaId'
     | '/_authenticated/sala_/nova-comanda/$mesaId'
@@ -974,6 +986,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminClientesIdRouteImport
       parentRoute: typeof AuthenticatedAdminClientesRoute
     }
+    '/_authenticated/sala_/mesa/': {
+      id: '/_authenticated/sala_/mesa/'
+      path: '/sala/mesa'
+      fullPath: '/sala/mesa/'
+      preLoaderRoute: typeof AuthenticatedSalaMesaRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/admin/garcons_/$garcomId/sala': {
       id: '/_authenticated/admin/garcons_/$garcomId/sala'
       path: '/garcons/$garcomId/sala'
@@ -1079,6 +1098,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedCozinhaRoute: typeof AuthenticatedCozinhaRoute
   AuthenticatedCumimRoute: typeof AuthenticatedCumimRoute
   AuthenticatedSalaRoute: typeof AuthenticatedSalaRoute
+  AuthenticatedSalaMesaRoute: typeof AuthenticatedSalaMesaRoute
   AuthenticatedSalaMesaMesaIdRoute: typeof AuthenticatedSalaMesaMesaIdRoute
   AuthenticatedSalaNovaComandaMesaIdRoute: typeof AuthenticatedSalaNovaComandaMesaIdRoute
 }
@@ -1090,6 +1110,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedCozinhaRoute: AuthenticatedCozinhaRoute,
   AuthenticatedCumimRoute: AuthenticatedCumimRoute,
   AuthenticatedSalaRoute: AuthenticatedSalaRoute,
+  AuthenticatedSalaMesaRoute: AuthenticatedSalaMesaRoute,
   AuthenticatedSalaMesaMesaIdRoute: AuthenticatedSalaMesaMesaIdRoute,
   AuthenticatedSalaNovaComandaMesaIdRoute:
     AuthenticatedSalaNovaComandaMesaIdRoute,

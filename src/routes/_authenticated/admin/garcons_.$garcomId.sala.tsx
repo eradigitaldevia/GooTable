@@ -106,6 +106,7 @@ function VisualizarSalaPage() {
                 prontosPorMesa={prontosPorMesa}
                 chamadosPorMesa={chamadosPorMesa}
                 readOnly
+                adminGarcomId={garcomId}
               />
             </TabsContent>
             <TabsContent value="chamados" className="mt-4">
