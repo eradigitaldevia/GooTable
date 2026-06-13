@@ -7,7 +7,13 @@ export function useGerarRelatorioComissoes() {
   return useMutation<
     RelatorioComissoes,
     Error,
-    { restauranteId: string; garcomId?: string; inicio: string; fim: string }
+    {
+      restauranteId: string;
+      garcomId?: string;
+      inicio: string;
+      fim: string;
+      canais?: ("mesa" | "balcao" | "delivery" | "retirada")[];
+    }
   >({
     mutationFn: (data) => fn({ data }),
   });
