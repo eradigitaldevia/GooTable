@@ -20,6 +20,7 @@ import { Route as SuperadminIndexRouteImport } from './routes/superadmin.index'
 import { Route as SuperadminRestaurantesRouteImport } from './routes/superadmin.restaurantes'
 import { Route as SuperadminLogsRouteImport } from './routes/superadmin.logs'
 import { Route as MQrTokenRouteImport } from './routes/m.$qrToken'
+import { Route as DeliverySlugRouteImport } from './routes/delivery.$slug'
 import { Route as AuthenticatedSalaRouteImport } from './routes/_authenticated/sala'
 import { Route as AuthenticatedCumimRouteImport } from './routes/_authenticated/cumim'
 import { Route as AuthenticatedCozinhaRouteImport } from './routes/_authenticated/cozinha'
@@ -51,6 +52,7 @@ import { Route as AuthenticatedAdminCardapioPreviewRouteImport } from './routes/
 import { Route as AuthenticatedAdminCardapioRouteImport } from './routes/_authenticated/admin/cardapio'
 import { Route as AuthenticatedAdminCaixaRouteImport } from './routes/_authenticated/admin/caixa'
 import { Route as MQrTokenStatusPedidoIdRouteImport } from './routes/m.$qrToken_.status.$pedidoId'
+import { Route as DeliverySlugPedidoPedidoIdRouteImport } from './routes/delivery.$slug_.pedido.$pedidoId'
 import { Route as AuthenticatedSalaNovaComandaMesaIdRouteImport } from './routes/_authenticated/sala_.nova-comanda.$mesaId'
 import { Route as AuthenticatedSalaMesaMesaIdRouteImport } from './routes/_authenticated/sala_.mesa.$mesaId'
 import { Route as AuthenticatedAdminClientesIdRouteImport } from './routes/_authenticated/admin/clientes.$id'
@@ -109,6 +111,11 @@ const SuperadminLogsRoute = SuperadminLogsRouteImport.update({
 const MQrTokenRoute = MQrTokenRouteImport.update({
   id: '/m/$qrToken',
   path: '/m/$qrToken',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DeliverySlugRoute = DeliverySlugRouteImport.update({
+  id: '/delivery/$slug',
+  path: '/delivery/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedSalaRoute = AuthenticatedSalaRouteImport.update({
@@ -282,6 +289,12 @@ const MQrTokenStatusPedidoIdRoute = MQrTokenStatusPedidoIdRouteImport.update({
   path: '/m/$qrToken/status/$pedidoId',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DeliverySlugPedidoPedidoIdRoute =
+  DeliverySlugPedidoPedidoIdRouteImport.update({
+    id: '/delivery/$slug_/pedido/$pedidoId',
+    path: '/delivery/$slug/pedido/$pedidoId',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const AuthenticatedSalaNovaComandaMesaIdRoute =
   AuthenticatedSalaNovaComandaMesaIdRouteImport.update({
     id: '/sala_/nova-comanda/$mesaId',
@@ -326,6 +339,7 @@ export interface FileRoutesByFullPath {
   '/cozinha': typeof AuthenticatedCozinhaRoute
   '/cumim': typeof AuthenticatedCumimRoute
   '/sala': typeof AuthenticatedSalaRoute
+  '/delivery/$slug': typeof DeliverySlugRoute
   '/m/$qrToken': typeof MQrTokenRoute
   '/superadmin/logs': typeof SuperadminLogsRoute
   '/superadmin/restaurantes': typeof SuperadminRestaurantesRouteWithChildren
@@ -357,6 +371,7 @@ export interface FileRoutesByFullPath {
   '/admin/clientes/$id': typeof AuthenticatedAdminClientesIdRoute
   '/sala/mesa/$mesaId': typeof AuthenticatedSalaMesaMesaIdRoute
   '/sala/nova-comanda/$mesaId': typeof AuthenticatedSalaNovaComandaMesaIdRoute
+  '/delivery/$slug/pedido/$pedidoId': typeof DeliverySlugPedidoPedidoIdRoute
   '/m/$qrToken/status/$pedidoId': typeof MQrTokenStatusPedidoIdRoute
   '/admin/cumins/$cumimId/display': typeof AuthenticatedAdminCuminsCumimIdDisplayRoute
   '/admin/garcons/$garcomId/sala': typeof AuthenticatedAdminGarconsGarcomIdSalaRoute
@@ -371,6 +386,7 @@ export interface FileRoutesByTo {
   '/cozinha': typeof AuthenticatedCozinhaRoute
   '/cumim': typeof AuthenticatedCumimRoute
   '/sala': typeof AuthenticatedSalaRoute
+  '/delivery/$slug': typeof DeliverySlugRoute
   '/m/$qrToken': typeof MQrTokenRoute
   '/superadmin/logs': typeof SuperadminLogsRoute
   '/superadmin/restaurantes': typeof SuperadminRestaurantesRouteWithChildren
@@ -402,6 +418,7 @@ export interface FileRoutesByTo {
   '/admin/clientes/$id': typeof AuthenticatedAdminClientesIdRoute
   '/sala/mesa/$mesaId': typeof AuthenticatedSalaMesaMesaIdRoute
   '/sala/nova-comanda/$mesaId': typeof AuthenticatedSalaNovaComandaMesaIdRoute
+  '/delivery/$slug/pedido/$pedidoId': typeof DeliverySlugPedidoPedidoIdRoute
   '/m/$qrToken/status/$pedidoId': typeof MQrTokenStatusPedidoIdRoute
   '/admin/cumins/$cumimId/display': typeof AuthenticatedAdminCuminsCumimIdDisplayRoute
   '/admin/garcons/$garcomId/sala': typeof AuthenticatedAdminGarconsGarcomIdSalaRoute
@@ -421,6 +438,7 @@ export interface FileRoutesById {
   '/_authenticated/cozinha': typeof AuthenticatedCozinhaRoute
   '/_authenticated/cumim': typeof AuthenticatedCumimRoute
   '/_authenticated/sala': typeof AuthenticatedSalaRoute
+  '/delivery/$slug': typeof DeliverySlugRoute
   '/m/$qrToken': typeof MQrTokenRoute
   '/superadmin/logs': typeof SuperadminLogsRoute
   '/superadmin/restaurantes': typeof SuperadminRestaurantesRouteWithChildren
@@ -452,6 +470,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/clientes/$id': typeof AuthenticatedAdminClientesIdRoute
   '/_authenticated/sala_/mesa/$mesaId': typeof AuthenticatedSalaMesaMesaIdRoute
   '/_authenticated/sala_/nova-comanda/$mesaId': typeof AuthenticatedSalaNovaComandaMesaIdRoute
+  '/delivery/$slug_/pedido/$pedidoId': typeof DeliverySlugPedidoPedidoIdRoute
   '/m/$qrToken_/status/$pedidoId': typeof MQrTokenStatusPedidoIdRoute
   '/_authenticated/admin/cumins_/$cumimId/display': typeof AuthenticatedAdminCuminsCumimIdDisplayRoute
   '/_authenticated/admin/garcons_/$garcomId/sala': typeof AuthenticatedAdminGarconsGarcomIdSalaRoute
@@ -471,6 +490,7 @@ export interface FileRouteTypes {
     | '/cozinha'
     | '/cumim'
     | '/sala'
+    | '/delivery/$slug'
     | '/m/$qrToken'
     | '/superadmin/logs'
     | '/superadmin/restaurantes'
@@ -502,6 +522,7 @@ export interface FileRouteTypes {
     | '/admin/clientes/$id'
     | '/sala/mesa/$mesaId'
     | '/sala/nova-comanda/$mesaId'
+    | '/delivery/$slug/pedido/$pedidoId'
     | '/m/$qrToken/status/$pedidoId'
     | '/admin/cumins/$cumimId/display'
     | '/admin/garcons/$garcomId/sala'
@@ -516,6 +537,7 @@ export interface FileRouteTypes {
     | '/cozinha'
     | '/cumim'
     | '/sala'
+    | '/delivery/$slug'
     | '/m/$qrToken'
     | '/superadmin/logs'
     | '/superadmin/restaurantes'
@@ -547,6 +569,7 @@ export interface FileRouteTypes {
     | '/admin/clientes/$id'
     | '/sala/mesa/$mesaId'
     | '/sala/nova-comanda/$mesaId'
+    | '/delivery/$slug/pedido/$pedidoId'
     | '/m/$qrToken/status/$pedidoId'
     | '/admin/cumins/$cumimId/display'
     | '/admin/garcons/$garcomId/sala'
@@ -565,6 +588,7 @@ export interface FileRouteTypes {
     | '/_authenticated/cozinha'
     | '/_authenticated/cumim'
     | '/_authenticated/sala'
+    | '/delivery/$slug'
     | '/m/$qrToken'
     | '/superadmin/logs'
     | '/superadmin/restaurantes'
@@ -596,6 +620,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/clientes/$id'
     | '/_authenticated/sala_/mesa/$mesaId'
     | '/_authenticated/sala_/nova-comanda/$mesaId'
+    | '/delivery/$slug_/pedido/$pedidoId'
     | '/m/$qrToken_/status/$pedidoId'
     | '/_authenticated/admin/cumins_/$cumimId/display'
     | '/_authenticated/admin/garcons_/$garcomId/sala'
@@ -609,10 +634,12 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   SuperadminRoute: typeof SuperadminRouteWithChildren
+  DeliverySlugRoute: typeof DeliverySlugRoute
   MQrTokenRoute: typeof MQrTokenRoute
   MQrTokenCarrinhoRoute: typeof MQrTokenCarrinhoRoute
   MQrTokenContaRoute: typeof MQrTokenContaRoute
   MQrTokenMinhaContaRoute: typeof MQrTokenMinhaContaRoute
+  DeliverySlugPedidoPedidoIdRoute: typeof DeliverySlugPedidoPedidoIdRoute
   MQrTokenStatusPedidoIdRoute: typeof MQrTokenStatusPedidoIdRoute
 }
 
@@ -693,6 +720,13 @@ declare module '@tanstack/react-router' {
       path: '/m/$qrToken'
       fullPath: '/m/$qrToken'
       preLoaderRoute: typeof MQrTokenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/delivery/$slug': {
+      id: '/delivery/$slug'
+      path: '/delivery/$slug'
+      fullPath: '/delivery/$slug'
+      preLoaderRoute: typeof DeliverySlugRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/sala': {
@@ -912,6 +946,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof MQrTokenStatusPedidoIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/delivery/$slug_/pedido/$pedidoId': {
+      id: '/delivery/$slug_/pedido/$pedidoId'
+      path: '/delivery/$slug/pedido/$pedidoId'
+      fullPath: '/delivery/$slug/pedido/$pedidoId'
+      preLoaderRoute: typeof DeliverySlugPedidoPedidoIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authenticated/sala_/nova-comanda/$mesaId': {
       id: '/_authenticated/sala_/nova-comanda/$mesaId'
       path: '/sala/nova-comanda/$mesaId'
@@ -1096,10 +1137,12 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   SuperadminRoute: SuperadminRouteWithChildren,
+  DeliverySlugRoute: DeliverySlugRoute,
   MQrTokenRoute: MQrTokenRoute,
   MQrTokenCarrinhoRoute: MQrTokenCarrinhoRoute,
   MQrTokenContaRoute: MQrTokenContaRoute,
   MQrTokenMinhaContaRoute: MQrTokenMinhaContaRoute,
+  DeliverySlugPedidoPedidoIdRoute: DeliverySlugPedidoPedidoIdRoute,
   MQrTokenStatusPedidoIdRoute: MQrTokenStatusPedidoIdRoute,
 }
 export const routeTree = rootRouteImport
