@@ -25,6 +25,7 @@ interface Pedido {
   status: "recebido" | "em_preparo" | "pronto" | "entregue" | "cancelado";
   criado_em: string;
   mesa_id: string;
+  canal?: string | null;
 }
 interface ItemRaw extends BarItem {
   pedido_id: string;
