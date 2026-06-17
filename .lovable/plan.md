@@ -1,148 +1,104 @@
-# Melhorias na página Pedidos
+## Objetivo
 
-Reestruturar `/admin/pedidos` em quatro abas, mantendo o comportamento atual intacto na primeira aba e adicionando visões de auditoria e histórico.
+Separar da aba **Identidade** os campos não-visuais (nome, CNPJ, telefone, endereço) e adicionar **horário de funcionamento** do restaurante. Quando o estabelecimento estiver fora do horário, o cardápio de delivery passa a ficar somente leitura (sem permitir finalizar pedido).
 
-## 1. Estrutura geral
+## Nome sugerido para a aba
 
-Adicionar um `Tabs` principal acima do filtro de canal já existente:
+Sugestão: **"Geral"** (curto, padrão de mercado, abriga informações do negócio + horário). Alternativas: "Negócio", "Informações". A aba Identidade fica focada apenas em logo/cores/tema do cardápio.
 
-- **Hoje** (default) — Kanban atual, sem mudanças funcionais.
-- **Histórico** — pedidos de dias anteriores (somente leitura).
-- **Em aberto (auditoria)** — pedidos antigos ainda em status `recebido` / `em_preparo` / `pronto`.
-- **Cancelados** — pedidos com status `cancelado`.
+## Escopo
 
-O filtro de canal (Salão/Delivery/Retirada) e a busca permanecem disponíveis em todas as abas onde fizerem sentido.
+### 1. Reorganização da aba Identidade
 
-## 2. Aba "Hoje" — reforço visual
+- Mover de `IdentidadeForm` para a nova aba "Geral":
+  - Campo **Nome do restaurante**
+  - Bloco **Dados para impressão** (CNPJ, telefone, endereço)
+- Identidade mantém: logo, paletas de cores, tema do cardápio e prévia ao vivo.
+- O nome continua sendo passado para a prévia (apenas leitura na Identidade).
 
-Sem mudar o Kanban. Apenas adicionar no cabeçalho:
+### 2. Nova aba "Geral"
 
-- Badge ao lado do título: **"Hoje · 17/06/2026"** (data atual formatada em pt-BR).
-- Subtítulo curto: "Pedidos criados hoje. Para dias anteriores, use a aba Histórico."
+Conteúdo:
 
-Nenhuma alteração em colunas, cards, realtime ou regras de avanço.
+- **Informações do restaurante**: nome, CNPJ, telefone, endereço.
+- **Horário de funcionamento**:
+  - 7 linhas (Dom–Sáb), cada uma com toggle "Aberto" + horário de abertura e fechamento (`HH:MM`).
+  - Suporte a turno único por dia (ex.: 11:00–23:00). Horários que cruzam meia-noite são aceitos (fechamento < abertura).
+  - Fuso horário fixo: America/Sao_Paulo (sem campo de fuso por enquanto).
+  - Botão "Aplicar a todos os dias" para copiar o primeiro dia preenchido.
+- Validação: se "Aberto" marcado, abertura e fechamento obrigatórios e diferentes.
 
-## 3. Aba "Histórico"
+### 3. Efeito no Delivery (somente leitura quando fechado)
 
-Lista tabular paginada de pedidos de **dias anteriores** (não inclui hoje).
+- Cardápio público de delivery (`/delivery/$slug`) e o checkout passam a consultar o status "aberto agora".
+- Quando fechado:
+  - Banner no topo: "Estamos fechados no momento. Reabrimos {dia} às {hora}."
+  - Botões "Adicionar ao carrinho" e "Finalizar pedido" desabilitados.
+  - Server function de criação de pedido delivery rejeita com mensagem clara (defesa em profundidade).
+- Quando aberto: comportamento atual inalterado.
 
-Filtros no topo:
+### 4. Escopo NÃO incluído (confirmar se deseja agora)
 
-- Intervalo de datas (date range picker) — default: últimos 7 dias.
-- Canal (Todos / Salão / Delivery / Retirada).
-- Status (Todos / Entregue / Cancelado / Em aberto).
-- Busca por número da mesa ou nome do cliente.
-
-Colunas: Data/hora · Canal · Mesa/Cliente · Itens (contagem) · Total · Status · Garçom.
-
-Clique na linha abre o `DetalhePedido` (já existente) em modo somente leitura.
-
-Paginação server-side (50 por página).
-
-## 4. Aba "Em aberto (auditoria)"
-
-Lista todos os pedidos com status em `('recebido','em_preparo','pronto')` **criados antes de hoje** (ou seja, abertos há mais de 1 dia — pedidos órfãos / esquecidos).
-
-Colunas: idade (ex.: "16 dias"), data criação, canal, mesa/cliente, status atual, total, garçom.
-
-Ações por linha:
-
-- **Cancelar** (com motivo) — reutiliza `cancelarPedidoFn`.
-- **Marcar como entregue** — reutiliza `atualizarStatusPedidoFn` para `entregue`.
-
-Ações em lote (via checkbox por linha + barra de ações):
-
-- **Cancelar selecionados** — abre dialog único pedindo motivo, aplica a todos.
-- **Marcar selecionados como entregues**.
-
-Confirmação obrigatória antes de ambas as ações em lote.
-
-## 5. Aba "Cancelados"
-
-Lista pedidos com `status = 'cancelado'`, com filtro de período (default: últimos 30 dias).
-
-Colunas: data, canal, mesa/cliente, total, **motivo do cancelamento**, **cancelado por**, **cancelado em** (timestamp).
-
-Somente leitura. Clique abre o `DetalhePedido`.
-
-## 6. Permissões
-
-Mantém-se idêntico ao atual: rota `/admin/pedidos` (já sob `_authenticated/admin`). Nenhuma mudança de RLS ou de papéis.
-
----
+- Não altera cardápio de mesa/QR (somente delivery).
+- Sem múltiplos turnos por dia (ex.: 11–14 e 18–23).
+- Sem feriados/exceções por data.
+- Sem agendamento de pedido para abertura futura.
 
 ## Detalhes técnicos
 
-### Backend (server functions novas em `src/lib/pedidos.functions.ts`)
+### Banco
 
-Todas autenticadas via `requireSupabaseAuth` + verificação de `restaurante_id`:
+Migration adicionando à tabela `restaurantes`:
 
-1. `**listarPedidosHistoricoFn**` — input: `{ restauranteId, dataInicio, dataFim, canal?, status?, busca?, page, pageSize }`. Retorna `{ pedidos, itens, mesas, destinoStatus, total }`. Filtra `criado_em < hoje` por padrão (o range cobre isso).
-2. `**listarPedidosAbertosAntigosFn**` — input: `{ restauranteId }`. Retorna pedidos com status em `('recebido','em_preparo','pronto')` e `criado_em < start_of_today`.
-3. `**listarPedidosCanceladosFn**` — input: `{ restauranteId, dataInicio, dataFim }`. Inclui join com `pedido_status_historico` para obter motivo, autor e timestamp do cancelamento.
-4. `**cancelarPedidosEmLoteFn**` — input: `{ restauranteId, pedidoIds: string[], motivo: string }`. Itera chamando a mesma lógica de `cancelarPedidoFn` (transacional por pedido; coleta resultado). Limita a 50 IDs por chamada.
-5. `**marcarPedidosEntreguesEmLoteFn**` — input: `{ restauranteId, pedidoIds: string[] }`. Idem para `entregue`.
+- `horario_funcionamento jsonb not null default '[]'::jsonb`
+Formato:
+  ```json
+  [
+    { "dia": 0, "aberto": false, "inicio": null, "fim": null },
+    { "dia": 1, "aberto": true,  "inicio": "11:00", "fim": "23:00" },
+    ...
+  ]
+  ```
+  (`dia`: 0=Domingo … 6=Sábado)
 
-Nenhuma migração de schema necessária — os dados já existem nas tabelas `pedidos`, `pedido_itens`, `pedido_status_historico`.
+Função SQL utilitária (usada pelo servidor):
 
-### Frontend
+- `public.restaurante_aberto_agora(restaurante_id uuid) returns boolean` — calcula em `America/Sao_Paulo` com base no JSON.
 
-Estrutura de arquivos novos em `src/components/pedidos/`:
+### Server functions (`src/lib/configuracoes.functions.ts`)
 
-- `aba-historico.tsx`
-- `aba-em-aberto.tsx`
-- `aba-cancelados.tsx`
-- `tabela-pedidos.tsx` (componente compartilhado de tabela com colunas configuráveis)
-- `acoes-lote-bar.tsx` (barra flutuante de ações em lote)
-- `cancelar-pedido-dialog.tsx` (dialog reutilizável com campo motivo)
+- Novo `aba: "geral"` no `atualizarConfiguracoesFn` com Zod validando: `nome`, `cnpj`, `telefone`, `endereco`, `horario_funcionamento`.
+- Remover esses campos do payload da aba `identidade`.
 
-Hooks novos em `src/hooks/use-pedidos.ts`:
+### Delivery
 
-- `usePedidosHistorico`, `usePedidosAbertosAntigos`, `usePedidosCancelados`
-- `useCancelarPedidosEmLote`, `useMarcarPedidosEntreguesEmLote`
+- `src/lib/cardapio-publico.functions.ts` (ou equivalente do delivery): retornar `aberto_agora: boolean` + `proxima_abertura: { dia, hora } | null` via `restaurante_aberto_agora()` + cálculo simples.
+- `src/lib/delivery.functions.ts` (criação de pedido): bloquear quando fechado.
+- `src/components/delivery/delivery-header.tsx` + página `/delivery/$slug`: banner + desabilitar CTAs.
 
-Estado das abas e filtros via **search params** (`?aba=historico&inicio=...&fim=...&canal=...`) usando `validateSearch` com Zod, para deep-link e refresh sem perder contexto.
+### Frontend Configurações
 
-Arquivo `src/routes/_authenticated/admin/pedidos.tsx`:
+- Novo componente `src/components/configuracoes/geral-form.tsx` (informações + horário).
+- Novo componente `src/components/configuracoes/horario-funcionamento-form.tsx`.
+- `src/routes/_authenticated/admin/configuracoes.tsx`:
+  - Adicionar `"geral"` ao enum `TabId` e ao `searchSchema` (default `"geral"`).
+  - Inserir aba "Geral" como **primeira** da lista, antes de "Identidade".
+  - Estado, dirty-tracking e payload de salvar replicados para a nova aba.
+- Hook `useAtualizarConfiguracoes` (`src/hooks/use-configuracoes.ts`): novo variant `aba: "geral"` no `ConfigPayload`.
 
-- Adiciona `Tabs` principal acima do filtro de canal atual.
-- Move o conteúdo atual (Kanban + filtro de canal) para dentro da aba "Hoje" sem alterações.
-- Renderiza as novas abas via componentes acima.
+### Compatibilidade
 
-### Limites e edge cases
+- Restaurantes existentes recebem `horario_funcionamento = []` (sem horário). Regra: lista vazia ⇒ considerado **sempre aberto** (mantém comportamento atual do delivery até o lojista configurar).
 
-- Paginação obrigatória em Histórico e Cancelados (server-side, 50/página) para não sobrecarregar.
-- Ações em lote limitadas a 50 pedidos por execução.
-- Realtime continua só na aba "Hoje" — as outras abas usam `staleTime` de 30s e refetch manual.
-- Cancelamento em lote: se algum pedido falhar, mostra toast com contagem de sucesso/falha e mantém os demais.
+## Perguntas antes de implementar
 
-## Arquivos afetados
+1. Confirma o nome **"Geral"** para a aba (ou prefere "Informações"/"Negócio")?
+2. Turno único por dia está OK, ou precisa suportar 2 turnos (almoço/jantar) já nesta entrega?
+3. Quando fechado, o cardápio delivery deve ficar **visível em somente leitura** (como descrito) ou **totalmente oculto** com tela "Fechado"?
+4. Aplicar o bloqueio de horário apenas no **delivery**, ou também no **cardápio QR de mesa**?
 
-Novos:
-
-- `src/components/pedidos/aba-historico.tsx`
-- `src/components/pedidos/aba-em-aberto.tsx`
-- `src/components/pedidos/aba-cancelados.tsx`
-- `src/components/pedidos/tabela-pedidos.tsx`
-- `src/components/pedidos/acoes-lote-bar.tsx`
-- `src/components/pedidos/cancelar-pedido-dialog.tsx`
-
-Editados:
-
-- `src/lib/pedidos.functions.ts` (adicionar 5 server fns; sem alterar as existentes)
-- `src/hooks/use-pedidos.ts` (adicionar novos hooks; sem alterar os existentes)
-- `src/routes/_authenticated/admin/pedidos.tsx` (envolver conteúdo atual em Tabs + search params)
-
-Nenhuma alteração em: realtime atual, `PedidosKanban`, `DetalhePedido`, RLS, schema do banco.  
-  
-IMPORTANTE:
-
-Execute APENAS a alteração explicitamente solicitada.
-
-NÃO refatore, otimize, melhore ou modifique código não relacionado.
-
-NÃO faça suposições.
-
-Se algo não estiver claro, PARE e pergunte antes de alterar qualquer coisa.
-
-Preserve 100% do comportamento e da funcionalidade existentes.
+Respostas:  
+1. sim, Geral  
+2. suportar 2 turnos (almoço/jantar) já nesta entrega  
+3. o cardápio delivery deve ficar **visível em somente leitura** (como descrito)   
+4. bloqueio de horário apenas no **delivery**
