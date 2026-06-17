@@ -1788,6 +1788,7 @@ export type Database = {
           delivery_tempo_estimado_min: number
           delivery_whatsapp: string | null
           endereco: string | null
+          horario_funcionamento: Json
           id: string
           logo_url: string | null
           nome: string
@@ -1841,6 +1842,7 @@ export type Database = {
           delivery_tempo_estimado_min?: number
           delivery_whatsapp?: string | null
           endereco?: string | null
+          horario_funcionamento?: Json
           id?: string
           logo_url?: string | null
           nome: string
@@ -1894,6 +1896,7 @@ export type Database = {
           delivery_tempo_estimado_min?: number
           delivery_whatsapp?: string | null
           endereco?: string | null
+          horario_funcionamento?: Json
           id?: string
           logo_url?: string | null
           nome?: string
@@ -2216,6 +2219,10 @@ export type Database = {
       remover_garcom_mesa: {
         Args: { _garcom_id: string; _mesa_id: string }
         Returns: number
+      }
+      restaurante_aberto_agora: {
+        Args: { _restaurante_id: string }
+        Returns: boolean
       }
       resumo_comissoes: { Args: { _restaurante_id: string }; Returns: Json }
       totais_turno_caixa: { Args: { _turno_id: string }; Returns: Json }
