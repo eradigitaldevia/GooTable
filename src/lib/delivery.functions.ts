@@ -246,8 +246,15 @@ export const getRestauranteDeliveryFn = createServerFn({ method: "POST" })
       if (cErr) return { erro: cErr.message };
       if (pErr) return { erro: pErr.message };
 
+      const aberto = await checarAbertoAgora(r.id);
+      const publico = toPublicRestaurante(r);
+      publico.aberto_agora = aberto;
+      publico.proxima_abertura_label = aberto
+        ? null
+        : calcularProximaAbertura((r as unknown as { horario_funcionamento: unknown }).horario_funcionamento);
+
       return {
-        restaurante: toPublicRestaurante(r),
+        restaurante: publico,
         categorias: (cats ?? []) as CategoriaPublica[],
         produtos: (prods ?? []) as ProdutoPublico[],
       };
@@ -316,6 +323,12 @@ export const criarPedidoDeliveryFn = createServerFn({ method: "POST" })
   )
   .handler(async ({ data }): Promise<CriarPedidoDeliveryResultado> => {
     const r = await carregarRestaurantePorSlug(data.slug);
+
+    // 0. Bloqueia se restaurante fora do horário de funcionamento
+    const aberto = await checarAbertoAgora(r.id);
+    if (!aberto) {
+      throw new Error("Estamos fechados no momento. Tente novamente no horário de funcionamento.");
+    }
 
     // 1. Validações de modalidade
     if (data.modo === "delivery") {
