@@ -17,6 +17,13 @@ import {
   resumoContaMesaFn,
   type StatusPedido,
 } from "@/lib/pedidos.functions";
+import {
+  listarPedidosHistoricoFn,
+  listarPedidosAbertosAntigosFn,
+  listarPedidosCanceladosFn,
+  cancelarPedidosEmLoteFn,
+  marcarPedidosEntreguesEmLoteFn,
+} from "@/lib/pedidos.functions";
 
 export function usePedidosDoDia(
   restauranteId: string | undefined,
@@ -210,5 +217,108 @@ export function useResumoContaMesa(
     queryFn: () =>
       fn({ data: { restauranteId: restauranteId!, mesaId: mesaId! } }),
     enabled,
+  });
+}
+
+/* ---------- Histórico / Auditoria / Cancelados ---------- */
+
+export function usePedidosHistorico(input: {
+  restauranteId: string | undefined;
+  dataInicio: string;
+  dataFim: string;
+  canal: "todos" | "mesa" | "delivery" | "retirada";
+  status: "todos" | "entregue" | "cancelado" | "abertos";
+  busca?: string;
+  page: number;
+  pageSize: number;
+}) {
+  const fn = useServerFn(listarPedidosHistoricoFn);
+  return useQuery({
+    queryKey: [
+      "pedidos-historico",
+      input.restauranteId ?? "none",
+      input.dataInicio,
+      input.dataFim,
+      input.canal,
+      input.status,
+      input.busca ?? "",
+      input.page,
+      input.pageSize,
+    ],
+    queryFn: () =>
+      fn({
+        data: {
+          restauranteId: input.restauranteId!,
+          dataInicio: input.dataInicio,
+          dataFim: input.dataFim,
+          canal: input.canal,
+          status: input.status,
+          busca: input.busca,
+          page: input.page,
+          pageSize: input.pageSize,
+        },
+      }),
+    enabled: !!input.restauranteId,
+    staleTime: 30_000,
+  });
+}
+
+export function usePedidosAbertosAntigos(restauranteId: string | undefined) {
+  const fn = useServerFn(listarPedidosAbertosAntigosFn);
+  return useQuery({
+    queryKey: ["pedidos-abertos-antigos", restauranteId ?? "none"],
+    queryFn: () => fn({ data: { restauranteId: restauranteId! } }),
+    enabled: !!restauranteId,
+    staleTime: 30_000,
+  });
+}
+
+export function usePedidosCancelados(input: {
+  restauranteId: string | undefined;
+  dataInicio: string;
+  dataFim: string;
+}) {
+  const fn = useServerFn(listarPedidosCanceladosFn);
+  return useQuery({
+    queryKey: ["pedidos-cancelados", input.restauranteId ?? "none", input.dataInicio, input.dataFim],
+    queryFn: () =>
+      fn({
+        data: {
+          restauranteId: input.restauranteId!,
+          dataInicio: input.dataInicio,
+          dataFim: input.dataFim,
+        },
+      }),
+    enabled: !!input.restauranteId,
+    staleTime: 30_000,
+  });
+}
+
+export function useCancelarPedidosEmLote(restauranteId: string | undefined) {
+  const fn = useServerFn(cancelarPedidosEmLoteFn);
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (data: { pedidoIds: string[]; motivo?: string }) =>
+      fn({ data: { restauranteId: restauranteId!, pedidoIds: data.pedidoIds, motivo: data.motivo } }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["pedidos-abertos-antigos", restauranteId ?? "none"] });
+      qc.invalidateQueries({ queryKey: ["pedidos-historico"] });
+      qc.invalidateQueries({ queryKey: ["pedidos-cancelados"] });
+      if (restauranteId) qc.invalidateQueries({ queryKey: queryKeys.pedidos(restauranteId) });
+    },
+  });
+}
+
+export function useMarcarPedidosEntreguesEmLote(restauranteId: string | undefined) {
+  const fn = useServerFn(marcarPedidosEntreguesEmLoteFn);
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (data: { pedidoIds: string[] }) =>
+      fn({ data: { restauranteId: restauranteId!, pedidoIds: data.pedidoIds } }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["pedidos-abertos-antigos", restauranteId ?? "none"] });
+      qc.invalidateQueries({ queryKey: ["pedidos-historico"] });
+      if (restauranteId) qc.invalidateQueries({ queryKey: queryKeys.pedidos(restauranteId) });
+    },
   });
 }
