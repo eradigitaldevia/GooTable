@@ -12,6 +12,7 @@ export interface SalaMesa {
   id: string;
   numero: string;
   atribuido_em: string;
+  minha?: boolean;
 }
 
 export interface SalaPedidoItem {
