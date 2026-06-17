@@ -2,6 +2,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { queryKeys } from "@/lib/query-keys";
 import { atualizarConfiguracoesFn, uploadLogoFn, validarPixFn } from "@/lib/configuracoes.functions";
+import type { HorarioFuncionamento } from "@/lib/configuracoes.functions";
 
 export function useValidarPix() {
   const fn = useServerFn(validarPixFn);
@@ -15,16 +16,20 @@ type Base = { restauranteId: string };
 
 export type ConfigPayload =
   | (Base & {
-      aba: "identidade";
+      aba: "geral";
       nome: string;
+      cnpj: string | null;
+      telefone: string | null;
+      endereco: string | null;
+      horario_funcionamento: HorarioFuncionamento;
+    })
+  | (Base & {
+      aba: "identidade";
       cor_primaria: string;
       cor_secundaria: string;
       cor_acento: string;
       tema_cardapio: "claro" | "escuro";
       logo_url: string | null;
-      cnpj: string | null;
-      telefone: string | null;
-      endereco: string | null;
     })
   | (Base & {
       aba: "pagamentos";

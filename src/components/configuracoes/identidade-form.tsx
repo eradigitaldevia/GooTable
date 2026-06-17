@@ -10,15 +10,11 @@ import { TemaCardapioSecao } from "./identidade/tema-cardapio-secao";
 import { PreviewDrawer } from "./identidade/preview-drawer";
 
 type IdentidadePatch = {
-  nome?: string;
   cor_primaria?: string;
   cor_secundaria?: string;
   cor_acento?: string;
   tema_cardapio?: "claro" | "escuro";
   logo_url?: string | null;
-  cnpj?: string;
-  telefone?: string;
-  endereco?: string;
 };
 
 export function IdentidadeForm({
@@ -29,9 +25,6 @@ export function IdentidadeForm({
   corAcento,
   tema,
   logoUrl,
-  cnpj,
-  telefone,
-  endereco,
   onChange,
 }: {
   restauranteId: string;
@@ -41,9 +34,6 @@ export function IdentidadeForm({
   corAcento: string;
   tema: "claro" | "escuro";
   logoUrl: string | null;
-  cnpj: string;
-  telefone: string;
-  endereco: string;
   onChange: (patch: IdentidadePatch) => void;
 }) {
   const fileRef = useRef<HTMLInputElement>(null);
@@ -75,7 +65,8 @@ export function IdentidadeForm({
       <div>
         <h2 className="text-lg font-semibold">Identidade</h2>
         <p className="mt-1 text-xs text-muted-foreground">
-          Personalize a logo, o nome e as cores que o cliente vê no cardápio.
+          Personalize a logo, as cores e o tema que o cliente vê no cardápio.
+          O nome do restaurante é editado na aba <strong className="font-medium text-foreground">Geral</strong>.
         </p>
       </div>
 
@@ -121,50 +112,6 @@ export function IdentidadeForm({
               PNG ou SVG transparente · 512×512 px recomendado · até 2 MB
             </p>
           </div>
-        </div>
-      </div>
-
-      <div className="space-y-2">
-        <Label>Nome do restaurante</Label>
-        <Input value={nome} onChange={(e) => onChange({ nome: e.target.value })} />
-      </div>
-
-      <div className="space-y-3 rounded-xl border border-dashed border-border bg-muted/30 p-4">
-        <div>
-          <div className="text-sm font-medium">Dados para impressão</div>
-          <p className="mt-1 text-xs text-muted-foreground">
-            Aparecem no cabeçalho dos comprovantes impressos pelo garçom e pelo
-            caixa. Campos opcionais — só aparece o que estiver preenchido.
-          </p>
-        </div>
-        <div className="grid gap-3 sm:grid-cols-2">
-          <div className="space-y-1">
-            <Label>CNPJ</Label>
-            <Input
-              value={cnpj}
-              maxLength={20}
-              placeholder="00.000.000/0000-00"
-              onChange={(e) => onChange({ cnpj: e.target.value })}
-            />
-          </div>
-          <div className="space-y-1">
-            <Label>Telefone</Label>
-            <Input
-              value={telefone}
-              maxLength={30}
-              placeholder="(11) 99999-9999"
-              onChange={(e) => onChange({ telefone: e.target.value })}
-            />
-          </div>
-        </div>
-        <div className="space-y-1">
-          <Label>Endereço</Label>
-          <Input
-            value={endereco}
-            maxLength={200}
-            placeholder="Rua X, 123 - Bairro - Cidade/UF"
-            onChange={(e) => onChange({ endereco: e.target.value })}
-          />
         </div>
       </div>
 

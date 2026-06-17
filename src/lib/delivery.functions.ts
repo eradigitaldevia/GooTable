@@ -28,6 +28,8 @@ export interface RestauranteDeliveryPublico extends RestaurantePublico {
   delivery_aceita_pix: boolean;
   delivery_whatsapp: string | null;
   pix_habilitado: boolean;
+  aberto_agora: boolean;
+  proxima_abertura_label: string | null;
 }
 
 export interface EnderecoCliente {
@@ -105,6 +107,7 @@ const SELECT_RESTAURANTE_DELIVERY =
 type RestauranteDeliveryRow = RestauranteDeliveryPublico & {
   pix_chave: string | null;
   pix_nome_titular: string | null;
+  horario_funcionamento: unknown;
 };
 
 async function carregarRestaurantePorSlug(slug: string): Promise<RestauranteDeliveryRow> {
@@ -124,11 +127,95 @@ function toPublicRestaurante(r: RestauranteDeliveryRow): RestauranteDeliveryPubl
   const {
     pix_chave: _pc,
     pix_nome_titular: _pn,
+    horario_funcionamento: _hf,
     ...rest
   } = r;
   void _pc;
   void _pn;
+  void _hf;
   return rest as RestauranteDeliveryPublico;
+}
+
+const DIAS_LABEL = [
+  "domingo",
+  "segunda-feira",
+  "terça-feira",
+  "quarta-feira",
+  "quinta-feira",
+  "sexta-feira",
+  "sábado",
+];
+
+type TurnoHorario = { inicio: string; fim: string };
+type DiaHorario = { dia: number; aberto: boolean; turnos: TurnoHorario[] };
+
+function hhmmToMin(s: string): number | null {
+  const m = /^([01]\d|2[0-3]):([0-5]\d)$/.exec(s);
+  if (!m) return null;
+  return parseInt(m[1], 10) * 60 + parseInt(m[2], 10);
+}
+
+/** Calcula label "Reabrimos {dia} às {hh:mm}" a partir do JSON e do horário SP. */
+function calcularProximaAbertura(horarioRaw: unknown): string | null {
+  if (!Array.isArray(horarioRaw) || horarioRaw.length === 0) return null;
+  const horario = horarioRaw as DiaHorario[];
+
+  const fmt = new Intl.DateTimeFormat("en-US", {
+    timeZone: "America/Sao_Paulo",
+    hour12: false,
+    weekday: "short",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+  // weekday short -> index
+  const parts = fmt.formatToParts(new Date());
+  const wd = parts.find((p) => p.type === "weekday")?.value ?? "Sun";
+  const hh = Number(parts.find((p) => p.type === "hour")?.value ?? "0");
+  const mm = Number(parts.find((p) => p.type === "minute")?.value ?? "0");
+  const map: Record<string, number> = { Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6 };
+  const hojeIdx = map[wd] ?? 0;
+  const minutosAgora = hh * 60 + mm;
+
+  type Candidato = { offsetDias: number; minutos: number };
+  let melhor: Candidato | null = null;
+
+  for (let offset = 0; offset < 7; offset++) {
+    const diaIdx = (hojeIdx + offset) % 7;
+    const conf = horario.find((d) => d.dia === diaIdx);
+    if (!conf || !conf.aberto || !Array.isArray(conf.turnos)) continue;
+    for (const t of conf.turnos) {
+      const ini = hhmmToMin(t.inicio);
+      if (ini == null) continue;
+      if (offset === 0 && ini <= minutosAgora) continue;
+      const cand: Candidato = { offsetDias: offset, minutos: ini };
+      if (
+        !melhor ||
+        cand.offsetDias < melhor.offsetDias ||
+        (cand.offsetDias === melhor.offsetDias && cand.minutos < melhor.minutos)
+      ) {
+        melhor = cand;
+      }
+    }
+  }
+
+  if (!melhor) return null;
+  const diaIdx = (hojeIdx + melhor.offsetDias) % 7;
+  const h = Math.floor(melhor.minutos / 60).toString().padStart(2, "0");
+  const m = (melhor.minutos % 60).toString().padStart(2, "0");
+  const quando = melhor.offsetDias === 0
+    ? "hoje"
+    : melhor.offsetDias === 1
+      ? "amanhã"
+      : DIAS_LABEL[diaIdx];
+  return `Reabrimos ${quando} às ${h}:${m}.`;
+}
+
+async function checarAbertoAgora(restauranteId: string): Promise<boolean> {
+  const { data, error } = await supabaseAdmin.rpc("restaurante_aberto_agora", {
+    _restaurante_id: restauranteId,
+  });
+  if (error) return true; // fail-open para não derrubar o cardápio
+  return !!data;
 }
 
 /* ============================================================
@@ -159,8 +246,15 @@ export const getRestauranteDeliveryFn = createServerFn({ method: "POST" })
       if (cErr) return { erro: cErr.message };
       if (pErr) return { erro: pErr.message };
 
+      const aberto = await checarAbertoAgora(r.id);
+      const publico = toPublicRestaurante(r);
+      publico.aberto_agora = aberto;
+      publico.proxima_abertura_label = aberto
+        ? null
+        : calcularProximaAbertura((r as unknown as { horario_funcionamento: unknown }).horario_funcionamento);
+
       return {
-        restaurante: toPublicRestaurante(r),
+        restaurante: publico,
         categorias: (cats ?? []) as CategoriaPublica[],
         produtos: (prods ?? []) as ProdutoPublico[],
       };
@@ -229,6 +323,12 @@ export const criarPedidoDeliveryFn = createServerFn({ method: "POST" })
   )
   .handler(async ({ data }): Promise<CriarPedidoDeliveryResultado> => {
     const r = await carregarRestaurantePorSlug(data.slug);
+
+    // 0. Bloqueia se restaurante fora do horário de funcionamento
+    const aberto = await checarAbertoAgora(r.id);
+    if (!aberto) {
+      throw new Error("Estamos fechados no momento. Tente novamente no horário de funcionamento.");
+    }
 
     // 1. Validações de modalidade
     if (data.modo === "delivery") {

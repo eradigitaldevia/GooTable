@@ -108,6 +108,15 @@ function resumoEndereco(e: EnderecoCliente) {
   return `${e.rua}, ${e.numero}${e.complemento ? ` (${e.complemento})` : ""} — ${e.bairro}`;
 }
 
+function ClosedBanner({ mensagem }: { mensagem: string | null }) {
+  return (
+    <div className="sticky top-[57px] z-20 border-b border-destructive/30 bg-destructive/10 px-4 py-2 text-center text-sm font-medium text-destructive">
+      Estamos fechados no momento.
+      {mensagem ? ` ${mensagem}` : " Volte no horário de funcionamento."}
+    </div>
+  );
+}
+
 /* ----------------------------- Component ----------------------------- */
 
 function DeliveryPage() {
@@ -145,6 +154,8 @@ function DeliveryPage() {
 
   const erro = data && "erro" in data ? data.erro : null;
   const restaurante = data && !("erro" in data) ? data.restaurante : null;
+  const aberto = restaurante ? restaurante.aberto_agora : true;
+  const mensagemFechado = restaurante?.proxima_abertura_label ?? null;
 
   const irPara = (s: DeliveryState["modo"] extends never ? never : "identificacao" | "cardapio" | "revisao") =>
     navigate({
@@ -217,6 +228,8 @@ function DeliveryPage() {
           taxa={restaurante.delivery_taxa_entrega}
           categorias={categorias}
           produtos={produtos}
+          aberto={aberto}
+          mensagemFechado={mensagemFechado}
           onVoltar={() => irPara("identificacao")}
           onContinuar={() => irPara("revisao")}
         />
@@ -235,6 +248,8 @@ function DeliveryPage() {
           aceitaPix={restaurante.delivery_aceita_pix && restaurante.pix_habilitado}
           aceitaDinheiro={restaurante.delivery_aceita_dinheiro}
           aceitaCartao={restaurante.delivery_aceita_cartao_entrega}
+          aberto={aberto}
+          mensagemFechado={mensagemFechado}
           onVoltar={() => irPara("cardapio")}
           enviar={async (payload) => {
             try {
@@ -436,6 +451,8 @@ function StepCardapio({
   taxa,
   categorias,
   produtos,
+  aberto,
+  mensagemFechado,
   onVoltar,
   onContinuar,
 }: {
@@ -447,6 +464,8 @@ function StepCardapio({
   taxa: number;
   categorias: { id: string; nome: string; ordem: number }[];
   produtos: ProdutoPublico[];
+  aberto: boolean;
+  mensagemFechado: string | null;
   onVoltar: () => void;
   onContinuar: () => void;
 }) {
@@ -485,7 +504,7 @@ function StepCardapio({
   const subtotal = cartTotal(cart);
   const count = cartCount(cart);
   const falta = Math.max(0, minimo - subtotal);
-  const podeContinuar = count > 0 && falta === 0;
+  const podeContinuar = count > 0 && falta === 0 && aberto;
 
   return (
     <>
@@ -495,6 +514,7 @@ function StepCardapio({
         onBack={onVoltar}
         subtitulo={modo === "delivery" ? "Entrega" : "Retirada"}
       />
+      {!aberto && <ClosedBanner mensagem={mensagemFechado} />}
       <div className="sticky top-[57px] z-20 border-b bg-background/95 px-4 py-3 backdrop-blur">
         <div className="mx-auto max-w-2xl space-y-2">
           <Input
@@ -542,9 +562,13 @@ function StepCardapio({
       </main>
 
       <ProdutoDialog
-        produto={selecionado}
+        produto={aberto ? selecionado : null}
         onClose={() => setSelecionado(null)}
         onAdd={(item) => {
+          if (!aberto) {
+            toast.error("Estamos fechados no momento.");
+            return;
+          }
           setSelecionado(null);
           addToDeliveryCart(slug, item);
           requestAnimationFrame(() => toast.success("Adicionado ao carrinho"));
@@ -612,6 +636,8 @@ function StepRevisao({
   aceitaPix,
   aceitaDinheiro,
   aceitaCartao,
+  aberto,
+  mensagemFechado,
   onVoltar,
   enviar,
 }: {
@@ -626,6 +652,8 @@ function StepRevisao({
   aceitaPix: boolean;
   aceitaDinheiro: boolean;
   aceitaCartao: boolean;
+  aberto: boolean;
+  mensagemFechado: string | null;
   onVoltar: () => void;
   enviar: (p: RevisaoPayload) => Promise<void>;
 }) {
@@ -680,7 +708,7 @@ function StepRevisao({
       state.endereco.cidade.trim() &&
       state.endereco.uf.trim().length === 2);
   const podeEnviar =
-    cart.length > 0 && falta === 0 && enderecoOk && metodosDisp.length > 0 && !enviando;
+    cart.length > 0 && falta === 0 && enderecoOk && metodosDisp.length > 0 && !enviando && aberto;
 
   const handleEnviar = async () => {
     if (!podeEnviar) return;
@@ -721,6 +749,7 @@ function StepRevisao({
         onBack={onVoltar}
         subtitulo="Revisar pedido"
       />
+      {!aberto && <ClosedBanner mensagem={mensagemFechado} />}
       <main className="mx-auto max-w-2xl space-y-5 px-4 py-5">
         {cart.length === 0 ? (
           <div className="py-16 text-center text-muted-foreground">

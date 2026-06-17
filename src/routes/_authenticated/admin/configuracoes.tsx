@@ -9,6 +9,12 @@ import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { IdentidadeForm } from "@/components/configuracoes/identidade-form";
+import { GeralForm } from "@/components/configuracoes/geral-form";
+import {
+  diasPadrao,
+  normalizarHorario,
+} from "@/components/configuracoes/horario-funcionamento-form";
+import type { HorarioFuncionamento } from "@/lib/configuracoes.functions";
 import { PixForm } from "@/components/configuracoes/pix-form";
 import { ComissaoModoForm } from "@/components/configuracoes/comissao-modo-form";
 import { TaxaServicoForm } from "@/components/configuracoes/taxa-servico-form";
@@ -22,6 +28,7 @@ import { useUnsavedChangesGuard } from "@/hooks/use-unsaved-changes-guard";
 import { UnsavedChangesDialog } from "@/components/configuracoes/unsaved-changes-dialog";
 
 type TabId =
+  | "geral"
   | "identidade"
   | "pagamentos"
   | "taxas"
@@ -32,8 +39,8 @@ type TabId =
 
 const searchSchema = z.object({
   tab: z
-    .enum(["identidade", "pagamentos", "taxas", "comissoes", "caixa", "cardapio", "delivery"])
-    .default("identidade"),
+    .enum(["geral", "identidade", "pagamentos", "taxas", "comissoes", "caixa", "cardapio", "delivery"])
+    .default("geral"),
 });
 
 export const Route = createFileRoute("/_authenticated/admin/configuracoes")({
@@ -65,6 +72,8 @@ function Configuracoes() {
     cnpj: "",
     telefone: "",
     endereco: "",
+    horario_funcionamento_habilitado: false,
+    horario_funcionamento: diasPadrao() as HorarioFuncionamento,
     pix_habilitado: false,
     pix_chave: "",
     pix_nome_titular: "",
@@ -102,6 +111,8 @@ function Configuracoes() {
 
   useEffect(() => {
     if (!restaurante) return;
+    const horarioRaw = ((restaurante as any).horario_funcionamento ?? []) as HorarioFuncionamento;
+    const horarioHabilitado = Array.isArray(horarioRaw) && horarioRaw.length > 0;
     const next: typeof form = {
       nome: restaurante.nome,
       cor_primaria: restaurante.cor_primaria || "#c2410c",
@@ -113,6 +124,10 @@ function Configuracoes() {
       cnpj: (restaurante as any).cnpj ?? "",
       telefone: (restaurante as any).telefone ?? "",
       endereco: (restaurante as any).endereco ?? "",
+      horario_funcionamento_habilitado: horarioHabilitado,
+      horario_funcionamento: horarioHabilitado
+        ? normalizarHorario(horarioRaw)
+        : diasPadrao(),
       pix_habilitado: restaurante.pix_habilitado,
       pix_chave: restaurante.pix_chave ?? "",
       pix_nome_titular: restaurante.pix_nome_titular ?? "",
@@ -203,6 +218,8 @@ function Configuracoes() {
 
   const snapshot = useMemo(() => {
     if (!restaurante) return null;
+    const horarioRaw = ((restaurante as any).horario_funcionamento ?? []) as HorarioFuncionamento;
+    const horarioHabilitado = Array.isArray(horarioRaw) && horarioRaw.length > 0;
     return {
       nome: restaurante.nome,
       cor_primaria: restaurante.cor_primaria || "#c2410c",
@@ -214,6 +231,10 @@ function Configuracoes() {
       cnpj: (restaurante as any).cnpj ?? "",
       telefone: (restaurante as any).telefone ?? "",
       endereco: (restaurante as any).endereco ?? "",
+      horario_funcionamento_habilitado: horarioHabilitado,
+      horario_funcionamento: horarioHabilitado
+        ? normalizarHorario(horarioRaw)
+        : diasPadrao(),
       pix_habilitado: restaurante.pix_habilitado,
       pix_chave: restaurante.pix_chave ?? "",
       pix_nome_titular: restaurante.pix_nome_titular ?? "",
@@ -279,16 +300,20 @@ function Configuracoes() {
   }, [restaurante]);
 
   const CAMPOS_POR_ABA: Record<TabId, (keyof typeof form)[]> = {
-    identidade: [
+    geral: [
       "nome",
+      "cnpj",
+      "telefone",
+      "endereco",
+      "horario_funcionamento_habilitado",
+      "horario_funcionamento",
+    ],
+    identidade: [
       "cor_primaria",
       "cor_secundaria",
       "cor_acento",
       "tema_cardapio",
       "logo_url",
-      "cnpj",
-      "telefone",
-      "endereco",
     ],
     pagamentos: ["pix_habilitado", "pix_chave", "pix_nome_titular"],
     taxas: [
@@ -331,6 +356,7 @@ function Configuracoes() {
 
   const abasSujas = useMemo(() => {
     const r: Record<TabId, boolean> = {
+      geral: false,
       identidade: false,
       pagamentos: false,
       taxas: false,
@@ -341,7 +367,14 @@ function Configuracoes() {
     };
     if (!snapshot) return r;
     (Object.keys(CAMPOS_POR_ABA) as TabId[]).forEach((aba) => {
-      r[aba] = CAMPOS_POR_ABA[aba].some((k) => form[k] !== snapshot[k]);
+      r[aba] = CAMPOS_POR_ABA[aba].some((k) => {
+        const a = form[k];
+        const b = snapshot[k];
+        if (typeof a === "object" && a !== null) {
+          return JSON.stringify(a) !== JSON.stringify(b);
+        }
+        return a !== b;
+      });
     });
     return r;
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -364,10 +397,25 @@ function Configuracoes() {
     const f = overrides ? { ...form, ...overrides } : form;
 
     // Validações por aba
-    if (aba === "identidade") {
+    if (aba === "geral") {
       if (f.nome.trim().length < 2) {
         toast.error("Nome muito curto");
         return;
+      }
+      if (f.horario_funcionamento_habilitado) {
+        for (const d of f.horario_funcionamento) {
+          if (!d.aberto) continue;
+          for (const t of d.turnos) {
+            if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(t.inicio) || !/^([01]\d|2[0-3]):[0-5]\d$/.test(t.fim)) {
+              toast.error("Horário inválido em algum dia.");
+              return;
+            }
+            if (t.inicio === t.fim) {
+              toast.error("Início e fim do turno devem ser diferentes.");
+              return;
+            }
+          }
+        }
       }
     }
     if (aba === "pagamentos") {
@@ -396,19 +444,27 @@ function Configuracoes() {
 
     let payload: Parameters<typeof atualizar.mutateAsync>[0] | null = null;
 
-    if (aba === "identidade") {
+    if (aba === "geral") {
+      payload = {
+        aba: "geral",
+        restauranteId: restaurante.id,
+        nome: f.nome.trim(),
+        cnpj: f.cnpj.trim() || null,
+        telefone: f.telefone.trim() || null,
+        endereco: f.endereco.trim() || null,
+        horario_funcionamento: f.horario_funcionamento_habilitado
+          ? f.horario_funcionamento
+          : [],
+      };
+    } else if (aba === "identidade") {
       payload = {
         aba: "identidade",
         restauranteId: restaurante.id,
-        nome: f.nome.trim(),
         cor_primaria: f.cor_primaria,
         cor_secundaria: f.cor_secundaria,
         cor_acento: f.cor_acento,
         tema_cardapio: f.tema_cardapio,
         logo_url: f.logo_url,
-        cnpj: f.cnpj.trim() || null,
-        telefone: f.telefone.trim() || null,
-        endereco: f.endereco.trim() || null,
       };
     } else if (aba === "pagamentos") {
       payload = {
@@ -617,6 +673,7 @@ function Configuracoes() {
         <TabsList className="grid h-auto w-full grid-cols-2 gap-1 sm:flex sm:flex-wrap sm:justify-start">
           {(
             [
+              ["geral", "Geral"],
               ["identidade", "Identidade"],
               ["pagamentos", "Pagamentos"],
               ["taxas", "Taxa e couvert"],
@@ -638,6 +695,19 @@ function Configuracoes() {
           ))}
         </TabsList>
 
+        <TabsContent value="geral" className="space-y-6">
+          <GeralForm
+            nome={form.nome}
+            cnpj={form.cnpj}
+            telefone={form.telefone}
+            endereco={form.endereco}
+            horarioHabilitado={form.horario_funcionamento_habilitado}
+            horario={form.horario_funcionamento}
+            onChange={patch}
+          />
+          <SaveBtn aba="geral" />
+        </TabsContent>
+
         <TabsContent value="identidade" className="space-y-6">
           <IdentidadeForm
             restauranteId={restaurante.id}
@@ -647,9 +717,6 @@ function Configuracoes() {
             corAcento={form.cor_acento}
             tema={form.tema_cardapio}
             logoUrl={form.logo_url}
-            cnpj={form.cnpj}
-            telefone={form.telefone}
-            endereco={form.endereco}
             onChange={patch}
           />
           <SaveBtn aba="identidade" />
