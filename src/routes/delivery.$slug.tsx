@@ -108,6 +108,15 @@ function resumoEndereco(e: EnderecoCliente) {
   return `${e.rua}, ${e.numero}${e.complemento ? ` (${e.complemento})` : ""} — ${e.bairro}`;
 }
 
+function ClosedBanner({ mensagem }: { mensagem: string | null }) {
+  return (
+    <div className="sticky top-[57px] z-20 border-b border-destructive/30 bg-destructive/10 px-4 py-2 text-center text-sm font-medium text-destructive">
+      Estamos fechados no momento.
+      {mensagem ? ` ${mensagem}` : " Volte no horário de funcionamento."}
+    </div>
+  );
+}
+
 /* ----------------------------- Component ----------------------------- */
 
 function DeliveryPage() {
