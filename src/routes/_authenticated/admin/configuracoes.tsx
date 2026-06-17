@@ -9,6 +9,12 @@ import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { IdentidadeForm } from "@/components/configuracoes/identidade-form";
+import { GeralForm } from "@/components/configuracoes/geral-form";
+import {
+  diasPadrao,
+  normalizarHorario,
+} from "@/components/configuracoes/horario-funcionamento-form";
+import type { HorarioFuncionamento } from "@/lib/configuracoes.functions";
 import { PixForm } from "@/components/configuracoes/pix-form";
 import { ComissaoModoForm } from "@/components/configuracoes/comissao-modo-form";
 import { TaxaServicoForm } from "@/components/configuracoes/taxa-servico-form";
@@ -22,6 +28,7 @@ import { useUnsavedChangesGuard } from "@/hooks/use-unsaved-changes-guard";
 import { UnsavedChangesDialog } from "@/components/configuracoes/unsaved-changes-dialog";
 
 type TabId =
+  | "geral"
   | "identidade"
   | "pagamentos"
   | "taxas"
@@ -32,8 +39,8 @@ type TabId =
 
 const searchSchema = z.object({
   tab: z
-    .enum(["identidade", "pagamentos", "taxas", "comissoes", "caixa", "cardapio", "delivery"])
-    .default("identidade"),
+    .enum(["geral", "identidade", "pagamentos", "taxas", "comissoes", "caixa", "cardapio", "delivery"])
+    .default("geral"),
 });
 
 export const Route = createFileRoute("/_authenticated/admin/configuracoes")({
@@ -65,6 +72,8 @@ function Configuracoes() {
     cnpj: "",
     telefone: "",
     endereco: "",
+    horario_funcionamento_habilitado: false,
+    horario_funcionamento: diasPadrao() as HorarioFuncionamento,
     pix_habilitado: false,
     pix_chave: "",
     pix_nome_titular: "",
@@ -102,6 +111,8 @@ function Configuracoes() {
 
   useEffect(() => {
     if (!restaurante) return;
+    const horarioRaw = ((restaurante as any).horario_funcionamento ?? []) as HorarioFuncionamento;
+    const horarioHabilitado = Array.isArray(horarioRaw) && horarioRaw.length > 0;
     const next: typeof form = {
       nome: restaurante.nome,
       cor_primaria: restaurante.cor_primaria || "#c2410c",
@@ -113,6 +124,10 @@ function Configuracoes() {
       cnpj: (restaurante as any).cnpj ?? "",
       telefone: (restaurante as any).telefone ?? "",
       endereco: (restaurante as any).endereco ?? "",
+      horario_funcionamento_habilitado: horarioHabilitado,
+      horario_funcionamento: horarioHabilitado
+        ? normalizarHorario(horarioRaw)
+        : diasPadrao(),
       pix_habilitado: restaurante.pix_habilitado,
       pix_chave: restaurante.pix_chave ?? "",
       pix_nome_titular: restaurante.pix_nome_titular ?? "",
@@ -203,6 +218,8 @@ function Configuracoes() {
 
   const snapshot = useMemo(() => {
     if (!restaurante) return null;
+    const horarioRaw = ((restaurante as any).horario_funcionamento ?? []) as HorarioFuncionamento;
+    const horarioHabilitado = Array.isArray(horarioRaw) && horarioRaw.length > 0;
     return {
       nome: restaurante.nome,
       cor_primaria: restaurante.cor_primaria || "#c2410c",
@@ -214,6 +231,10 @@ function Configuracoes() {
       cnpj: (restaurante as any).cnpj ?? "",
       telefone: (restaurante as any).telefone ?? "",
       endereco: (restaurante as any).endereco ?? "",
+      horario_funcionamento_habilitado: horarioHabilitado,
+      horario_funcionamento: horarioHabilitado
+        ? normalizarHorario(horarioRaw)
+        : diasPadrao(),
       pix_habilitado: restaurante.pix_habilitado,
       pix_chave: restaurante.pix_chave ?? "",
       pix_nome_titular: restaurante.pix_nome_titular ?? "",
@@ -279,16 +300,20 @@ function Configuracoes() {
   }, [restaurante]);
 
   const CAMPOS_POR_ABA: Record<TabId, (keyof typeof form)[]> = {
-    identidade: [
+    geral: [
       "nome",
+      "cnpj",
+      "telefone",
+      "endereco",
+      "horario_funcionamento_habilitado",
+      "horario_funcionamento",
+    ],
+    identidade: [
       "cor_primaria",
       "cor_secundaria",
       "cor_acento",
       "tema_cardapio",
       "logo_url",
-      "cnpj",
-      "telefone",
-      "endereco",
     ],
     pagamentos: ["pix_habilitado", "pix_chave", "pix_nome_titular"],
     taxas: [
@@ -331,6 +356,7 @@ function Configuracoes() {
 
   const abasSujas = useMemo(() => {
     const r: Record<TabId, boolean> = {
+      geral: false,
       identidade: false,
       pagamentos: false,
       taxas: false,
@@ -341,7 +367,14 @@ function Configuracoes() {
     };
     if (!snapshot) return r;
     (Object.keys(CAMPOS_POR_ABA) as TabId[]).forEach((aba) => {
-      r[aba] = CAMPOS_POR_ABA[aba].some((k) => form[k] !== snapshot[k]);
+      r[aba] = CAMPOS_POR_ABA[aba].some((k) => {
+        const a = form[k];
+        const b = snapshot[k];
+        if (typeof a === "object" && a !== null) {
+          return JSON.stringify(a) !== JSON.stringify(b);
+        }
+        return a !== b;
+      });
     });
     return r;
     // eslint-disable-next-line react-hooks/exhaustive-deps
