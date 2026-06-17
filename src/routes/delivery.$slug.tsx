@@ -145,6 +145,8 @@ function DeliveryPage() {
 
   const erro = data && "erro" in data ? data.erro : null;
   const restaurante = data && !("erro" in data) ? data.restaurante : null;
+  const aberto = restaurante ? restaurante.aberto_agora : true;
+  const mensagemFechado = restaurante?.proxima_abertura_label ?? null;
 
   const irPara = (s: DeliveryState["modo"] extends never ? never : "identificacao" | "cardapio" | "revisao") =>
     navigate({
@@ -217,6 +219,8 @@ function DeliveryPage() {
           taxa={restaurante.delivery_taxa_entrega}
           categorias={categorias}
           produtos={produtos}
+          aberto={aberto}
+          mensagemFechado={mensagemFechado}
           onVoltar={() => irPara("identificacao")}
           onContinuar={() => irPara("revisao")}
         />
@@ -235,6 +239,8 @@ function DeliveryPage() {
           aceitaPix={restaurante.delivery_aceita_pix && restaurante.pix_habilitado}
           aceitaDinheiro={restaurante.delivery_aceita_dinheiro}
           aceitaCartao={restaurante.delivery_aceita_cartao_entrega}
+          aberto={aberto}
+          mensagemFechado={mensagemFechado}
           onVoltar={() => irPara("cardapio")}
           enviar={async (payload) => {
             try {
