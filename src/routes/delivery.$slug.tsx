@@ -636,6 +636,8 @@ function StepRevisao({
   aceitaPix,
   aceitaDinheiro,
   aceitaCartao,
+  aberto,
+  mensagemFechado,
   onVoltar,
   enviar,
 }: {
@@ -650,6 +652,8 @@ function StepRevisao({
   aceitaPix: boolean;
   aceitaDinheiro: boolean;
   aceitaCartao: boolean;
+  aberto: boolean;
+  mensagemFechado: string | null;
   onVoltar: () => void;
   enviar: (p: RevisaoPayload) => Promise<void>;
 }) {
@@ -704,7 +708,7 @@ function StepRevisao({
       state.endereco.cidade.trim() &&
       state.endereco.uf.trim().length === 2);
   const podeEnviar =
-    cart.length > 0 && falta === 0 && enderecoOk && metodosDisp.length > 0 && !enviando;
+    cart.length > 0 && falta === 0 && enderecoOk && metodosDisp.length > 0 && !enviando && aberto;
 
   const handleEnviar = async () => {
     if (!podeEnviar) return;
@@ -745,6 +749,7 @@ function StepRevisao({
         onBack={onVoltar}
         subtitulo="Revisar pedido"
       />
+      {!aberto && <ClosedBanner mensagem={mensagemFechado} />}
       <main className="mx-auto max-w-2xl space-y-5 px-4 py-5">
         {cart.length === 0 ? (
           <div className="py-16 text-center text-muted-foreground">
