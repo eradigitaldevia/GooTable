@@ -673,6 +673,7 @@ function Configuracoes() {
         <TabsList className="grid h-auto w-full grid-cols-2 gap-1 sm:flex sm:flex-wrap sm:justify-start">
           {(
             [
+              ["geral", "Geral"],
               ["identidade", "Identidade"],
               ["pagamentos", "Pagamentos"],
               ["taxas", "Taxa e couvert"],
@@ -694,6 +695,19 @@ function Configuracoes() {
           ))}
         </TabsList>
 
+        <TabsContent value="geral" className="space-y-6">
+          <GeralForm
+            nome={form.nome}
+            cnpj={form.cnpj}
+            telefone={form.telefone}
+            endereco={form.endereco}
+            horarioHabilitado={form.horario_funcionamento_habilitado}
+            horario={form.horario_funcionamento}
+            onChange={patch}
+          />
+          <SaveBtn aba="geral" />
+        </TabsContent>
+
         <TabsContent value="identidade" className="space-y-6">
           <IdentidadeForm
             restauranteId={restaurante.id}
@@ -703,9 +717,6 @@ function Configuracoes() {
             corAcento={form.cor_acento}
             tema={form.tema_cardapio}
             logoUrl={form.logo_url}
-            cnpj={form.cnpj}
-            telefone={form.telefone}
-            endereco={form.endereco}
             onChange={patch}
           />
           <SaveBtn aba="identidade" />
