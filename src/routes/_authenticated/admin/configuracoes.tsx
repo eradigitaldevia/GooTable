@@ -611,7 +611,7 @@ function Configuracoes() {
 
       <Tabs
         value={tab}
-        onValueChange={(v) => navigate({ search: { tab: v as TabId } })}
+        onValueChange={(v) => navigate({ to: ".", search: { tab: v as TabId }, replace: true })}
         className="space-y-4"
       >
         <TabsList className="grid h-auto w-full grid-cols-2 gap-1 sm:flex sm:flex-wrap sm:justify-start">
