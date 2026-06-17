@@ -23,19 +23,45 @@ export const validarPixFn = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
+/* ---------- Horário de funcionamento ---------- */
+
+const horaSchema = z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, "Hora inválida");
+
+const turnoSchema = z.object({
+  inicio: horaSchema,
+  fim: horaSchema,
+}).refine((t) => t.inicio !== t.fim, { message: "Início e fim devem ser diferentes" });
+
+const diaHorarioSchema = z.object({
+  dia: z.number().int().min(0).max(6),
+  aberto: z.boolean(),
+  turnos: z.array(turnoSchema).max(2),
+});
+
+export const horarioFuncionamentoSchema = z.array(diaHorarioSchema).max(7);
+
+export type HorarioTurno = z.infer<typeof turnoSchema>;
+export type HorarioDia = z.infer<typeof diaHorarioSchema>;
+export type HorarioFuncionamento = z.infer<typeof horarioFuncionamentoSchema>;
+
 const configSchema = z.discriminatedUnion("aba", [
+  z.object({
+    aba: z.literal("geral"),
+    restauranteId: z.string().uuid(),
+    nome: z.string().trim().min(2).max(100),
+    cnpj: z.string().trim().max(20).nullable(),
+    telefone: z.string().trim().max(30).nullable(),
+    endereco: z.string().trim().max(200).nullable(),
+    horario_funcionamento: horarioFuncionamentoSchema,
+  }),
   z.object({
     aba: z.literal("identidade"),
     restauranteId: z.string().uuid(),
-    nome: z.string().trim().min(2).max(100),
     cor_primaria: z.string().regex(/^#[0-9a-fA-F]{6}$/, "Cor inválida"),
     cor_secundaria: z.string().regex(/^#[0-9a-fA-F]{6}$/, "Cor inválida"),
     cor_acento: z.string().regex(/^#[0-9a-fA-F]{6}$/, "Cor inválida"),
     tema_cardapio: z.enum(["claro", "escuro"]),
     logo_url: z.string().nullable(),
-    cnpj: z.string().trim().max(20).nullable(),
-    telefone: z.string().trim().max(30).nullable(),
-    endereco: z.string().trim().max(200).nullable(),
   }),
   z.object({
     aba: z.literal("pagamentos"),
@@ -113,17 +139,28 @@ export const atualizarConfiguracoesFn = createServerFn({ method: "POST" })
     let update: TablesUpdate<"restaurantes"> = {};
 
     switch (data.aba) {
-      case "identidade": {
+      case "geral": {
+        // Normaliza: se nenhum dia estiver realmente aberto com turnos válidos,
+        // salva [] (interpretado como "sempre aberto" — compat).
+        const normalizado = data.horario_funcionamento
+          .filter((d) => d.aberto && d.turnos.length > 0);
+        const final = normalizado.length === 0 ? [] : data.horario_funcionamento;
         update = {
           nome: data.nome,
+          cnpj: data.cnpj,
+          telefone: data.telefone,
+          endereco: data.endereco,
+          horario_funcionamento: final as unknown as TablesUpdate<"restaurantes">["horario_funcionamento"],
+        };
+        break;
+      }
+      case "identidade": {
+        update = {
           cor_primaria: data.cor_primaria,
           cor_secundaria: data.cor_secundaria,
           cor_acento: data.cor_acento,
           tema_cardapio: data.tema_cardapio,
           logo_url: data.logo_url,
-          cnpj: data.cnpj,
-          telefone: data.telefone,
-          endereco: data.endereco,
         };
         break;
       }
