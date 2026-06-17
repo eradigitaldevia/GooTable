@@ -397,10 +397,25 @@ function Configuracoes() {
     const f = overrides ? { ...form, ...overrides } : form;
 
     // Validações por aba
-    if (aba === "identidade") {
+    if (aba === "geral") {
       if (f.nome.trim().length < 2) {
         toast.error("Nome muito curto");
         return;
+      }
+      if (f.horario_funcionamento_habilitado) {
+        for (const d of f.horario_funcionamento) {
+          if (!d.aberto) continue;
+          for (const t of d.turnos) {
+            if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(t.inicio) || !/^([01]\d|2[0-3]):[0-5]\d$/.test(t.fim)) {
+              toast.error("Horário inválido em algum dia.");
+              return;
+            }
+            if (t.inicio === t.fim) {
+              toast.error("Início e fim do turno devem ser diferentes.");
+              return;
+            }
+          }
+        }
       }
     }
     if (aba === "pagamentos") {
@@ -429,19 +444,27 @@ function Configuracoes() {
 
     let payload: Parameters<typeof atualizar.mutateAsync>[0] | null = null;
 
-    if (aba === "identidade") {
+    if (aba === "geral") {
+      payload = {
+        aba: "geral",
+        restauranteId: restaurante.id,
+        nome: f.nome.trim(),
+        cnpj: f.cnpj.trim() || null,
+        telefone: f.telefone.trim() || null,
+        endereco: f.endereco.trim() || null,
+        horario_funcionamento: f.horario_funcionamento_habilitado
+          ? f.horario_funcionamento
+          : [],
+      };
+    } else if (aba === "identidade") {
       payload = {
         aba: "identidade",
         restauranteId: restaurante.id,
-        nome: f.nome.trim(),
         cor_primaria: f.cor_primaria,
         cor_secundaria: f.cor_secundaria,
         cor_acento: f.cor_acento,
         tema_cardapio: f.tema_cardapio,
         logo_url: f.logo_url,
-        cnpj: f.cnpj.trim() || null,
-        telefone: f.telefone.trim() || null,
-        endereco: f.endereco.trim() || null,
       };
     } else if (aba === "pagamentos") {
       payload = {
