@@ -5,7 +5,8 @@ import { useAuth } from "@/hooks/use-auth";
 import { useMeuRestaurante } from "@/hooks/use-restaurante";
 import { supabase } from "@/integrations/supabase/client";
 import { Clock, ChefHat, Bell, PackageCheck } from "lucide-react";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
 import { PageHeaderSkeleton } from "@/components/admin/skeletons/page-header-skeleton";
 import { CardsGridSkeleton } from "@/components/admin/skeletons/cards-grid-skeleton";
 import { toast } from "sonner";
@@ -15,6 +16,9 @@ import { usePedidosDoDia } from "@/hooks/use-pedidos";
 import { queryKeys } from "@/lib/query-keys";
 import { listarPedidosDoDiaFn } from "@/lib/pedidos.functions";
 import { useGarcomLookup } from "@/hooks/use-garcom-lookup";
+import { AbaHistorico } from "@/components/pedidos/aba-historico";
+import { AbaEmAberto } from "@/components/pedidos/aba-em-aberto";
+import { AbaCancelados } from "@/components/pedidos/aba-cancelados";
 
 export const Route = createFileRoute("/_authenticated/admin/pedidos")({
   loader: ({ context }) => {
@@ -196,45 +200,77 @@ function PedidosPainel() {
       <header>
         <h1 className="text-3xl font-bold tracking-tight">Pedidos</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Painel realtime — visualize os pedidos do dia. O avanço de status é feito pela cozinha/bar e pelo garçom ao entregar.
+          Painel operacional do dia, histórico, auditoria de pedidos esquecidos e cancelados.
         </p>
       </header>
 
-      <Tabs value={filtroCanal} onValueChange={(v) => setFiltroCanal(v as typeof filtroCanal)}>
+      <Tabs defaultValue="hoje" className="space-y-4">
         <TabsList>
-          <TabsTrigger value="todos">Todos ({pedidosAll.length})</TabsTrigger>
-          <TabsTrigger value="mesa">Salão ({contagensCanal.mesa})</TabsTrigger>
-          <TabsTrigger value="delivery">Delivery ({contagensCanal.delivery})</TabsTrigger>
-          <TabsTrigger value="retirada">Retirada ({contagensCanal.retirada})</TabsTrigger>
+          <TabsTrigger value="hoje">Hoje</TabsTrigger>
+          <TabsTrigger value="historico">Histórico</TabsTrigger>
+          <TabsTrigger value="em-aberto">Em aberto (auditoria)</TabsTrigger>
+          <TabsTrigger value="cancelados">Cancelados</TabsTrigger>
         </TabsList>
+
+        <TabsContent value="hoje" className="space-y-4">
+          <div className="flex items-center gap-2">
+            <Badge variant="secondary" className="text-xs">
+              Hoje · {new Date().toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric" })}
+            </Badge>
+            <span className="text-xs text-muted-foreground">
+              Pedidos criados hoje. Para dias anteriores, use a aba Histórico.
+            </span>
+          </div>
+
+          <Tabs value={filtroCanal} onValueChange={(v) => setFiltroCanal(v as typeof filtroCanal)}>
+            <TabsList>
+              <TabsTrigger value="todos">Todos ({pedidosAll.length})</TabsTrigger>
+              <TabsTrigger value="mesa">Salão ({contagensCanal.mesa})</TabsTrigger>
+              <TabsTrigger value="delivery">Delivery ({contagensCanal.delivery})</TabsTrigger>
+              <TabsTrigger value="retirada">Retirada ({contagensCanal.retirada})</TabsTrigger>
+            </TabsList>
+          </Tabs>
+
+          <PedidosKanban
+            colunas={COLUNAS}
+            pedidos={pedidos}
+            itensPorPedido={itensPorPedido}
+            mesas={mesas}
+            onAbrir={setAberto}
+            onAvancar={() => {}}
+            garcomPorPedido={(p) => nomeDoPedido(p)}
+            destinoStatusPorPedido={destinoStatusPorPedido}
+          />
+
+          <DetalhePedido
+            pedido={aberto}
+            itens={aberto ? itensPorPedido.get(aberto.id) ?? [] : []}
+            mesa={aberto ? mesas.get(aberto.mesa_id)?.numero : undefined}
+            garcomNome={aberto ? nomeDoPedido(aberto) : null}
+            destinoStatus={
+              aberto
+                ? destinoStatusList
+                    .filter((d) => d.pedido_id === aberto.id)
+                    .map((d) => ({ destino: d.destino, status: d.status }))
+                : []
+            }
+            onClose={() => setAberto(null)}
+            deliverySlug={restaurante?.delivery_slug ?? null}
+          />
+        </TabsContent>
+
+        <TabsContent value="historico">
+          <AbaHistorico restauranteId={restauranteId} deliverySlug={restaurante?.delivery_slug ?? null} />
+        </TabsContent>
+
+        <TabsContent value="em-aberto">
+          <AbaEmAberto restauranteId={restauranteId} deliverySlug={restaurante?.delivery_slug ?? null} />
+        </TabsContent>
+
+        <TabsContent value="cancelados">
+          <AbaCancelados restauranteId={restauranteId} deliverySlug={restaurante?.delivery_slug ?? null} />
+        </TabsContent>
       </Tabs>
-
-      <PedidosKanban
-        colunas={COLUNAS}
-        pedidos={pedidos}
-        itensPorPedido={itensPorPedido}
-        mesas={mesas}
-        onAbrir={setAberto}
-        onAvancar={() => {}}
-        garcomPorPedido={(p) => nomeDoPedido(p)}
-        destinoStatusPorPedido={destinoStatusPorPedido}
-      />
-
-      <DetalhePedido
-        pedido={aberto}
-        itens={aberto ? itensPorPedido.get(aberto.id) ?? [] : []}
-        mesa={aberto ? mesas.get(aberto.mesa_id)?.numero : undefined}
-        garcomNome={aberto ? nomeDoPedido(aberto) : null}
-        destinoStatus={
-          aberto
-            ? destinoStatusList
-                .filter((d) => d.pedido_id === aberto.id)
-                .map((d) => ({ destino: d.destino, status: d.status }))
-            : []
-        }
-        onClose={() => setAberto(null)}
-        deliverySlug={restaurante?.delivery_slug ?? null}
-      />
     </div>
   );
 }

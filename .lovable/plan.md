@@ -1,115 +1,148 @@
-## Impressão da conta — Garçom e Caixa
+# Melhorias na página Pedidos
 
-Implementação simples baseada em `window.print()` com layout dedicado para impressora térmica (80mm). **Sem agente externo, sem novas tabelas operacionais** — reusa os dados já carregados pelas telas atuais. Funciona em qualquer impressora instalada no SO (térmica USB, rede via spooler, ou A4) através do diálogo de impressão do navegador.
+Reestruturar `/admin/pedidos` em quatro abas, mantendo o comportamento atual intacto na primeira aba e adicionando visões de auditoria e histórico.
 
----
+## 1. Estrutura geral
 
-### 1) Dados cadastrais do restaurante (pré-requisito para o cabeçalho)
+Adicionar um `Tabs` principal acima do filtro de canal já existente:
 
-Hoje a tabela `restaurantes` só tem `nome` e `logo_url` — não há `cnpj`, `endereco`, `telefone`. Precisamos criar:
+- **Hoje** (default) — Kanban atual, sem mudanças funcionais.
+- **Histórico** — pedidos de dias anteriores (somente leitura).
+- **Em aberto (auditoria)** — pedidos antigos ainda em status `recebido` / `em_preparo` / `pronto`.
+- **Cancelados** — pedidos com status `cancelado`.
 
-**Migration:** adicionar em `public.restaurantes` as colunas:
-- `cnpj` text NULL
-- `telefone` text NULL
-- `endereco` text NULL  (linha única livre, ex.: "Rua X, 123 - Bairro - Cidade/UF")
+O filtro de canal (Salão/Delivery/Retirada) e a busca permanecem disponíveis em todas as abas onde fizerem sentido.
 
-**UI:** editar `src/components/configuracoes/identidade-form.tsx` — adicionar uma seção **"Dados para impressão"** logo abaixo do campo "Nome do restaurante", com três inputs (CNPJ, Telefone, Endereço). Todos opcionais; o que estiver vazio simplesmente não aparece no comprovante. Reaproveita o mesmo botão "Salvar" da aba Identidade (sem nova tab, sem nova rota).
+## 2. Aba "Hoje" — reforço visual
 
-Atualizar `src/lib/configuracoes.functions.ts` (ou a fn que salva identidade) para persistir os três campos novos.
+Sem mudar o Kanban. Apenas adicionar no cabeçalho:
 
----
+- Badge ao lado do título: **"Hoje · 17/06/2026"** (data atual formatada em pt-BR).
+- Subtítulo curto: "Pedidos criados hoje. Para dias anteriores, use a aba Histórico."
 
-### 2) Componente compartilhado de comprovante
+Nenhuma alteração em colunas, cards, realtime ou regras de avanço.
 
-**Novo** `src/components/impressao/comprovante-conta.tsx`
+## 3. Aba "Histórico"
 
-Componente "print-only" que renderiza a conta para 80mm em fonte monospace. Recebe props já disponíveis nas telas atuais (mesa-detalhe-view, caixa.pagamentos):
+Lista tabular paginada de pedidos de **dias anteriores** (não inclui hoje).
 
-```ts
-type Props = {
-  restaurante: { nome; cnpj?; endereco?; telefone?; logo_url? };
-  contexto: { tipo: "mesa" | "comanda"; mesaNumero?; comandaTitular?; garcomNome?: string | null };
-  itens: Array<{ nome; quantidade; preco_unit; observacao?: string | null }>;
-  couverts?: Array<{ descricao; total }>;
-  totais: { subtotal; couvert?; taxa_servico?; desconto?; total; total_pago?; saldo? };
-  pagamentos?: Array<{ metodo; valor; quando }>; // só quando "comprovante pago"
-  divisao?: { pessoas: number; valorPorPessoa: number }; // opcional, rodapé
-  variante: "rascunho" | "pago"; // "pago" carimba PAGO no rodapé
-};
-```
+Filtros no topo:
 
-Cabeçalho com logo (opcional), nome, CNPJ/endereço/telefone (cada um só aparece se preenchido). Identificação Mesa/Comanda + garçom. Tabela de itens (qtd × nome — preço). Couverts. Totais. Pagamentos (variante "pago"). Divisão por pessoa quando informada. Rodapé com data/hora e "Não é documento fiscal".
+- Intervalo de datas (date range picker) — default: últimos 7 dias.
+- Canal (Todos / Salão / Delivery / Retirada).
+- Status (Todos / Entregue / Cancelado / Em aberto).
+- Busca por número da mesa ou nome do cliente.
 
-**Novo** `src/styles/print.css` (importado uma vez em `__root.tsx`):
+Colunas: Data/hora · Canal · Mesa/Cliente · Itens (contagem) · Total · Status · Garçom.
 
-```css
-@media screen { .print-only { display: none; } }
-@media print {
-  body * { visibility: hidden; }
-  .print-only, .print-only * { visibility: visible; }
-  .print-only { position: absolute; inset: 0; width: 80mm; }
-  @page { size: 80mm auto; margin: 4mm; }
-}
-```
+Clique na linha abre o `DetalhePedido` (já existente) em modo somente leitura.
 
-**Novo** `src/hooks/use-imprimir.ts` — wrapper trivial em torno de `window.print()`.
+Paginação server-side (50 por página).
 
----
+## 4. Aba "Em aberto (auditoria)"
 
-### 3) Garçom — botões no detalhe da mesa
+Lista todos os pedidos com status em `('recebido','em_preparo','pronto')` **criados antes de hoje** (ou seja, abertos há mais de 1 dia — pedidos órfãos / esquecidos).
 
-**Editar** `src/components/sala/mesa-detalhe-view.tsx`:
+Colunas: idade (ex.: "16 dias"), data criação, canal, mesa/cliente, status atual, total, garçom.
 
-- Botão **"Imprimir conta"** no header (ao lado de Dividir total / Juntar comandas). Visível também em `readOnly`.
-- Botão **"Imprimir"** (ícone) dentro de cada card de comanda no accordion, para imprimir a comanda individual.
-- Renderiza `<ComprovanteConta variante="rascunho">` oculto via `print-only` com os dados do contexto clicado.
+Ações por linha:
 
-**Editar** `src/components/sala/dividir-total-dialog.tsx`:
-- Adicionar botão **"Imprimir conta com divisão"** que imprime **uma única via** com o detalhamento completo e, no rodapé, "Dividido por N pessoas: R$ X por pessoa". (Sem múltiplas vias — economia de papel; se o cliente quiser vias separadas, usa "Imprimir" por comanda.)
+- **Cancelar** (com motivo) — reutiliza `cancelarPedidoFn`.
+- **Marcar como entregue** — reutiliza `atualizarStatusPedidoFn` para `entregue`.
 
-Sem novos server functions — todos os dados já vêm de `useCarregarMesa`.
+Ações em lote (via checkbox por linha + barra de ações):
 
----
+- **Cancelar selecionados** — abre dialog único pedindo motivo, aplica a todos.
+- **Marcar selecionados como entregues**.
 
-### 4) Caixa — botão na lista e comprovante pós-pagamento
+Confirmação obrigatória antes de ambas as ações em lote.
 
-**Editar** `src/routes/_authenticated/caixa.pagamentos.tsx`:
-- Na coluna de ações da tabela, adicionar **botão-ícone "Imprimir conta"** (ícone `Receipt`) ao lado de "Registrar pagamento" em cada linha, imprimindo a conta rascunho da comanda.
+## 5. Aba "Cancelados"
 
-**Editar** `src/components/admin/confirmar-pagamento-dialog-body.tsx`:
-- Após o `registrar.mutateAsync` bem-sucedido, **antes** de fechar o diálogo, exibir um estado de sucesso com botão destacado **"Imprimir comprovante"** (`variante="pago"`, incluindo a linha de pagamentos e carimbo PAGO) + botão "Fechar". Quem não quiser imprimir só fecha.
+Lista pedidos com `status = 'cancelado'`, com filtro de período (default: últimos 30 dias).
 
-**Server function nova** (se necessário) em `src/lib/caixa.functions.ts`:
-- `carregarComandaParaImpressaoFn({ comandaId })` → retorna `{ restaurante, comanda, itens, couverts, totais, pagamentos }`. Reusa selects de `sala.functions.ts`. (A confirmar durante implementação se realmente é necessária ou se algo equivalente já existe.)
+Colunas: data, canal, mesa/cliente, total, **motivo do cancelamento**, **cancelado por**, **cancelado em** (timestamp).
+
+Somente leitura. Clique abre o `DetalhePedido`.
+
+## 6. Permissões
+
+Mantém-se idêntico ao atual: rota `/admin/pedidos` (já sob `_authenticated/admin`). Nenhuma mudança de RLS ou de papéis.
 
 ---
 
-### 5) Arquivos afetados
+## Detalhes técnicos
 
-**Migration:**
-- Nova migration: adicionar `cnpj`, `telefone`, `endereco` em `restaurantes`.
+### Backend (server functions novas em `src/lib/pedidos.functions.ts`)
 
-**Novos:**
-- `src/components/impressao/comprovante-conta.tsx`
-- `src/hooks/use-imprimir.ts`
-- `src/styles/print.css`
+Todas autenticadas via `requireSupabaseAuth` + verificação de `restaurante_id`:
 
-**Editados:**
-- `src/routes/__root.tsx` (importar `print.css`)
-- `src/components/configuracoes/identidade-form.tsx` (seção "Dados para impressão")
-- `src/lib/configuracoes.functions.ts` (persistir os 3 campos novos)
-- `src/components/sala/mesa-detalhe-view.tsx` (botões + render oculto)
-- `src/components/sala/dividir-total-dialog.tsx` (botão "Imprimir conta com divisão")
-- `src/routes/_authenticated/caixa.pagamentos.tsx` (botão-ícone na linha)
-- `src/components/admin/confirmar-pagamento-dialog-body.tsx` (estado pós-sucesso + botão "Imprimir comprovante")
-- `src/lib/caixa.functions.ts` (apenas se precisar de fn nova de carregamento por comanda)
+1. `**listarPedidosHistoricoFn**` — input: `{ restauranteId, dataInicio, dataFim, canal?, status?, busca?, page, pageSize }`. Retorna `{ pedidos, itens, mesas, destinoStatus, total }`. Filtra `criado_em < hoje` por padrão (o range cobre isso).
+2. `**listarPedidosAbertosAntigosFn**` — input: `{ restauranteId }`. Retorna pedidos com status em `('recebido','em_preparo','pronto')` e `criado_em < start_of_today`.
+3. `**listarPedidosCanceladosFn**` — input: `{ restauranteId, dataInicio, dataFim }`. Inclui join com `pedido_status_historico` para obter motivo, autor e timestamp do cancelamento.
+4. `**cancelarPedidosEmLoteFn**` — input: `{ restauranteId, pedidoIds: string[], motivo: string }`. Itera chamando a mesma lógica de `cancelarPedidoFn` (transacional por pedido; coleta resultado). Limita a 50 IDs por chamada.
+5. `**marcarPedidosEntreguesEmLoteFn**` — input: `{ restauranteId, pedidoIds: string[] }`. Idem para `entregue`.
 
----
+Nenhuma migração de schema necessária — os dados já existem nas tabelas `pedidos`, `pedido_itens`, `pedido_status_historico`.
 
-### Fora de escopo
+### Frontend
 
-- Agente Node.js local e impressão automática de comanda de cozinha (KDS já cobre).
-- Tabelas `impressoras`, `regras_impressao`, `impressoes_log`, `fila_reimpressao`.
-- Log persistente de impressões/reimpressões.
-- Múltiplas vias na divisão de conta (decisão: 1 via única para economizar papel).
-- Tela de configuração de layout de impressão (largura, toggles). Pode entrar num PR futuro se demandado.
+Estrutura de arquivos novos em `src/components/pedidos/`:
+
+- `aba-historico.tsx`
+- `aba-em-aberto.tsx`
+- `aba-cancelados.tsx`
+- `tabela-pedidos.tsx` (componente compartilhado de tabela com colunas configuráveis)
+- `acoes-lote-bar.tsx` (barra flutuante de ações em lote)
+- `cancelar-pedido-dialog.tsx` (dialog reutilizável com campo motivo)
+
+Hooks novos em `src/hooks/use-pedidos.ts`:
+
+- `usePedidosHistorico`, `usePedidosAbertosAntigos`, `usePedidosCancelados`
+- `useCancelarPedidosEmLote`, `useMarcarPedidosEntreguesEmLote`
+
+Estado das abas e filtros via **search params** (`?aba=historico&inicio=...&fim=...&canal=...`) usando `validateSearch` com Zod, para deep-link e refresh sem perder contexto.
+
+Arquivo `src/routes/_authenticated/admin/pedidos.tsx`:
+
+- Adiciona `Tabs` principal acima do filtro de canal atual.
+- Move o conteúdo atual (Kanban + filtro de canal) para dentro da aba "Hoje" sem alterações.
+- Renderiza as novas abas via componentes acima.
+
+### Limites e edge cases
+
+- Paginação obrigatória em Histórico e Cancelados (server-side, 50/página) para não sobrecarregar.
+- Ações em lote limitadas a 50 pedidos por execução.
+- Realtime continua só na aba "Hoje" — as outras abas usam `staleTime` de 30s e refetch manual.
+- Cancelamento em lote: se algum pedido falhar, mostra toast com contagem de sucesso/falha e mantém os demais.
+
+## Arquivos afetados
+
+Novos:
+
+- `src/components/pedidos/aba-historico.tsx`
+- `src/components/pedidos/aba-em-aberto.tsx`
+- `src/components/pedidos/aba-cancelados.tsx`
+- `src/components/pedidos/tabela-pedidos.tsx`
+- `src/components/pedidos/acoes-lote-bar.tsx`
+- `src/components/pedidos/cancelar-pedido-dialog.tsx`
+
+Editados:
+
+- `src/lib/pedidos.functions.ts` (adicionar 5 server fns; sem alterar as existentes)
+- `src/hooks/use-pedidos.ts` (adicionar novos hooks; sem alterar os existentes)
+- `src/routes/_authenticated/admin/pedidos.tsx` (envolver conteúdo atual em Tabs + search params)
+
+Nenhuma alteração em: realtime atual, `PedidosKanban`, `DetalhePedido`, RLS, schema do banco.  
+  
+IMPORTANTE:
+
+Execute APENAS a alteração explicitamente solicitada.
+
+NÃO refatore, otimize, melhore ou modifique código não relacionado.
+
+NÃO faça suposições.
+
+Se algo não estiver claro, PARE e pergunte antes de alterar qualquer coisa.
+
+Preserve 100% do comportamento e da funcionalidade existentes.
