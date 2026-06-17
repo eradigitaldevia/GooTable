@@ -1429,3 +1429,313 @@ export const resumoComandaImpressaoFn = createServerFn({ method: "POST" })
       pagamentos,
     };
   });
+
+/* ---------- Admin: histórico, auditoria e cancelados ---------- */
+
+const canalEnum = z.enum(["todos", "mesa", "delivery", "retirada"]);
+const statusFiltroHistorico = z.enum(["todos", "entregue", "cancelado", "abertos"]);
+
+export interface PedidoListaItem {
+  id: string;
+  status: StatusPedido;
+  total: number;
+  criado_em: string;
+  mesa_id: string;
+  restaurante_id: string;
+  comanda_id: string | null;
+  garcom_id: string | null;
+  canal?: string | null;
+  cliente_nome?: string | null;
+  cliente_telefone?: string | null;
+  observacao?: string | null;
+  taxa_entrega?: number | null;
+  endereco_cep?: string | null;
+  endereco_rua?: string | null;
+  endereco_numero?: string | null;
+  endereco_complemento?: string | null;
+  endereco_bairro?: string | null;
+  endereco_cidade?: string | null;
+  endereco_uf?: string | null;
+  endereco_referencia?: string | null;
+}
+
+const COLUNAS_PEDIDO =
+  "id, status, total, observacao, criado_em, mesa_id, restaurante_id, comanda_id, garcom_id, canal, cliente_nome, cliente_telefone, taxa_entrega, endereco_cep, endereco_rua, endereco_numero, endereco_complemento, endereco_bairro, endereco_cidade, endereco_uf, endereco_referencia";
+
+function inicioHoje(): Date {
+  const d = new Date();
+  d.setHours(0, 0, 0, 0);
+  return d;
+}
+
+async function carregarMesas(supabase: any, restauranteId: string): Promise<MesaResumo[]> {
+  const { data, error } = await supabase
+    .from("mesas")
+    .select("id, numero")
+    .eq("restaurante_id", restauranteId);
+  if (error) throw new Error(error.message);
+  return (data ?? []) as MesaResumo[];
+}
+
+export const listarPedidosHistoricoFn = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) =>
+    z
+      .object({
+        restauranteId: z.string().uuid(),
+        dataInicio: z.string().min(10),
+        dataFim: z.string().min(10),
+        canal: canalEnum.default("todos"),
+        status: statusFiltroHistorico.default("todos"),
+        busca: z.string().max(80).optional(),
+        page: z.number().int().min(1).default(1),
+        pageSize: z.number().int().min(1).max(100).default(50),
+      })
+      .parse(d),
+  )
+  .handler(async ({ context, data }) => {
+    const { supabase, userId } = context;
+    await assertAcessoRestaurante(supabase, userId, data.restauranteId);
+
+    const ini = new Date(data.dataInicio);
+    ini.setHours(0, 0, 0, 0);
+    const fim = new Date(data.dataFim);
+    fim.setHours(23, 59, 59, 999);
+    // Limita rigidamente: histórico = anterior a hoje
+    const limiteHoje = inicioHoje();
+    if (fim >= limiteHoje) fim.setTime(limiteHoje.getTime() - 1);
+
+    const from = (data.page - 1) * data.pageSize;
+    const to = from + data.pageSize - 1;
+
+    let q = supabase
+      .from("pedidos")
+      .select(COLUNAS_PEDIDO, { count: "exact" })
+      .eq("restaurante_id", data.restauranteId)
+      .gte("criado_em", ini.toISOString())
+      .lte("criado_em", fim.toISOString())
+      .order("criado_em", { ascending: false })
+      .range(from, to);
+
+    if (data.canal !== "todos") q = q.eq("canal", data.canal);
+    if (data.status === "entregue") q = q.eq("status", "entregue");
+    else if (data.status === "cancelado") q = q.eq("status", "cancelado");
+    else if (data.status === "abertos")
+      q = q.in("status", ["recebido", "em_preparo", "pronto"]);
+
+    if (data.busca && data.busca.trim()) {
+      const termo = `%${data.busca.trim()}%`;
+      q = q.or(`cliente_nome.ilike.${termo},cliente_telefone.ilike.${termo}`);
+    }
+
+    const { data: peds, error, count } = await q;
+    if (error) throw new Error(error.message);
+
+    const pedidos = (peds ?? []) as PedidoListaItem[];
+    const mesas = await carregarMesas(supabase, data.restauranteId);
+
+    // contagem de itens por pedido
+    const ids = pedidos.map((p) => p.id);
+    const itensPorPedido = new Map<string, number>();
+    if (ids.length) {
+      const { data: its } = await supabase
+        .from("pedido_itens")
+        .select("pedido_id, quantidade")
+        .in("pedido_id", ids);
+      for (const it of (its ?? []) as Array<{ pedido_id: string; quantidade: number }>) {
+        itensPorPedido.set(it.pedido_id, (itensPorPedido.get(it.pedido_id) ?? 0) + Number(it.quantidade));
+      }
+    }
+    const itensCount = Object.fromEntries(itensPorPedido) as Record<string, number>;
+
+    return { pedidos, mesas, itensCount, total: count ?? 0 };
+  });
+
+export const listarPedidosAbertosAntigosFn = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) => z.object({ restauranteId: z.string().uuid() }).parse(d))
+  .handler(async ({ context, data }) => {
+    const { supabase, userId } = context;
+    await assertAcessoRestaurante(supabase, userId, data.restauranteId);
+
+    const limite = inicioHoje().toISOString();
+    const { data: peds, error } = await supabase
+      .from("pedidos")
+      .select(COLUNAS_PEDIDO)
+      .eq("restaurante_id", data.restauranteId)
+      .lt("criado_em", limite)
+      .in("status", ["recebido", "em_preparo", "pronto"])
+      .order("criado_em", { ascending: true })
+      .limit(500);
+    if (error) throw new Error(error.message);
+
+    const pedidos = (peds ?? []) as PedidoListaItem[];
+    const mesas = await carregarMesas(supabase, data.restauranteId);
+    return { pedidos, mesas };
+  });
+
+export interface PedidoCanceladoInfo {
+  pedido_id: string;
+  motivo: string | null;
+  cancelado_em: string | null;
+  actor_email: string | null;
+}
+
+export const listarPedidosCanceladosFn = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) =>
+    z
+      .object({
+        restauranteId: z.string().uuid(),
+        dataInicio: z.string().min(10),
+        dataFim: z.string().min(10),
+      })
+      .parse(d),
+  )
+  .handler(async ({ context, data }) => {
+    const { supabase, userId } = context;
+    await assertAcessoRestaurante(supabase, userId, data.restauranteId);
+
+    const ini = new Date(data.dataInicio);
+    ini.setHours(0, 0, 0, 0);
+    const fim = new Date(data.dataFim);
+    fim.setHours(23, 59, 59, 999);
+
+    const { data: peds, error } = await supabase
+      .from("pedidos")
+      .select(COLUNAS_PEDIDO)
+      .eq("restaurante_id", data.restauranteId)
+      .eq("status", "cancelado")
+      .gte("criado_em", ini.toISOString())
+      .lte("criado_em", fim.toISOString())
+      .order("criado_em", { ascending: false })
+      .limit(500);
+    if (error) throw new Error(error.message);
+
+    const pedidos = (peds ?? []) as PedidoListaItem[];
+    const mesas = await carregarMesas(supabase, data.restauranteId);
+
+    const ids = pedidos.map((p) => p.id);
+    let cancelInfo: PedidoCanceladoInfo[] = [];
+    if (ids.length) {
+      const { data: logs } = await supabase
+        .from("audit_logs")
+        .select("entidade_id, criado_em, metadata, actor_user_id")
+        .eq("entidade", "pedido")
+        .eq("acao", "cancelar")
+        .in("entidade_id", ids)
+        .order("criado_em", { ascending: false });
+
+      const byId = new Map<string, { motivo: string | null; cancelado_em: string; actor_user_id: string | null }>();
+      for (const l of (logs ?? []) as Array<{
+        entidade_id: string;
+        criado_em: string;
+        metadata: any;
+        actor_user_id: string | null;
+      }>) {
+        if (byId.has(l.entidade_id)) continue;
+        byId.set(l.entidade_id, {
+          motivo: (l.metadata?.motivo as string | null) ?? null,
+          cancelado_em: l.criado_em,
+          actor_user_id: l.actor_user_id,
+        });
+      }
+
+      // resolve emails dos autores via admin
+      const actorIds = Array.from(
+        new Set(
+          Array.from(byId.values())
+            .map((v) => v.actor_user_id)
+            .filter((v): v is string => !!v),
+        ),
+      );
+      const emailMap = new Map<string, string>();
+      if (actorIds.length) {
+        const { supabaseAdmin: admin } = await import("@/integrations/supabase/client.server");
+        for (const uid of actorIds) {
+          try {
+            const { data: u } = await admin.auth.admin.getUserById(uid);
+            if (u?.user?.email) emailMap.set(uid, u.user.email);
+          } catch {
+            /* ignore */
+          }
+        }
+      }
+
+      cancelInfo = ids.map((id) => {
+        const info = byId.get(id);
+        return {
+          pedido_id: id,
+          motivo: info?.motivo ?? null,
+          cancelado_em: info?.cancelado_em ?? null,
+          actor_email: info?.actor_user_id ? emailMap.get(info.actor_user_id) ?? null : null,
+        };
+      });
+    }
+
+    return { pedidos, mesas, cancelInfo };
+  });
+
+export const cancelarPedidosEmLoteFn = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) =>
+    z
+      .object({
+        restauranteId: z.string().uuid(),
+        pedidoIds: z.array(z.string().uuid()).min(1).max(50),
+        motivo: z.string().max(300).optional(),
+      })
+      .parse(d),
+  )
+  .handler(async ({ context, data }) => {
+    const { supabase, userId } = context;
+    await assertAcessoRestaurante(supabase, userId, data.restauranteId);
+
+    let ok = 0;
+    const erros: { pedidoId: string; mensagem: string }[] = [];
+    for (const id of data.pedidoIds) {
+      const { error } = await supabase.rpc("cancelar_pedido", {
+        _pedido_id: id,
+        _motivo: data.motivo ?? undefined,
+      });
+      if (error) erros.push({ pedidoId: id, mensagem: error.message });
+      else ok++;
+    }
+    return { ok, erros };
+  });
+
+export const marcarPedidosEntreguesEmLoteFn = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) =>
+    z
+      .object({
+        restauranteId: z.string().uuid(),
+        pedidoIds: z.array(z.string().uuid()).min(1).max(50),
+      })
+      .parse(d),
+  )
+  .handler(async ({ context, data }) => {
+    const { supabase, userId } = context;
+    await assertAcessoRestaurante(supabase, userId, data.restauranteId);
+
+    const agora = new Date().toISOString();
+    let ok = 0;
+    const erros: { pedidoId: string; mensagem: string }[] = [];
+    for (const id of data.pedidoIds) {
+      const { error } = await supabase
+        .from("pedidos")
+        .update({ status: "entregue", atualizado_em: agora, entregue_em: agora })
+        .eq("id", id)
+        .eq("restaurante_id", data.restauranteId)
+        .in("status", ["recebido", "em_preparo", "pronto"]);
+      if (error) erros.push({ pedidoId: id, mensagem: error.message });
+      else {
+        ok++;
+        await supabaseAdmin
+          .rpc("creditar_cashback_pedido", { _pedido_id: id })
+          .then(() => {})
+          .then(undefined, () => {});
+      }
+    }
+    return { ok, erros };
+  });
