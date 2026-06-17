@@ -442,6 +442,8 @@ function StepCardapio({
   taxa,
   categorias,
   produtos,
+  aberto,
+  mensagemFechado,
   onVoltar,
   onContinuar,
 }: {
@@ -453,6 +455,8 @@ function StepCardapio({
   taxa: number;
   categorias: { id: string; nome: string; ordem: number }[];
   produtos: ProdutoPublico[];
+  aberto: boolean;
+  mensagemFechado: string | null;
   onVoltar: () => void;
   onContinuar: () => void;
 }) {
@@ -491,7 +495,7 @@ function StepCardapio({
   const subtotal = cartTotal(cart);
   const count = cartCount(cart);
   const falta = Math.max(0, minimo - subtotal);
-  const podeContinuar = count > 0 && falta === 0;
+  const podeContinuar = count > 0 && falta === 0 && aberto;
 
   return (
     <>
@@ -501,6 +505,7 @@ function StepCardapio({
         onBack={onVoltar}
         subtitulo={modo === "delivery" ? "Entrega" : "Retirada"}
       />
+      {!aberto && <ClosedBanner mensagem={mensagemFechado} />}
       <div className="sticky top-[57px] z-20 border-b bg-background/95 px-4 py-3 backdrop-blur">
         <div className="mx-auto max-w-2xl space-y-2">
           <Input
@@ -548,9 +553,13 @@ function StepCardapio({
       </main>
 
       <ProdutoDialog
-        produto={selecionado}
+        produto={aberto ? selecionado : null}
         onClose={() => setSelecionado(null)}
         onAdd={(item) => {
+          if (!aberto) {
+            toast.error("Estamos fechados no momento.");
+            return;
+          }
           setSelecionado(null);
           addToDeliveryCart(slug, item);
           requestAnimationFrame(() => toast.success("Adicionado ao carrinho"));
