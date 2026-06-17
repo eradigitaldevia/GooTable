@@ -12,6 +12,7 @@ export interface SalaMesa {
   id: string;
   numero: string;
   atribuido_em: string;
+  minha?: boolean;
 }
 
 export interface SalaPedidoItem {
@@ -112,11 +113,21 @@ export const carregarSalaFn = createServerFn({ method: "POST" })
         .eq("ativa", true)
         .eq("is_virtual", false);
       if (mErr) throw new Error(mErr.message);
+      const { data: atribsMinhas } = await supabase
+        .from("mesa_garcom")
+        .select("mesa_id")
+        .eq("restaurante_id", restauranteId)
+        .eq("garcom_id", garcom.id as string)
+        .is("liberado_em", null);
+      const minhasSet = new Set(
+        (atribsMinhas ?? []).map((a) => a.mesa_id as string),
+      );
       mesas = (ms ?? [])
         .map((m) => ({
           id: m.id as string,
           numero: m.numero as string,
           atribuido_em: "",
+          minha: minhasSet.has(m.id as string),
         }))
         .sort((x, y) =>
           x.numero.localeCompare(y.numero, "pt-BR", { numeric: true }),
@@ -149,6 +160,7 @@ export const carregarSalaFn = createServerFn({ method: "POST" })
             id: m.id as string,
             numero: m.numero as string,
             atribuido_em: atribuidoEmByMesa.get(m.id as string) ?? "",
+            minha: true,
           }))
           .sort((x, y) =>
             x.numero.localeCompare(y.numero, "pt-BR", { numeric: true }),

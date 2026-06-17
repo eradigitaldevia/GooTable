@@ -1,5 +1,5 @@
 import { createFileRoute, redirect } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { SalaHeader } from "@/components/sala/sala-header";
@@ -8,6 +8,8 @@ import { MinhasMesasGrid } from "@/components/sala/minhas-mesas-grid";
 import { ChamadosList } from "@/components/sala/chamados-list";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 import { Search, Play, Square, Clock } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -49,6 +51,7 @@ function SalaPage() {
   const [pendingPedidoId, setPendingPedidoId] = useState<string | null>(null);
   const [pendingChamadoId, setPendingChamadoId] = useState<string | null>(null);
   const [busca, setBusca] = useState("");
+  const [apenasMinhas, setApenasMinhas] = useState<boolean>(true);
 
   const restauranteId = data?.garcom.restaurante_id;
   const mesas = data?.mesas ?? [];
@@ -84,11 +87,38 @@ function SalaPage() {
   const garcomId = data?.garcom.id ?? garcomCtx.id;
   const turno = data?.turno ?? null;
 
+  const permitirCruzado = data?.permitir_atendimento_cruzado ?? false;
+  const temMesasMinhas = useMemo(
+    () => mesas.some((m) => m.minha),
+    [mesas],
+  );
+  const mostrarToggleMinhas = permitirCruzado && temMesasMinhas;
+
+  useEffect(() => {
+    if (!garcomId || typeof window === "undefined") return;
+    const v = window.localStorage.getItem(`sala:apenasMinhas:${garcomId}`);
+    if (v != null) setApenasMinhas(v === "1");
+  }, [garcomId]);
+
+  const handleToggleApenasMinhas = (v: boolean) => {
+    setApenasMinhas(v);
+    if (garcomId && typeof window !== "undefined") {
+      window.localStorage.setItem(
+        `sala:apenasMinhas:${garcomId}`,
+        v ? "1" : "0",
+      );
+    }
+  };
+
   const mesasFiltradas = useMemo(() => {
+    let arr = mesas;
+    if (mostrarToggleMinhas && apenasMinhas) {
+      arr = arr.filter((m) => m.minha);
+    }
     const t = busca.trim().toLowerCase();
-    if (!t) return mesas;
-    return mesas.filter((m) => m.numero.toLowerCase().includes(t));
-  }, [mesas, busca]);
+    if (!t) return arr;
+    return arr.filter((m) => m.numero.toLowerCase().includes(t));
+  }, [mesas, busca, apenasMinhas, mostrarToggleMinhas]);
 
   const horaTurno = turno
     ? new Date(turno.iniciado_em).toLocaleTimeString("pt-BR", {
@@ -188,6 +218,21 @@ function SalaPage() {
               />
             </TabsContent>
             <TabsContent value="mesas" className="mt-4">
+              {mostrarToggleMinhas && (
+                <div className="mb-3 flex items-center justify-between gap-2 rounded-xl border border-border bg-card px-3 py-2">
+                  <Label
+                    htmlFor="toggle-apenas-minhas"
+                    className="text-sm font-medium"
+                  >
+                    Apenas minhas mesas
+                  </Label>
+                  <Switch
+                    id="toggle-apenas-minhas"
+                    checked={apenasMinhas}
+                    onCheckedChange={handleToggleApenasMinhas}
+                  />
+                </div>
+              )}
               {mesas.length > 6 && (
                 <div className="relative mb-3">
                   <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
