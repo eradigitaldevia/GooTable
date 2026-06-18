@@ -97,7 +97,9 @@ export function CategoriaChip({
               <AlertDialogHeader>
                 <AlertDialogTitle>Excluir categoria?</AlertDialogTitle>
                 <AlertDialogDescription>
-                  Os produtos vinculados ficarão sem categoria.
+                  {quantidadeProdutos > 0
+                    ? "Os produtos vinculados ficarão sem categoria."
+                    : "Tem certeza que deseja excluir esta categoria? Esta ação não pode ser desfeita."}
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
