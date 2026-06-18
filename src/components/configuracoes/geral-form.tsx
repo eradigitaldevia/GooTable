@@ -47,14 +47,17 @@ export function GeralForm({
             onChange={(e) => onChange({ nome: e.target.value })}
             maxLength={100}
           />
+          <p className="text-xs text-muted-foreground">
+            Aparece em destaque no cabeçalho dos comprovantes impressos.
+          </p>
         </div>
 
         <div className="space-y-3 rounded-xl border border-dashed border-border bg-muted/30 p-4">
           <div>
             <div className="text-sm font-medium">Dados para impressão</div>
             <p className="mt-1 text-xs text-muted-foreground">
-              Aparecem no cabeçalho dos comprovantes impressos pelo garçom e pelo
-              caixa. Campos opcionais — só aparece o que estiver preenchido.
+              Complementam o nome do restaurante no cabeçalho dos comprovantes
+              impressos. Campos opcionais — só aparece o que estiver preenchido.
             </p>
           </div>
           <div className="grid gap-3 sm:grid-cols-2">
