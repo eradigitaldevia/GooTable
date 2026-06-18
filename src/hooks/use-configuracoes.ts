@@ -58,6 +58,7 @@ export type ConfigPayload =
     })
   | (Base & {
       aba: "comissoes";
+      comissao_ativa: boolean;
       comissao_modo: "pedido" | "item";
       comissao_rateio_troca_turno: boolean;
       comissao_pedido_cliente: boolean;
