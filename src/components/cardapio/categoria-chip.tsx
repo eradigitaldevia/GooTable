@@ -27,10 +27,12 @@ interface Categoria { id: string; nome: string; ordem: number; destino: "cozinha
 export function CategoriaChip({
   cat,
   restauranteId,
+  quantidadeProdutos = 0,
   onChanged,
 }: {
   cat: Categoria;
   restauranteId: string;
+  quantidadeProdutos?: number;
   onChanged: () => void;
 }) {
   const [editing, setEditing] = useState(false);
