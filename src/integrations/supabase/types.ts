@@ -1760,6 +1760,7 @@ export type Database = {
           caixa_obrigatorio_para_pagamento: boolean
           caixa_teto_dinheiro: number | null
           cnpj: string | null
+          comissao_ativa: boolean
           comissao_modo: string
           comissao_pedido_cliente: boolean
           comissao_pedido_cliente_percentual: number | null
@@ -1814,6 +1815,7 @@ export type Database = {
           caixa_obrigatorio_para_pagamento?: boolean
           caixa_teto_dinheiro?: number | null
           cnpj?: string | null
+          comissao_ativa?: boolean
           comissao_modo?: string
           comissao_pedido_cliente?: boolean
           comissao_pedido_cliente_percentual?: number | null
@@ -1868,6 +1870,7 @@ export type Database = {
           caixa_obrigatorio_para_pagamento?: boolean
           caixa_teto_dinheiro?: number | null
           cnpj?: string | null
+          comissao_ativa?: boolean
           comissao_modo?: string
           comissao_pedido_cliente?: boolean
           comissao_pedido_cliente_percentual?: number | null

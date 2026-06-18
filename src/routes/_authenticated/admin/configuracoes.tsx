@@ -78,6 +78,7 @@ function Configuracoes() {
     pix_chave: "",
     pix_nome_titular: "",
     comissao_modo: "pedido" as "pedido" | "item",
+    comissao_ativa: true,
     permitir_atendimento_cruzado: true,
     caixa_alerta_horas: 12,
     caixa_teto_dinheiro: "" as string,
@@ -132,6 +133,7 @@ function Configuracoes() {
       pix_chave: restaurante.pix_chave ?? "",
       pix_nome_titular: restaurante.pix_nome_titular ?? "",
       comissao_modo: restaurante.comissao_modo ?? "pedido",
+      comissao_ativa: (restaurante as any).comissao_ativa ?? true,
       permitir_atendimento_cruzado:
         restaurante.permitir_atendimento_cruzado ?? true,
       caixa_alerta_horas: restaurante.caixa_alerta_horas ?? 12,
@@ -239,6 +241,7 @@ function Configuracoes() {
       pix_chave: restaurante.pix_chave ?? "",
       pix_nome_titular: restaurante.pix_nome_titular ?? "",
       comissao_modo: restaurante.comissao_modo ?? "pedido",
+      comissao_ativa: (restaurante as any).comissao_ativa ?? true,
       permitir_atendimento_cruzado: restaurante.permitir_atendimento_cruzado ?? true,
       caixa_alerta_horas: restaurante.caixa_alerta_horas ?? 12,
       caixa_teto_dinheiro:
@@ -327,6 +330,7 @@ function Configuracoes() {
       "couvert_mesa_descricao",
     ],
     comissoes: [
+      "comissao_ativa",
       "comissao_modo",
       "comissao_rateio_troca_turno",
       "comissao_pedido_cliente",
@@ -513,7 +517,7 @@ function Configuracoes() {
         couvert_mesa_descricao: f.couvert_mesa_descricao.trim() || null,
       };
     } else if (aba === "comissoes") {
-      if (!comissaoFormValido) {
+      if (f.comissao_ativa && !comissaoFormValido) {
         toast.error("Verifique os campos de comissões.");
         return;
       }
@@ -530,6 +534,7 @@ function Configuracoes() {
       payload = {
         aba: "comissoes",
         restauranteId: restaurante.id,
+        comissao_ativa: f.comissao_ativa,
         comissao_modo: f.comissao_modo,
         comissao_rateio_troca_turno: f.comissao_rateio_troca_turno,
         comissao_pedido_cliente: f.comissao_pedido_cliente,
@@ -635,7 +640,7 @@ function Configuracoes() {
         onClick={() => salvar(aba)}
         disabled={
           abaSalvando === aba ||
-          (aba === "comissoes" && !comissaoFormValido)
+          (aba === "comissoes" && form.comissao_ativa && !comissaoFormValido)
         }
         className="h-11 px-6"
       >
@@ -751,17 +756,39 @@ function Configuracoes() {
         </TabsContent>
 
         <TabsContent value="comissoes" className="space-y-6">
-          <ComissaoModoForm
-            modo={form.comissao_modo}
-            rateioTrocaTurno={form.comissao_rateio_troca_turno}
-            pagarPedidoCliente={form.comissao_pedido_cliente}
-            percentualPedidoCliente={form.comissao_pedido_cliente_percentual}
-            onChange={patch}
-            semGarcons={semGarcons}
-            todosGarconsZerados={todosGarconsZerados}
-            mesasSemGarcom={mesasSemGarcom}
-            onValidityChange={setComissaoFormValido}
-          />
+          <section className="rounded-lg border border-border bg-card p-4">
+            <div className="flex items-start justify-between gap-4">
+              <div className="min-w-0">
+                <h2 className="text-base font-semibold">
+                  Pagar comissão a garçons
+                </h2>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Quando ligado, novos pedidos entregues geram comissão conforme
+                  as regras abaixo. Quando desligado, novos pedidos entregues
+                  deixam de gerar comissão. Comissões já lançadas no histórico
+                  são preservadas.
+                </p>
+              </div>
+              <Switch
+                checked={form.comissao_ativa}
+                onCheckedChange={(v) => patch({ comissao_ativa: v })}
+                aria-label="Pagar comissão a garçons"
+              />
+            </div>
+          </section>
+          {form.comissao_ativa && (
+            <ComissaoModoForm
+              modo={form.comissao_modo}
+              rateioTrocaTurno={form.comissao_rateio_troca_turno}
+              pagarPedidoCliente={form.comissao_pedido_cliente}
+              percentualPedidoCliente={form.comissao_pedido_cliente_percentual}
+              onChange={patch}
+              semGarcons={semGarcons}
+              todosGarconsZerados={todosGarconsZerados}
+              mesasSemGarcom={mesasSemGarcom}
+              onValidityChange={setComissaoFormValido}
+            />
+          )}
           <section className="rounded-lg border border-border bg-card p-4">
             <div className="flex items-start justify-between gap-4">
               <div className="min-w-0">

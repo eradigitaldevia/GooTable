@@ -94,6 +94,7 @@ const configSchema = z.discriminatedUnion("aba", [
   z.object({
     aba: z.literal("comissoes"),
     restauranteId: z.string().uuid(),
+    comissao_ativa: z.boolean(),
     comissao_modo: z.enum(["pedido", "item"]),
     comissao_rateio_troca_turno: z.boolean(),
     comissao_pedido_cliente: z.boolean(),
@@ -225,6 +226,7 @@ export const atualizarConfiguracoesFn = createServerFn({ method: "POST" })
       }
       case "comissoes": {
         update = {
+          comissao_ativa: data.comissao_ativa,
           comissao_modo: data.comissao_modo,
           comissao_rateio_troca_turno: data.comissao_rateio_troca_turno,
           comissao_pedido_cliente: data.comissao_pedido_cliente,
