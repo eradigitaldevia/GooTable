@@ -78,6 +78,7 @@ function Configuracoes() {
     pix_chave: "",
     pix_nome_titular: "",
     comissao_modo: "pedido" as "pedido" | "item",
+    comissao_ativa: true,
     permitir_atendimento_cruzado: true,
     caixa_alerta_horas: 12,
     caixa_teto_dinheiro: "" as string,
