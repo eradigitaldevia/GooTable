@@ -122,7 +122,7 @@ export function ComissaoModoForm({
           <div>
             <div className="font-medium">Por pedido</div>
             <div className="text-xs text-muted-foreground">
-              Aplica o % do garçom sobre o total do pedido.
+              Aplica o % do garçom sobre o total de cada pedido lançado, não sobre o consumo acumulado da mesa.
             </div>
           </div>
         </Label>
@@ -131,8 +131,7 @@ export function ComissaoModoForm({
           <div>
             <div className="font-medium">Por item</div>
             <div className="text-xs text-muted-foreground">
-              Soma item a item usando o % do produto (quando definido) ou o % do
-              garçom. Itens marcados como não-aplicáveis são ignorados.
+              Aplica o % do produto (quando definido) ou o % do garçom (quando não definido). Itens marcados como não-aplicáveis são ignorados. Importante para quando quiser pagar uma comissão diferente para um produto específico.
             </div>
           </div>
         </Label>
