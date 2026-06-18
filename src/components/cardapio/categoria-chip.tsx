@@ -8,6 +8,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Pencil, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { useAtualizarCategoria, useExcluirCategoria } from "@/hooks/use-cardapio";
@@ -28,6 +38,7 @@ export function CategoriaChip({
   const [destino, setDestino] = useState<"cozinha" | "bar">(cat.destino);
   const atualizar = useAtualizarCategoria(restauranteId);
   const excluir = useExcluirCategoria(restauranteId);
+  const [confirmOpen, setConfirmOpen] = useState(false);
 
   async function save() {
     try {
@@ -39,7 +50,6 @@ export function CategoriaChip({
     }
   }
   async function remove() {
-    if (!confirm("Excluir esta categoria? Os produtos vinculados ficarão sem categoria.")) return;
     try {
       await excluir.mutateAsync({ id: cat.id });
       toast.success("Categoria excluída");
@@ -77,9 +87,28 @@ export function CategoriaChip({
           <button onClick={() => setEditing(true)} className="text-muted-foreground hover:text-foreground" aria-label="Editar">
             <Pencil className="h-3.5 w-3.5" />
           </button>
-          <button onClick={remove} className="text-muted-foreground hover:text-destructive" aria-label="Excluir">
+          <button onClick={() => setConfirmOpen(true)} className="text-muted-foreground hover:text-destructive" aria-label="Excluir">
             <Trash2 className="h-3.5 w-3.5" />
           </button>
+          <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Excluir categoria?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Os produtos vinculados ficarão sem categoria.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                <AlertDialogAction
+                  onClick={remove}
+                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                >
+                  Excluir
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         </>
       )}
     </div>
