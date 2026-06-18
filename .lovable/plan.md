@@ -1,27 +1,69 @@
-## Contexto
+## Objetivo
 
-Na aba **Geral** de Configurações, a seção "Dados para impressão" lista apenas CNPJ, Telefone e Endereço. O **Nome do restaurante** fica em um campo separado acima e o texto auxiliar atual diz que "CNPJ, telefone e endereço aparecem no cabeçalho dos comprovantes", o que dá a impressão de que o nome **não** é impresso.
+Criar uma chave mestra que liga/desliga a geração de novas comissões de garçons. Default `true` (preserva comportamento atual). Quando desligada: o trigger no banco para de gerar novas linhas em `comissoes`, e a sub-configuração de "modo / rateio / pedido do cliente" some da tela. Histórico de comissões, telas operacionais e tudo mais permanece intacto.
 
-Verifiquei `src/components/impressao/comprovante-conta.tsx`: o nome **já é impresso** (em negrito, no topo do cabeçalho), junto com CNPJ, endereço e telefone. Ou seja, o comportamento de impressão já está correto — o que confunde é apenas a UI da tela de Configurações.
+## 1. Banco de dados (nova migration)
 
-## Mudança proposta (apenas UI / texto)
+- Adicionar coluna `restaurantes.comissao_ativa boolean not null default true`.
+- Atualizar `public.trg_pedido_gerar_comissao()`: ler `comissao_ativa` no mesmo `SELECT` dos outros campos e, se `false`, `RETURN NEW` antes de qualquer cálculo. Nenhuma outra alteração na função.
 
-Arquivo único: `src/components/configuracoes/geral-form.tsx`
+Sem mudanças em RLS, grants, outras tabelas, ou outros triggers.
 
-1. Ajustar o texto auxiliar do campo **Nome do restaurante** para deixar claro que ele também aparece no comprovante impresso.
-  - De: (sem helper)
-  - Para: algo como *"Aparece em destaque no cabeçalho dos comprovantes impressos."*
-2. Ajustar o texto auxiliar da seção **Dados para impressão** para refletir que ela complementa o nome (que já está acima).
-  - De: *"Aparecem no cabeçalho dos comprovantes impressos pelo garçom e pelo caixa. Campos opcionais — só aparece o que estiver preenchido."*
-  - Para: *"Complementam o nome do restaurante no cabeçalho dos comprovantes impressos. Campos opcionais — só aparece o que estiver preenchido."*
+## 2. Backend — server function
 
-## Fora de escopo
+`src/lib/configuracoes.functions.ts`:
 
-- Nenhuma mudança em backend, schema, componente de impressão, layout ou regras.
-- Nenhuma mudança em outras abas/arquivos.
+- Adicionar `comissao_ativa: z.boolean()` ao schema da aba `comissoes`.
+- Incluir `comissao_ativa` no `update` do case `"comissoes"`.
 
-## Pergunta
+`src/hooks/use-configuracoes.ts`:
 
-Confirma essa abordagem (somente texto auxiliar), ou prefere que eu **mova o campo Nome para dentro da seção "Dados para impressão"** visualmente, mantendo-o como o primeiro campo do bloco?  
+- Adicionar `comissao_ativa: boolean` ao tipo do payload da aba `comissoes`.
+
+## 3. UI — Configurações → aba Comissões
+
+Arquivo: `src/routes/_authenticated/admin/configuracoes.tsx`
+
+- Adicionar `comissao_ativa` ao `form`, ao `snapshot`, ao reset a partir de `restaurante` e ao `CAMPOS_POR_ABA.comissoes`.
+- No `TabsContent value="comissoes"`, renderizar **no topo** um card novo com um switch "Pagar comissão a garçons" e um helper text curto explicando que, quando desligado, novos pedidos entregues não geram comissão (histórico é mantido).
+- Quando `comissao_ativa === false`: **ocultar apenas o `<ComissaoModoForm />**` (modo por pedido/item, rateio, pedido do cliente, % específico). A seção "Atendimento cruzado" **continua visível** (é operacional, independe de comissão).
+- Incluir `comissao_ativa` no payload do `salvar("comissoes", …)`.
+
+Nenhuma alteração no componente `ComissaoModoForm` em si.
+
+## 4. Telas não alteradas (confirmado)
+
+- **Garçons → aba Comissões**: permanece visível mesmo com flag off (lista histórico que precisa ser pago).
+- **Garçons → roster** (coluna "Comissão %"): inalterado.
+- **Painel / Relatórios / Fechamento de caixa / Extrato do garçom**: inalterados.
+- **Atendimento cruzado**: continua visível e funcional (controla operação de atendimento, não comissão).
+- **Bônus por meta**, **repasse de taxa de serviço**, **repasse do couvert artístico**: inalterados, independentes da flag.
+
+## Detalhes técnicos
+
+- Coluna criada com `default true` → restaurantes existentes ficam ligados; nenhum efeito sobre o comportamento atual.
+- Checagem no trigger é antes de qualquer leitura de `pedido_itens`/`pedido_garcons` → custo desprezível.
+- Comissões já existentes em `comissoes` permanecem; apenas novas paradas de pedido em `entregue` deixam de inserir.
+- Nada muda em `comissoes_taxa_servico`, `repasses_couvert_artistico`, `garcom_bonus`.
+
+## Arquivos afetados
+
+1. Nova migration SQL (coluna + atualização do trigger).
+2. `src/lib/configuracoes.functions.ts`
+3. `src/hooks/use-configuracoes.ts`
+4. `src/routes/_authenticated/admin/configuracoes.tsx`
+
+Confirma para eu implementar?  
+Sim  
   
-resposta: Confirmo essa abordagem (somente texto auxiliar)
+IMPORTANTE:
+
+Execute APENAS a alteração explicitamente solicitada.
+
+NÃO refatore, otimize, melhore ou modifique código não relacionado.
+
+NÃO faça suposições.
+
+Se algo não estiver claro, PARE e pergunte antes de alterar qualquer coisa.
+
+Preserve 100% do comportamento e da funcionalidade existentes.
