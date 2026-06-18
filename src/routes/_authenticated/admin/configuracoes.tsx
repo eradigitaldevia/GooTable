@@ -133,6 +133,7 @@ function Configuracoes() {
       pix_chave: restaurante.pix_chave ?? "",
       pix_nome_titular: restaurante.pix_nome_titular ?? "",
       comissao_modo: restaurante.comissao_modo ?? "pedido",
+      comissao_ativa: (restaurante as any).comissao_ativa ?? true,
       permitir_atendimento_cruzado:
         restaurante.permitir_atendimento_cruzado ?? true,
       caixa_alerta_horas: restaurante.caixa_alerta_horas ?? 12,
@@ -240,6 +241,7 @@ function Configuracoes() {
       pix_chave: restaurante.pix_chave ?? "",
       pix_nome_titular: restaurante.pix_nome_titular ?? "",
       comissao_modo: restaurante.comissao_modo ?? "pedido",
+      comissao_ativa: (restaurante as any).comissao_ativa ?? true,
       permitir_atendimento_cruzado: restaurante.permitir_atendimento_cruzado ?? true,
       caixa_alerta_horas: restaurante.caixa_alerta_horas ?? 12,
       caixa_teto_dinheiro:
@@ -328,6 +330,7 @@ function Configuracoes() {
       "couvert_mesa_descricao",
     ],
     comissoes: [
+      "comissao_ativa",
       "comissao_modo",
       "comissao_rateio_troca_turno",
       "comissao_pedido_cliente",
@@ -531,6 +534,7 @@ function Configuracoes() {
       payload = {
         aba: "comissoes",
         restauranteId: restaurante.id,
+        comissao_ativa: f.comissao_ativa,
         comissao_modo: f.comissao_modo,
         comissao_rateio_troca_turno: f.comissao_rateio_troca_turno,
         comissao_pedido_cliente: f.comissao_pedido_cliente,
