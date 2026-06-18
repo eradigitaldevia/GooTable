@@ -640,7 +640,7 @@ function Configuracoes() {
         onClick={() => salvar(aba)}
         disabled={
           abaSalvando === aba ||
-          (aba === "comissoes" && !comissaoFormValido)
+          (aba === "comissoes" && form.comissao_ativa && !comissaoFormValido)
         }
         className="h-11 px-6"
       >
