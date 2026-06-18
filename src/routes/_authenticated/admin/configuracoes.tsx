@@ -517,7 +517,7 @@ function Configuracoes() {
         couvert_mesa_descricao: f.couvert_mesa_descricao.trim() || null,
       };
     } else if (aba === "comissoes") {
-      if (!comissaoFormValido) {
+      if (f.comissao_ativa && !comissaoFormValido) {
         toast.error("Verifique os campos de comissões.");
         return;
       }
