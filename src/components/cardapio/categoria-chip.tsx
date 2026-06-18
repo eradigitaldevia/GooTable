@@ -27,10 +27,12 @@ interface Categoria { id: string; nome: string; ordem: number; destino: "cozinha
 export function CategoriaChip({
   cat,
   restauranteId,
+  quantidadeProdutos = 0,
   onChanged,
 }: {
   cat: Categoria;
   restauranteId: string;
+  quantidadeProdutos?: number;
   onChanged: () => void;
 }) {
   const [editing, setEditing] = useState(false);
@@ -95,7 +97,9 @@ export function CategoriaChip({
               <AlertDialogHeader>
                 <AlertDialogTitle>Excluir categoria?</AlertDialogTitle>
                 <AlertDialogDescription>
-                  Os produtos vinculados ficarão sem categoria.
+                  {quantidadeProdutos > 0
+                    ? "Os produtos vinculados ficarão sem categoria."
+                    : "Tem certeza que deseja excluir esta categoria? Esta ação não pode ser desfeita."}
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>

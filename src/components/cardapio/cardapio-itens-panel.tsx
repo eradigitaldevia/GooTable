@@ -214,6 +214,7 @@ export function CardapioItensPanel({ restaurante }: { restaurante: Restaurante }
                   <CategoriaChip
                     cat={c}
                     restauranteId={restaurante.id}
+                    quantidadeProdutos={produtos.filter((p) => p.categoria_id === c.id).length}
                     onChanged={() => {}}
                   />
                 </div>
