@@ -756,17 +756,39 @@ function Configuracoes() {
         </TabsContent>
 
         <TabsContent value="comissoes" className="space-y-6">
-          <ComissaoModoForm
-            modo={form.comissao_modo}
-            rateioTrocaTurno={form.comissao_rateio_troca_turno}
-            pagarPedidoCliente={form.comissao_pedido_cliente}
-            percentualPedidoCliente={form.comissao_pedido_cliente_percentual}
-            onChange={patch}
-            semGarcons={semGarcons}
-            todosGarconsZerados={todosGarconsZerados}
-            mesasSemGarcom={mesasSemGarcom}
-            onValidityChange={setComissaoFormValido}
-          />
+          <section className="rounded-lg border border-border bg-card p-4">
+            <div className="flex items-start justify-between gap-4">
+              <div className="min-w-0">
+                <h2 className="text-base font-semibold">
+                  Pagar comissão a garçons
+                </h2>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Quando ligado, novos pedidos entregues geram comissão conforme
+                  as regras abaixo. Quando desligado, novos pedidos entregues
+                  deixam de gerar comissão. Comissões já lançadas no histórico
+                  são preservadas.
+                </p>
+              </div>
+              <Switch
+                checked={form.comissao_ativa}
+                onCheckedChange={(v) => patch({ comissao_ativa: v })}
+                aria-label="Pagar comissão a garçons"
+              />
+            </div>
+          </section>
+          {form.comissao_ativa && (
+            <ComissaoModoForm
+              modo={form.comissao_modo}
+              rateioTrocaTurno={form.comissao_rateio_troca_turno}
+              pagarPedidoCliente={form.comissao_pedido_cliente}
+              percentualPedidoCliente={form.comissao_pedido_cliente_percentual}
+              onChange={patch}
+              semGarcons={semGarcons}
+              todosGarconsZerados={todosGarconsZerados}
+              mesasSemGarcom={mesasSemGarcom}
+              onValidityChange={setComissaoFormValido}
+            />
+          )}
           <section className="rounded-lg border border-border bg-card p-4">
             <div className="flex items-start justify-between gap-4">
               <div className="min-w-0">
