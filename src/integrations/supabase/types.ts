@@ -2123,7 +2123,15 @@ export type Database = {
         Args: { _periodo?: string; _restaurante_id: string }
         Returns: Json
       }
+      dashboard_produtos_top: {
+        Args: { _limit?: number; _periodo?: string; _restaurante_id: string }
+        Returns: Json
+      }
       dashboard_superadmin_resumo: { Args: never; Returns: Json }
+      dashboard_ticket_medio_mesa: {
+        Args: { _periodo?: string; _restaurante_id: string }
+        Returns: Json
+      }
       definir_garcons_pedido: {
         Args: { _items: Json; _pedido_id: string }
         Returns: undefined
