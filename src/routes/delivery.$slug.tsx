@@ -420,27 +420,23 @@ function StepCardapio({
   slug,
   restauranteNome,
   logo,
-  modo,
+  identificado,
   minimo,
-  taxa,
   categorias,
   produtos,
   aberto,
   mensagemFechado,
-  onVoltar,
   onContinuar,
 }: {
   slug: string;
   restauranteNome: string;
   logo: string | null;
-  modo: "delivery" | "retirada";
+  identificado: boolean;
   minimo: number;
-  taxa: number;
   categorias: { id: string; nome: string; ordem: number }[];
   produtos: ProdutoPublico[];
   aberto: boolean;
   mensagemFechado: string | null;
-  onVoltar: () => void;
   onContinuar: () => void;
 }) {
   const [busca, setBusca] = useState("");
@@ -485,8 +481,7 @@ function StepCardapio({
       <DeliveryHeader
         nome={restauranteNome}
         logoUrl={logo}
-        onBack={onVoltar}
-        subtitulo={modo === "delivery" ? "Entrega" : "Retirada"}
+        subtitulo="Cardápio"
       />
       {!aberto && <ClosedBanner mensagem={mensagemFechado} />}
       <div className="sticky top-[57px] z-20 border-b bg-background/95 px-4 py-3 backdrop-blur">
@@ -559,10 +554,7 @@ function StepCardapio({
           <div className="flex items-center justify-between">
             <div className="text-sm">
               <div className="text-muted-foreground">
-                {count} {count === 1 ? "item" : "itens"} ·{" "}
-                {modo === "delivery" && taxa > 0
-                  ? `+ ${formatBRL(taxa)} entrega`
-                  : "sem taxa"}
+                {count} {count === 1 ? "item" : "itens"}
               </div>
               <div className="text-lg font-bold text-primary">{formatBRL(subtotal)}</div>
             </div>
@@ -572,7 +564,7 @@ function StepCardapio({
               onClick={onContinuar}
             >
               <ShoppingBag className="mr-2 h-4 w-4" />
-              Revisar
+              {identificado ? "Revisar" : "Continuar"}
             </Button>
           </div>
         </div>
