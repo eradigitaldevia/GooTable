@@ -164,6 +164,19 @@ function DeliveryPage() {
       search: { step: s },
     });
 
+  // Guard: bloquear acesso direto a `revisao` sem identificação concluída.
+  useEffect(() => {
+    if (!hydrated) return;
+    if (step === "revisao" && !state.telefone) {
+      navigate({
+        to: "/delivery/$slug",
+        params: { slug },
+        search: { step: "identificacao" },
+        replace: true,
+      });
+    }
+  }, [hydrated, step, state.telefone, slug, navigate]);
+
   if (isLoading || !hydrated) {
     return (
       <TemaCardapioProvider
@@ -199,7 +212,6 @@ function DeliveryPage() {
           slug={slug}
           restauranteNome={restaurante.nome}
           logo={restaurante.logo_url}
-          retiradaAtiva={restaurante.delivery_retirada_ativa}
           tempoMin={restaurante.delivery_tempo_estimado_min}
           taxa={restaurante.delivery_taxa_entrega}
           minimo={restaurante.delivery_pedido_minimo}
@@ -214,7 +226,8 @@ function DeliveryPage() {
               return null;
             }
           }}
-          onContinuar={() => irPara("cardapio")}
+          onVoltar={() => irPara("cardapio")}
+          onContinuar={() => irPara("revisao")}
         />
       )}
 
@@ -223,15 +236,13 @@ function DeliveryPage() {
           slug={slug}
           restauranteNome={restaurante.nome}
           logo={restaurante.logo_url}
-          modo={state.modo}
+          identificado={!!state.telefone}
           minimo={restaurante.delivery_pedido_minimo}
-          taxa={restaurante.delivery_taxa_entrega}
           categorias={categorias}
           produtos={produtos}
           aberto={aberto}
           mensagemFechado={mensagemFechado}
-          onVoltar={() => irPara("identificacao")}
-          onContinuar={() => irPara("revisao")}
+          onContinuar={() => irPara(state.telefone ? "revisao" : "identificacao")}
         />
       )}
 
@@ -245,12 +256,14 @@ function DeliveryPage() {
           taxa={Number(restaurante.delivery_taxa_entrega ?? 0)}
           minimo={Number(restaurante.delivery_pedido_minimo ?? 0)}
           previsao={restaurante.delivery_tempo_estimado_min}
+          retiradaAtiva={restaurante.delivery_retirada_ativa}
           aceitaPix={restaurante.delivery_aceita_pix && restaurante.pix_habilitado}
           aceitaDinheiro={restaurante.delivery_aceita_dinheiro}
           aceitaCartao={restaurante.delivery_aceita_cartao_entrega}
           aberto={aberto}
           mensagemFechado={mensagemFechado}
           onVoltar={() => irPara("cardapio")}
+          onTrocarIdentificacao={() => irPara("identificacao")}
           enviar={async (payload) => {
             try {
               const r = await criarPedido({ data: { slug, ...payload } });
