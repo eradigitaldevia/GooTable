@@ -48,8 +48,8 @@ import {
 /* ----------------------------- Route ----------------------------- */
 
 const searchSchema = z.object({
-  step: fallback(z.enum(["identificacao", "cardapio", "revisao"]), "identificacao").default(
-    "identificacao",
+  step: fallback(z.enum(["identificacao", "cardapio", "revisao"]), "cardapio").default(
+    "cardapio",
   ),
 });
 
