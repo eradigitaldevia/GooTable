@@ -5,7 +5,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { zodValidator, fallback } from "@tanstack/zod-adapter";
 import { toast } from "sonner";
-import { Loader2, ShoppingBag, Bike, Store, MapPin } from "lucide-react";
+import { Loader2, ShoppingBag, Bike, Store, MapPin, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -294,19 +294,18 @@ function StepIdentificacao({
   slug,
   restauranteNome,
   logo,
-  retiradaAtiva,
   tempoMin,
   taxa,
   minimo,
   state,
   setState,
   buscar,
+  onVoltar,
   onContinuar,
 }: {
   slug: string;
   restauranteNome: string;
   logo: string | null;
-  retiradaAtiva: boolean;
   tempoMin: number;
   taxa: number;
   minimo: number;
@@ -316,6 +315,7 @@ function StepIdentificacao({
     | { encontrado: boolean; nome?: string; enderecos: EnderecoCliente[] }
     | null
   >;
+  onVoltar: () => void;
   onContinuar: () => void;
 }) {
   const [enviando, setEnviando] = useState(false);
@@ -348,7 +348,7 @@ function StepIdentificacao({
 
   return (
     <>
-      <DeliveryHeader nome={restauranteNome} logoUrl={logo} subtitulo="Peça pelo delivery" />
+      <DeliveryHeader nome={restauranteNome} logoUrl={logo} onBack={onVoltar} subtitulo="Identificação" />
       <main className="mx-auto max-w-2xl space-y-5 px-4 py-5">
         <div className="rounded-2xl border bg-card p-4 shadow-[var(--shadow-soft)]">
           <div className="flex items-center justify-between text-sm">
@@ -391,45 +391,6 @@ function StepIdentificacao({
               required
               maxLength={80}
             />
-          </div>
-
-          <div>
-            <Label className="mb-2 block">Modalidade</Label>
-            <RadioGroup
-              value={state.modo}
-              onValueChange={(v) =>
-                setState((p) => ({ ...p, modo: v as DeliveryState["modo"] }))
-              }
-              className="grid grid-cols-2 gap-2"
-            >
-              <label
-                className={`flex cursor-pointer items-center gap-2 rounded-xl border p-3 ${
-                  state.modo === "delivery" ? "border-primary bg-primary/5" : ""
-                }`}
-              >
-                <RadioGroupItem value="delivery" className="sr-only" />
-                <Bike className="h-4 w-4" />
-                <span className="text-sm font-semibold">Entrega</span>
-              </label>
-              <label
-                aria-disabled={!retiradaAtiva}
-                className={`flex items-center gap-2 rounded-xl border p-3 ${
-                  !retiradaAtiva
-                    ? "cursor-not-allowed opacity-50"
-                    : state.modo === "retirada"
-                      ? "cursor-pointer border-primary bg-primary/5"
-                      : "cursor-pointer"
-                }`}
-              >
-                <RadioGroupItem
-                  value="retirada"
-                  className="sr-only"
-                  disabled={!retiradaAtiva}
-                />
-                <Store className="h-4 w-4" />
-                <span className="text-sm font-semibold">Retirada</span>
-              </label>
-            </RadioGroup>
           </div>
 
           <Button
