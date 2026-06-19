@@ -599,12 +599,14 @@ function StepRevisao({
   taxa,
   minimo,
   previsao,
+  retiradaAtiva,
   aceitaPix,
   aceitaDinheiro,
   aceitaCartao,
   aberto,
   mensagemFechado,
   onVoltar,
+  onTrocarIdentificacao,
   enviar,
 }: {
   slug: string;
@@ -615,12 +617,14 @@ function StepRevisao({
   taxa: number;
   minimo: number;
   previsao: number;
+  retiradaAtiva: boolean;
   aceitaPix: boolean;
   aceitaDinheiro: boolean;
   aceitaCartao: boolean;
   aberto: boolean;
   mensagemFechado: string | null;
   onVoltar: () => void;
+  onTrocarIdentificacao: () => void;
   enviar: (p: RevisaoPayload) => Promise<void>;
 }) {
   const [cart, setCart] = useState<CartItem[]>([]);
