@@ -48,8 +48,8 @@ import {
 /* ----------------------------- Route ----------------------------- */
 
 const searchSchema = z.object({
-  step: fallback(z.enum(["identificacao", "cardapio", "revisao"]), "identificacao").default(
-    "identificacao",
+  step: fallback(z.enum(["identificacao", "cardapio", "revisao"]), "cardapio").default(
+    "cardapio",
   ),
 });
 
@@ -164,6 +164,19 @@ function DeliveryPage() {
       search: { step: s },
     });
 
+  // Guard: bloquear acesso direto a `revisao` sem identificação concluída.
+  useEffect(() => {
+    if (!hydrated) return;
+    if (step === "revisao" && !state.telefone) {
+      navigate({
+        to: "/delivery/$slug",
+        params: { slug },
+        search: { step: "identificacao" },
+        replace: true,
+      });
+    }
+  }, [hydrated, step, state.telefone, slug, navigate]);
+
   if (isLoading || !hydrated) {
     return (
       <TemaCardapioProvider
@@ -199,7 +212,6 @@ function DeliveryPage() {
           slug={slug}
           restauranteNome={restaurante.nome}
           logo={restaurante.logo_url}
-          retiradaAtiva={restaurante.delivery_retirada_ativa}
           tempoMin={restaurante.delivery_tempo_estimado_min}
           taxa={restaurante.delivery_taxa_entrega}
           minimo={restaurante.delivery_pedido_minimo}
@@ -214,7 +226,8 @@ function DeliveryPage() {
               return null;
             }
           }}
-          onContinuar={() => irPara("cardapio")}
+          onVoltar={() => irPara("cardapio")}
+          onContinuar={() => irPara("revisao")}
         />
       )}
 
@@ -223,15 +236,13 @@ function DeliveryPage() {
           slug={slug}
           restauranteNome={restaurante.nome}
           logo={restaurante.logo_url}
-          modo={state.modo}
+          identificado={!!state.telefone}
           minimo={restaurante.delivery_pedido_minimo}
-          taxa={restaurante.delivery_taxa_entrega}
           categorias={categorias}
           produtos={produtos}
           aberto={aberto}
           mensagemFechado={mensagemFechado}
-          onVoltar={() => irPara("identificacao")}
-          onContinuar={() => irPara("revisao")}
+          onContinuar={() => irPara(state.telefone ? "revisao" : "identificacao")}
         />
       )}
 
@@ -245,12 +256,14 @@ function DeliveryPage() {
           taxa={Number(restaurante.delivery_taxa_entrega ?? 0)}
           minimo={Number(restaurante.delivery_pedido_minimo ?? 0)}
           previsao={restaurante.delivery_tempo_estimado_min}
+          retiradaAtiva={restaurante.delivery_retirada_ativa}
           aceitaPix={restaurante.delivery_aceita_pix && restaurante.pix_habilitado}
           aceitaDinheiro={restaurante.delivery_aceita_dinheiro}
           aceitaCartao={restaurante.delivery_aceita_cartao_entrega}
           aberto={aberto}
           mensagemFechado={mensagemFechado}
           onVoltar={() => irPara("cardapio")}
+          onTrocarIdentificacao={() => irPara("identificacao")}
           enviar={async (payload) => {
             try {
               const r = await criarPedido({ data: { slug, ...payload } });
@@ -281,19 +294,18 @@ function StepIdentificacao({
   slug,
   restauranteNome,
   logo,
-  retiradaAtiva,
   tempoMin,
   taxa,
   minimo,
   state,
   setState,
   buscar,
+  onVoltar,
   onContinuar,
 }: {
   slug: string;
   restauranteNome: string;
   logo: string | null;
-  retiradaAtiva: boolean;
   tempoMin: number;
   taxa: number;
   minimo: number;
@@ -303,6 +315,7 @@ function StepIdentificacao({
     | { encontrado: boolean; nome?: string; enderecos: EnderecoCliente[] }
     | null
   >;
+  onVoltar: () => void;
   onContinuar: () => void;
 }) {
   const [enviando, setEnviando] = useState(false);
@@ -335,7 +348,7 @@ function StepIdentificacao({
 
   return (
     <>
-      <DeliveryHeader nome={restauranteNome} logoUrl={logo} subtitulo="Peça pelo delivery" />
+      <DeliveryHeader nome={restauranteNome} logoUrl={logo} onBack={onVoltar} subtitulo="Identificação" />
       <main className="mx-auto max-w-2xl space-y-5 px-4 py-5">
         <div className="rounded-2xl border bg-card p-4 shadow-[var(--shadow-soft)]">
           <div className="flex items-center justify-between text-sm">
@@ -380,45 +393,6 @@ function StepIdentificacao({
             />
           </div>
 
-          <div>
-            <Label className="mb-2 block">Modalidade</Label>
-            <RadioGroup
-              value={state.modo}
-              onValueChange={(v) =>
-                setState((p) => ({ ...p, modo: v as DeliveryState["modo"] }))
-              }
-              className="grid grid-cols-2 gap-2"
-            >
-              <label
-                className={`flex cursor-pointer items-center gap-2 rounded-xl border p-3 ${
-                  state.modo === "delivery" ? "border-primary bg-primary/5" : ""
-                }`}
-              >
-                <RadioGroupItem value="delivery" className="sr-only" />
-                <Bike className="h-4 w-4" />
-                <span className="text-sm font-semibold">Entrega</span>
-              </label>
-              <label
-                aria-disabled={!retiradaAtiva}
-                className={`flex items-center gap-2 rounded-xl border p-3 ${
-                  !retiradaAtiva
-                    ? "cursor-not-allowed opacity-50"
-                    : state.modo === "retirada"
-                      ? "cursor-pointer border-primary bg-primary/5"
-                      : "cursor-pointer"
-                }`}
-              >
-                <RadioGroupItem
-                  value="retirada"
-                  className="sr-only"
-                  disabled={!retiradaAtiva}
-                />
-                <Store className="h-4 w-4" />
-                <span className="text-sm font-semibold">Retirada</span>
-              </label>
-            </RadioGroup>
-          </div>
-
           <Button
             type="submit"
             size="lg"
@@ -446,27 +420,23 @@ function StepCardapio({
   slug,
   restauranteNome,
   logo,
-  modo,
+  identificado,
   minimo,
-  taxa,
   categorias,
   produtos,
   aberto,
   mensagemFechado,
-  onVoltar,
   onContinuar,
 }: {
   slug: string;
   restauranteNome: string;
   logo: string | null;
-  modo: "delivery" | "retirada";
+  identificado: boolean;
   minimo: number;
-  taxa: number;
   categorias: { id: string; nome: string; ordem: number }[];
   produtos: ProdutoPublico[];
   aberto: boolean;
   mensagemFechado: string | null;
-  onVoltar: () => void;
   onContinuar: () => void;
 }) {
   const [busca, setBusca] = useState("");
@@ -511,8 +481,7 @@ function StepCardapio({
       <DeliveryHeader
         nome={restauranteNome}
         logoUrl={logo}
-        onBack={onVoltar}
-        subtitulo={modo === "delivery" ? "Entrega" : "Retirada"}
+        subtitulo="Cardápio"
       />
       {!aberto && <ClosedBanner mensagem={mensagemFechado} />}
       <div className="sticky top-[57px] z-20 border-b bg-background/95 px-4 py-3 backdrop-blur">
@@ -585,10 +554,7 @@ function StepCardapio({
           <div className="flex items-center justify-between">
             <div className="text-sm">
               <div className="text-muted-foreground">
-                {count} {count === 1 ? "item" : "itens"} ·{" "}
-                {modo === "delivery" && taxa > 0
-                  ? `+ ${formatBRL(taxa)} entrega`
-                  : "sem taxa"}
+                {count} {count === 1 ? "item" : "itens"}
               </div>
               <div className="text-lg font-bold text-primary">{formatBRL(subtotal)}</div>
             </div>
@@ -598,7 +564,7 @@ function StepCardapio({
               onClick={onContinuar}
             >
               <ShoppingBag className="mr-2 h-4 w-4" />
-              Revisar
+              {identificado ? "Revisar" : "Continuar"}
             </Button>
           </div>
         </div>
@@ -633,12 +599,14 @@ function StepRevisao({
   taxa,
   minimo,
   previsao,
+  retiradaAtiva,
   aceitaPix,
   aceitaDinheiro,
   aceitaCartao,
   aberto,
   mensagemFechado,
   onVoltar,
+  onTrocarIdentificacao,
   enviar,
 }: {
   slug: string;
@@ -649,12 +617,14 @@ function StepRevisao({
   taxa: number;
   minimo: number;
   previsao: number;
+  retiradaAtiva: boolean;
   aceitaPix: boolean;
   aceitaDinheiro: boolean;
   aceitaCartao: boolean;
   aberto: boolean;
   mensagemFechado: string | null;
   onVoltar: () => void;
+  onTrocarIdentificacao: () => void;
   enviar: (p: RevisaoPayload) => Promise<void>;
 }) {
   const [cart, setCart] = useState<CartItem[]>([]);
@@ -771,6 +741,63 @@ function StepRevisao({
                   onSetObs={setObsItem}
                 />
               ))}
+            </section>
+
+            <section className="space-y-2 rounded-2xl border bg-card p-4">
+              <div className="flex items-start justify-between gap-2">
+                <div className="text-sm">
+                  <div className="font-semibold">{state.nome || "Sem nome"}</div>
+                  <div className="text-muted-foreground">
+                    {formatTelefoneBR(state.telefone)}
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={onTrocarIdentificacao}
+                  className="text-xs text-primary underline-offset-2 hover:underline"
+                >
+                  Não é você? Trocar
+                </button>
+              </div>
+            </section>
+
+            <section className="space-y-3 rounded-2xl border bg-card p-4">
+              <h2 className="text-sm font-semibold">Modalidade</h2>
+              <RadioGroup
+                value={state.modo}
+                onValueChange={(v) =>
+                  setState((p) => ({ ...p, modo: v as DeliveryState["modo"] }))
+                }
+                className="grid grid-cols-2 gap-2"
+              >
+                <label
+                  className={`flex cursor-pointer items-center gap-2 rounded-xl border p-3 ${
+                    state.modo === "delivery" ? "border-primary bg-primary/5" : ""
+                  }`}
+                >
+                  <RadioGroupItem value="delivery" className="sr-only" />
+                  <Bike className="h-4 w-4" />
+                  <span className="text-sm font-semibold">Entrega</span>
+                </label>
+                <label
+                  aria-disabled={!retiradaAtiva}
+                  className={`flex items-center gap-2 rounded-xl border p-3 ${
+                    !retiradaAtiva
+                      ? "cursor-not-allowed opacity-50"
+                      : state.modo === "retirada"
+                        ? "cursor-pointer border-primary bg-primary/5"
+                        : "cursor-pointer"
+                  }`}
+                >
+                  <RadioGroupItem
+                    value="retirada"
+                    className="sr-only"
+                    disabled={!retiradaAtiva}
+                  />
+                  <Store className="h-4 w-4" />
+                  <span className="text-sm font-semibold">Retirada</span>
+                </label>
+              </RadioGroup>
             </section>
 
             {state.modo === "delivery" && (
