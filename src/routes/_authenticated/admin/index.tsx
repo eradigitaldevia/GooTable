@@ -18,6 +18,11 @@ const MetricasOperacionaisSection = lazy(() =>
     default: m.MetricasOperacionaisSection,
   })),
 );
+const VendasSection = lazy(() =>
+  import("@/components/admin/metricas/vendas-section").then((m) => ({
+    default: m.VendasSection,
+  })),
+);
 
 export const Route = createFileRoute("/_authenticated/admin/")({
   loader: ({ context }) => {
@@ -53,6 +58,8 @@ function Dashboard() {
         qc.invalidateQueries({ queryKey: ["dashboard-admin", restauranteId] });
         qc.invalidateQueries({ queryKey: ["dashboard-metricas", restauranteId] });
         qc.invalidateQueries({ queryKey: ["dashboard-delivery", restauranteId] });
+        qc.invalidateQueries({ queryKey: ["dashboard-produtos-top", restauranteId] });
+        qc.invalidateQueries({ queryKey: ["dashboard-ticket-mesa", restauranteId] });
         timeout = null;
       }, 1500);
     };
@@ -181,6 +188,10 @@ function Dashboard() {
 
       <Suspense fallback={<div className="h-32 w-full animate-pulse rounded-xl bg-muted/40" />}>
         <MetricasOperacionaisSection restauranteId={restauranteId} />
+      </Suspense>
+
+      <Suspense fallback={<div className="h-32 w-full animate-pulse rounded-xl bg-muted/40" />}>
+        <VendasSection restauranteId={restauranteId} />
       </Suspense>
     </div>
   );
