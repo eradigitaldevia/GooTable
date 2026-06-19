@@ -1,79 +1,90 @@
 ## Objetivo
 
-Reordenar o fluxo do cardápio público de delivery (`/delivery/$slug`) para que o **cardápio seja a tela inicial**, deixando identificação, endereço e pagamento para o final — semelhante ao padrão dos grandes apps de delivery (iFood, Rappi).
+Adicionar duas novas métricas ao Dashboard do admin (`/admin`):
 
-## Fluxo atual vs. proposto
+1. **Produtos mais vendidos** — top N produtos por quantidade vendida no período.
+2. **Ticket médio por mesa** — total faturado dividido pelo número de mesas (sessões) atendidas.
 
-```text
-ATUAL:    Identificação (telefone+nome+modalidade) → Cardápio → Revisão (endereço+pagamento) → Confirmação
-PROPOSTO: Cardápio (entrada) → Revisão dos itens → Identificação (telefone+nome+modalidade) → Endereço/Pagamento → Confirmação
-```
+Ambas seguem o padrão atual do dashboard (server function + RPC quando possível + componente em card).
 
-Na prática, no código atual já existem 3 steps (`identificacao`, `cardapio`, `revisao`). A mudança principal é:
+## Decisões a confirmar antes de codar
 
-1. `cardapio` passa a ser o **step inicial padrão**.
-2. `identificacao` deixa de ser bloqueio de entrada e vira parte da **finalização**, junto com endereço/pagamento.
-3. A modalidade (entrega/retirada) sai da identificação e passa a ser perguntada no checkout (junto com endereço).
+1. **Período das novas métricas**:
+  - Opção A: **fixo em "hoje"** (igual aos cards de topo).
+  - Opção B (recomendada): **seletor Hoje / 7d / 30d** (igual à seção "Métricas operacionais"), pois "mais vendidos do dia" costuma ter pouca amostra.
+2. **Produtos mais vendidos — critério de ranking**:
+  - Opção A (recomendada): **quantidade vendida** (`SUM(quantidade)` em `pedido_itens`).
+  - Opção B: **faturamento** (`SUM(quantidade * preco_unit)`).
+  - Opção C: exibir ambas as colunas (qtd e R$) e ordenar por qtd.
+3. **Produtos mais vendidos — filtro de status do pedido**:
+  - Opção A (recomendada): apenas pedidos com status `entregue` (mesmo critério usado em `faturamentoHoje`).
+  - Opção B: todos os pedidos exceto `cancelado`.
+4. **Ticket médio por mesa — definição de "mesa atendida"**:
+  - Opção A (recomendada): **por sessão de mesa** — `SUM(total) / COUNT(DISTINCT sessao_id)` considerando pedidos `entregue` com `sessao_id` não nulo (exclui delivery e balcão). Reflete o ticket por "visita".
+  - Opção B: por mesa física — `SUM(total) / COUNT(DISTINCT mesa_id)` no período (uma mesa usada 3x conta como 1).
+  - Opção C: por pedido em mesa — `AVG(total)` dos pedidos com `mesa_id` não nulo.
+5. **Top N de produtos**: 5 ou 10? (recomendo **5** no card, com possibilidade futura de "Ver todos").
 
-## Mudanças por arquivo
+## Mudanças por arquivo (após confirmação)
 
-### `src/routes/delivery.$slug.tsx`
+### Backend
 
-1. `**searchSchema**`: trocar o default de `"identificacao"` para `"cardapio"`. A ordem do enum permanece igual (não há impacto em URLs já abertas — se um cliente cair em `?step=identificacao`, continua funcionando).
-2. **Navegação entre steps**:
-  - Botão "Voltar" do `StepCardapio` deixa de ir para `identificacao` e passa a não existir (ou vira link para trocar de restaurante / não navega — a entrada é o próprio cardápio).
-  - Botão "Revisar" do `StepCardapio` continua indo para `revisao`.
-  - `StepRevisao` ganha a responsabilidade de coletar **nome + telefone + modalidade** antes de exibir endereço/pagamento, OU encaminhar para `identificacao` como sub-etapa do checkout.
-3. **Decisão de arquitetura (recomendada)**: manter os 3 steps existentes, mas inverter o papel deles:
-  - `step=cardapio` → entrada (default).
-  - `step=identificacao` → coleta nome+telefone+modalidade (acessada a partir do botão "Revisar" do cardápio quando ainda não há identificação salva).
-  - `step=revisao` → endereço (se delivery) + pagamento + envio.
-   O botão "Revisar" do cardápio passa a decidir:
-  - Se já existe `state.telefone` e `state.nome` preenchidos (cliente recorrente, vindo do `localStorage`): pula direto para `revisao`.
-  - Caso contrário: vai para `identificacao` e, ao concluir, segue para `revisao` (não volta para o cardápio).
-4. `**StepCardapio**`:
-  - Remover a prop `onVoltar` (e o botão de voltar no header).
-  - A prop `modo` deixa de vir do `state` no momento da entrada (cliente ainda não escolheu) — passa a ser apenas informativa no rodapé ("entrega/retirada" só aparece após identificação). Sugestão: exibir apenas o subtítulo do `DeliveryHeader` como "Cardápio" enquanto o modo ainda não foi escolhido; quando `state.telefone` já existir, mostrar o modo escolhido.
-  - O cálculo de `taxa` exibido no rodapé do carrinho só faz sentido quando `modo` está definido. Enquanto não estiver, exibir apenas "Subtotal" sem taxa.
-5. `**StepIdentificacao**`:
-  - O botão "Continuar" passa a navegar para `revisao` (e não mais para `cardapio`).
-  - Acrescentar um botão/seta "Voltar ao cardápio" no header.
-  - Manter 100% da lógica de `buscarClienteDeliveryFn` (lookup por telefone) e da hidratação de endereços salvos.
-6. `**StepRevisao**`:
-  - Acrescentar um guard: se `state.telefone` estiver vazio, redirecionar para `identificacao` (evita acesso direto via URL sem identificação).
-  - Botão "Voltar" passa a ir para `cardapio` (já é o comportamento atual — manter).
-7. **Banner "Fechado"**: passar a ser exibido também no `StepCardapio` (já é). Sem mudança.
-8. **Pedido mínimo**: já existe o bloco "Faltam R$ X para o pedido mínimo" no rodapé do cardápio. Manter.
+**Nova migração** — criar RPC `dashboard_produtos_top` e `dashboard_ticket_medio_mesa` (ou estender `dashboard_admin_resumo` com os novos campos). Recomendo **RPCs separadas** para não inflar o payload do resumo principal e permitir cache independente por período.
 
-### Outros arquivos
+- `dashboard_produtos_top(_restaurante_id uuid, _periodo text, _limit int)` → retorna `[{ produto_id, nome, quantidade, faturamento }]`.
+- `dashboard_ticket_medio_mesa(_restaurante_id uuid, _periodo text)` → retorna `{ ticket_medio, mesas_atendidas, faturamento_total }`.
 
-- Nenhuma alteração em `src/lib/delivery.functions.ts`, hooks, componentes de `endereco-form`, `carrinho-item-row`, ou backend. Toda a mudança é de **ordem de navegação no frontend**.
-- Nenhuma alteração em `src/routes/delivery.$slug_.pedido.$pedidoId.tsx` (tela de acompanhamento pós-pedido).
+Ambas com `SECURITY DEFINER` e validação de acesso ao restaurante (padrão das RPCs existentes).
 
-## Comportamentos preservados
+### `src/lib/dashboard.functions.ts`
 
-- Persistência em `localStorage` (`delivery-state:{slug}`, `delivery-cart:{slug}`, `delivery-last-phone:{slug}`).
-- `buscarClienteDeliveryFn` continua sendo chamado na identificação para pré-preencher nome e endereços salvos.
-- Validações de pedido mínimo, endereço completo, métodos de pagamento, restaurante fechado — todas mantidas.
-- `criarPedidoDeliveryFn` e payload do pedido — sem mudança.
-- URLs `?step=identificacao` ainda funcionam (compatibilidade com QR/links antigos).
+Adicionar duas server functions com `requireSupabaseAuth` + `assertAcessoRestaurante`:
 
-## Pontos de decisão (preciso da sua confirmação antes de codar)
+- `dashboardProdutosTopFn({ restauranteId, periodo, limit })`
+- `dashboardTicketMedioMesaFn({ restauranteId, periodo })`
 
-1. **Onde fica a modalidade (entrega/retirada)?**
-  - **Opção A (recomendada)**: continua no step `identificacao`, junto com nome+telefone — o cliente decide ao iniciar o checkout. Mantém o componente como está hoje, só muda a ordem de navegação.
-  - **Opção B**: move para o step `revisao`, acima do bloco de endereço. Identificação fica só com nome+telefone. Mais próximo do iFood, mas exige refatorar dois componentes.
-2. **Cliente recorrente (telefone já salvo no `localStorage`)**: ao clicar em "Revisar" no cardápio, devo **pular automaticamente** o step de identificação e ir direto para `revisao`? (Recomendo **sim**, com um link discreto "Não é você? Trocar identificação" no topo da revisão.)
-3. **Botão "Voltar" no cardápio**: como a entrada agora é o próprio cardápio, **removo o botão de voltar** do header do `StepCardapio`? (Recomendo **sim**.)
+Sem alterar as funções existentes.
 
-Confirme essas 3 decisões (ou ajuste) e parto para a implementação.  
+### `src/hooks/use-dashboard.ts`
+
+Adicionar dois hooks no mesmo padrão dos existentes:
+
+- `useDashboardProdutosTop(restauranteId, periodo, limit)`
+- `useDashboardTicketMedioMesa(restauranteId, periodo)`
+
+### Novos componentes (UI)
+
+- `src/components/admin/metricas/produtos-top-card.tsx` — lista ordenada com nome, qtd e barra proporcional ou badge de faturamento.
+- `src/components/admin/metricas/ticket-medio-mesa-card.tsx` — card padrão (igual aos demais do topo) com valor formatado em BRL e legenda "X mesas atendidas".
+
+Ambos com skeleton de loading no mesmo padrão dos atuais.
+
+### `src/routes/_authenticated/admin/index.tsx`
+
+Inserir os dois novos componentes **abaixo da seção "Métricas operacionais"** (ou conforme preferência), sem mexer no resto do layout.
+
+Realtime: aproveitar o `useEffect` existente que invalida `dashboard-metricas` em mudanças de `pedidos` — adicionar invalidação das novas queries (`dashboard-produtos-top`, `dashboard-ticket-medio-mesa`).
+
+## Não será alterado
+
+- Estrutura visual existente (cards, gráficos, métricas operacionais).
+- Server functions e RPCs já existentes.
+- Hooks existentes.
+- Backend de pedidos/itens (apenas leitura via novas RPCs).
+
+## Confirmações necessárias
+
+Por favor, responda as 5 decisões acima (ou diga "todas opção recomendada") antes de eu iniciar a implementação.  
   
 Confirmações:  
-  
-1. Opção B  
-2. Sim.  
-3. Sim.  
-  
+1. Recomendada.  
+2. Opção C.  
+3. Recomendada.  
+4. Recomendada.  
+5. Recomendada.
+
+&nbsp;
+
 IMPORTANTE:
 
 Execute APENAS a alteração explicitamente solicitada.
@@ -83,5 +94,3 @@ NÃO refatore, otimize, melhore ou modifique código não relacionado.
 NÃO faça suposições.
 
 Se algo não estiver claro, PARE e pergunte antes de alterar qualquer coisa.
-
-Preserve 100% do comportamento e da funcionalidade existentes.

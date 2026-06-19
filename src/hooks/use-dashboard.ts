@@ -7,6 +7,8 @@ import {
   dashboardDeliveryFn,
   dashboardMetricasOperacionaisFn,
   type DashboardMetricasPeriodo,
+  dashboardProdutosTopFn,
+  dashboardTicketMedioMesaFn,
   dashboardSuperadminFn,
   detalheRestauranteAdminFn,
   listarLogsFn,
@@ -44,6 +46,35 @@ export function useDashboardMetricasOperacionais(
     queryKey: restauranteId
       ? ["dashboard-metricas", restauranteId, periodo]
       : ["dashboard-metricas", "none", periodo],
+    queryFn: () => fn({ data: { restauranteId: restauranteId!, periodo } }),
+    enabled: !!restauranteId,
+  });
+}
+
+export function useDashboardProdutosTop(
+  restauranteId: string | undefined,
+  periodo: DashboardMetricasPeriodo,
+  limit = 5,
+) {
+  const fn = useServerFn(dashboardProdutosTopFn);
+  return useQuery({
+    queryKey: restauranteId
+      ? ["dashboard-produtos-top", restauranteId, periodo, limit]
+      : ["dashboard-produtos-top", "none", periodo, limit],
+    queryFn: () => fn({ data: { restauranteId: restauranteId!, periodo, limit } }),
+    enabled: !!restauranteId,
+  });
+}
+
+export function useDashboardTicketMedioMesa(
+  restauranteId: string | undefined,
+  periodo: DashboardMetricasPeriodo,
+) {
+  const fn = useServerFn(dashboardTicketMedioMesaFn);
+  return useQuery({
+    queryKey: restauranteId
+      ? ["dashboard-ticket-mesa", restauranteId, periodo]
+      : ["dashboard-ticket-mesa", "none", periodo],
     queryFn: () => fn({ data: { restauranteId: restauranteId!, periodo } }),
     enabled: !!restauranteId,
   });

@@ -135,6 +135,81 @@ export const dashboardMetricasOperacionaisFn = createServerFn({ method: "POST" }
     };
   });
 
+/* ---------- Admin: produtos mais vendidos ---------- */
+
+export interface DashboardProdutoTop {
+  produto_id: string | null;
+  nome: string;
+  quantidade: number;
+  faturamento: number;
+}
+
+export const dashboardProdutosTopFn = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) =>
+    z.object({
+      restauranteId: z.string().uuid(),
+      periodo: z.enum(["hoje", "7d", "30d"]).default("hoje"),
+      limit: z.number().int().min(1).max(50).default(5),
+    }).parse(d),
+  )
+  .handler(async ({ context, data }): Promise<DashboardProdutoTop[]> => {
+    const { supabase, userId } = context;
+    await assertAcessoRestaurante(supabase, userId, data.restauranteId);
+
+    const { data: rows, error } = await supabase.rpc("dashboard_produtos_top", {
+      _restaurante_id: data.restauranteId,
+      _periodo: data.periodo,
+      _limit: data.limit,
+    });
+    if (error) throw new Error(error.message);
+    const lista = (rows ?? []) as Array<{
+      produto_id: string | null;
+      nome: string;
+      quantidade: number | string;
+      faturamento: number | string;
+    }>;
+    return lista.map((r) => ({
+      produto_id: r.produto_id,
+      nome: r.nome,
+      quantidade: Number(r.quantidade ?? 0),
+      faturamento: Number(r.faturamento ?? 0),
+    }));
+  });
+
+/* ---------- Admin: ticket médio por mesa ---------- */
+
+export interface DashboardTicketMedioMesa {
+  ticketMedio: number;
+  mesasAtendidas: number;
+  faturamentoTotal: number;
+}
+
+export const dashboardTicketMedioMesaFn = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) =>
+    z.object({
+      restauranteId: z.string().uuid(),
+      periodo: z.enum(["hoje", "7d", "30d"]).default("hoje"),
+    }).parse(d),
+  )
+  .handler(async ({ context, data }): Promise<DashboardTicketMedioMesa> => {
+    const { supabase, userId } = context;
+    await assertAcessoRestaurante(supabase, userId, data.restauranteId);
+
+    const { data: row, error } = await supabase.rpc("dashboard_ticket_medio_mesa", {
+      _restaurante_id: data.restauranteId,
+      _periodo: data.periodo,
+    });
+    if (error) throw new Error(error.message);
+    const r = (row ?? {}) as Record<string, unknown>;
+    return {
+      ticketMedio: Number(r.ticket_medio ?? 0),
+      mesasAtendidas: Number(r.mesas_atendidas ?? 0),
+      faturamentoTotal: Number(r.faturamento_total ?? 0),
+    };
+  });
+
 /* ---------- Super-admin: resumo via RPC ---------- */
 
 export interface SuperadminResumo {
