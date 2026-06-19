@@ -743,6 +743,63 @@ function StepRevisao({
               ))}
             </section>
 
+            <section className="space-y-2 rounded-2xl border bg-card p-4">
+              <div className="flex items-start justify-between gap-2">
+                <div className="text-sm">
+                  <div className="font-semibold">{state.nome || "Sem nome"}</div>
+                  <div className="text-muted-foreground">
+                    {formatTelefoneBR(state.telefone)}
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={onTrocarIdentificacao}
+                  className="text-xs text-primary underline-offset-2 hover:underline"
+                >
+                  Não é você? Trocar
+                </button>
+              </div>
+            </section>
+
+            <section className="space-y-3 rounded-2xl border bg-card p-4">
+              <h2 className="text-sm font-semibold">Modalidade</h2>
+              <RadioGroup
+                value={state.modo}
+                onValueChange={(v) =>
+                  setState((p) => ({ ...p, modo: v as DeliveryState["modo"] }))
+                }
+                className="grid grid-cols-2 gap-2"
+              >
+                <label
+                  className={`flex cursor-pointer items-center gap-2 rounded-xl border p-3 ${
+                    state.modo === "delivery" ? "border-primary bg-primary/5" : ""
+                  }`}
+                >
+                  <RadioGroupItem value="delivery" className="sr-only" />
+                  <Bike className="h-4 w-4" />
+                  <span className="text-sm font-semibold">Entrega</span>
+                </label>
+                <label
+                  aria-disabled={!retiradaAtiva}
+                  className={`flex items-center gap-2 rounded-xl border p-3 ${
+                    !retiradaAtiva
+                      ? "cursor-not-allowed opacity-50"
+                      : state.modo === "retirada"
+                        ? "cursor-pointer border-primary bg-primary/5"
+                        : "cursor-pointer"
+                  }`}
+                >
+                  <RadioGroupItem
+                    value="retirada"
+                    className="sr-only"
+                    disabled={!retiradaAtiva}
+                  />
+                  <Store className="h-4 w-4" />
+                  <span className="text-sm font-semibold">Retirada</span>
+                </label>
+              </RadioGroup>
+            </section>
+
             {state.modo === "delivery" && (
               <section className="space-y-3 rounded-2xl border bg-card p-4">
                 <h2 className="flex items-center gap-2 text-sm font-semibold">
