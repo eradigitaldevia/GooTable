@@ -80,6 +80,7 @@ function Mesas() {
               origin={origin}
               restauranteId={restaurante.id}
               garcomNome={nomeDaMesa(m.id)}
+              baseUrl={(restaurante as { url_publica_cardapio?: string | null }).url_publica_cardapio ?? null}
             />
           ))}
         </div>

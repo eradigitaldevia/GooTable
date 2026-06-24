@@ -21,13 +21,16 @@ function MesaCardComponent({
   origin,
   restauranteId,
   garcomNome,
+  baseUrl,
 }: {
   mesa: Mesa;
   origin: string;
   restauranteId: string;
   garcomNome?: string | null;
+  baseUrl?: string | null;
 }) {
-  const url = `${origin}/m/${mesa.qr_token}`;
+  const base = (baseUrl?.trim() || origin).replace(/\/+$/, "");
+  const url = `${base}/m/${mesa.qr_token}`;
   const alterar = useAlterarMesaAtiva(restauranteId);
   const excluir = useExcluirMesa(restauranteId);
 
