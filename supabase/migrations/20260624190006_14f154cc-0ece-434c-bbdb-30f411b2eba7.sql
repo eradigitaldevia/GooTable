@@ -1,0 +1,1 @@
+ALTER TABLE public.restaurantes ADD COLUMN IF NOT EXISTS url_publica_cardapio text NULL;
