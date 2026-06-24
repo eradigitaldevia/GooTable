@@ -53,6 +53,12 @@ const configSchema = z.discriminatedUnion("aba", [
     telefone: z.string().trim().max(30).nullable(),
     endereco: z.string().trim().max(200).nullable(),
     horario_funcionamento: horarioFuncionamentoSchema,
+    url_publica_cardapio: z
+      .string()
+      .trim()
+      .max(200)
+      .regex(/^https?:\/\/.+/i, "URL deve começar com http:// ou https://")
+      .nullable(),
   }),
   z.object({
     aba: z.literal("identidade"),
@@ -152,7 +158,10 @@ export const atualizarConfiguracoesFn = createServerFn({ method: "POST" })
           telefone: data.telefone,
           endereco: data.endereco,
           horario_funcionamento: final as unknown as TablesUpdate<"restaurantes">["horario_funcionamento"],
-        };
+          url_publica_cardapio: data.url_publica_cardapio
+            ? data.url_publica_cardapio.replace(/\/+$/, "")
+            : null,
+        } as TablesUpdate<"restaurantes">;
         break;
       }
       case "identidade": {

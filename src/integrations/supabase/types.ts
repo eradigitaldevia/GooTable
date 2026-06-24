@@ -1806,6 +1806,7 @@ export type Database = {
           telefone: string | null
           tema_cardapio: string
           upsell_habilitado: boolean
+          url_publica_cardapio: string | null
           usa_cumim: boolean
         }
         Insert: {
@@ -1861,6 +1862,7 @@ export type Database = {
           telefone?: string | null
           tema_cardapio?: string
           upsell_habilitado?: boolean
+          url_publica_cardapio?: string | null
           usa_cumim?: boolean
         }
         Update: {
@@ -1916,6 +1918,7 @@ export type Database = {
           telefone?: string | null
           tema_cardapio?: string
           upsell_habilitado?: boolean
+          url_publica_cardapio?: string | null
           usa_cumim?: boolean
         }
         Relationships: []

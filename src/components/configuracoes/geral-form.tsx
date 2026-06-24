@@ -10,6 +10,7 @@ type GeralPatch = {
   endereco?: string;
   horario_funcionamento_habilitado?: boolean;
   horario_funcionamento?: HorarioFuncionamento;
+  url_publica_cardapio?: string;
 };
 
 export function GeralForm({
@@ -19,6 +20,7 @@ export function GeralForm({
   endereco,
   horarioHabilitado,
   horario,
+  urlPublicaCardapio,
   onChange,
 }: {
   nome: string;
@@ -27,6 +29,7 @@ export function GeralForm({
   endereco: string;
   horarioHabilitado: boolean;
   horario: HorarioFuncionamento;
+  urlPublicaCardapio: string;
   onChange: (patch: GeralPatch) => void;
 }) {
   return (
@@ -89,6 +92,21 @@ export function GeralForm({
               onChange={(e) => onChange({ endereco: e.target.value })}
             />
           </div>
+        </div>
+
+        <div className="space-y-2">
+          <Label>URL pública do cardápio</Label>
+          <Input
+            value={urlPublicaCardapio}
+            maxLength={200}
+            placeholder="https://dine-tap-flow.lovable.app"
+            onChange={(e) => onChange({ url_publica_cardapio: e.target.value })}
+          />
+          <p className="text-xs text-muted-foreground">
+            Endereço usado nos QR Codes das mesas. Deixe em branco para usar o
+            domínio atual. Use o domínio publicado (ou o seu domínio próprio)
+            para que clientes consigam abrir o cardápio sem fazer login.
+          </p>
         </div>
       </section>
 

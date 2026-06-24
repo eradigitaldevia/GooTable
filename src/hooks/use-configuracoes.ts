@@ -22,6 +22,7 @@ export type ConfigPayload =
       telefone: string | null;
       endereco: string | null;
       horario_funcionamento: HorarioFuncionamento;
+      url_publica_cardapio: string | null;
     })
   | (Base & {
       aba: "identidade";

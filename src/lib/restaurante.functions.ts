@@ -51,6 +51,7 @@ export interface Restaurante {
   delivery_aceita_dinheiro?: boolean;
   delivery_aceita_cartao_entrega?: boolean;
   delivery_aceita_pix?: boolean;
+  url_publica_cardapio?: string | null;
 }
 
 /** Restaurante do usuário autenticado (primeiro vínculo). */
