@@ -1,96 +1,51 @@
-## Objetivo
+# Corrigir URL pública dos QR Codes das mesas
 
-Adicionar duas novas métricas ao Dashboard do admin (`/admin`):
+## Problema
 
-1. **Produtos mais vendidos** — top N produtos por quantidade vendida no período.
-2. **Ticket médio por mesa** — total faturado dividido pelo número de mesas (sessões) atendidas.
+O `MesaCard` monta a URL do QR com `window.location.origin`. Quando o admin abre o painel pelo editor do Lovable (`id-preview--*.lovable.app`), o QR é gerado apontando para esse host — que **exige login do Lovable**. O cliente que escaneia cai numa tela de autenticação em vez do cardápio.
 
-Ambas seguem o padrão atual do dashboard (server function + RPC quando possível + componente em card).
+O domínio publicado (`dine-tap-flow.lovable.app`) já é público; o QR só precisa apontar para ele (ou para o domínio próprio do restaurante, se houver).
 
-## Decisões a confirmar antes de codar
+## Solução
 
-1. **Período das novas métricas**:
-  - Opção A: **fixo em "hoje"** (igual aos cards de topo).
-  - Opção B (recomendada): **seletor Hoje / 7d / 30d** (igual à seção "Métricas operacionais"), pois "mais vendidos do dia" costuma ter pouca amostra.
-2. **Produtos mais vendidos — critério de ranking**:
-  - Opção A (recomendada): **quantidade vendida** (`SUM(quantidade)` em `pedido_itens`).
-  - Opção B: **faturamento** (`SUM(quantidade * preco_unit)`).
-  - Opção C: exibir ambas as colunas (qtd e R$) e ordenar por qtd.
-3. **Produtos mais vendidos — filtro de status do pedido**:
-  - Opção A (recomendada): apenas pedidos com status `entregue` (mesmo critério usado em `faturamentoHoje`).
-  - Opção B: todos os pedidos exceto `cancelado`.
-4. **Ticket médio por mesa — definição de "mesa atendida"**:
-  - Opção A (recomendada): **por sessão de mesa** — `SUM(total) / COUNT(DISTINCT sessao_id)` considerando pedidos `entregue` com `sessao_id` não nulo (exclui delivery e balcão). Reflete o ticket por "visita".
-  - Opção B: por mesa física — `SUM(total) / COUNT(DISTINCT mesa_id)` no período (uma mesa usada 3x conta como 1).
-  - Opção C: por pedido em mesa — `AVG(total)` dos pedidos com `mesa_id` não nulo.
-5. **Top N de produtos**: 5 ou 10? (recomendo **5** no card, com possibilidade futura de "Ver todos").
+Adicionar um campo opcional **"URL pública do cardápio"** por restaurante. O QR usa esse valor; se vazio, usa `window.location.origin` (comportamento atual, sem regressão).
 
-## Mudanças por arquivo (após confirmação)
+## Mudanças
 
-### Backend
+### 1. Banco (migration)
+- `ALTER TABLE public.restaurantes ADD COLUMN url_publica_cardapio text NULL;`
+- Sem alteração de RLS/GRANT (coluna nova em tabela existente).
 
-**Nova migração** — criar RPC `dashboard_produtos_top` e `dashboard_ticket_medio_mesa` (ou estender `dashboard_admin_resumo` com os novos campos). Recomendo **RPCs separadas** para não inflar o payload do resumo principal e permitir cache independente por período.
+### 2. Backend
+- `src/lib/configuracoes.functions.ts` (`atualizarConfiguracoesFn`, aba `geral`): aceitar e persistir `url_publica_cardapio` (validação Zod: string opcional, trim, deve começar com `http://` ou `https://`, sem barra final).
+- `src/lib/restaurante.functions.ts` (carregamento do "meu restaurante"): incluir a coluna no `select` para o admin ler o valor salvo.
 
-- `dashboard_produtos_top(_restaurante_id uuid, _periodo text, _limit int)` → retorna `[{ produto_id, nome, quantidade, faturamento }]`.
-- `dashboard_ticket_medio_mesa(_restaurante_id uuid, _periodo text)` → retorna `{ ticket_medio, mesas_atendidas, faturamento_total }`.
+### 3. Tipos
+- `ConfigPayload` em `src/hooks/use-configuracoes.ts`, variante `geral`: adicionar `url_publica_cardapio: string | null`.
 
-Ambas com `SECURITY DEFINER` e validação de acesso ao restaurante (padrão das RPCs existentes).
+### 4. UI — Configurações
+- `src/components/configuracoes/geral-form.tsx`: novo `Input` "URL pública do cardápio" (opcional), com placeholder `https://dine-tap-flow.lovable.app` e texto de ajuda curto explicando que é o endereço usado nos QR Codes das mesas. Incluir no submit junto com os demais campos da aba Geral.
 
-### `src/lib/dashboard.functions.ts`
+### 5. UI — Mesas (correção do QR)
+- `src/routes/_authenticated/admin/mesas.tsx`: ler `url_publica_cardapio` do restaurante carregado e passar como prop `baseUrl` para `MesaCard`.
+- `src/components/mesas/mesa-card.tsx`: aceitar `baseUrl?: string`. Montar `url` como `(baseUrl?.replace(/\/$/, "") || origin) + "/m/" + qr_token`. Manter `origin` como fallback — zero regressão quando o campo estiver vazio.
 
-Adicionar duas server functions com `requireSupabaseAuth` + `assertAcessoRestaurante`:
+## Detalhes técnicos
 
-- `dashboardProdutosTopFn({ restauranteId, periodo, limit })`
-- `dashboardTicketMedioMesaFn({ restauranteId, periodo })`
+- Nada muda no fluxo público do cardápio (`/m/$qrToken`) — só a forma como a string do QR é montada no admin.
+- Nenhuma refatoração: apenas adição de coluna, campo de formulário e prop opcional.
+- Nenhum impacto em layout, cores, tipografia, regras de negócio ou outros fluxos.
 
-Sem alterar as funções existentes.
+## Arquivos afetados
 
-### `src/hooks/use-dashboard.ts`
+- `supabase/migrations/<novo>.sql` (criar)
+- `src/lib/configuracoes.functions.ts`
+- `src/lib/restaurante.functions.ts`
+- `src/hooks/use-configuracoes.ts`
+- `src/components/configuracoes/geral-form.tsx`
+- `src/routes/_authenticated/admin/mesas.tsx`
+- `src/components/mesas/mesa-card.tsx`
 
-Adicionar dois hooks no mesmo padrão dos existentes:
+## Pós-implementação (ação do usuário)
 
-- `useDashboardProdutosTop(restauranteId, periodo, limit)`
-- `useDashboardTicketMedioMesa(restauranteId, periodo)`
-
-### Novos componentes (UI)
-
-- `src/components/admin/metricas/produtos-top-card.tsx` — lista ordenada com nome, qtd e barra proporcional ou badge de faturamento.
-- `src/components/admin/metricas/ticket-medio-mesa-card.tsx` — card padrão (igual aos demais do topo) com valor formatado em BRL e legenda "X mesas atendidas".
-
-Ambos com skeleton de loading no mesmo padrão dos atuais.
-
-### `src/routes/_authenticated/admin/index.tsx`
-
-Inserir os dois novos componentes **abaixo da seção "Métricas operacionais"** (ou conforme preferência), sem mexer no resto do layout.
-
-Realtime: aproveitar o `useEffect` existente que invalida `dashboard-metricas` em mudanças de `pedidos` — adicionar invalidação das novas queries (`dashboard-produtos-top`, `dashboard-ticket-medio-mesa`).
-
-## Não será alterado
-
-- Estrutura visual existente (cards, gráficos, métricas operacionais).
-- Server functions e RPCs já existentes.
-- Hooks existentes.
-- Backend de pedidos/itens (apenas leitura via novas RPCs).
-
-## Confirmações necessárias
-
-Por favor, responda as 5 decisões acima (ou diga "todas opção recomendada") antes de eu iniciar a implementação.  
-  
-Confirmações:  
-1. Recomendada.  
-2. Opção C.  
-3. Recomendada.  
-4. Recomendada.  
-5. Recomendada.
-
-&nbsp;
-
-IMPORTANTE:
-
-Execute APENAS a alteração explicitamente solicitada.
-
-NÃO refatore, otimize, melhore ou modifique código não relacionado.
-
-NÃO faça suposições.
-
-Se algo não estiver claro, PARE e pergunte antes de alterar qualquer coisa.
+Abrir **Admin → Configurações → Geral**, preencher `https://dine-tap-flow.lovable.app` (ou o domínio próprio, quando houver) e salvar. Os QR Codes passam a ser gerados com esse endereço imediatamente.
