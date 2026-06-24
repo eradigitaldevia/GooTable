@@ -74,6 +74,7 @@ function Configuracoes() {
     endereco: "",
     horario_funcionamento_habilitado: false,
     horario_funcionamento: diasPadrao() as HorarioFuncionamento,
+    url_publica_cardapio: "" as string,
     pix_habilitado: false,
     pix_chave: "",
     pix_nome_titular: "",
@@ -129,6 +130,7 @@ function Configuracoes() {
       horario_funcionamento: horarioHabilitado
         ? normalizarHorario(horarioRaw)
         : diasPadrao(),
+      url_publica_cardapio: (restaurante as any).url_publica_cardapio ?? "",
       pix_habilitado: restaurante.pix_habilitado,
       pix_chave: restaurante.pix_chave ?? "",
       pix_nome_titular: restaurante.pix_nome_titular ?? "",
@@ -237,6 +239,7 @@ function Configuracoes() {
       horario_funcionamento: horarioHabilitado
         ? normalizarHorario(horarioRaw)
         : diasPadrao(),
+      url_publica_cardapio: (restaurante as any).url_publica_cardapio ?? "",
       pix_habilitado: restaurante.pix_habilitado,
       pix_chave: restaurante.pix_chave ?? "",
       pix_nome_titular: restaurante.pix_nome_titular ?? "",
@@ -310,6 +313,7 @@ function Configuracoes() {
       "endereco",
       "horario_funcionamento_habilitado",
       "horario_funcionamento",
+      "url_publica_cardapio",
     ],
     identidade: [
       "cor_primaria",
@@ -459,6 +463,7 @@ function Configuracoes() {
         horario_funcionamento: f.horario_funcionamento_habilitado
           ? f.horario_funcionamento
           : [],
+        url_publica_cardapio: f.url_publica_cardapio.trim() || null,
       };
     } else if (aba === "identidade") {
       payload = {
@@ -708,6 +713,7 @@ function Configuracoes() {
             endereco={form.endereco}
             horarioHabilitado={form.horario_funcionamento_habilitado}
             horario={form.horario_funcionamento}
+            urlPublicaCardapio={form.url_publica_cardapio}
             onChange={patch}
           />
           <SaveBtn aba="geral" />
