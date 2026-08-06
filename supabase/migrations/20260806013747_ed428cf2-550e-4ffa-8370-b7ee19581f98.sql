@@ -1,0 +1,1 @@
+ALTER TABLE public.restaurantes ADD COLUMN IF NOT EXISTS banners_habilitados boolean NOT NULL DEFAULT true;
