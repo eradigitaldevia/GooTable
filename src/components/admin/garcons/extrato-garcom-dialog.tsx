@@ -13,6 +13,7 @@ import { toast } from "sonner";
 import type { Garcom } from "@/lib/garcons.functions";
 import { useGerarRelatorioComissoes } from "@/hooks/use-relatorios";
 import { exportarRelatorioCSV, gerarRelatorioPDF } from "@/lib/relatorios-export";
+import { dataLocal } from "@/lib/data-fuso";
 
 interface Props {
   restauranteId: string;
@@ -23,8 +24,8 @@ interface Props {
 export function ExtratoGarcomDialog({ restauranteId, garcom, onClose }: Props) {
   const hoje = new Date();
   const primeiroDia = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
-  const [extInicio, setExtInicio] = useState(primeiroDia.toISOString().slice(0, 10));
-  const [extFim, setExtFim] = useState(hoje.toISOString().slice(0, 10));
+  const [extInicio, setExtInicio] = useState(dataLocal(primeiroDia));
+  const [extFim, setExtFim] = useState(dataLocal(hoje));
   const gerarRelatorio = useGerarRelatorioComissoes();
 
   const handleExtrato = async (formato: "csv" | "pdf") => {
