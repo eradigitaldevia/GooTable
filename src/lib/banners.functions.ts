@@ -115,3 +115,12 @@ export const excluirBannerFn = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { ok: true };
   });
+
+/** Formato reduzido usado nas telas públicas (mesa e delivery). */
+export interface BannerPublico {
+  id: string;
+  imagem_url: string;
+  alt_text: string;
+  destino_tipo: BannerDestinoTipo;
+  destino_valor: string | null;
+}
