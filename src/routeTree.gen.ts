@@ -9,80 +9,61 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as IndexRouteImport } from './routes/index'
-import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
-import { Route as CadastroRouteImport } from './routes/cadastro'
-import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
-import { Route as LoginRouteImport } from './routes/login'
-import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as SuperadminRouteImport } from './routes/superadmin'
-import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
-import { Route as AuthenticatedBarRouteImport } from './routes/_authenticated/bar'
-import { Route as AuthenticatedCaixaRouteImport } from './routes/_authenticated/caixa'
-import { Route as AuthenticatedCozinhaRouteImport } from './routes/_authenticated/cozinha'
-import { Route as AuthenticatedCumimRouteImport } from './routes/_authenticated/cumim'
-import { Route as AuthenticatedSalaRouteImport } from './routes/_authenticated/sala'
-import { Route as DeliverySlugRouteImport } from './routes/delivery.$slug'
-import { Route as MQrTokenRouteImport } from './routes/m.$qrToken'
+import { Route as ResetPasswordRouteImport } from './routes/reset-password'
+import { Route as LoginRouteImport } from './routes/login'
+import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
+import { Route as CadastroRouteImport } from './routes/cadastro'
+import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
+import { Route as IndexRouteImport } from './routes/index'
 import { Route as SuperadminIndexRouteImport } from './routes/superadmin.index'
-import { Route as SuperadminLogsRouteImport } from './routes/superadmin.logs'
 import { Route as SuperadminRestaurantesRouteImport } from './routes/superadmin.restaurantes'
-import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin/index'
-import { Route as AuthenticatedAdminCaixaRouteImport } from './routes/_authenticated/admin/caixa'
-import { Route as AuthenticatedAdminCardapioRouteImport } from './routes/_authenticated/admin/cardapio'
-import { Route as AuthenticatedAdminCardapioPreviewRouteImport } from './routes/_authenticated/admin/cardapio-preview'
-import { Route as AuthenticatedAdminChamadosRouteImport } from './routes/_authenticated/admin/chamados'
-import { Route as AuthenticatedAdminClientesRouteImport } from './routes/_authenticated/admin/clientes'
-import { Route as AuthenticatedAdminConfiguracoesRouteImport } from './routes/_authenticated/admin/configuracoes'
-import { Route as AuthenticatedAdminCouvertArtisticoRouteImport } from './routes/_authenticated/admin/couvert-artistico'
-import { Route as AuthenticatedAdminCumimRouteImport } from './routes/_authenticated/admin/cumim'
-import { Route as AuthenticatedAdminCuponsRouteImport } from './routes/_authenticated/admin/cupons'
-import { Route as AuthenticatedAdminDestinosPreparoRouteImport } from './routes/_authenticated/admin/destinos-preparo'
-import { Route as AuthenticatedAdminEquipeRouteImport } from './routes/_authenticated/admin/equipe'
-import { Route as AuthenticatedAdminFidelidadeRouteImport } from './routes/_authenticated/admin/fidelidade'
-import { Route as AuthenticatedAdminGarconsRouteImport } from './routes/_authenticated/admin/garcons'
-import { Route as AuthenticatedAdminMesasRouteImport } from './routes/_authenticated/admin/mesas'
-import { Route as AuthenticatedAdminPedidosRouteImport } from './routes/_authenticated/admin/pedidos'
+import { Route as SuperadminLogsRouteImport } from './routes/superadmin.logs'
+import { Route as MQrTokenRouteImport } from './routes/m.$qrToken'
+import { Route as DeliverySlugRouteImport } from './routes/delivery.$slug'
+import { Route as AuthenticatedSalaRouteImport } from './routes/_authenticated/sala'
+import { Route as AuthenticatedCumimRouteImport } from './routes/_authenticated/cumim'
+import { Route as AuthenticatedCozinhaRouteImport } from './routes/_authenticated/cozinha'
+import { Route as AuthenticatedCaixaRouteImport } from './routes/_authenticated/caixa'
+import { Route as AuthenticatedBarRouteImport } from './routes/_authenticated/bar'
+import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
 import { Route as AuthenticatedCaixaIndexRouteImport } from './routes/_authenticated/caixa.index'
-import { Route as AuthenticatedCaixaMovimentosRouteImport } from './routes/_authenticated/caixa.movimentos'
-import { Route as AuthenticatedCaixaPagamentosRouteImport } from './routes/_authenticated/caixa.pagamentos'
-import { Route as AuthenticatedCaixaRelatorioRouteImport } from './routes/_authenticated/caixa.relatorio'
-import { Route as MQrTokenCarrinhoRouteImport } from './routes/m.$qrToken_.carrinho'
-import { Route as MQrTokenContaRouteImport } from './routes/m.$qrToken_.conta'
-import { Route as MQrTokenMinhaContaRouteImport } from './routes/m.$qrToken_.minha-conta'
+import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin/index'
 import { Route as SuperadminRestaurantesIdRouteImport } from './routes/superadmin.restaurantes.$id'
+import { Route as MQrTokenMinhaContaRouteImport } from './routes/m.$qrToken_.minha-conta'
+import { Route as MQrTokenContaRouteImport } from './routes/m.$qrToken_.conta'
+import { Route as MQrTokenCarrinhoRouteImport } from './routes/m.$qrToken_.carrinho'
+import { Route as AuthenticatedCaixaRelatorioRouteImport } from './routes/_authenticated/caixa.relatorio'
+import { Route as AuthenticatedCaixaPagamentosRouteImport } from './routes/_authenticated/caixa.pagamentos'
+import { Route as AuthenticatedCaixaMovimentosRouteImport } from './routes/_authenticated/caixa.movimentos'
+import { Route as AuthenticatedAdminPedidosRouteImport } from './routes/_authenticated/admin/pedidos'
+import { Route as AuthenticatedAdminMesasRouteImport } from './routes/_authenticated/admin/mesas'
+import { Route as AuthenticatedAdminGarconsRouteImport } from './routes/_authenticated/admin/garcons'
+import { Route as AuthenticatedAdminFidelidadeRouteImport } from './routes/_authenticated/admin/fidelidade'
+import { Route as AuthenticatedAdminEquipeRouteImport } from './routes/_authenticated/admin/equipe'
+import { Route as AuthenticatedAdminDestinosPreparoRouteImport } from './routes/_authenticated/admin/destinos-preparo'
+import { Route as AuthenticatedAdminCuponsRouteImport } from './routes/_authenticated/admin/cupons'
+import { Route as AuthenticatedAdminCumimRouteImport } from './routes/_authenticated/admin/cumim'
+import { Route as AuthenticatedAdminCouvertArtisticoRouteImport } from './routes/_authenticated/admin/couvert-artistico'
+import { Route as AuthenticatedAdminConfiguracoesRouteImport } from './routes/_authenticated/admin/configuracoes'
+import { Route as AuthenticatedAdminClientesRouteImport } from './routes/_authenticated/admin/clientes'
+import { Route as AuthenticatedAdminChamadosRouteImport } from './routes/_authenticated/admin/chamados'
+import { Route as AuthenticatedAdminCardapioPreviewRouteImport } from './routes/_authenticated/admin/cardapio-preview'
+import { Route as AuthenticatedAdminCardapioRouteImport } from './routes/_authenticated/admin/cardapio'
+import { Route as AuthenticatedAdminCaixaRouteImport } from './routes/_authenticated/admin/caixa'
+import { Route as MQrTokenStatusPedidoIdRouteImport } from './routes/m.$qrToken_.status.$pedidoId'
+import { Route as DeliverySlugPedidoPedidoIdRouteImport } from './routes/delivery.$slug_.pedido.$pedidoId'
+import { Route as AuthenticatedSalaNovaComandaMesaIdRouteImport } from './routes/_authenticated/sala_.nova-comanda.$mesaId'
+import { Route as AuthenticatedSalaMesaMesaIdRouteImport } from './routes/_authenticated/sala_.mesa.$mesaId'
 import { Route as AuthenticatedAdminClientesIdRouteImport } from './routes/_authenticated/admin/clientes.$id'
 import { Route as AuthenticatedSalaMesaRouteImport } from './routes/_authenticated/sala_.mesa.'
-import { Route as AuthenticatedSalaMesaMesaIdRouteImport } from './routes/_authenticated/sala_.mesa.$mesaId'
-import { Route as AuthenticatedSalaNovaComandaMesaIdRouteImport } from './routes/_authenticated/sala_.nova-comanda.$mesaId'
-import { Route as DeliverySlugPedidoPedidoIdRouteImport } from './routes/delivery.$slug_.pedido.$pedidoId'
-import { Route as MQrTokenStatusPedidoIdRouteImport } from './routes/m.$qrToken_.status.$pedidoId'
-import { Route as AuthenticatedAdminCuminsCumimIdDisplayRouteImport } from './routes/_authenticated/admin/cumins_.$cumimId.display'
 import { Route as AuthenticatedAdminGarconsGarcomIdSalaRouteImport } from './routes/_authenticated/admin/garcons_.$garcomId.sala'
+import { Route as AuthenticatedAdminCuminsCumimIdDisplayRouteImport } from './routes/_authenticated/admin/cumins_.$cumimId.display'
 import { Route as AuthenticatedAdminGarconsGarcomIdSalaMesaMesaIdRouteImport } from './routes/_authenticated/admin/garcons_.$garcomId.sala_.mesa.$mesaId'
 
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AuthenticatedRoute = AuthenticatedRouteImport.update({
-  id: '/_authenticated',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const CadastroRoute = CadastroRouteImport.update({
-  id: '/cadastro',
-  path: '/cadastro',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ForgotPasswordRoute = ForgotPasswordRouteImport.update({
-  id: '/forgot-password',
-  path: '/forgot-password',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const LoginRoute = LoginRouteImport.update({
-  id: '/login',
-  path: '/login',
+const SuperadminRoute = SuperadminRouteImport.update({
+  id: '/superadmin',
+  path: '/superadmin',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
@@ -90,49 +71,28 @@ const ResetPasswordRoute = ResetPasswordRouteImport.update({
   path: '/reset-password',
   getParentRoute: () => rootRouteImport,
 } as any)
-const SuperadminRoute = SuperadminRouteImport.update({
-  id: '/superadmin',
-  path: '/superadmin',
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
-  id: '/admin',
-  path: '/admin',
-  getParentRoute: () => AuthenticatedRoute,
-} as any)
-const AuthenticatedBarRoute = AuthenticatedBarRouteImport.update({
-  id: '/bar',
-  path: '/bar',
-  getParentRoute: () => AuthenticatedRoute,
-} as any)
-const AuthenticatedCaixaRoute = AuthenticatedCaixaRouteImport.update({
-  id: '/caixa',
-  path: '/caixa',
-  getParentRoute: () => AuthenticatedRoute,
-} as any)
-const AuthenticatedCozinhaRoute = AuthenticatedCozinhaRouteImport.update({
-  id: '/cozinha',
-  path: '/cozinha',
-  getParentRoute: () => AuthenticatedRoute,
-} as any)
-const AuthenticatedCumimRoute = AuthenticatedCumimRouteImport.update({
-  id: '/cumim',
-  path: '/cumim',
-  getParentRoute: () => AuthenticatedRoute,
-} as any)
-const AuthenticatedSalaRoute = AuthenticatedSalaRouteImport.update({
-  id: '/sala',
-  path: '/sala',
-  getParentRoute: () => AuthenticatedRoute,
-} as any)
-const DeliverySlugRoute = DeliverySlugRouteImport.update({
-  id: '/delivery/$slug',
-  path: '/delivery/$slug',
+const ForgotPasswordRoute = ForgotPasswordRouteImport.update({
+  id: '/forgot-password',
+  path: '/forgot-password',
   getParentRoute: () => rootRouteImport,
 } as any)
-const MQrTokenRoute = MQrTokenRouteImport.update({
-  id: '/m/$qrToken',
-  path: '/m/$qrToken',
+const CadastroRoute = CadastroRouteImport.update({
+  id: '/cadastro',
+  path: '/cadastro',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedRoute = AuthenticatedRouteImport.update({
+  id: '/_authenticated',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SuperadminIndexRoute = SuperadminIndexRouteImport.update({
@@ -140,117 +100,91 @@ const SuperadminIndexRoute = SuperadminIndexRouteImport.update({
   path: '/',
   getParentRoute: () => SuperadminRoute,
 } as any)
+const SuperadminRestaurantesRoute = SuperadminRestaurantesRouteImport.update({
+  id: '/restaurantes',
+  path: '/restaurantes',
+  getParentRoute: () => SuperadminRoute,
+} as any)
 const SuperadminLogsRoute = SuperadminLogsRouteImport.update({
   id: '/logs',
   path: '/logs',
   getParentRoute: () => SuperadminRoute,
 } as any)
-const SuperadminRestaurantesRoute = SuperadminRestaurantesRouteImport.update({
-  id: '/restaurantes',
-  path: '/restaurantes',
-  getParentRoute: () => SuperadminRoute,
+const MQrTokenRoute = MQrTokenRouteImport.update({
+  id: '/m/$qrToken',
+  path: '/m/$qrToken',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DeliverySlugRoute = DeliverySlugRouteImport.update({
+  id: '/delivery/$slug',
+  path: '/delivery/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedSalaRoute = AuthenticatedSalaRouteImport.update({
+  id: '/sala',
+  path: '/sala',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedCumimRoute = AuthenticatedCumimRouteImport.update({
+  id: '/cumim',
+  path: '/cumim',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedCozinhaRoute = AuthenticatedCozinhaRouteImport.update({
+  id: '/cozinha',
+  path: '/cozinha',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedCaixaRoute = AuthenticatedCaixaRouteImport.update({
+  id: '/caixa',
+  path: '/caixa',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedBarRoute = AuthenticatedBarRouteImport.update({
+  id: '/bar',
+  path: '/bar',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedCaixaIndexRoute = AuthenticatedCaixaIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AuthenticatedCaixaRoute,
 } as any)
 const AuthenticatedAdminIndexRoute = AuthenticatedAdminIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => AuthenticatedAdminRoute,
 } as any)
-const AuthenticatedAdminCaixaRoute = AuthenticatedAdminCaixaRouteImport.update({
-  id: '/caixa',
-  path: '/caixa',
-  getParentRoute: () => AuthenticatedAdminRoute,
+const SuperadminRestaurantesIdRoute =
+  SuperadminRestaurantesIdRouteImport.update({
+    id: '/$id',
+    path: '/$id',
+    getParentRoute: () => SuperadminRestaurantesRoute,
+  } as any)
+const MQrTokenMinhaContaRoute = MQrTokenMinhaContaRouteImport.update({
+  id: '/m/$qrToken_/minha-conta',
+  path: '/m/$qrToken/minha-conta',
+  getParentRoute: () => rootRouteImport,
 } as any)
-const AuthenticatedAdminCardapioRoute =
-  AuthenticatedAdminCardapioRouteImport.update({
-    id: '/cardapio',
-    path: '/cardapio',
-    getParentRoute: () => AuthenticatedAdminRoute,
-  } as any)
-const AuthenticatedAdminCardapioPreviewRoute =
-  AuthenticatedAdminCardapioPreviewRouteImport.update({
-    id: '/cardapio-preview',
-    path: '/cardapio-preview',
-    getParentRoute: () => AuthenticatedAdminRoute,
-  } as any)
-const AuthenticatedAdminChamadosRoute =
-  AuthenticatedAdminChamadosRouteImport.update({
-    id: '/chamados',
-    path: '/chamados',
-    getParentRoute: () => AuthenticatedAdminRoute,
-  } as any)
-const AuthenticatedAdminClientesRoute =
-  AuthenticatedAdminClientesRouteImport.update({
-    id: '/clientes',
-    path: '/clientes',
-    getParentRoute: () => AuthenticatedAdminRoute,
-  } as any)
-const AuthenticatedAdminConfiguracoesRoute =
-  AuthenticatedAdminConfiguracoesRouteImport.update({
-    id: '/configuracoes',
-    path: '/configuracoes',
-    getParentRoute: () => AuthenticatedAdminRoute,
-  } as any)
-const AuthenticatedAdminCouvertArtisticoRoute =
-  AuthenticatedAdminCouvertArtisticoRouteImport.update({
-    id: '/couvert-artistico',
-    path: '/couvert-artistico',
-    getParentRoute: () => AuthenticatedAdminRoute,
-  } as any)
-const AuthenticatedAdminCumimRoute = AuthenticatedAdminCumimRouteImport.update({
-  id: '/cumim',
-  path: '/cumim',
-  getParentRoute: () => AuthenticatedAdminRoute,
+const MQrTokenContaRoute = MQrTokenContaRouteImport.update({
+  id: '/m/$qrToken_/conta',
+  path: '/m/$qrToken/conta',
+  getParentRoute: () => rootRouteImport,
 } as any)
-const AuthenticatedAdminCuponsRoute =
-  AuthenticatedAdminCuponsRouteImport.update({
-    id: '/cupons',
-    path: '/cupons',
-    getParentRoute: () => AuthenticatedAdminRoute,
-  } as any)
-const AuthenticatedAdminDestinosPreparoRoute =
-  AuthenticatedAdminDestinosPreparoRouteImport.update({
-    id: '/destinos-preparo',
-    path: '/destinos-preparo',
-    getParentRoute: () => AuthenticatedAdminRoute,
-  } as any)
-const AuthenticatedAdminEquipeRoute =
-  AuthenticatedAdminEquipeRouteImport.update({
-    id: '/equipe',
-    path: '/equipe',
-    getParentRoute: () => AuthenticatedAdminRoute,
-  } as any)
-const AuthenticatedAdminFidelidadeRoute =
-  AuthenticatedAdminFidelidadeRouteImport.update({
-    id: '/fidelidade',
-    path: '/fidelidade',
-    getParentRoute: () => AuthenticatedAdminRoute,
-  } as any)
-const AuthenticatedAdminGarconsRoute =
-  AuthenticatedAdminGarconsRouteImport.update({
-    id: '/garcons',
-    path: '/garcons',
-    getParentRoute: () => AuthenticatedAdminRoute,
-  } as any)
-const AuthenticatedAdminMesasRoute = AuthenticatedAdminMesasRouteImport.update({
-  id: '/mesas',
-  path: '/mesas',
-  getParentRoute: () => AuthenticatedAdminRoute,
+const MQrTokenCarrinhoRoute = MQrTokenCarrinhoRouteImport.update({
+  id: '/m/$qrToken_/carrinho',
+  path: '/m/$qrToken/carrinho',
+  getParentRoute: () => rootRouteImport,
 } as any)
-const AuthenticatedAdminPedidosRoute =
-  AuthenticatedAdminPedidosRouteImport.update({
-    id: '/pedidos',
-    path: '/pedidos',
-    getParentRoute: () => AuthenticatedAdminRoute,
-  } as any)
-const AuthenticatedCaixaIndexRoute = AuthenticatedCaixaIndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => AuthenticatedCaixaRoute,
-} as any)
-const AuthenticatedCaixaMovimentosRoute =
-  AuthenticatedCaixaMovimentosRouteImport.update({
-    id: '/movimentos',
-    path: '/movimentos',
+const AuthenticatedCaixaRelatorioRoute =
+  AuthenticatedCaixaRelatorioRouteImport.update({
+    id: '/relatorio',
+    path: '/relatorio',
     getParentRoute: () => AuthenticatedCaixaRoute,
   } as any)
 const AuthenticatedCaixaPagamentosRoute =
@@ -259,32 +193,121 @@ const AuthenticatedCaixaPagamentosRoute =
     path: '/pagamentos',
     getParentRoute: () => AuthenticatedCaixaRoute,
   } as any)
-const AuthenticatedCaixaRelatorioRoute =
-  AuthenticatedCaixaRelatorioRouteImport.update({
-    id: '/relatorio',
-    path: '/relatorio',
+const AuthenticatedCaixaMovimentosRoute =
+  AuthenticatedCaixaMovimentosRouteImport.update({
+    id: '/movimentos',
+    path: '/movimentos',
     getParentRoute: () => AuthenticatedCaixaRoute,
   } as any)
-const MQrTokenCarrinhoRoute = MQrTokenCarrinhoRouteImport.update({
-  id: '/m/$qrToken_/carrinho',
-  path: '/m/$qrToken/carrinho',
+const AuthenticatedAdminPedidosRoute =
+  AuthenticatedAdminPedidosRouteImport.update({
+    id: '/pedidos',
+    path: '/pedidos',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
+const AuthenticatedAdminMesasRoute = AuthenticatedAdminMesasRouteImport.update({
+  id: '/mesas',
+  path: '/mesas',
+  getParentRoute: () => AuthenticatedAdminRoute,
+} as any)
+const AuthenticatedAdminGarconsRoute =
+  AuthenticatedAdminGarconsRouteImport.update({
+    id: '/garcons',
+    path: '/garcons',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
+const AuthenticatedAdminFidelidadeRoute =
+  AuthenticatedAdminFidelidadeRouteImport.update({
+    id: '/fidelidade',
+    path: '/fidelidade',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
+const AuthenticatedAdminEquipeRoute =
+  AuthenticatedAdminEquipeRouteImport.update({
+    id: '/equipe',
+    path: '/equipe',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
+const AuthenticatedAdminDestinosPreparoRoute =
+  AuthenticatedAdminDestinosPreparoRouteImport.update({
+    id: '/destinos-preparo',
+    path: '/destinos-preparo',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
+const AuthenticatedAdminCuponsRoute =
+  AuthenticatedAdminCuponsRouteImport.update({
+    id: '/cupons',
+    path: '/cupons',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
+const AuthenticatedAdminCumimRoute = AuthenticatedAdminCumimRouteImport.update({
+  id: '/cumim',
+  path: '/cumim',
+  getParentRoute: () => AuthenticatedAdminRoute,
+} as any)
+const AuthenticatedAdminCouvertArtisticoRoute =
+  AuthenticatedAdminCouvertArtisticoRouteImport.update({
+    id: '/couvert-artistico',
+    path: '/couvert-artistico',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
+const AuthenticatedAdminConfiguracoesRoute =
+  AuthenticatedAdminConfiguracoesRouteImport.update({
+    id: '/configuracoes',
+    path: '/configuracoes',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
+const AuthenticatedAdminClientesRoute =
+  AuthenticatedAdminClientesRouteImport.update({
+    id: '/clientes',
+    path: '/clientes',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
+const AuthenticatedAdminChamadosRoute =
+  AuthenticatedAdminChamadosRouteImport.update({
+    id: '/chamados',
+    path: '/chamados',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
+const AuthenticatedAdminCardapioPreviewRoute =
+  AuthenticatedAdminCardapioPreviewRouteImport.update({
+    id: '/cardapio-preview',
+    path: '/cardapio-preview',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
+const AuthenticatedAdminCardapioRoute =
+  AuthenticatedAdminCardapioRouteImport.update({
+    id: '/cardapio',
+    path: '/cardapio',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
+const AuthenticatedAdminCaixaRoute = AuthenticatedAdminCaixaRouteImport.update({
+  id: '/caixa',
+  path: '/caixa',
+  getParentRoute: () => AuthenticatedAdminRoute,
+} as any)
+const MQrTokenStatusPedidoIdRoute = MQrTokenStatusPedidoIdRouteImport.update({
+  id: '/m/$qrToken_/status/$pedidoId',
+  path: '/m/$qrToken/status/$pedidoId',
   getParentRoute: () => rootRouteImport,
 } as any)
-const MQrTokenContaRoute = MQrTokenContaRouteImport.update({
-  id: '/m/$qrToken_/conta',
-  path: '/m/$qrToken/conta',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const MQrTokenMinhaContaRoute = MQrTokenMinhaContaRouteImport.update({
-  id: '/m/$qrToken_/minha-conta',
-  path: '/m/$qrToken/minha-conta',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const SuperadminRestaurantesIdRoute =
-  SuperadminRestaurantesIdRouteImport.update({
-    id: '/$id',
-    path: '/$id',
-    getParentRoute: () => SuperadminRestaurantesRoute,
+const DeliverySlugPedidoPedidoIdRoute =
+  DeliverySlugPedidoPedidoIdRouteImport.update({
+    id: '/delivery/$slug_/pedido/$pedidoId',
+    path: '/delivery/$slug/pedido/$pedidoId',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const AuthenticatedSalaNovaComandaMesaIdRoute =
+  AuthenticatedSalaNovaComandaMesaIdRouteImport.update({
+    id: '/sala_/nova-comanda/$mesaId',
+    path: '/sala/nova-comanda/$mesaId',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedSalaMesaMesaIdRoute =
+  AuthenticatedSalaMesaMesaIdRouteImport.update({
+    id: '/sala_/mesa/$mesaId',
+    path: '/sala/mesa/$mesaId',
+    getParentRoute: () => AuthenticatedRoute,
   } as any)
 const AuthenticatedAdminClientesIdRoute =
   AuthenticatedAdminClientesIdRouteImport.update({
@@ -297,39 +320,16 @@ const AuthenticatedSalaMesaRoute = AuthenticatedSalaMesaRouteImport.update({
   path: '/sala/mesa/',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
-const AuthenticatedSalaMesaMesaIdRoute =
-  AuthenticatedSalaMesaMesaIdRouteImport.update({
-    id: '/sala_/mesa/$mesaId',
-    path: '/sala/mesa/$mesaId',
-    getParentRoute: () => AuthenticatedRoute,
-  } as any)
-const AuthenticatedSalaNovaComandaMesaIdRoute =
-  AuthenticatedSalaNovaComandaMesaIdRouteImport.update({
-    id: '/sala_/nova-comanda/$mesaId',
-    path: '/sala/nova-comanda/$mesaId',
-    getParentRoute: () => AuthenticatedRoute,
-  } as any)
-const DeliverySlugPedidoPedidoIdRoute =
-  DeliverySlugPedidoPedidoIdRouteImport.update({
-    id: '/delivery/$slug_/pedido/$pedidoId',
-    path: '/delivery/$slug/pedido/$pedidoId',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const MQrTokenStatusPedidoIdRoute = MQrTokenStatusPedidoIdRouteImport.update({
-  id: '/m/$qrToken_/status/$pedidoId',
-  path: '/m/$qrToken/status/$pedidoId',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AuthenticatedAdminCuminsCumimIdDisplayRoute =
-  AuthenticatedAdminCuminsCumimIdDisplayRouteImport.update({
-    id: '/cumins_/$cumimId/display',
-    path: '/cumins/$cumimId/display',
-    getParentRoute: () => AuthenticatedAdminRoute,
-  } as any)
 const AuthenticatedAdminGarconsGarcomIdSalaRoute =
   AuthenticatedAdminGarconsGarcomIdSalaRouteImport.update({
     id: '/garcons_/$garcomId/sala',
     path: '/garcons/$garcomId/sala',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
+const AuthenticatedAdminCuminsCumimIdDisplayRoute =
+  AuthenticatedAdminCuminsCumimIdDisplayRouteImport.update({
+    id: '/cumins_/$cumimId/display',
+    path: '/cumins/$cumimId/display',
     getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
 const AuthenticatedAdminGarconsGarcomIdSalaMesaMesaIdRoute =
@@ -670,39 +670,11 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/_authenticated': {
-      id: '/_authenticated'
-      path: ''
-      fullPath: '/'
-      preLoaderRoute: typeof AuthenticatedRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/cadastro': {
-      id: '/cadastro'
-      path: '/cadastro'
-      fullPath: '/cadastro'
-      preLoaderRoute: typeof CadastroRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/forgot-password': {
-      id: '/forgot-password'
-      path: '/forgot-password'
-      fullPath: '/forgot-password'
-      preLoaderRoute: typeof ForgotPasswordRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/login': {
-      id: '/login'
-      path: '/login'
-      fullPath: '/login'
-      preLoaderRoute: typeof LoginRouteImport
+    '/superadmin': {
+      id: '/superadmin'
+      path: '/superadmin'
+      fullPath: '/superadmin'
+      preLoaderRoute: typeof SuperadminRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/reset-password': {
@@ -712,67 +684,39 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ResetPasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/superadmin': {
-      id: '/superadmin'
-      path: '/superadmin'
-      fullPath: '/superadmin'
-      preLoaderRoute: typeof SuperadminRouteImport
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/admin': {
-      id: '/_authenticated/admin'
-      path: '/admin'
-      fullPath: '/admin'
-      preLoaderRoute: typeof AuthenticatedAdminRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
-    '/_authenticated/bar': {
-      id: '/_authenticated/bar'
-      path: '/bar'
-      fullPath: '/bar'
-      preLoaderRoute: typeof AuthenticatedBarRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
-    '/_authenticated/caixa': {
-      id: '/_authenticated/caixa'
-      path: '/caixa'
-      fullPath: '/caixa'
-      preLoaderRoute: typeof AuthenticatedCaixaRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
-    '/_authenticated/cozinha': {
-      id: '/_authenticated/cozinha'
-      path: '/cozinha'
-      fullPath: '/cozinha'
-      preLoaderRoute: typeof AuthenticatedCozinhaRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
-    '/_authenticated/cumim': {
-      id: '/_authenticated/cumim'
-      path: '/cumim'
-      fullPath: '/cumim'
-      preLoaderRoute: typeof AuthenticatedCumimRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
-    '/_authenticated/sala': {
-      id: '/_authenticated/sala'
-      path: '/sala'
-      fullPath: '/sala'
-      preLoaderRoute: typeof AuthenticatedSalaRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
-    '/delivery/$slug': {
-      id: '/delivery/$slug'
-      path: '/delivery/$slug'
-      fullPath: '/delivery/$slug'
-      preLoaderRoute: typeof DeliverySlugRouteImport
+    '/forgot-password': {
+      id: '/forgot-password'
+      path: '/forgot-password'
+      fullPath: '/forgot-password'
+      preLoaderRoute: typeof ForgotPasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/m/$qrToken': {
-      id: '/m/$qrToken'
-      path: '/m/$qrToken'
-      fullPath: '/m/$qrToken'
-      preLoaderRoute: typeof MQrTokenRouteImport
+    '/cadastro': {
+      id: '/cadastro'
+      path: '/cadastro'
+      fullPath: '/cadastro'
+      preLoaderRoute: typeof CadastroRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated': {
+      id: '/_authenticated'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AuthenticatedRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/superadmin/': {
@@ -782,13 +726,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SuperadminIndexRouteImport
       parentRoute: typeof SuperadminRoute
     }
-    '/superadmin/logs': {
-      id: '/superadmin/logs'
-      path: '/logs'
-      fullPath: '/superadmin/logs'
-      preLoaderRoute: typeof SuperadminLogsRouteImport
-      parentRoute: typeof SuperadminRoute
-    }
     '/superadmin/restaurantes': {
       id: '/superadmin/restaurantes'
       path: '/restaurantes'
@@ -796,117 +733,68 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SuperadminRestaurantesRouteImport
       parentRoute: typeof SuperadminRoute
     }
-    '/_authenticated/admin/': {
-      id: '/_authenticated/admin/'
-      path: '/'
-      fullPath: '/admin/'
-      preLoaderRoute: typeof AuthenticatedAdminIndexRouteImport
-      parentRoute: typeof AuthenticatedAdminRoute
+    '/superadmin/logs': {
+      id: '/superadmin/logs'
+      path: '/logs'
+      fullPath: '/superadmin/logs'
+      preLoaderRoute: typeof SuperadminLogsRouteImport
+      parentRoute: typeof SuperadminRoute
     }
-    '/_authenticated/admin/caixa': {
-      id: '/_authenticated/admin/caixa'
-      path: '/caixa'
-      fullPath: '/admin/caixa'
-      preLoaderRoute: typeof AuthenticatedAdminCaixaRouteImport
-      parentRoute: typeof AuthenticatedAdminRoute
+    '/m/$qrToken': {
+      id: '/m/$qrToken'
+      path: '/m/$qrToken'
+      fullPath: '/m/$qrToken'
+      preLoaderRoute: typeof MQrTokenRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/admin/cardapio': {
-      id: '/_authenticated/admin/cardapio'
-      path: '/cardapio'
-      fullPath: '/admin/cardapio'
-      preLoaderRoute: typeof AuthenticatedAdminCardapioRouteImport
-      parentRoute: typeof AuthenticatedAdminRoute
+    '/delivery/$slug': {
+      id: '/delivery/$slug'
+      path: '/delivery/$slug'
+      fullPath: '/delivery/$slug'
+      preLoaderRoute: typeof DeliverySlugRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/admin/cardapio-preview': {
-      id: '/_authenticated/admin/cardapio-preview'
-      path: '/cardapio-preview'
-      fullPath: '/admin/cardapio-preview'
-      preLoaderRoute: typeof AuthenticatedAdminCardapioPreviewRouteImport
-      parentRoute: typeof AuthenticatedAdminRoute
+    '/_authenticated/sala': {
+      id: '/_authenticated/sala'
+      path: '/sala'
+      fullPath: '/sala'
+      preLoaderRoute: typeof AuthenticatedSalaRouteImport
+      parentRoute: typeof AuthenticatedRoute
     }
-    '/_authenticated/admin/chamados': {
-      id: '/_authenticated/admin/chamados'
-      path: '/chamados'
-      fullPath: '/admin/chamados'
-      preLoaderRoute: typeof AuthenticatedAdminChamadosRouteImport
-      parentRoute: typeof AuthenticatedAdminRoute
-    }
-    '/_authenticated/admin/clientes': {
-      id: '/_authenticated/admin/clientes'
-      path: '/clientes'
-      fullPath: '/admin/clientes'
-      preLoaderRoute: typeof AuthenticatedAdminClientesRouteImport
-      parentRoute: typeof AuthenticatedAdminRoute
-    }
-    '/_authenticated/admin/configuracoes': {
-      id: '/_authenticated/admin/configuracoes'
-      path: '/configuracoes'
-      fullPath: '/admin/configuracoes'
-      preLoaderRoute: typeof AuthenticatedAdminConfiguracoesRouteImport
-      parentRoute: typeof AuthenticatedAdminRoute
-    }
-    '/_authenticated/admin/couvert-artistico': {
-      id: '/_authenticated/admin/couvert-artistico'
-      path: '/couvert-artistico'
-      fullPath: '/admin/couvert-artistico'
-      preLoaderRoute: typeof AuthenticatedAdminCouvertArtisticoRouteImport
-      parentRoute: typeof AuthenticatedAdminRoute
-    }
-    '/_authenticated/admin/cumim': {
-      id: '/_authenticated/admin/cumim'
+    '/_authenticated/cumim': {
+      id: '/_authenticated/cumim'
       path: '/cumim'
-      fullPath: '/admin/cumim'
-      preLoaderRoute: typeof AuthenticatedAdminCumimRouteImport
-      parentRoute: typeof AuthenticatedAdminRoute
+      fullPath: '/cumim'
+      preLoaderRoute: typeof AuthenticatedCumimRouteImport
+      parentRoute: typeof AuthenticatedRoute
     }
-    '/_authenticated/admin/cupons': {
-      id: '/_authenticated/admin/cupons'
-      path: '/cupons'
-      fullPath: '/admin/cupons'
-      preLoaderRoute: typeof AuthenticatedAdminCuponsRouteImport
-      parentRoute: typeof AuthenticatedAdminRoute
+    '/_authenticated/cozinha': {
+      id: '/_authenticated/cozinha'
+      path: '/cozinha'
+      fullPath: '/cozinha'
+      preLoaderRoute: typeof AuthenticatedCozinhaRouteImport
+      parentRoute: typeof AuthenticatedRoute
     }
-    '/_authenticated/admin/destinos-preparo': {
-      id: '/_authenticated/admin/destinos-preparo'
-      path: '/destinos-preparo'
-      fullPath: '/admin/destinos-preparo'
-      preLoaderRoute: typeof AuthenticatedAdminDestinosPreparoRouteImport
-      parentRoute: typeof AuthenticatedAdminRoute
+    '/_authenticated/caixa': {
+      id: '/_authenticated/caixa'
+      path: '/caixa'
+      fullPath: '/caixa'
+      preLoaderRoute: typeof AuthenticatedCaixaRouteImport
+      parentRoute: typeof AuthenticatedRoute
     }
-    '/_authenticated/admin/equipe': {
-      id: '/_authenticated/admin/equipe'
-      path: '/equipe'
-      fullPath: '/admin/equipe'
-      preLoaderRoute: typeof AuthenticatedAdminEquipeRouteImport
-      parentRoute: typeof AuthenticatedAdminRoute
+    '/_authenticated/bar': {
+      id: '/_authenticated/bar'
+      path: '/bar'
+      fullPath: '/bar'
+      preLoaderRoute: typeof AuthenticatedBarRouteImport
+      parentRoute: typeof AuthenticatedRoute
     }
-    '/_authenticated/admin/fidelidade': {
-      id: '/_authenticated/admin/fidelidade'
-      path: '/fidelidade'
-      fullPath: '/admin/fidelidade'
-      preLoaderRoute: typeof AuthenticatedAdminFidelidadeRouteImport
-      parentRoute: typeof AuthenticatedAdminRoute
-    }
-    '/_authenticated/admin/garcons': {
-      id: '/_authenticated/admin/garcons'
-      path: '/garcons'
-      fullPath: '/admin/garcons'
-      preLoaderRoute: typeof AuthenticatedAdminGarconsRouteImport
-      parentRoute: typeof AuthenticatedAdminRoute
-    }
-    '/_authenticated/admin/mesas': {
-      id: '/_authenticated/admin/mesas'
-      path: '/mesas'
-      fullPath: '/admin/mesas'
-      preLoaderRoute: typeof AuthenticatedAdminMesasRouteImport
-      parentRoute: typeof AuthenticatedAdminRoute
-    }
-    '/_authenticated/admin/pedidos': {
-      id: '/_authenticated/admin/pedidos'
-      path: '/pedidos'
-      fullPath: '/admin/pedidos'
-      preLoaderRoute: typeof AuthenticatedAdminPedidosRouteImport
-      parentRoute: typeof AuthenticatedAdminRoute
+    '/_authenticated/admin': {
+      id: '/_authenticated/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AuthenticatedAdminRouteImport
+      parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/caixa/': {
       id: '/_authenticated/caixa/'
@@ -915,32 +803,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedCaixaIndexRouteImport
       parentRoute: typeof AuthenticatedCaixaRoute
     }
-    '/_authenticated/caixa/movimentos': {
-      id: '/_authenticated/caixa/movimentos'
-      path: '/movimentos'
-      fullPath: '/caixa/movimentos'
-      preLoaderRoute: typeof AuthenticatedCaixaMovimentosRouteImport
-      parentRoute: typeof AuthenticatedCaixaRoute
+    '/_authenticated/admin/': {
+      id: '/_authenticated/admin/'
+      path: '/'
+      fullPath: '/admin/'
+      preLoaderRoute: typeof AuthenticatedAdminIndexRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
     }
-    '/_authenticated/caixa/pagamentos': {
-      id: '/_authenticated/caixa/pagamentos'
-      path: '/pagamentos'
-      fullPath: '/caixa/pagamentos'
-      preLoaderRoute: typeof AuthenticatedCaixaPagamentosRouteImport
-      parentRoute: typeof AuthenticatedCaixaRoute
+    '/superadmin/restaurantes/$id': {
+      id: '/superadmin/restaurantes/$id'
+      path: '/$id'
+      fullPath: '/superadmin/restaurantes/$id'
+      preLoaderRoute: typeof SuperadminRestaurantesIdRouteImport
+      parentRoute: typeof SuperadminRestaurantesRoute
     }
-    '/_authenticated/caixa/relatorio': {
-      id: '/_authenticated/caixa/relatorio'
-      path: '/relatorio'
-      fullPath: '/caixa/relatorio'
-      preLoaderRoute: typeof AuthenticatedCaixaRelatorioRouteImport
-      parentRoute: typeof AuthenticatedCaixaRoute
-    }
-    '/m/$qrToken_/carrinho': {
-      id: '/m/$qrToken_/carrinho'
-      path: '/m/$qrToken/carrinho'
-      fullPath: '/m/$qrToken/carrinho'
-      preLoaderRoute: typeof MQrTokenCarrinhoRouteImport
+    '/m/$qrToken_/minha-conta': {
+      id: '/m/$qrToken_/minha-conta'
+      path: '/m/$qrToken/minha-conta'
+      fullPath: '/m/$qrToken/minha-conta'
+      preLoaderRoute: typeof MQrTokenMinhaContaRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/m/$qrToken_/conta': {
@@ -950,19 +831,166 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof MQrTokenContaRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/m/$qrToken_/minha-conta': {
-      id: '/m/$qrToken_/minha-conta'
-      path: '/m/$qrToken/minha-conta'
-      fullPath: '/m/$qrToken/minha-conta'
-      preLoaderRoute: typeof MQrTokenMinhaContaRouteImport
+    '/m/$qrToken_/carrinho': {
+      id: '/m/$qrToken_/carrinho'
+      path: '/m/$qrToken/carrinho'
+      fullPath: '/m/$qrToken/carrinho'
+      preLoaderRoute: typeof MQrTokenCarrinhoRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/superadmin/restaurantes/$id': {
-      id: '/superadmin/restaurantes/$id'
-      path: '/$id'
-      fullPath: '/superadmin/restaurantes/$id'
-      preLoaderRoute: typeof SuperadminRestaurantesIdRouteImport
-      parentRoute: typeof SuperadminRestaurantesRoute
+    '/_authenticated/caixa/relatorio': {
+      id: '/_authenticated/caixa/relatorio'
+      path: '/relatorio'
+      fullPath: '/caixa/relatorio'
+      preLoaderRoute: typeof AuthenticatedCaixaRelatorioRouteImport
+      parentRoute: typeof AuthenticatedCaixaRoute
+    }
+    '/_authenticated/caixa/pagamentos': {
+      id: '/_authenticated/caixa/pagamentos'
+      path: '/pagamentos'
+      fullPath: '/caixa/pagamentos'
+      preLoaderRoute: typeof AuthenticatedCaixaPagamentosRouteImport
+      parentRoute: typeof AuthenticatedCaixaRoute
+    }
+    '/_authenticated/caixa/movimentos': {
+      id: '/_authenticated/caixa/movimentos'
+      path: '/movimentos'
+      fullPath: '/caixa/movimentos'
+      preLoaderRoute: typeof AuthenticatedCaixaMovimentosRouteImport
+      parentRoute: typeof AuthenticatedCaixaRoute
+    }
+    '/_authenticated/admin/pedidos': {
+      id: '/_authenticated/admin/pedidos'
+      path: '/pedidos'
+      fullPath: '/admin/pedidos'
+      preLoaderRoute: typeof AuthenticatedAdminPedidosRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/_authenticated/admin/mesas': {
+      id: '/_authenticated/admin/mesas'
+      path: '/mesas'
+      fullPath: '/admin/mesas'
+      preLoaderRoute: typeof AuthenticatedAdminMesasRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/_authenticated/admin/garcons': {
+      id: '/_authenticated/admin/garcons'
+      path: '/garcons'
+      fullPath: '/admin/garcons'
+      preLoaderRoute: typeof AuthenticatedAdminGarconsRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/_authenticated/admin/fidelidade': {
+      id: '/_authenticated/admin/fidelidade'
+      path: '/fidelidade'
+      fullPath: '/admin/fidelidade'
+      preLoaderRoute: typeof AuthenticatedAdminFidelidadeRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/_authenticated/admin/equipe': {
+      id: '/_authenticated/admin/equipe'
+      path: '/equipe'
+      fullPath: '/admin/equipe'
+      preLoaderRoute: typeof AuthenticatedAdminEquipeRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/_authenticated/admin/destinos-preparo': {
+      id: '/_authenticated/admin/destinos-preparo'
+      path: '/destinos-preparo'
+      fullPath: '/admin/destinos-preparo'
+      preLoaderRoute: typeof AuthenticatedAdminDestinosPreparoRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/_authenticated/admin/cupons': {
+      id: '/_authenticated/admin/cupons'
+      path: '/cupons'
+      fullPath: '/admin/cupons'
+      preLoaderRoute: typeof AuthenticatedAdminCuponsRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/_authenticated/admin/cumim': {
+      id: '/_authenticated/admin/cumim'
+      path: '/cumim'
+      fullPath: '/admin/cumim'
+      preLoaderRoute: typeof AuthenticatedAdminCumimRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/_authenticated/admin/couvert-artistico': {
+      id: '/_authenticated/admin/couvert-artistico'
+      path: '/couvert-artistico'
+      fullPath: '/admin/couvert-artistico'
+      preLoaderRoute: typeof AuthenticatedAdminCouvertArtisticoRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/_authenticated/admin/configuracoes': {
+      id: '/_authenticated/admin/configuracoes'
+      path: '/configuracoes'
+      fullPath: '/admin/configuracoes'
+      preLoaderRoute: typeof AuthenticatedAdminConfiguracoesRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/_authenticated/admin/clientes': {
+      id: '/_authenticated/admin/clientes'
+      path: '/clientes'
+      fullPath: '/admin/clientes'
+      preLoaderRoute: typeof AuthenticatedAdminClientesRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/_authenticated/admin/chamados': {
+      id: '/_authenticated/admin/chamados'
+      path: '/chamados'
+      fullPath: '/admin/chamados'
+      preLoaderRoute: typeof AuthenticatedAdminChamadosRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/_authenticated/admin/cardapio-preview': {
+      id: '/_authenticated/admin/cardapio-preview'
+      path: '/cardapio-preview'
+      fullPath: '/admin/cardapio-preview'
+      preLoaderRoute: typeof AuthenticatedAdminCardapioPreviewRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/_authenticated/admin/cardapio': {
+      id: '/_authenticated/admin/cardapio'
+      path: '/cardapio'
+      fullPath: '/admin/cardapio'
+      preLoaderRoute: typeof AuthenticatedAdminCardapioRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/_authenticated/admin/caixa': {
+      id: '/_authenticated/admin/caixa'
+      path: '/caixa'
+      fullPath: '/admin/caixa'
+      preLoaderRoute: typeof AuthenticatedAdminCaixaRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/m/$qrToken_/status/$pedidoId': {
+      id: '/m/$qrToken_/status/$pedidoId'
+      path: '/m/$qrToken/status/$pedidoId'
+      fullPath: '/m/$qrToken/status/$pedidoId'
+      preLoaderRoute: typeof MQrTokenStatusPedidoIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/delivery/$slug_/pedido/$pedidoId': {
+      id: '/delivery/$slug_/pedido/$pedidoId'
+      path: '/delivery/$slug/pedido/$pedidoId'
+      fullPath: '/delivery/$slug/pedido/$pedidoId'
+      preLoaderRoute: typeof DeliverySlugPedidoPedidoIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/sala_/nova-comanda/$mesaId': {
+      id: '/_authenticated/sala_/nova-comanda/$mesaId'
+      path: '/sala/nova-comanda/$mesaId'
+      fullPath: '/sala/nova-comanda/$mesaId'
+      preLoaderRoute: typeof AuthenticatedSalaNovaComandaMesaIdRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/sala_/mesa/$mesaId': {
+      id: '/_authenticated/sala_/mesa/$mesaId'
+      path: '/sala/mesa/$mesaId'
+      fullPath: '/sala/mesa/$mesaId'
+      preLoaderRoute: typeof AuthenticatedSalaMesaMesaIdRouteImport
+      parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/admin/clientes/$id': {
       id: '/_authenticated/admin/clientes/$id'
@@ -978,46 +1006,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSalaMesaRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
-    '/_authenticated/sala_/mesa/$mesaId': {
-      id: '/_authenticated/sala_/mesa/$mesaId'
-      path: '/sala/mesa/$mesaId'
-      fullPath: '/sala/mesa/$mesaId'
-      preLoaderRoute: typeof AuthenticatedSalaMesaMesaIdRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
-    '/_authenticated/sala_/nova-comanda/$mesaId': {
-      id: '/_authenticated/sala_/nova-comanda/$mesaId'
-      path: '/sala/nova-comanda/$mesaId'
-      fullPath: '/sala/nova-comanda/$mesaId'
-      preLoaderRoute: typeof AuthenticatedSalaNovaComandaMesaIdRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
-    '/delivery/$slug_/pedido/$pedidoId': {
-      id: '/delivery/$slug_/pedido/$pedidoId'
-      path: '/delivery/$slug/pedido/$pedidoId'
-      fullPath: '/delivery/$slug/pedido/$pedidoId'
-      preLoaderRoute: typeof DeliverySlugPedidoPedidoIdRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/m/$qrToken_/status/$pedidoId': {
-      id: '/m/$qrToken_/status/$pedidoId'
-      path: '/m/$qrToken/status/$pedidoId'
-      fullPath: '/m/$qrToken/status/$pedidoId'
-      preLoaderRoute: typeof MQrTokenStatusPedidoIdRouteImport
-      parentRoute: typeof rootRouteImport
+    '/_authenticated/admin/garcons_/$garcomId/sala': {
+      id: '/_authenticated/admin/garcons_/$garcomId/sala'
+      path: '/garcons/$garcomId/sala'
+      fullPath: '/admin/garcons/$garcomId/sala'
+      preLoaderRoute: typeof AuthenticatedAdminGarconsGarcomIdSalaRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
     }
     '/_authenticated/admin/cumins_/$cumimId/display': {
       id: '/_authenticated/admin/cumins_/$cumimId/display'
       path: '/cumins/$cumimId/display'
       fullPath: '/admin/cumins/$cumimId/display'
       preLoaderRoute: typeof AuthenticatedAdminCuminsCumimIdDisplayRouteImport
-      parentRoute: typeof AuthenticatedAdminRoute
-    }
-    '/_authenticated/admin/garcons_/$garcomId/sala': {
-      id: '/_authenticated/admin/garcons_/$garcomId/sala'
-      path: '/garcons/$garcomId/sala'
-      fullPath: '/admin/garcons/$garcomId/sala'
-      preLoaderRoute: typeof AuthenticatedAdminGarconsGarcomIdSalaRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
     '/_authenticated/admin/garcons_/$garcomId/sala_/mesa/$mesaId': {
@@ -1192,13 +1192,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
