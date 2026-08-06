@@ -10,6 +10,12 @@ export async function carregarBannersPublicos(
   canal: "mesa" | "delivery",
 ): Promise<BannerPublico[]> {
   const agora = new Date().toISOString();
+  const { data: rest } = await supabaseAdmin
+    .from("restaurantes")
+    .select("banners_habilitados")
+    .eq("id", restauranteId)
+    .maybeSingle();
+  if (rest && rest.banners_habilitados === false) return [];
   const { data, error } = await supabaseAdmin
     .from("banners_cardapio")
     .select("id, imagem_url, alt_text, destino_tipo, destino_valor")

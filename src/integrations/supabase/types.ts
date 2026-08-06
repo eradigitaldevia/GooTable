@@ -1811,6 +1811,7 @@ export type Database = {
       restaurantes: {
         Row: {
           ativo: boolean
+          banners_habilitados: boolean
           caixa_alerta_horas: number
           caixa_conferencia_cega: boolean
           caixa_obrigatorio_para_pagamento: boolean
@@ -1867,6 +1868,7 @@ export type Database = {
         }
         Insert: {
           ativo?: boolean
+          banners_habilitados?: boolean
           caixa_alerta_horas?: number
           caixa_conferencia_cega?: boolean
           caixa_obrigatorio_para_pagamento?: boolean
@@ -1923,6 +1925,7 @@ export type Database = {
         }
         Update: {
           ativo?: boolean
+          banners_habilitados?: boolean
           caixa_alerta_horas?: number
           caixa_conferencia_cega?: boolean
           caixa_obrigatorio_para_pagamento?: boolean

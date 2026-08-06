@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import {
@@ -32,6 +33,8 @@ import {
 import { BannerDialogBody, type BannerFormValues } from "./banner-dialog-body";
 import type { Banner } from "@/lib/banners.functions";
 import type { Restaurante } from "@/lib/restaurante.functions";
+import { useAuth } from "@/hooks/use-auth";
+import { useAtualizarConfiguracoes } from "@/hooks/use-configuracoes";
 
 const EXIBIR_LABEL: Record<Banner["exibir_em"], string> = {
   ambos: "Mesa e delivery",
@@ -54,6 +57,9 @@ export function BannersPanel({ restaurante }: { restaurante: Restaurante }) {
   const criar = useCriarBanner(restaurante.id);
   const atualizar = useAtualizarBanner(restaurante.id);
   const excluir = useExcluirBanner(restaurante.id);
+  const { user } = useAuth();
+  const salvarConfig = useAtualizarConfiguracoes(user?.id);
+  const [habilitados, setHabilitados] = useState(restaurante.banners_habilitados ?? true);
 
   const [dialogAberto, setDialogAberto] = useState(false);
   const [editando, setEditando] = useState<Banner | null>(null);
@@ -61,6 +67,21 @@ export function BannersPanel({ restaurante }: { restaurante: Restaurante }) {
 
   const lista = banners ?? [];
   const ativos = lista.filter((b) => b.ativo).length;
+
+  async function alternarHabilitados(v: boolean) {
+    setHabilitados(v);
+    try {
+      await salvarConfig.mutateAsync({
+        aba: "banners",
+        restauranteId: restaurante.id,
+        banners_habilitados: v,
+      });
+      toast.success(v ? "Banners exibidos no cardápio" : "Banners ocultados do cardápio");
+    } catch (e) {
+      setHabilitados(!v);
+      toast.error(e instanceof Error ? e.message : "Falha ao salvar configuração");
+    }
+  }
 
   async function salvar(values: BannerFormValues) {
     try {
@@ -100,6 +121,21 @@ export function BannersPanel({ restaurante }: { restaurante: Restaurante }) {
 
   return (
     <div className="space-y-4">
+      <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border p-4">
+        <div className="space-y-0.5">
+          <Label htmlFor="banners-habilitados">Exibir banners no cardápio</Label>
+          <p className="text-xs text-muted-foreground">
+            Quando desligado, nenhum banner é exibido no cardápio da mesa nem no delivery.
+          </p>
+        </div>
+        <Switch
+          id="banners-habilitados"
+          checked={habilitados}
+          disabled={salvarConfig.isPending}
+          onCheckedChange={alternarHabilitados}
+        />
+      </div>
+
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <p className="text-sm text-muted-foreground">

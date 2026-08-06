@@ -78,6 +78,10 @@ export type ConfigPayload =
       upsell_habilitado: boolean;
     })
   | (Base & {
+      aba: "banners";
+      banners_habilitados: boolean;
+    })
+  | (Base & {
       aba: "delivery";
       delivery_ativo: boolean;
       delivery_retirada_ativa: boolean;

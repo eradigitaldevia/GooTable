@@ -121,6 +121,11 @@ const configSchema = z.discriminatedUnion("aba", [
     upsell_habilitado: z.boolean(),
   }),
   z.object({
+    aba: z.literal("banners"),
+    restauranteId: z.string().uuid(),
+    banners_habilitados: z.boolean(),
+  }),
+  z.object({
     aba: z.literal("delivery"),
     restauranteId: z.string().uuid(),
     delivery_ativo: z.boolean(),
@@ -255,6 +260,10 @@ export const atualizarConfiguracoesFn = createServerFn({ method: "POST" })
       }
       case "cardapio": {
         update = { upsell_habilitado: data.upsell_habilitado };
+        break;
+      }
+      case "banners": {
+        update = { banners_habilitados: data.banners_habilitados };
         break;
       }
       case "delivery": {
