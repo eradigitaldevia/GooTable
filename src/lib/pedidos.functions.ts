@@ -1463,9 +1463,7 @@ const COLUNAS_PEDIDO =
   "id, status, total, observacao, criado_em, mesa_id, restaurante_id, comanda_id, garcom_id, canal, cliente_nome, cliente_telefone, taxa_entrega, endereco_cep, endereco_rua, endereco_numero, endereco_complemento, endereco_bairro, endereco_cidade, endereco_uf, endereco_referencia";
 
 function inicioHoje(): Date {
-  const d = new Date();
-  d.setHours(0, 0, 0, 0);
-  return d;
+  return inicioDoDia();
 }
 
 async function carregarMesas(supabase: any, restauranteId: string): Promise<MesaResumo[]> {
