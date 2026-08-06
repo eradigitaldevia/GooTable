@@ -5,6 +5,7 @@ import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import type { TablesUpdate } from "@/integrations/supabase/types";
 import { assertAcessoRestaurante } from "./auth.server";
 import { sanitizarComandasOrfas } from "./sessoes.server";
+import { inicioDoDia, fimDoDia } from "./data-fuso";
 
 export type StatusPedido =
   | "recebido"
