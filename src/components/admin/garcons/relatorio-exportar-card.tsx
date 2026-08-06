@@ -8,6 +8,7 @@ import { Download, FileText } from "lucide-react";
 import { toast } from "sonner";
 import { useGerarRelatorioComissoes } from "@/hooks/use-relatorios";
 import { exportarRelatorioCSV, gerarRelatorioPDF } from "@/lib/relatorios-export";
+import { dataLocal } from "@/lib/data-fuso";
 
 type Canal = "mesa" | "balcao" | "delivery" | "retirada";
 const CANAL_OPCOES: { value: Canal; label: string }[] = [
@@ -20,8 +21,8 @@ const CANAL_OPCOES: { value: Canal; label: string }[] = [
 export function RelatorioExportarCard({ restauranteId }: { restauranteId: string }) {
   const hoje = new Date();
   const primeiroDia = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
-  const [inicio, setInicio] = useState(primeiroDia.toISOString().slice(0, 10));
-  const [fim, setFim] = useState(hoje.toISOString().slice(0, 10));
+  const [inicio, setInicio] = useState(dataLocal(primeiroDia));
+  const [fim, setFim] = useState(dataLocal(hoje));
   const [canais, setCanais] = useState<Canal[]>([]);
   const gerarRelatorio = useGerarRelatorioComissoes();
 

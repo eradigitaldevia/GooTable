@@ -5,6 +5,7 @@ import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import type { TablesUpdate } from "@/integrations/supabase/types";
 import { assertAcessoRestaurante } from "./auth.server";
 import { sanitizarComandasOrfas } from "./sessoes.server";
+import { inicioDoDia, fimDoDia } from "./data-fuso";
 
 export type StatusPedido =
   | "recebido"
@@ -68,8 +69,7 @@ export const listarPedidosDoDiaFn = createServerFn({ method: "POST" })
     const { supabase, userId } = context;
     await assertAcessoRestaurante(supabase, userId, data.restauranteId);
 
-    const inicio = new Date();
-    inicio.setHours(0, 0, 0, 0);
+    const inicio = inicioDoDia();
 
     const { data: peds, error: pErr } = await supabase
       .from("pedidos")
@@ -1463,9 +1463,7 @@ const COLUNAS_PEDIDO =
   "id, status, total, observacao, criado_em, mesa_id, restaurante_id, comanda_id, garcom_id, canal, cliente_nome, cliente_telefone, taxa_entrega, endereco_cep, endereco_rua, endereco_numero, endereco_complemento, endereco_bairro, endereco_cidade, endereco_uf, endereco_referencia";
 
 function inicioHoje(): Date {
-  const d = new Date();
-  d.setHours(0, 0, 0, 0);
-  return d;
+  return inicioDoDia();
 }
 
 async function carregarMesas(supabase: any, restauranteId: string): Promise<MesaResumo[]> {
@@ -1497,10 +1495,8 @@ export const listarPedidosHistoricoFn = createServerFn({ method: "POST" })
     const { supabase, userId } = context;
     await assertAcessoRestaurante(supabase, userId, data.restauranteId);
 
-    const ini = new Date(data.dataInicio);
-    ini.setHours(0, 0, 0, 0);
-    const fim = new Date(data.dataFim);
-    fim.setHours(23, 59, 59, 999);
+    const ini = inicioDoDia(data.dataInicio);
+    const fim = fimDoDia(data.dataFim);
     // Limita rigidamente: histórico = anterior a hoje
     const limiteHoje = inicioHoje();
     if (fim >= limiteHoje) fim.setTime(limiteHoje.getTime() - 1);
@@ -1596,10 +1592,8 @@ export const listarPedidosCanceladosFn = createServerFn({ method: "POST" })
     const { supabase, userId } = context;
     await assertAcessoRestaurante(supabase, userId, data.restauranteId);
 
-    const ini = new Date(data.dataInicio);
-    ini.setHours(0, 0, 0, 0);
-    const fim = new Date(data.dataFim);
-    fim.setHours(23, 59, 59, 999);
+    const ini = inicioDoDia(data.dataInicio);
+    const fim = fimDoDia(data.dataFim);
 
     const { data: peds, error } = await supabase
       .from("pedidos")

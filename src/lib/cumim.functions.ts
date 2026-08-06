@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { assertAcessoRestaurante } from "./auth.server";
+import { inicioDoDia } from "./data-fuso";
 import type { SalaPedidoPronto, SalaPedidoItem } from "./sala.functions";
 
 export interface CumimEntregaRecente {
@@ -28,8 +29,7 @@ async function montarDadosCumim(
   cumimNome: string,
   restauranteId: string,
 ): Promise<CumimDados> {
-  const inicioDia = new Date();
-  inicioDia.setHours(0, 0, 0, 0);
+  const inicioDia = inicioDoDia();
 
   // Pratos prontos
   const { data: peds, error: pErr } = await supabase

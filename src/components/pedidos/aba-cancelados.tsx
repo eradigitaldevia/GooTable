@@ -8,12 +8,13 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Calendar } from "@/components/ui/calendar";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
+import { dataLocal } from "@/lib/data-fuso";
 import { usePedidosCancelados } from "@/hooks/use-pedidos";
 import { TabelaPedidos } from "@/components/pedidos/tabela-pedidos";
 import { DetalhePedidoLazy } from "@/components/pedidos/detalhe-pedido-lazy";
 import { useGarcomLookup } from "@/hooks/use-garcom-lookup";
 
-function toISODate(d: Date) { return d.toISOString().slice(0, 10); }
+function toISODate(d: Date) { return dataLocal(d); }
 
 function diasAtras(n: number) { const d = new Date(); d.setDate(d.getDate() - n); return d; }
 

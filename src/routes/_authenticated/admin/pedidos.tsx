@@ -160,6 +160,11 @@ function PedidosPainel() {
           }
         },
       )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "pedido_destino_status" },
+        () => scheduleInvalidate(),
+      )
       .subscribe();
 
     return () => {
