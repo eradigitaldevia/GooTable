@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { usePedidosCancelados } from "@/hooks/use-pedidos";
 import { TabelaPedidos } from "@/components/pedidos/tabela-pedidos";
@@ -14,15 +15,25 @@ import { useGarcomLookup } from "@/hooks/use-garcom-lookup";
 
 function toISODate(d: Date) { return d.toISOString().slice(0, 10); }
 
+function diasAtras(n: number) { const d = new Date(); d.setDate(d.getDate() - n); return d; }
+
 export function AbaCancelados({
   restauranteId,
   deliverySlug,
 }: { restauranteId: string; deliverySlug: string | null }) {
-  const trinta = useMemo(() => { const d = new Date(); d.setDate(d.getDate() - 30); return d; }, []);
+  const sete = useMemo(() => diasAtras(7), []);
   const hoje = useMemo(() => new Date(), []);
-  const [dataInicio, setDataInicio] = useState<Date>(trinta);
+  const [dataInicio, setDataInicio] = useState<Date>(sete);
   const [dataFim, setDataFim] = useState<Date>(hoje);
+  const [periodo, setPeriodo] = useState<"7" | "30" | "60" | "custom">("7");
   const [aberto, setAberto] = useState<any | null>(null);
+
+  function aplicarPeriodo(v: "7" | "30" | "60" | "custom") {
+    setPeriodo(v);
+    if (v === "custom") return;
+    setDataInicio(diasAtras(Number(v)));
+    setDataFim(new Date());
+  }
 
   const { data, isLoading } = usePedidosCancelados({
     restauranteId,
@@ -45,9 +56,21 @@ export function AbaCancelados({
 
   return (
     <div className="space-y-4">
-      <div className="grid gap-3 sm:grid-cols-2 lg:max-w-md">
-        <DateField label="De" value={dataInicio} onChange={setDataInicio} />
-        <DateField label="Até" value={dataFim} onChange={setDataFim} />
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 lg:max-w-2xl">
+        <div className="space-y-1">
+          <Label>Período</Label>
+          <Select value={periodo} onValueChange={(v) => aplicarPeriodo(v as any)}>
+            <SelectTrigger><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="7">Últimos 7 dias</SelectItem>
+              <SelectItem value="30">Últimos 30 dias</SelectItem>
+              <SelectItem value="60">Últimos 60 dias</SelectItem>
+              <SelectItem value="custom">Personalizado</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <DateField label="De" value={dataInicio} onChange={(d) => { setDataInicio(d); setPeriodo("custom"); }} />
+        <DateField label="Até" value={dataFim} onChange={(d) => { setDataFim(d); setPeriodo("custom"); }} />
       </div>
 
       {isLoading ? (
