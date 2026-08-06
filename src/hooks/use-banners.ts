@@ -27,14 +27,12 @@ function useInvalidateBanners(restauranteId: string | undefined) {
   };
 }
 
-type BannerInput = Parameters<typeof criarBannerFn>[0] extends never ? never : Record<string, unknown>;
-
 export function useCriarBanner(restauranteId: string | undefined) {
   const fn = useServerFn(criarBannerFn);
   const invalidate = useInvalidateBanners(restauranteId);
   return useMutation({
     mutationFn: (banner: Omit<Banner, "id" | "restaurante_id">) =>
-      fn({ data: { restauranteId: restauranteId!, banner } as unknown as BannerInput }),
+      fn({ data: { restauranteId: restauranteId!, banner } }),
     onSuccess: invalidate,
   });
 }
@@ -44,13 +42,7 @@ export function useAtualizarBanner(restauranteId: string | undefined) {
   const invalidate = useInvalidateBanners(restauranteId);
   return useMutation({
     mutationFn: (params: { id: string; banner: Partial<Omit<Banner, "id" | "restaurante_id">> }) =>
-      fn({
-        data: {
-          id: params.id,
-          restauranteId: restauranteId!,
-          banner: params.banner,
-        } as unknown as BannerInput,
-      }),
+      fn({ data: { id: params.id, restauranteId: restauranteId!, banner: params.banner } }),
     onSuccess: invalidate,
   });
 }
