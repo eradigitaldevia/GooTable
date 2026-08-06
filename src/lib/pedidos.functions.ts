@@ -68,8 +68,7 @@ export const listarPedidosDoDiaFn = createServerFn({ method: "POST" })
     const { supabase, userId } = context;
     await assertAcessoRestaurante(supabase, userId, data.restauranteId);
 
-    const inicio = new Date();
-    inicio.setHours(0, 0, 0, 0);
+    const inicio = inicioDoDia();
 
     const { data: peds, error: pErr } = await supabase
       .from("pedidos")
