@@ -30,6 +30,7 @@ export function AbaEmAberto({
 
   const [selecionados, setSelecionados] = useState<Set<string>>(new Set());
   const [cancelLoteOpen, setCancelLoteOpen] = useState(false);
+  const [cancelarUmId, setCancelarUmId] = useState<string | null>(null);
   const [aberto, setAberto] = useState<any | null>(null);
 
   const pedidos = (data?.pedidos ?? []) as any[];
@@ -52,12 +53,16 @@ export function AbaEmAberto({
     else setSelecionados(new Set());
   }
 
-  function handleCancelarUm(id: string) {
-    if (!confirm("Cancelar este pedido?")) return;
+  function handleCancelarUmConfirm(motivo: string) {
+    const id = cancelarUmId;
+    if (!id) return;
     cancelarMut.mutate(
-      { pedidoId: id, motivo: "Cancelado via auditoria" },
+      { pedidoId: id, motivo: motivo || "Cancelado via auditoria" },
       {
-        onSuccess: () => toast.success("Pedido cancelado"),
+        onSuccess: () => {
+          toast.success("Pedido cancelado");
+          setCancelarUmId(null);
+        },
         onError: (e) => toast.error(e instanceof Error ? e.message : "Erro"),
       },
     );
@@ -147,7 +152,7 @@ export function AbaEmAberto({
             <Button size="sm" variant="ghost" onClick={() => handleEntregarUm(p.id)} title="Marcar entregue">
               <CheckCircle2 className="h-4 w-4" />
             </Button>
-            <Button size="sm" variant="ghost" onClick={() => handleCancelarUm(p.id)} title="Cancelar pedido">
+            <Button size="sm" variant="ghost" onClick={() => setCancelarUmId(p.id)} title="Cancelar pedido">
               <X className="h-4 w-4" />
             </Button>
           </div>
@@ -161,6 +166,17 @@ export function AbaEmAberto({
         quantidade={selecionados.size}
         onConfirm={handleCancelarLoteConfirm}
         loading={cancelarLoteMut.isPending}
+      />
+
+      <CancelarLoteDialog
+        key={cancelarUmId ?? "nenhum"}
+        open={!!cancelarUmId}
+        onOpenChange={(v) => {
+          if (!v) setCancelarUmId(null);
+        }}
+        quantidade={1}
+        onConfirm={handleCancelarUmConfirm}
+        loading={cancelarMut.isPending}
       />
 
       <DetalhePedidoLazy
