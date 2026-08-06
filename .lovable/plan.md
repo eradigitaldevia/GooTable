@@ -1,51 +1,28 @@
-# Corrigir URL pública dos QR Codes das mesas
+# Corrigir o login (build quebrado por dependências desalinhadas)
 
-## Problema
+## O que está acontecendo
 
-O `MesaCard` monta a URL do QR com `window.location.origin`. Quando o admin abre o painel pelo editor do Lovable (`id-preview--*.lovable.app`), o QR é gerado apontando para esse host — que **exige login do Lovable**. O cliente que escaneia cai numa tela de autenticação em vez do cardápio.
+O login não falha por senha errada: o formulário nem chega a enviar a requisição de autenticação. Reproduzi no preview — ao clicar em "Entrar" o botão fica girando e **nenhuma chamada de autenticação é feita** (confirmado também nos logs de autenticação do backend, que não registram nenhuma tentativa de login recente, apenas um erro antigo de token expirado).
 
-O domínio publicado (`dine-tap-flow.lovable.app`) já é público; o QR só precisa apontar para ele (ou para o domínio próprio do restaurante, se houver).
+A causa é o build da aplicação, que está falhando desde a última atualização de dependências feita na correção de segurança:
 
-## Solução
+```text
+"getScriptPreloadAttrs" is not exported by @tanstack/router-core
+```
 
-Adicionar um campo opcional **"URL pública do cardápio"** por restaurante. O QR usa esse valor; se vazio, usa `window.location.origin` (comportamento atual, sem regressão).
+O pacote `@tanstack/react-start` foi atualizado e passou a exigir uma versão mais nova do roteador (1.170.x), enquanto o `@tanstack/react-router` do projeto continua travado em 1.168.x. Com versões incompatíveis, o bundle da aplicação quebra e a tela de login fica sem comportamento.
 
-## Mudanças
+## Correção
 
-### 1. Banco (migration)
-- `ALTER TABLE public.restaurantes ADD COLUMN url_publica_cardapio text NULL;`
-- Sem alteração de RLS/GRANT (coluna nova em tabela existente).
+1. Alinhar os pacotes TanStack para a mesma linha de versão:
+   - `@tanstack/react-router` → `^1.170.20`
+   - `@tanstack/router-plugin` → versão correspondente 1.170.x
+   - manter `@tanstack/react-start` na versão atual (1.168.37), que já espera o núcleo 1.170.x
+   - `@tanstack/zod-adapter` acompanhando a mesma linha
+2. Reinstalar dependências e confirmar que `router-core` e `start-client-core` resolvem para a mesma linha 1.170.x.
+3. Rodar o build para confirmar que o erro `getScriptPreloadAttrs` desapareceu.
+4. Revalidar o login no preview: com credenciais inválidas deve aparecer a mensagem "Email ou senha incorretos" (prova de que a chamada está saindo) e com credenciais válidas deve redirecionar para a área correta.
 
-### 2. Backend
-- `src/lib/configuracoes.functions.ts` (`atualizarConfiguracoesFn`, aba `geral`): aceitar e persistir `url_publica_cardapio` (validação Zod: string opcional, trim, deve começar com `http://` ou `https://`, sem barra final).
-- `src/lib/restaurante.functions.ts` (carregamento do "meu restaurante"): incluir a coluna no `select` para o admin ler o valor salvo.
+## Escopo
 
-### 3. Tipos
-- `ConfigPayload` em `src/hooks/use-configuracoes.ts`, variante `geral`: adicionar `url_publica_cardapio: string | null`.
-
-### 4. UI — Configurações
-- `src/components/configuracoes/geral-form.tsx`: novo `Input` "URL pública do cardápio" (opcional), com placeholder `https://dine-tap-flow.lovable.app` e texto de ajuda curto explicando que é o endereço usado nos QR Codes das mesas. Incluir no submit junto com os demais campos da aba Geral.
-
-### 5. UI — Mesas (correção do QR)
-- `src/routes/_authenticated/admin/mesas.tsx`: ler `url_publica_cardapio` do restaurante carregado e passar como prop `baseUrl` para `MesaCard`.
-- `src/components/mesas/mesa-card.tsx`: aceitar `baseUrl?: string`. Montar `url` como `(baseUrl?.replace(/\/$/, "") || origin) + "/m/" + qr_token`. Manter `origin` como fallback — zero regressão quando o campo estiver vazio.
-
-## Detalhes técnicos
-
-- Nada muda no fluxo público do cardápio (`/m/$qrToken`) — só a forma como a string do QR é montada no admin.
-- Nenhuma refatoração: apenas adição de coluna, campo de formulário e prop opcional.
-- Nenhum impacto em layout, cores, tipografia, regras de negócio ou outros fluxos.
-
-## Arquivos afetados
-
-- `supabase/migrations/<novo>.sql` (criar)
-- `src/lib/configuracoes.functions.ts`
-- `src/lib/restaurante.functions.ts`
-- `src/hooks/use-configuracoes.ts`
-- `src/components/configuracoes/geral-form.tsx`
-- `src/routes/_authenticated/admin/mesas.tsx`
-- `src/components/mesas/mesa-card.tsx`
-
-## Pós-implementação (ação do usuário)
-
-Abrir **Admin → Configurações → Geral**, preencher `https://dine-tap-flow.lovable.app` (ou o domínio próprio, quando houver) e salvar. Os QR Codes passam a ser gerados com esse endereço imediatamente.
+Apenas `package.json` (versões das dependências TanStack). Nenhuma alteração em telas, rotas, regras de negócio ou banco de dados. As correções de segurança aplicadas anteriormente (incluindo o pin do `dompurify`) permanecem intactas.
