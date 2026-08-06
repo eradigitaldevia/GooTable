@@ -9,9 +9,10 @@ import { CardsGridSkeleton } from "@/components/admin/skeletons/cards-grid-skele
 import { CardapioItensPanel } from "@/components/cardapio/cardapio-itens-panel";
 import { DestinosPreparoPanel } from "@/components/cardapio/destinos-preparo-panel";
 import { CardapioPreviaPanel } from "@/components/cardapio/cardapio-previa-panel";
+import { BannersPanel } from "@/components/cardapio/banners-panel";
 
 const searchSchema = z.object({
-  tab: z.enum(["itens", "destinos", "previa"]).default("itens"),
+  tab: z.enum(["itens", "destinos", "banners", "previa"]).default("itens"),
 });
 
 export const Route = createFileRoute("/_authenticated/admin/cardapio")({
@@ -59,13 +60,14 @@ function Cardapio() {
         value={tab}
         onValueChange={(v) =>
           navigate({
-            search: { tab: v as "itens" | "destinos" | "previa" },
+            search: { tab: v as "itens" | "destinos" | "banners" | "previa" },
           })
         }
       >
         <TabsList>
           <TabsTrigger value="itens">Itens</TabsTrigger>
           <TabsTrigger value="destinos">Destinos de preparo</TabsTrigger>
+          <TabsTrigger value="banners">Banners</TabsTrigger>
           <TabsTrigger value="previa">Prévia</TabsTrigger>
         </TabsList>
 
@@ -74,6 +76,9 @@ function Cardapio() {
         </TabsContent>
         <TabsContent value="destinos" className="mt-6">
           <DestinosPreparoPanel restaurante={restaurante} />
+        </TabsContent>
+        <TabsContent value="banners" className="mt-6">
+          <BannersPanel restaurante={restaurante} />
         </TabsContent>
         <TabsContent value="previa" className="mt-6">
           <CardapioPreviaPanel restaurante={restaurante} />
