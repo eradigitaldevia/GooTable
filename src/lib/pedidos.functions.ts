@@ -1592,10 +1592,8 @@ export const listarPedidosCanceladosFn = createServerFn({ method: "POST" })
     const { supabase, userId } = context;
     await assertAcessoRestaurante(supabase, userId, data.restauranteId);
 
-    const ini = new Date(data.dataInicio);
-    ini.setHours(0, 0, 0, 0);
-    const fim = new Date(data.dataFim);
-    fim.setHours(23, 59, 59, 999);
+    const ini = inicioDoDia(data.dataInicio);
+    const fim = fimDoDia(data.dataFim);
 
     const { data: peds, error } = await supabase
       .from("pedidos")
