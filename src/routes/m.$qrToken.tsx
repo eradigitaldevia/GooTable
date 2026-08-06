@@ -9,6 +9,7 @@ import { ClienteHeader } from "@/components/cliente/cliente-header";
 import { CarrinhoPersistente } from "@/components/cliente/carrinho-persistente";
 import { ProdutoDialog } from "@/components/cliente/produto-dialog";
 import { ProdutosListaCategorizada } from "@/components/cliente/produtos-lista-categorizada";
+import { BannersCardapio } from "@/components/cardapio/banners-cardapio";
 import { ChamarGarcomFab } from "@/components/cliente/chamar-garcom-fab";
 import { useCardapioPublico } from "@/hooks/use-cardapio-publico";
 import type { ProdutoPublico } from "@/lib/cardapio-publico.functions";
@@ -133,6 +134,7 @@ function ClienteMenu() {
   const mesa = data && !("erro" in data) ? data.mesa : null;
   const categorias = data && !("erro" in data) ? data.categorias : [];
   const produtos = data && !("erro" in data) ? data.produtos : [];
+  const banners = data && !("erro" in data) ? (data.banners ?? []) : [];
 
   const produtosFiltrados = useMemo(() => {
     return produtos.filter((p) => {
@@ -316,6 +318,17 @@ function ClienteMenu() {
       />
 
       <main className="mx-auto max-w-2xl px-4 py-4">
+        {banners.length > 0 && (
+          <BannersCardapio
+            banners={banners}
+            className="mb-4"
+            onCategoria={(id) => setCatAtiva(id)}
+            onProduto={(id) => {
+              const p = produtos.find((x) => x.id === id);
+              if (p) setSelecionado(p);
+            }}
+          />
+        )}
         <ProdutosListaCategorizada
           produtosFiltrados={produtosFiltrados}
           porCategoria={porCategoria}
