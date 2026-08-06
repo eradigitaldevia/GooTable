@@ -8,6 +8,7 @@ import { Download, FileText } from "lucide-react";
 import { toast } from "sonner";
 import { useGerarRelatorioComissoes } from "@/hooks/use-relatorios";
 import { exportarRelatorioCSV, gerarRelatorioPDF } from "@/lib/relatorios-export";
+import { dataLocal } from "@/lib/data-fuso";
 
 type Canal = "mesa" | "balcao" | "delivery" | "retirada";
 const CANAL_OPCOES: { value: Canal; label: string }[] = [
