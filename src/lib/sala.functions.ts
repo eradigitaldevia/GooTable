@@ -366,8 +366,7 @@ export const carregarSalaAdminFn = createServerFn({ method: "POST" })
       };
     }
 
-    const inicio = new Date();
-    inicio.setHours(0, 0, 0, 0);
+    const inicio = inicioDoDia();
 
     const { data: peds, error: pErr } = await supabase
       .from("pedidos")
