@@ -3,6 +3,7 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { assertAcessoRestaurante, assertPlatformAdmin } from "./auth.server";
+import { inicioDoDia, inicioDoMes } from "./data-fuso";
 
 /* ---------- Admin do restaurante: resumo via RPC ---------- */
 
@@ -58,8 +59,7 @@ export const dashboardDeliveryFn = createServerFn({ method: "POST" })
     const { supabase, userId } = context;
     await assertAcessoRestaurante(supabase, userId, data.restauranteId);
 
-    const inicioDia = new Date();
-    inicioDia.setHours(0, 0, 0, 0);
+    const inicioDia = inicioDoDia();
 
     const { data: peds, error } = await supabase
       .from("pedidos")
@@ -268,9 +268,7 @@ export const listarRestaurantesAdminFn = createServerFn({ method: "POST" })
     const { supabase, userId } = context;
     await assertPlatformAdmin(supabase, userId);
 
-    const inicioMes = new Date();
-    inicioMes.setDate(1);
-    inicioMes.setHours(0, 0, 0, 0);
+    const inicioMes = inicioDoMes();
 
     const [{ data: rests }, { data: pedidos }, { data: mesas }] = await Promise.all([
       supabaseAdmin
