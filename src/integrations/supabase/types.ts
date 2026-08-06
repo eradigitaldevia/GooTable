@@ -174,6 +174,62 @@ export type Database = {
         }
         Relationships: []
       }
+      banners_cardapio: {
+        Row: {
+          alt_text: string
+          ativo: boolean
+          atualizado_em: string
+          criado_em: string
+          destino_tipo: string
+          destino_valor: string | null
+          exibir_em: string
+          id: string
+          imagem_url: string
+          ordem: number
+          restaurante_id: string
+          vigencia_fim: string | null
+          vigencia_inicio: string | null
+        }
+        Insert: {
+          alt_text?: string
+          ativo?: boolean
+          atualizado_em?: string
+          criado_em?: string
+          destino_tipo?: string
+          destino_valor?: string | null
+          exibir_em?: string
+          id?: string
+          imagem_url: string
+          ordem?: number
+          restaurante_id: string
+          vigencia_fim?: string | null
+          vigencia_inicio?: string | null
+        }
+        Update: {
+          alt_text?: string
+          ativo?: boolean
+          atualizado_em?: string
+          criado_em?: string
+          destino_tipo?: string
+          destino_valor?: string | null
+          exibir_em?: string
+          id?: string
+          imagem_url?: string
+          ordem?: number
+          restaurante_id?: string
+          vigencia_fim?: string | null
+          vigencia_inicio?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "banners_cardapio_restaurante_id_fkey"
+            columns: ["restaurante_id"]
+            isOneToOne: false
+            referencedRelation: "restaurantes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       caixa_eventos: {
         Row: {
           ator_nome: string | null

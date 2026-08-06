@@ -4,6 +4,8 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { assertAcessoRestaurante } from "./auth.server";
 import { gerarPixPayload } from "./pix";
+import { carregarBannersPublicos } from "./banners-publicos.server";
+import type { BannerPublico } from "./banners.functions";
 import type { Json } from "@/integrations/supabase/types";
 import type {
   CategoriaPublica,
@@ -44,12 +46,13 @@ export interface EnderecoCliente {
 }
 
 export type GetRestauranteDeliveryResultado =
-  | { erro: string; restaurante?: never; categorias?: never; produtos?: never }
+  | { erro: string; restaurante?: never; categorias?: never; produtos?: never; banners?: never }
   | {
       erro?: never;
       restaurante: RestauranteDeliveryPublico;
       categorias: CategoriaPublica[];
       produtos: ProdutoPublico[];
+      banners: BannerPublico[];
     };
 
 /* ============================================================
@@ -228,7 +231,7 @@ export const getRestauranteDeliveryFn = createServerFn({ method: "POST" })
     try {
       const r = await carregarRestaurantePorSlug(data.slug);
 
-      const [{ data: cats, error: cErr }, { data: prods, error: pErr }] = await Promise.all([
+      const [{ data: cats, error: cErr }, { data: prods, error: pErr }, banners] = await Promise.all([
         supabaseAdmin
           .from("categorias")
           .select("id, nome, ordem")
@@ -242,6 +245,7 @@ export const getRestauranteDeliveryFn = createServerFn({ method: "POST" })
           .eq("restaurante_id", r.id)
           .eq("disponivel", true)
           .order("ordem"),
+        carregarBannersPublicos(r.id, "delivery"),
       ]);
       if (cErr) return { erro: cErr.message };
       if (pErr) return { erro: pErr.message };
@@ -257,6 +261,7 @@ export const getRestauranteDeliveryFn = createServerFn({ method: "POST" })
         restaurante: publico,
         categorias: (cats ?? []) as CategoriaPublica[],
         produtos: (prods ?? []) as ProdutoPublico[],
+        banners,
       };
     } catch (e) {
       return { erro: e instanceof Error ? e.message : "Falha ao carregar restaurante" };

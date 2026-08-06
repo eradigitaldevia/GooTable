@@ -1,6 +1,8 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { carregarBannersPublicos } from "./banners-publicos.server";
+import type { BannerPublico } from "./banners.functions";
 
 export interface RestaurantePublico {
   id: string;
@@ -37,13 +39,21 @@ export interface ProdutoPublico {
 }
 
 export type ResultadoCardapio =
-  | { erro: string; restaurante?: never; mesa?: never; categorias?: never; produtos?: never }
+  | {
+      erro: string;
+      restaurante?: never;
+      mesa?: never;
+      categorias?: never;
+      produtos?: never;
+      banners?: never;
+    }
   | {
       erro?: never;
       restaurante: RestaurantePublico;
       mesa: MesaPublica;
       categorias: CategoriaPublica[];
       produtos: ProdutoPublico[];
+      banners: BannerPublico[];
     };
 
 /** Carrega cardápio inteiro a partir do qrToken da mesa (público). */
@@ -59,7 +69,7 @@ export const carregarCardapioPublicoFn = createServerFn({ method: "POST" })
     if (!m) return { erro: "Mesa não encontrada. Verifique o QR Code." };
     if (!m.ativa) return { erro: "Esta mesa está inativa no momento." };
 
-    const [{ data: r }, { data: cats }, { data: prods }] = await Promise.all([
+    const [{ data: r }, { data: cats }, { data: prods }, banners] = await Promise.all([
       supabaseAdmin
         .from("restaurantes")
         .select(
@@ -78,6 +88,7 @@ export const carregarCardapioPublicoFn = createServerFn({ method: "POST" })
         .eq("restaurante_id", m.restaurante_id)
         .eq("disponivel", true)
         .order("ordem"),
+      carregarBannersPublicos(m.restaurante_id, "mesa"),
     ]);
 
     if (!r) return { erro: "Restaurante não encontrado." };
@@ -90,5 +101,6 @@ export const carregarCardapioPublicoFn = createServerFn({ method: "POST" })
       mesa: m as MesaPublica,
       categorias: (cats ?? []) as CategoriaPublica[],
       produtos: (prods ?? []) as ProdutoPublico[],
+      banners,
     };
   });

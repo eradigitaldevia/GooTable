@@ -23,6 +23,8 @@ import {
 } from "@/components/ui/select";
 import { TemaCardapioProvider } from "@/components/cliente/tema-cardapio-provider";
 import { ProdutosListaCategorizada } from "@/components/cliente/produtos-lista-categorizada";
+import { BannersCardapio } from "@/components/cardapio/banners-cardapio";
+import type { BannerPublico } from "@/lib/banners.functions";
 import { ProdutoDialog } from "@/components/cliente/produto-dialog";
 import { CarrinhoItemRow } from "@/components/cliente/carrinho-item-row";
 import { DeliveryHeader } from "@/components/delivery/delivery-header";
@@ -204,6 +206,7 @@ function DeliveryPage() {
 
   const categorias = data && !("erro" in data) ? data.categorias : [];
   const produtos = data && !("erro" in data) ? data.produtos : [];
+  const banners = data && !("erro" in data) ? (data.banners ?? []) : [];
 
   return (
     <TemaCardapioProvider restaurante={restaurante} className="min-h-screen pb-32">
@@ -240,6 +243,7 @@ function DeliveryPage() {
           minimo={restaurante.delivery_pedido_minimo}
           categorias={categorias}
           produtos={produtos}
+          banners={banners}
           aberto={aberto}
           mensagemFechado={mensagemFechado}
           onContinuar={() => irPara(state.telefone ? "revisao" : "identificacao")}
@@ -424,6 +428,7 @@ function StepCardapio({
   minimo,
   categorias,
   produtos,
+  banners,
   aberto,
   mensagemFechado,
   onContinuar,
@@ -435,6 +440,7 @@ function StepCardapio({
   minimo: number;
   categorias: { id: string; nome: string; ordem: number }[];
   produtos: ProdutoPublico[];
+  banners: BannerPublico[];
   aberto: boolean;
   mensagemFechado: string | null;
   onContinuar: () => void;
@@ -522,6 +528,17 @@ function StepCardapio({
       </div>
 
       <main className="mx-auto max-w-2xl px-4 py-4">
+        {banners.length > 0 && (
+          <BannersCardapio
+            banners={banners}
+            className="mb-4"
+            onCategoria={(id) => setCatAtiva(id)}
+            onProduto={(id) => {
+              const p = produtos.find((x) => x.id === id);
+              if (p) setSelecionado(p);
+            }}
+          />
+        )}
         <ProdutosListaCategorizada
           produtosFiltrados={filtrados}
           porCategoria={porCategoria}
