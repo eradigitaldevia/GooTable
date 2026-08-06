@@ -18,6 +18,12 @@ function toISODate(d: Date) {
   return d.toISOString().slice(0, 10);
 }
 
+function diasAtras(n: number) {
+  const d = new Date();
+  d.setDate(d.getDate() - n);
+  return d;
+}
+
 export function AbaHistorico({
   restauranteId,
   deliverySlug,
@@ -25,25 +31,26 @@ export function AbaHistorico({
   restauranteId: string;
   deliverySlug: string | null;
 }) {
-  const ontem = useMemo(() => {
-    const d = new Date();
-    d.setDate(d.getDate() - 1);
-    return d;
-  }, []);
-  const seteDiasAtras = useMemo(() => {
-    const d = new Date();
-    d.setDate(d.getDate() - 7);
-    return d;
-  }, []);
+  const hoje = useMemo(() => new Date(), []);
+  const seteDiasAtras = useMemo(() => diasAtras(7), []);
 
   const [dataInicio, setDataInicio] = useState<Date>(seteDiasAtras);
-  const [dataFim, setDataFim] = useState<Date>(ontem);
+  const [dataFim, setDataFim] = useState<Date>(hoje);
+  const [periodo, setPeriodo] = useState<"7" | "30" | "60" | "custom">("7");
   const [canal, setCanal] = useState<"todos" | "mesa" | "delivery" | "retirada">("todos");
   const [status, setStatus] = useState<"todos" | "entregue" | "cancelado" | "abertos">("todos");
   const [busca, setBusca] = useState("");
   const [page, setPage] = useState(1);
   const pageSize = 50;
   const [aberto, setAberto] = useState<any | null>(null);
+
+  function aplicarPeriodo(v: "7" | "30" | "60" | "custom") {
+    setPeriodo(v);
+    setPage(1);
+    if (v === "custom") return;
+    setDataInicio(diasAtras(Number(v)));
+    setDataFim(new Date());
+  }
 
   const { data, isLoading } = usePedidosHistorico({
     restauranteId,
@@ -69,9 +76,21 @@ export function AbaHistorico({
 
   return (
     <div className="space-y-4">
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
-        <DateField label="De" value={dataInicio} onChange={(d) => { setDataInicio(d); setPage(1); }} />
-        <DateField label="Até" value={dataFim} onChange={(d) => { setDataFim(d); setPage(1); }} />
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-6">
+        <div className="space-y-1">
+          <Label>Período</Label>
+          <Select value={periodo} onValueChange={(v) => aplicarPeriodo(v as any)}>
+            <SelectTrigger><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="7">Últimos 7 dias</SelectItem>
+              <SelectItem value="30">Últimos 30 dias</SelectItem>
+              <SelectItem value="60">Últimos 60 dias</SelectItem>
+              <SelectItem value="custom">Personalizado</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <DateField label="De" value={dataInicio} onChange={(d) => { setDataInicio(d); setPeriodo("custom"); setPage(1); }} />
+        <DateField label="Até" value={dataFim} onChange={(d) => { setDataFim(d); setPeriodo("custom"); setPage(1); }} />
         <div className="space-y-1">
           <Label>Canal</Label>
           <Select value={canal} onValueChange={(v) => { setCanal(v as any); setPage(1); }}>
