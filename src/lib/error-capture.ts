@@ -34,6 +34,22 @@ if (typeof globalThis.addEventListener === "function") {
   );
 }
 
+// The dev node adapter (srvx) aborts its request AbortController when the socket
+// closes early. That rejection escapes our fetch handler and reaches the process,
+// where it would be reported as a runtime error. Swallow only those.
+const nodeProcess = (globalThis as { process?: NodeJS.Process }).process;
+if (nodeProcess && typeof nodeProcess.on === "function") {
+  nodeProcess.on("unhandledRejection", (reason: unknown) => {
+    if (isClientDisconnect(reason)) return;
+    record(reason);
+  });
+  nodeProcess.on("uncaughtException", (error: unknown) => {
+    if (isClientDisconnect(error)) return;
+    record(error);
+    console.error(error);
+  });
+}
+
 export function consumeLastCapturedError(): unknown {
   if (!lastCapturedError) return undefined;
   if (Date.now() - lastCapturedError.at > TTL_MS) {
