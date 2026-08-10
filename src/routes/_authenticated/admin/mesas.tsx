@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { useMeuRestaurante } from "@/hooks/use-restaurante";
-import { useMesas } from "@/hooks/use-mesas";
+import { useMesas, useRealtimeMesas } from "@/hooks/use-mesas";
 import { Button } from "@/components/ui/button";
 import { Printer, QrCode as QrIcon } from "lucide-react";
 import { NovaMesaDialog } from "@/components/mesas/nova-mesa-dialog";
