@@ -16,12 +16,15 @@ Causa raiz: a função `confirmar_pagamento` credita o `total_pago` da comanda, 
 ## O que fazer
 
 ### 1. Fechar a comanda quando ela for totalmente paga
+
 Ajustar `confirmar_pagamento` (migração SQL): após somar o pagamento, se `total_pago >= total` e `total > 0`, marcar a comanda como `fechada` com `fechada_em = now()`. Pagamento parcial continua com o comportamento atual.
 
 ### 2. Re-identificação
+
 Nenhuma mudança de código necessária: `buscarClientePorTelefoneFn` já só reaproveita comandas com status `aberta`. Com o item 1, ela passa a criar comanda nova e "Minha conta" começa zerada.
 
 ### 3. Limpeza dos dados atuais
+
 Migração pontual fechando a comanda já quitada da Alison e, conforme sua escolha abaixo, encerrando as sessões antigas das Mesas 01 e 02 (abertas desde maio).
 
 ## Ponto em aberto (preciso da sua decisão)
@@ -29,7 +32,8 @@ Migração pontual fechando a comanda já quitada da Alison e, conforme sua esco
 Existem comandas abertas **sem consumo** (total 0,00) de outros clientes nessas sessões antigas. Devo:
 
 - (a) fechar apenas a comanda paga da Alison, ou
-- (b) encerrar por completo as sessões antigas das Mesas 01 e 02, fechando também as comandas zeradas?
+- (b) encerrar por completo as sessões antigas das Mesas 01 e 02, fechando também as comandas zeradas?  
+Resposta: (b) encerrar por completo as sessões antigas das Mesas 01 e 02, fechando também as comandas zeradas.
 
 ## Detalhes técnicos
 
