@@ -15,6 +15,7 @@ interface Mesa {
   numero: string;
   qr_token: string;
   ativa: boolean;
+  sessao_aberta?: boolean;
 }
 
 function MesaCardComponent({
@@ -56,10 +57,24 @@ function MesaCardComponent({
     }
   }, [excluir, mesa.id, mesa.numero]);
 
+  const emAtendimento = mesa.sessao_aberta === true;
+
   return (
-    <div className="break-inside-avoid rounded-2xl border border-border bg-card p-5 text-center shadow-[var(--shadow-soft)] print:border-2 print:shadow-none">
+    <div
+      className={`break-inside-avoid rounded-2xl border bg-card p-5 text-center shadow-[var(--shadow-soft)] print:border-2 print:shadow-none print:ring-0 ${
+        emAtendimento
+          ? "border-emerald-500/60 ring-1 ring-emerald-500/30"
+          : "border-border"
+      }`}
+    >
       <div className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Mesa</div>
       <div className="text-3xl font-extrabold tracking-tight">{mesa.numero}</div>
+      {emAtendimento && (
+        <div className="mt-1.5 flex items-center justify-center gap-1.5 text-xs font-medium text-emerald-600 dark:text-emerald-400">
+          <span className="inline-block h-2 w-2 rounded-full bg-emerald-500" />
+          Em atendimento
+        </div>
+      )}
       {garcomNome && (
         <div className="mt-2 flex justify-center">
           <GarcomBadge nome={garcomNome} />
