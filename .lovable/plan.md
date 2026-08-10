@@ -11,9 +11,9 @@ Substituir o único destaque atual ("Em atendimento" verde para qualquer sessão
 | `livre` | sem sessão aberta | card atual, sem destaque |
 | `aguardando` | sessão aberta, nenhum pedido | contorno âmbar + badge "Aguardando pedido" |
 | `em_atendimento` | sessão aberta com pedidos ativos (recebido/em_preparo/pronto) | contorno verde + badge "Em atendimento" |
-| `a_pagar` | sessão aberta, comanda aberta, sem pedidos ativos e com consumo lançado | contorno azul + badge "Sem pedidos ativos" |
+| `sem_pedidos_ativos` | sessão aberta, comanda aberta, sem pedidos ativos e com consumo lançado | contorno azul + badge "Sem pedidos ativos" |
 
-Prioridade de avaliação: `a_pagar` só quando não há pedido ativo; `em_atendimento` prevalece sobre `a_pagar`.
+Prioridade de avaliação: `sem_pedidos_ativos` só quando não há pedido ativo; `em_atendimento` prevalece sobre `sem_pedidos_ativos`.
 
 ## Etapa 1 — Agregado no backend
 
