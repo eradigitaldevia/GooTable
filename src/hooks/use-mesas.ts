@@ -56,3 +56,62 @@ export function useExcluirMesa(restauranteId: string | undefined) {
     onSuccess: invalidate,
   });
 }
+
+/**
+ * Inscreve em mudanças de mesa_sessoes, pedidos e comandas do restaurante,
+ * invalidando a query de mesas (com debounce) para o grid refletir o estado
+ * das mesas em tempo real.
+ */
+export function useRealtimeMesas(restauranteId: string | undefined) {
+  const qc = useQueryClient();
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    if (!restauranteId) return;
+    const invalidate = () => {
+      if (timer.current) clearTimeout(timer.current);
+      timer.current = setTimeout(() => {
+        qc.invalidateQueries({ queryKey: queryKeys.mesas(restauranteId) });
+      }, 400);
+    };
+
+    const channel = supabase
+      .channel(`mesas-realtime-${restauranteId}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "mesa_sessoes",
+          filter: `restaurante_id=eq.${restauranteId}`,
+        },
+        invalidate,
+      )
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "pedidos",
+          filter: `restaurante_id=eq.${restauranteId}`,
+        },
+        invalidate,
+      )
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "comandas",
+          filter: `restaurante_id=eq.${restauranteId}`,
+        },
+        invalidate,
+      )
+      .subscribe();
+
+    return () => {
+      if (timer.current) clearTimeout(timer.current);
+      supabase.removeChannel(channel);
+    };
+  }, [restauranteId, qc]);
+}
