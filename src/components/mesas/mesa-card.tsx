@@ -9,14 +9,44 @@ import { Eye, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { useAlterarMesaAtiva, useExcluirMesa } from "@/hooks/use-mesas";
 import { GarcomBadge } from "@/components/garcons/garcom-badge";
+import { formatBRL } from "@/lib/cart";
+import type { SituacaoMesa } from "@/lib/mesas.functions";
 
 interface Mesa {
   id: string;
   numero: string;
   qr_token: string;
   ativa: boolean;
-  sessao_aberta?: boolean;
+  sessao_aberta: boolean;
+  situacao: SituacaoMesa;
+  pedidos_ativos: number;
+  total_parcial: number;
 }
+
+const SITUACAO: Record<
+  SituacaoMesa,
+  { border: string; badge?: string; dot?: string; text?: string }
+> = {
+  livre: { border: "border-border" },
+  aguardando: {
+    border: "border-amber-500/60 ring-1 ring-amber-500/30",
+    badge: "Aguardando pedido",
+    dot: "bg-amber-500",
+    text: "text-amber-600 dark:text-amber-400",
+  },
+  em_atendimento: {
+    border: "border-emerald-500/60 ring-1 ring-emerald-500/30",
+    badge: "Em atendimento",
+    dot: "bg-emerald-500",
+    text: "text-emerald-600 dark:text-emerald-400",
+  },
+  sem_pedidos_ativos: {
+    border: "border-blue-500/60 ring-1 ring-blue-500/30",
+    badge: "Sem pedidos ativos",
+    dot: "bg-blue-500",
+    text: "text-blue-600 dark:text-blue-400",
+  },
+};
 
 function MesaCardComponent({
   mesa,
