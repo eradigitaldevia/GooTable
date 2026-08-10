@@ -328,7 +328,9 @@ function ChamadosAdmin() {
                   {tipos.map((t) => (
                     <tr key={t.id} className="border-t">
                       <td className="px-4 py-3 font-medium">{t.nome}</td>
-                      <td className="px-4 py-3 text-muted-foreground">{t.icone}</td>
+                      <td className="px-4 py-3 text-muted-foreground">
+                        {ICONES.find((i) => i.value === t.icone)?.label ?? t.icone}
+                      </td>
                       <td className="px-4 py-3">
                         {t.ativo ? <Badge>Ativo</Badge> : <Badge variant="secondary">Inativo</Badge>}
                       </td>
