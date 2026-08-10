@@ -9,14 +9,44 @@ import { Eye, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { useAlterarMesaAtiva, useExcluirMesa } from "@/hooks/use-mesas";
 import { GarcomBadge } from "@/components/garcons/garcom-badge";
+import { formatBRL } from "@/lib/cart";
+import type { SituacaoMesa } from "@/lib/mesas.functions";
 
 interface Mesa {
   id: string;
   numero: string;
   qr_token: string;
   ativa: boolean;
-  sessao_aberta?: boolean;
+  sessao_aberta: boolean;
+  situacao: SituacaoMesa;
+  pedidos_ativos: number;
+  total_parcial: number;
 }
+
+const SITUACAO: Record<
+  SituacaoMesa,
+  { border: string; badge?: string; dot?: string; text?: string }
+> = {
+  livre: { border: "border-border" },
+  aguardando: {
+    border: "border-amber-500/60 ring-1 ring-amber-500/30",
+    badge: "Aguardando pedido",
+    dot: "bg-amber-500",
+    text: "text-amber-600 dark:text-amber-400",
+  },
+  em_atendimento: {
+    border: "border-emerald-500/60 ring-1 ring-emerald-500/30",
+    badge: "Em atendimento",
+    dot: "bg-emerald-500",
+    text: "text-emerald-600 dark:text-emerald-400",
+  },
+  sem_pedidos_ativos: {
+    border: "border-blue-500/60 ring-1 ring-blue-500/30",
+    badge: "Sem pedidos ativos",
+    dot: "bg-blue-500",
+    text: "text-blue-600 dark:text-blue-400",
+  },
+};
 
 function MesaCardComponent({
   mesa,
@@ -57,22 +87,25 @@ function MesaCardComponent({
     }
   }, [excluir, mesa.id, mesa.numero]);
 
-  const emAtendimento = mesa.sessao_aberta === true;
+  const est = SITUACAO[mesa.situacao];
+  const temSessao = mesa.sessao_aberta;
 
   return (
     <div
-      className={`break-inside-avoid rounded-2xl border bg-card p-5 text-center shadow-[var(--shadow-soft)] print:border-2 print:shadow-none print:ring-0 ${
-        emAtendimento
-          ? "border-emerald-500/60 ring-1 ring-emerald-500/30"
-          : "border-border"
-      }`}
+      className={`break-inside-avoid rounded-2xl border bg-card p-5 text-center shadow-[var(--shadow-soft)] print:border-2 print:shadow-none print:ring-0 ${est.border}`}
     >
       <div className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Mesa</div>
       <div className="text-3xl font-extrabold tracking-tight">{mesa.numero}</div>
-      {emAtendimento && (
-        <div className="mt-1.5 flex items-center justify-center gap-1.5 text-xs font-medium text-emerald-600 dark:text-emerald-400">
-          <span className="inline-block h-2 w-2 rounded-full bg-emerald-500" />
-          Em atendimento
+      {est.badge && est.dot && est.text && (
+        <div className={`mt-1.5 flex items-center justify-center gap-1.5 text-xs font-medium ${est.text}`}>
+          <span className={`inline-block h-2 w-2 rounded-full ${est.dot}`} />
+          {est.badge}
+        </div>
+      )}
+      {temSessao && (
+        <div className="no-print mt-1 text-[11px] font-medium text-muted-foreground">
+          {mesa.pedidos_ativos} {mesa.pedidos_ativos === 1 ? "pedido" : "pedidos"}
+          {mesa.total_parcial > 0 ? ` • ${formatBRL(mesa.total_parcial)}` : ""}
         </div>
       )}
       {garcomNome && (

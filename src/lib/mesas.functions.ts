@@ -3,12 +3,21 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { assertAcessoRestaurante } from "./auth.server";
 
+export type SituacaoMesa =
+  | "livre"
+  | "aguardando"
+  | "em_atendimento"
+  | "sem_pedidos_ativos";
+
 export interface Mesa {
   id: string;
   numero: string;
   qr_token: string;
   ativa: boolean;
   sessao_aberta: boolean;
+  situacao: SituacaoMesa;
+  pedidos_ativos: number;
+  total_parcial: number;
 }
 
 export const listarMesasFn = createServerFn({ method: "POST" })
@@ -26,24 +35,81 @@ export const listarMesasFn = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
 
     const mesaIds = (rows ?? []).map((m) => m.id as string);
-    let sessaoAberta = new Set<string>();
+    // mesa_id -> sessao_id (apenas sessões abertas)
+    const sessaoPorMesa = new Map<string, string>();
     if (mesaIds.length > 0) {
       const { data: sess } = await supabase
         .from("mesa_sessoes")
-        .select("mesa_id")
+        .select("id, mesa_id")
         .eq("restaurante_id", data.restauranteId)
         .eq("status", "aberta")
         .in("mesa_id", mesaIds);
-      sessaoAberta = new Set((sess ?? []).map((s) => s.mesa_id as string));
+      for (const s of sess ?? []) {
+        sessaoPorMesa.set(s.mesa_id as string, s.id as string);
+      }
     }
 
-    return (rows ?? []).map((m) => ({
-      id: m.id as string,
-      numero: m.numero as string,
-      qr_token: m.qr_token as string,
-      ativa: m.ativa as boolean,
-      sessao_aberta: sessaoAberta.has(m.id as string),
-    })) as Mesa[];
+    const sessaoIds = Array.from(sessaoPorMesa.values());
+    const pedidosAtivosPorMesa = new Map<string, number>();
+    const totalParcialPorMesa = new Map<string, number>();
+
+    if (sessaoIds.length > 0) {
+      // pedidos ativos por mesa (recebido/em_preparo/pronto)
+      const { data: peds } = await supabase
+        .from("pedidos")
+        .select("mesa_id, status")
+        .eq("restaurante_id", data.restauranteId)
+        .in("mesa_id", mesaIds)
+        .in("status", ["recebido", "em_preparo", "pronto"]);
+      for (const p of peds ?? []) {
+        const mid = p.mesa_id as string;
+        pedidosAtivosPorMesa.set(
+          mid,
+          (pedidosAtivosPorMesa.get(mid) ?? 0) + 1,
+        );
+      }
+
+      // comandas abertas por sessao (consumo lançado)
+      const { data: coms } = await supabase
+        .from("comandas")
+        .select("sessao_id, total")
+        .eq("status", "aberta")
+        .in("sessao_id", sessaoIds);
+      const totalPorSessao = new Map<string, number>();
+      for (const c of coms ?? []) {
+        const sid = c.sessao_id as string;
+        totalPorSessao.set(
+          sid,
+          (totalPorSessao.get(sid) ?? 0) + Number(c.total ?? 0),
+        );
+      }
+      for (const [mid, sid] of sessaoPorMesa) {
+        totalParcialPorMesa.set(mid, totalPorSessao.get(sid) ?? 0);
+      }
+    }
+
+    return (rows ?? []).map((m) => {
+      const id = m.id as string;
+      const temSessao = sessaoPorMesa.has(id);
+      let situacao: SituacaoMesa = "livre";
+      if (temSessao) {
+        const ativos = pedidosAtivosPorMesa.get(id) ?? 0;
+        const total = totalParcialPorMesa.get(id) ?? 0;
+        if (ativos > 0) situacao = "em_atendimento";
+        else if (total > 0) situacao = "sem_pedidos_ativos";
+        else situacao = "aguardando";
+      }
+      return {
+        id,
+        numero: m.numero as string,
+        qr_token: m.qr_token as string,
+        ativa: m.ativa as boolean,
+        sessao_aberta: temSessao,
+        situacao,
+        pedidos_ativos: pedidosAtivosPorMesa.get(id) ?? 0,
+        total_parcial: totalParcialPorMesa.get(id) ?? 0,
+      };
+    }) as Mesa[];
   });
 
 export const criarMesaFn = createServerFn({ method: "POST" })
