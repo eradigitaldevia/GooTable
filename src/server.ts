@@ -25,6 +25,16 @@ function brandedErrorResponse(): Response {
   });
 }
 
+function isAbortError(error: unknown): boolean {
+  if (!error || typeof error !== "object") return false;
+  const candidate = error as { name?: unknown; cause?: unknown };
+  return candidate.name === "AbortError" || isAbortError(candidate.cause);
+}
+
+function abortedResponse(): Response {
+  return new Response(null, { status: 204 });
+}
+
 function isCatastrophicSsrErrorBody(body: string, responseStatus: number): boolean {
   let payload: unknown;
   try {
@@ -62,7 +72,10 @@ async function normalizeCatastrophicSsrResponse(response: Response): Promise<Res
     return response;
   }
 
-  console.error(consumeLastCapturedError() ?? new Error(`h3 swallowed SSR error: ${body}`));
+  const capturedError = consumeLastCapturedError();
+  if (isAbortError(capturedError)) return abortedResponse();
+
+  console.error(capturedError ?? new Error(`h3 swallowed SSR error: ${body}`));
   return brandedErrorResponse();
 }
 
@@ -73,6 +86,7 @@ export default {
       const response = await handler.fetch(request, env, ctx);
       return await normalizeCatastrophicSsrResponse(response);
     } catch (error) {
+      if (isAbortError(error)) return abortedResponse();
       console.error(error);
       return brandedErrorResponse();
     }
