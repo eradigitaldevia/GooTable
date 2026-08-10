@@ -3,7 +3,7 @@ import { ArrowLeft, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { MesaDetalheView } from "@/components/sala/mesa-detalhe-view";
 
-export const Route = createFileRoute("/_authenticated/admin/mesas/$mesaId")({
+export const Route = createFileRoute("/_authenticated/admin/mesas_/$mesaId")({
   component: AdminMesaDetalhePage,
 });
 
