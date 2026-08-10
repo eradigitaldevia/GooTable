@@ -1,10 +1,11 @@
 import { memo, useCallback, lazy, Suspense } from "react";
+import { Link } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 const QRCodeSVG = lazy(() =>
   import("qrcode.react").then((m) => ({ default: m.QRCodeSVG })),
 );
-import { Trash2 } from "lucide-react";
+import { Eye, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { useAlterarMesaAtiva, useExcluirMesa } from "@/hooks/use-mesas";
 import { GarcomBadge } from "@/components/garcons/garcom-badge";
@@ -76,9 +77,16 @@ function MesaCardComponent({
           <Switch checked={mesa.ativa} onCheckedChange={toggle} />
           Ativa
         </label>
-        <Button variant="ghost" size="icon" onClick={remove}>
-          <Trash2 className="h-4 w-4" />
-        </Button>
+        <div className="flex items-center gap-1">
+          <Button asChild variant="outline" size="sm">
+            <Link to="/admin/mesas/$mesaId" params={{ mesaId: mesa.id }}>
+              <Eye className="mr-1 h-3.5 w-3.5" /> Ver mesa
+            </Link>
+          </Button>
+          <Button variant="ghost" size="icon" onClick={remove}>
+            <Trash2 className="h-4 w-4" />
+          </Button>
+        </div>
       </div>
     </div>
   );

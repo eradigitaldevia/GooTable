@@ -1,3 +1,4 @@
+import { Link } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
 import { formatBRL } from "@/lib/cart";
 import { GarcomBadge } from "@/components/garcons/garcom-badge";
@@ -87,15 +88,24 @@ export function PedidoCard({
     >
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <span className="text-sm font-bold">
-            {pedido.canal && pedido.canal !== "mesa"
-              ? pedido.canal === "delivery"
+          {pedido.canal && pedido.canal !== "mesa" ? (
+            <span className="text-sm font-bold">
+              {pedido.canal === "delivery"
                 ? "Delivery"
                 : pedido.canal === "retirada"
                   ? "Retirada"
-                  : `Mesa ${mesaNumero ?? "?"}`
-              : `Mesa ${mesaNumero ?? "?"}`}
-          </span>
+                  : `Mesa ${mesaNumero ?? "?"}`}
+            </span>
+          ) : (
+            <Link
+              to="/admin/mesas/$mesaId"
+              params={{ mesaId: pedido.mesa_id }}
+              className="text-sm font-bold text-primary underline-offset-2 hover:underline"
+              onClick={(e) => e.stopPropagation()}
+            >
+              Mesa {mesaNumero ?? "?"}
+            </Link>
+          )}
           <CanalBadge canal={pedido.canal} showLabel={false} />
         </div>
         <span className="text-xs text-muted-foreground">{minutos}min</span>

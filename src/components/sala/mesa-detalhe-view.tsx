@@ -64,7 +64,8 @@ function chipClasses(status: StatusPedido) {
 
 export type BackTo =
   | { to: "/sala" }
-  | { to: "/admin/garcons/$garcomId/sala"; params: { garcomId: string } };
+  | { to: "/admin/garcons/$garcomId/sala"; params: { garcomId: string } }
+  | { to: "/admin/mesas" };
 
 export function MesaDetalheView({
   mesaId,
@@ -172,6 +173,11 @@ export function MesaDetalheView({
   const backLink =
     backTo.to === "/admin/garcons/$garcomId/sala" ? (
       <Link to={backTo.to} params={backTo.params}>
+        <ArrowLeft className="mr-1 h-4 w-4" />
+        Voltar
+      </Link>
+    ) : backTo.to === "/admin/mesas" ? (
+      <Link to="/admin/mesas">
         <ArrowLeft className="mr-1 h-4 w-4" />
         Voltar
       </Link>
