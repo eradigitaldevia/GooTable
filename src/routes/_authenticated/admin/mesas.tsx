@@ -36,6 +36,7 @@ function Mesas() {
   const { data: mesas = [], isLoading: loadingMesas } = useMesas(restaurante?.id);
   const [origin, setOrigin] = useState("");
   const { nomeDaMesa } = useGarcomLookup(restaurante?.id);
+  useRealtimeMesas(restaurante?.id);
 
   useEffect(() => {
     if (typeof window !== "undefined") setOrigin(window.location.origin);
