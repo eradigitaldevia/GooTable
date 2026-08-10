@@ -1,3 +1,4 @@
+import { Link } from "@tanstack/react-router";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -139,7 +140,7 @@ export function TabelaPedidos<T extends LinhaPedido>({
                 className={onAbrir ? "cursor-pointer" : undefined}
                 onClick={(e) => {
                   const tgt = e.target as HTMLElement;
-                  if (tgt.closest("button, [role=checkbox], input")) return;
+                  if (tgt.closest("button, [role=checkbox], input, a")) return;
                   onAbrir?.(p);
                 }}
               >
@@ -159,7 +160,20 @@ export function TabelaPedidos<T extends LinhaPedido>({
                 )}
                 <TableCell className="whitespace-nowrap text-sm">{fmtDataHora(p.criado_em)}</TableCell>
                 <TableCell className="capitalize text-sm">{canal}</TableCell>
-                <TableCell className="text-sm">{label}</TableCell>
+                <TableCell className="text-sm">
+                  {canal === "mesa" && mesa ? (
+                    <Link
+                      to="/admin/mesas/$mesaId"
+                      params={{ mesaId: p.mesa_id }}
+                      className="text-primary underline-offset-2 hover:underline"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      {label}
+                    </Link>
+                  ) : (
+                    label
+                  )}
+                </TableCell>
                 {mostrarItens && (
                   <TableCell className="text-right tabular-nums">{itensCount?.[p.id] ?? 0}</TableCell>
                 )}
