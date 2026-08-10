@@ -163,7 +163,7 @@ export function AdminSidebar({
         )}
       </div>
 
-      <nav className={cn("flex-1 space-y-1 overflow-y-auto", collapsed ? "p-2" : "p-3")}>
+      <nav className={cn("sidebar-scroll flex-1 space-y-1 overflow-y-auto", collapsed ? "p-2" : "p-3")}>
         {navGroups.map((group, groupIdx) => {
           const renderedItems = group.items.map((item) => {
           const active = item.exact ? path === item.to : path.startsWith(item.to);
