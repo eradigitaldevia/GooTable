@@ -6,12 +6,19 @@ const TTL_MS = 5_000;
 
 // Client disconnects (navigation, HMR reload, closed tab) surface as
 // "aborted" / AbortError from the node HTTP layer. They are not app errors.
-function isClientDisconnect(error: unknown): boolean {
+export function isClientDisconnect(error: unknown): boolean {
   if (!error || typeof error !== "object") return false;
   const candidate = error as { name?: unknown; message?: unknown; code?: unknown; cause?: unknown };
   if (candidate.name === "AbortError") return true;
   if (candidate.code === "ECONNRESET" || candidate.code === "ABORT_ERR") return true;
-  if (typeof candidate.message === "string" && /^aborted$/i.test(candidate.message)) return true;
+  if (
+    typeof candidate.message === "string" &&
+    /(^aborted$|aborted|ECONNRESET|socket hang up|premature close|request cancell?ed)/i.test(
+      candidate.message,
+    )
+  ) {
+    return true;
+  }
   return isClientDisconnect(candidate.cause);
 }
 
