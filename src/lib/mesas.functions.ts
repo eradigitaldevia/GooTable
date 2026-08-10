@@ -8,6 +8,7 @@ export interface Mesa {
   numero: string;
   qr_token: string;
   ativa: boolean;
+  sessao_aberta: boolean;
 }
 
 export const listarMesasFn = createServerFn({ method: "POST" })
@@ -23,7 +24,26 @@ export const listarMesasFn = createServerFn({ method: "POST" })
       .eq("is_virtual", false)
       .order("numero");
     if (error) throw new Error(error.message);
-    return (rows ?? []) as Mesa[];
+
+    const mesaIds = (rows ?? []).map((m) => m.id as string);
+    let sessaoAberta = new Set<string>();
+    if (mesaIds.length > 0) {
+      const { data: sess } = await supabase
+        .from("mesa_sessoes")
+        .select("mesa_id")
+        .eq("restaurante_id", data.restauranteId)
+        .eq("status", "aberta")
+        .in("mesa_id", mesaIds);
+      sessaoAberta = new Set((sess ?? []).map((s) => s.mesa_id as string));
+    }
+
+    return (rows ?? []).map((m) => ({
+      id: m.id as string,
+      numero: m.numero as string,
+      qr_token: m.qr_token as string,
+      ativa: m.ativa as boolean,
+      sessao_aberta: sessaoAberta.has(m.id as string),
+    })) as Mesa[];
   });
 
 export const criarMesaFn = createServerFn({ method: "POST" })
