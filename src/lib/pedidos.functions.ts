@@ -576,8 +576,8 @@ export const resumoContaFn = createServerFn({ method: "POST" })
     const taxaValor = taxaHab ? Number(atual?.taxa_servico_valor ?? 0) : 0;
     const totalSugerido = comandaAtual ? Number(comandaAtual.total) : 0;
 
-
     return {
+
       comanda_atual: comandaAtual,
       meu_subtotal_na_comanda: meuSubtotal,
       total_mesa: totalMesa,
