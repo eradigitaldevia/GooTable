@@ -514,6 +514,8 @@ export const detalheVisitaFn = createServerFn({ method: "POST" })
       throw new Error("Visita inválida");
     }
 
+    await assertClienteNaSessao(data.sessaoId, data.clienteId);
+
     const { data: mesaRow, error: mrErr } = await supabaseAdmin
       .from("mesas")
       .select("numero")
