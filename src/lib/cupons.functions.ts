@@ -3,6 +3,7 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { assertAcessoRestaurante } from "./auth.server";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { assertClienteNaSessao } from "./sessoes.server";
 
 export type CupomTipo = "percentual" | "valor_fixo";
 
@@ -171,6 +172,10 @@ export const aplicarCupomComandaFn = createServerFn({ method: "POST" })
       .eq("id", sessao?.mesa_id as string)
       .maybeSingle();
     if (!mesa || mesa.qr_token !== data.qrToken) throw new Error("Mesa inválida");
+
+    if (data.clienteId) {
+      await assertClienteNaSessao(comanda.sessao_id as string, data.clienteId);
+    }
 
     const { data: res, error } = await supabaseAdmin.rpc("aplicar_cupom_comanda", {
       _comanda_id: data.comandaId,

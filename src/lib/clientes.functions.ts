@@ -10,6 +10,7 @@ import {
   detectarConflitoMesa,
   type ConflitoMesa,
 } from "./sessoes.server";
+import { assertClienteNaSessao } from "./sessoes.server";
 
 export interface ClienteIdentificado {
   id: string;
@@ -299,6 +300,8 @@ export const minhaContaFn = createServerFn({ method: "POST" })
       throw new Error("Cliente inválido");
     }
 
+    await assertClienteNaSessao(data.sessaoId, data.clienteId);
+
     // Pedidos da sessão atual (para somar consumo na sessão)
     const { data: pedsSessao, error: psErr } = await supabaseAdmin
       .from("pedidos")
@@ -510,6 +513,8 @@ export const detalheVisitaFn = createServerFn({ method: "POST" })
     if (!sessao || sessao.restaurante_id !== mesa.restaurante_id) {
       throw new Error("Visita inválida");
     }
+
+    await assertClienteNaSessao(data.sessaoId, data.clienteId);
 
     const { data: mesaRow, error: mrErr } = await supabaseAdmin
       .from("mesas")

@@ -561,6 +561,7 @@ export type Database = {
           sessao_id: string
           status: Database["public"]["Enums"]["comanda_status"]
           subtotal: number
+          taxa_servico_valor: number
           tipo: Database["public"]["Enums"]["comanda_tipo"]
           titular_cliente_id: string | null
           total: number
@@ -578,6 +579,7 @@ export type Database = {
           sessao_id: string
           status?: Database["public"]["Enums"]["comanda_status"]
           subtotal?: number
+          taxa_servico_valor?: number
           tipo?: Database["public"]["Enums"]["comanda_tipo"]
           titular_cliente_id?: string | null
           total?: number
@@ -595,6 +597,7 @@ export type Database = {
           sessao_id?: string
           status?: Database["public"]["Enums"]["comanda_status"]
           subtotal?: number
+          taxa_servico_valor?: number
           tipo?: Database["public"]["Enums"]["comanda_tipo"]
           titular_cliente_id?: string | null
           total?: number
@@ -2202,12 +2205,12 @@ export type Database = {
         Args: { _pedido_id: string }
         Returns: undefined
       }
-      derivar_status_pedido: {
-        Args: { _pedido_id: string }
-        Returns: undefined
-      }
       encerrar_turno_garcom: { Args: { _garcom_id: string }; Returns: number }
       encerrar_turnos_expirados: { Args: never; Returns: number }
+      fechar_comanda_se_quitada: {
+        Args: { _comanda_id: string }
+        Returns: boolean
+      }
       fechar_turno_caixa: {
         Args: {
           _contagem_fisica: number
@@ -2257,6 +2260,10 @@ export type Database = {
         Returns: boolean
       }
       recalcular_couvert_comanda: {
+        Args: { _comanda_id: string }
+        Returns: undefined
+      }
+      recalcular_total_comanda: {
         Args: { _comanda_id: string }
         Returns: undefined
       }

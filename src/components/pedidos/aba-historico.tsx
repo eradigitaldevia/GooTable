@@ -92,6 +92,11 @@ export function AbaHistorico({
         </div>
         <DateField label="De" value={dataInicio} onChange={(d) => { setDataInicio(d); setPeriodo("custom"); setPage(1); }} />
         <DateField label="Até" value={dataFim} onChange={(d) => { setDataFim(d); setPeriodo("custom"); setPage(1); }} />
+      </div>
+      <p className="text-xs text-muted-foreground">
+        O histórico considera apenas pedidos até ontem. Os pedidos de hoje ficam na aba Hoje.
+      </p>
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-6">
         <div className="space-y-1">
           <Label>Canal</Label>
           <Select value={canal} onValueChange={(v) => { setCanal(v as any); setPage(1); }}>

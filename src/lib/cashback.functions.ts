@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { assertClienteNaSessao } from "./sessoes.server";
 
 /**
  * Aplica resgate de cashback do cliente em uma comanda.
@@ -62,6 +63,8 @@ export const aplicarCashbackFn = createServerFn({ method: "POST" })
     if (!cliente || cliente.restaurante_id !== mesa.restaurante_id) {
       throw new Error("Cliente inválido");
     }
+
+    await assertClienteNaSessao(sessao.id as string, data.clienteId);
 
     const { data: rpc, error: rpcErr } = await supabaseAdmin.rpc("aplicar_cashback", {
       _comanda_id: data.comandaId,
