@@ -2202,10 +2202,6 @@ export type Database = {
         Args: { _pedido_id: string }
         Returns: undefined
       }
-      derivar_status_pedido: {
-        Args: { _pedido_id: string }
-        Returns: undefined
-      }
       encerrar_turno_garcom: { Args: { _garcom_id: string }; Returns: number }
       encerrar_turnos_expirados: { Args: never; Returns: number }
       fechar_comanda_se_quitada: {
