@@ -561,6 +561,7 @@ export type Database = {
           sessao_id: string
           status: Database["public"]["Enums"]["comanda_status"]
           subtotal: number
+          taxa_servico_valor: number
           tipo: Database["public"]["Enums"]["comanda_tipo"]
           titular_cliente_id: string | null
           total: number
@@ -578,6 +579,7 @@ export type Database = {
           sessao_id: string
           status?: Database["public"]["Enums"]["comanda_status"]
           subtotal?: number
+          taxa_servico_valor?: number
           tipo?: Database["public"]["Enums"]["comanda_tipo"]
           titular_cliente_id?: string | null
           total?: number
@@ -595,6 +597,7 @@ export type Database = {
           sessao_id?: string
           status?: Database["public"]["Enums"]["comanda_status"]
           subtotal?: number
+          taxa_servico_valor?: number
           tipo?: Database["public"]["Enums"]["comanda_tipo"]
           titular_cliente_id?: string | null
           total?: number
