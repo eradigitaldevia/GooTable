@@ -1,5 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useEffect, useMemo } from "react";
+import { useEffect } from "react";
+
 import { ArrowLeft, Loader2, Users, User, CheckCircle2 } from "lucide-react";
 import { useClienteMesa } from "@/hooks/use-cliente-mesa";
 import { useResumoConta } from "@/hooks/use-pedidos";
