@@ -1732,10 +1732,15 @@ export const marcarPedidosEntreguesEmLoteFn = createServerFn({ method: "POST" })
       if (error) erros.push({ pedidoId: id, mensagem: error.message });
       else {
         ok++;
-        await supabaseAdmin
-          .rpc("creditar_cashback_pedido", { _pedido_id: id })
-          .then(() => {})
-          .then(undefined, () => {});
+        const { error: cbErr } = await supabaseAdmin.rpc("creditar_cashback_pedido", {
+          _pedido_id: id,
+        });
+        if (cbErr) {
+          erros.push({
+            pedidoId: id,
+            mensagem: `Entregue, mas o cashback não foi creditado: ${cbErr.message}`,
+          });
+        }
       }
     }
     return { ok, erros };
