@@ -39,22 +39,9 @@ function ContaMesa() {
 
   useRealtimeMesa(qrToken, identidade?.sessaoId);
 
-  const taxaKey = `taxa-servico-incluir:${qrToken}`;
-  const [incluirTaxa, setIncluirTaxa] = useState<boolean>(() => {
-    if (typeof window === "undefined") return true;
-    const v = window.localStorage.getItem(taxaKey);
-    return v == null ? true : v === "1";
-  });
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    window.localStorage.setItem(taxaKey, incluirTaxa ? "1" : "0");
-  }, [incluirTaxa, taxaKey]);
-
   const taxaValor = data?.taxa_servico_habilitada ? data.taxa_servico_valor : 0;
-  const totalFinal = useMemo(() => {
-    const base = data?.comanda_atual?.total ?? 0;
-    return base + (incluirTaxa ? taxaValor : 0);
-  }, [data, incluirTaxa, taxaValor]);
+  const totalFinal = data?.comanda_atual?.total ?? 0;
+
 
   return (
     <TemaCardapioProvider restaurante={restauranteTema} className="min-h-screen pb-12">
