@@ -572,15 +572,12 @@ export const resumoContaFn = createServerFn({ method: "POST" })
 
     const taxaHab = !!rest?.taxa_servico_habilitada;
     const taxaPerc = Number(rest?.taxa_servico_percentual ?? 0);
-    const baseTaxa = comandaAtual ? Number(comandaAtual.total) : 0;
-    // Valor persistido na comanda (mantido pelo banco); mantém o cálculo como
-    // fallback caso a comanda ainda não tenha sido recalculada.
-    const taxaValor = taxaHab && taxaPerc > 0
-      ? Number(atual?.taxa_servico_valor ?? ((baseTaxa * taxaPerc) / 100).toFixed(2))
-      : 0;
-    const totalSugerido = baseTaxa + taxaValor;
+    // O total da comanda já é mantido pelo banco com taxa de serviço incluída.
+    const taxaValor = taxaHab ? Number(atual?.taxa_servico_valor ?? 0) : 0;
+    const totalSugerido = comandaAtual ? Number(comandaAtual.total) : 0;
 
     return {
+
       comanda_atual: comandaAtual,
       meu_subtotal_na_comanda: meuSubtotal,
       total_mesa: totalMesa,

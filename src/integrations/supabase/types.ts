@@ -2220,6 +2220,10 @@ export type Database = {
         }
         Returns: Json
       }
+      gerar_comissao_comanda: {
+        Args: { _comanda_id: string }
+        Returns: undefined
+      }
       gerar_pedido_garcons: {
         Args: { _mesa_id: string; _pedido_id: string; _restaurante_id: string }
         Returns: number
