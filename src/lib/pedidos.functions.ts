@@ -4,7 +4,7 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import type { TablesUpdate } from "@/integrations/supabase/types";
 import { assertAcessoRestaurante } from "./auth.server";
-import { sanitizarComandasOrfas } from "./sessoes.server";
+import { sanitizarComandasOrfas, assertClienteNaSessao } from "./sessoes.server";
 import { inicioDoDia, fimDoDia } from "./data-fuso";
 
 export type StatusPedido =
@@ -443,10 +443,12 @@ export const resumoContaFn = createServerFn({ method: "POST" })
       .eq("id", mesa.restaurante_id as string)
       .maybeSingle();
 
+    await assertClienteNaSessao(data.sessaoId, data.clienteId);
+
     // Comandas da sessão
     const { data: comandas, error: cErr } = await supabaseAdmin
       .from("comandas")
-      .select("id, tipo, subtotal, cashback_resgatado, total, total_pago, desconto_cupom, cupom_id")
+      .select("id, tipo, subtotal, cashback_resgatado, total, total_pago, desconto_cupom, cupom_id, taxa_servico_valor")
       .eq("sessao_id", data.sessaoId)
       .eq("status", "aberta");
     if (cErr) throw new Error(cErr.message);
@@ -459,6 +461,7 @@ export const resumoContaFn = createServerFn({ method: "POST" })
       total_pago: number;
       desconto_cupom: number;
       cupom_id: string | null;
+      taxa_servico_valor: number;
     }>;
 
     const atual = lista.find((c) => c.id === data.comandaId) ?? null;
@@ -570,7 +573,11 @@ export const resumoContaFn = createServerFn({ method: "POST" })
     const taxaHab = !!rest?.taxa_servico_habilitada;
     const taxaPerc = Number(rest?.taxa_servico_percentual ?? 0);
     const baseTaxa = comandaAtual ? Number(comandaAtual.total) : 0;
-    const taxaValor = taxaHab && taxaPerc > 0 ? Number(((baseTaxa * taxaPerc) / 100).toFixed(2)) : 0;
+    // Valor persistido na comanda (mantido pelo banco); mantém o cálculo como
+    // fallback caso a comanda ainda não tenha sido recalculada.
+    const taxaValor = taxaHab && taxaPerc > 0
+      ? Number(atual?.taxa_servico_valor ?? ((baseTaxa * taxaPerc) / 100).toFixed(2))
+      : 0;
     const totalSugerido = baseTaxa + taxaValor;
 
     return {
