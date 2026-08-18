@@ -62,3 +62,19 @@ Hoje a taxa só existe no cálculo de exibição em `resumoContaFn`; some dos re
 - Etapas 1 a 4 e 6 são migrações no banco; 5 e 7 são alterações no código.
 - Nenhuma mudança de layout, cores ou textos fora do indicado.
 - Após cada etapa: typecheck e teste do fluxo mesa -> pedido -> cozinha -> entrega -> pagamento.
+
+&nbsp;
+
+Garante que todas as etapas sejam implementadas corretamente.
+
+IMPORTANTE:
+
+Execute APENAS a alteração explicitamente solicitada.
+
+NÃO refatore, otimize, melhore ou modifique código não relacionado.
+
+NÃO faça suposições.
+
+Se algo não estiver claro, PARE e pergunte antes de alterar qualquer coisa.
+
+Preserve 100% do comportamento e da funcionalidade existentes.
