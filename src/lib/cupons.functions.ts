@@ -172,6 +172,10 @@ export const aplicarCupomComandaFn = createServerFn({ method: "POST" })
       .maybeSingle();
     if (!mesa || mesa.qr_token !== data.qrToken) throw new Error("Mesa inválida");
 
+    if (data.clienteId) {
+      await assertClienteNaSessao(comanda.sessao_id as string, data.clienteId);
+    }
+
     const { data: res, error } = await supabaseAdmin.rpc("aplicar_cupom_comanda", {
       _comanda_id: data.comandaId,
       _codigo: data.codigo,
