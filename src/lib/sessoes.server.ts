@@ -238,6 +238,25 @@ export interface ConflitoMesa {
 }
 
 /**
+ * Garante que o cliente informado realmente participa da sessão informada.
+ * Protege endpoints públicos (QR) contra leitura de dados de outro cliente
+ * apenas conhecendo o UUID dele.
+ */
+export async function assertClienteNaSessao(
+  sessaoId: string,
+  clienteId: string,
+): Promise<void> {
+  const { data, error } = await supabaseAdmin
+    .from("mesa_sessao_clientes")
+    .select("id")
+    .eq("sessao_id", sessaoId)
+    .eq("cliente_id", clienteId)
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  if (!data) throw new Error("Cliente inválido para esta sessão");
+}
+
+/**
  * Verifica se o cliente já possui vínculo ativo (saiu_em IS NULL) em uma
  * comanda `aberta` de uma sessão `aberta` em OUTRA mesa do mesmo restaurante.
  * Retorna o conflito (com flag `podeTransferir`) ou `null` quando livre.
