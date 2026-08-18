@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo } from "react";
 import { ArrowLeft, Loader2, Users, User, CheckCircle2 } from "lucide-react";
 import { useClienteMesa } from "@/hooks/use-cliente-mesa";
 import { useResumoConta } from "@/hooks/use-pedidos";
@@ -8,9 +8,9 @@ import { formatBRL } from "@/lib/cart";
 import { CupomInput } from "@/components/cliente/cupom-input";
 import { DividirContaDialog } from "@/components/cliente/dividir-conta-dialog";
 import { CarrinhoPersistente } from "@/components/cliente/carrinho-persistente";
-import { Switch } from "@/components/ui/switch";
 import { useCardapioPublico } from "@/hooks/use-cardapio-publico";
 import { TemaCardapioProvider } from "@/components/cliente/tema-cardapio-provider";
+
 
 export const Route = createFileRoute("/m/$qrToken_/conta")({
   component: ContaMesa,
