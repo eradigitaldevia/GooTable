@@ -3,6 +3,7 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { assertAcessoRestaurante } from "./auth.server";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { assertClienteNaSessao } from "./sessoes.server";
 
 export type CupomTipo = "percentual" | "valor_fixo";
 
