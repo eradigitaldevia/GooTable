@@ -163,34 +163,21 @@ function ContaMesa() {
                 </div>
                 {data.taxa_servico_habilitada && taxaValor > 0 && (
                   <div className="mt-2 rounded-md border bg-muted/30 p-2">
-                    <div className="flex items-center justify-between gap-2">
-                      <div className="min-w-0">
-                        <div className="text-sm font-medium">
-                          {data.taxa_servico_descricao ||
-                            `Taxa de serviço (${data.taxa_servico_percentual}%)`}
-                        </div>
-                        <p className="text-[11px] text-muted-foreground">
-                          Opcional — você pode incluir ou retirar a qualquer momento.
-                        </p>
-                      </div>
-                      <Switch
-                        checked={incluirTaxa}
-                        onCheckedChange={setIncluirTaxa}
-                        aria-label="Incluir taxa de serviço"
-                      />
+                    <div className="text-sm font-medium">
+                      {data.taxa_servico_descricao ||
+                        `Taxa de serviço (${data.taxa_servico_percentual}%)`}
                     </div>
-                    {incluirTaxa && (
-                      <div className="mt-1 flex justify-between text-sm">
-                        <span className="text-muted-foreground">+ Taxa</span>
-                        <span className="font-semibold">{formatBRL(taxaValor)}</span>
-                      </div>
-                    )}
+                    <div className="mt-1 flex justify-between text-sm">
+                      <span className="text-muted-foreground">+ Taxa</span>
+                      <span className="font-semibold">{formatBRL(taxaValor)}</span>
+                    </div>
                     <div className="mt-1 flex justify-between border-t pt-1 text-base">
-                      <span className="font-semibold">Total sugerido</span>
+                      <span className="font-semibold">Total</span>
                       <span className="font-bold text-primary">{formatBRL(totalFinal)}</span>
                     </div>
                   </div>
                 )}
+
                 {data.comanda_atual.total > 0 &&
                   data.comanda_atual.total_pago >= data.comanda_atual.total && (
                     <div className="mt-2 flex items-center justify-center gap-2 rounded-lg bg-success/10 px-3 py-2 text-sm font-semibold text-success">
