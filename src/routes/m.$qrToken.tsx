@@ -5,6 +5,7 @@ import { HeaderClienteSkeleton } from "@/components/cliente/skeletons/header-cli
 import { ProdutosListaSkeleton } from "@/components/cliente/skeletons/produtos-lista-skeleton";
 import { addToCart, cartCount, getCart } from "@/lib/cart";
 import { toast } from "sonner";
+import { SESSAO_ENCERRADA_MENSAGEM } from "@/lib/sessao-messages";
 import { ClienteHeader } from "@/components/cliente/cliente-header";
 import { CarrinhoPersistente } from "@/components/cliente/carrinho-persistente";
 import { ProdutoDialog } from "@/components/cliente/produto-dialog";
@@ -48,6 +49,7 @@ function ClienteMenu() {
     identidade,
     hidratado,
     conflito: conflitoSessao,
+    sessaoEncerrada,
     salvar,
   } = useClienteMesa(qrToken);
 
@@ -82,12 +84,22 @@ function ClienteMenu() {
   }, [qrToken]);
 
   // Reconhecimento do cliente que já estava identificado (mesmo device).
-  // A recuperação de sessão obsoleta acontece dentro de useClienteMesa.
+  // Se a sessão foi liberada por ociosidade, a identidade é apagada e o
+  // app volta para a tela de identificação.
   useEffect(() => {
     if (!hidratado || !identidade) return;
     showWelcome(identidade.nome);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hidratado, identidade?.clienteId]);
+
+  // Aviso quando a sessão/comanda salvas foram liberadas por ociosidade.
+  useEffect(() => {
+    if (hidratado && sessaoEncerrada) {
+      toast.error(
+        "Sua mesa foi liberada por inatividade. Leia o QR Code da mesa para pedir novamente.",
+      );
+    }
+  }, [hidratado, sessaoEncerrada]);
 
 
   const erro = data && "erro" in data ? data.erro : null;
@@ -312,6 +324,10 @@ function ClienteMenu() {
         produto={selecionado}
         onClose={() => setSelecionado(null)}
         onAdd={(item) => {
+          if (!identidade || sessaoEncerrada) {
+            toast.error(SESSAO_ENCERRADA_MENSAGEM);
+            return;
+          }
           setSelecionado(null);
           addToCart(qrToken, {
             ...item,
