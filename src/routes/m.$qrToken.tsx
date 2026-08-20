@@ -44,19 +44,26 @@ interface PendenteConflito {
 function ClienteMenu() {
   const { qrToken } = Route.useParams();
   const { data, isLoading } = useCardapioPublico(qrToken);
-  const { identidade, hidratado, precisaRehidratarSessao, salvar, limpar } =
-    useClienteMesa(qrToken);
+  const {
+    identidade,
+    hidratado,
+    conflito: conflitoSessao,
+    salvar,
+  } = useClienteMesa(qrToken);
+
   const identificar = useServerFn(identificarClienteFn);
   const entrarNaMesa = useServerFn(entrarNaMesaFn);
   const buscarPorTelefone = useServerFn(buscarClientePorTelefoneFn);
   const transferirParaMesa = useServerFn(transferirClienteParaMesaFn);
   const [enviando, setEnviando] = useState(false);
-  const [conflito, setConflito] = useState<PendenteConflito | null>(null);
+  const [conflitoLocal, setConflitoLocal] = useState<PendenteConflito | null>(null);
   const [busca, setBusca] = useState("");
   const [catAtiva, setCatAtiva] = useState<string | "todas">("todas");
   const [selecionado, setSelecionado] = useState<ProdutoPublico | null>(null);
   const [count, setCount] = useState(0);
   const [modoLookup, setModoLookup] = useState(true);
+  const conflito = conflitoLocal ?? conflitoSessao;
+  const setConflito = setConflitoLocal;
 
   const showWelcome = (nome: string) => {
     if (typeof window === "undefined") return;
@@ -75,59 +82,13 @@ function ClienteMenu() {
   }, [qrToken]);
 
   // Reconhecimento do cliente que já estava identificado (mesmo device).
+  // A recuperação de sessão obsoleta acontece dentro de useClienteMesa.
   useEffect(() => {
     if (!hidratado || !identidade) return;
-    if (precisaRehidratarSessao) return;
     showWelcome(identidade.nome);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [hidratado, identidade?.clienteId, precisaRehidratarSessao]);
+  }, [hidratado, identidade?.clienteId]);
 
-  // Sessão/comanda obsoletas: reatribui automaticamente usando o telefone salvo.
-  useEffect(() => {
-    if (!precisaRehidratarSessao || !identidade) return;
-    let cancelado = false;
-    (async () => {
-      try {
-        const r = await buscarPorTelefone({
-          data: { qrToken, telefone: identidade.telefone },
-        });
-        if (cancelado) return;
-        if (r.encontrado && !r.conflito) {
-          salvar({
-            clienteId: r.cliente.id,
-            nome: r.cliente.nome,
-            telefone: r.cliente.telefone,
-            sessaoId: r.sessaoId,
-            comandaId: r.comandaId,
-          });
-          showWelcome(r.cliente.nome);
-        } else if (r.encontrado && r.conflito) {
-          setConflito({
-            clienteId: r.cliente.id,
-            nome: r.cliente.nome,
-            telefone: r.cliente.telefone,
-            sessaoOrigemId: r.conflito.sessaoId,
-            comandaOrigemId: r.conflito.comandaId,
-            numeroMesaAtual: r.conflito.numeroMesa,
-            podeTransferir: r.conflito.podeTransferir,
-          });
-          limpar();
-        } else {
-          limpar();
-        }
-      } catch (e) {
-        if (cancelado) return;
-        toast.error(
-          e instanceof Error ? e.message : "Não foi possível restaurar sua sessão.",
-        );
-        limpar();
-      }
-    })();
-    return () => {
-      cancelado = true;
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [precisaRehidratarSessao, identidade?.clienteId, qrToken]);
 
   const erro = data && "erro" in data ? data.erro : null;
   const restaurante = data && !("erro" in data) ? data.restaurante : null;
