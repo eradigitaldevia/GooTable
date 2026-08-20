@@ -103,9 +103,7 @@ function Carrinho() {
           msg,
         );
       if (sessaoEncerradaNoEnvio) {
-        toast.error(
-          "Sua mesa foi liberada por inatividade. Leia o QR Code da mesa para pedir novamente.",
-        );
+        toast.error(SESSAO_ENCERRADA_MENSAGEM);
         navigate({ to: "/m/$qrToken", params: { qrToken } });
         return;
       }
