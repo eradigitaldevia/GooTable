@@ -98,11 +98,7 @@ function Carrinho() {
       });
     } catch (e) {
       const msg = e instanceof Error ? e.message : "";
-      const sessaoEncerradaNoEnvio =
-        /Sua mesa foi liberada por inatividade|Sess[aã]o da mesa indispon[ií]vel|Comanda indispon[ií]vel/i.test(
-          msg,
-        );
-      if (sessaoEncerradaNoEnvio) {
+      if (msg === SESSAO_ENCERRADA_MENSAGEM) {
         toast.error(SESSAO_ENCERRADA_MENSAGEM);
         navigate({ to: "/m/$qrToken", params: { qrToken } });
         return;
