@@ -49,7 +49,7 @@ function ClienteMenu() {
     hidratado,
     conflito: conflitoSessao,
     salvar,
-    limpar,
+    } = useClienteMesa(qrToken);
   } = useClienteMesa(qrToken);
   const identificar = useServerFn(identificarClienteFn);
   const entrarNaMesa = useServerFn(entrarNaMesaFn);
