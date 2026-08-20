@@ -317,6 +317,7 @@ function Configuracoes() {
       "horario_funcionamento_habilitado",
       "horario_funcionamento",
       "url_publica_cardapio",
+      "sessao_ociosa_horas",
     ],
     identidade: [
       "cor_primaria",
