@@ -1,6 +1,9 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { validarSessaoComandaFn } from "@/lib/cliente-mesa.functions";
+import {
+  buscarClientePorTelefoneFn,
+  validarSessaoComandaFn,
+} from "@/lib/cliente-mesa.functions";
 
 export interface ClienteMesaIdentidade {
   clienteId: string;
@@ -8,6 +11,16 @@ export interface ClienteMesaIdentidade {
   telefone: string;
   sessaoId: string;
   comandaId: string;
+}
+
+export interface ClienteMesaConflito {
+  clienteId: string;
+  nome: string;
+  telefone: string;
+  sessaoOrigemId: string;
+  comandaOrigemId: string;
+  numeroMesaAtual: string;
+  podeTransferir: boolean;
 }
 
 const key = (qrToken: string) => `mesa-cliente:${qrToken}`;
@@ -36,59 +49,114 @@ function readFromStorage(qrToken: string): ClienteMesaIdentidade | null {
 
 /**
  * Mantém a identidade do cliente persistida em localStorage por qrToken.
- * Retorna `identidade=null` enquanto não identificado.
- * Após hidratar, valida sessão/comanda no backend; se inválidas, expõe
- * `precisaRehidratarSessao=true` mantendo os dados do cliente.
+ *
+ * Ao hidratar, valida sessão/comanda no backend. Se estiverem fechadas
+ * (por exemplo, após a liberação automática de mesa ociosa), tenta recuperar
+ * automaticamente pelo telefone salvo, abrindo nova sessão/comanda. A
+ * recuperação vale para qualquer tela do cliente que use este hook.
  */
 export function useClienteMesa(qrToken: string) {
   const [identidade, setIdentidade] = useState<ClienteMesaIdentidade | null>(null);
   const [hidratado, setHidratado] = useState(false);
-  const [precisaRehidratarSessao, setPrecisaRehidratarSessao] = useState(false);
+  const [conflito, setConflito] = useState<ClienteMesaConflito | null>(null);
   const validar = useServerFn(validarSessaoComandaFn);
+  const buscarPorTelefone = useServerFn(buscarClientePorTelefoneFn);
+  const buscarRef = useRef(buscarPorTelefone);
+  buscarRef.current = buscarPorTelefone;
+
+  const persistir = useCallback(
+    (next: ClienteMesaIdentidade | null) => {
+      if (typeof window !== "undefined") {
+        if (next) localStorage.setItem(key(qrToken), JSON.stringify(next));
+        else localStorage.removeItem(key(qrToken));
+      }
+      setIdentidade(next);
+    },
+    [qrToken],
+  );
+
+  /**
+   * Reabre sessão/comanda para o telefone informado e regrava a identidade.
+   * Retorna a nova identidade, ou null quando não foi possível recuperar.
+   */
+  const recuperarSessao = useCallback(
+    async (base: ClienteMesaIdentidade): Promise<ClienteMesaIdentidade | null> => {
+      try {
+        const r = await buscarRef.current({
+          data: { qrToken, telefone: base.telefone },
+        });
+        if (r.encontrado && !r.conflito) {
+          const next: ClienteMesaIdentidade = {
+            clienteId: r.cliente.id,
+            nome: r.cliente.nome,
+            telefone: r.cliente.telefone,
+            sessaoId: r.sessaoId,
+            comandaId: r.comandaId,
+          };
+          setConflito(null);
+          persistir(next);
+          return next;
+        }
+        if (r.encontrado && r.conflito) {
+          setConflito({
+            clienteId: r.cliente.id,
+            nome: r.cliente.nome,
+            telefone: r.cliente.telefone,
+            sessaoOrigemId: r.conflito.sessaoId,
+            comandaOrigemId: r.conflito.comandaId,
+            numeroMesaAtual: r.conflito.numeroMesa,
+            podeTransferir: r.conflito.podeTransferir,
+          });
+        }
+        persistir(null);
+        return null;
+      } catch {
+        persistir(null);
+        return null;
+      }
+    },
+    [qrToken, persistir],
+  );
 
   useEffect(() => {
     const stored = readFromStorage(qrToken);
     setIdentidade(stored);
-    setPrecisaRehidratarSessao(false);
+    setConflito(null);
+    setHidratado(false);
     if (!stored) {
       setHidratado(true);
       return;
     }
     let cancelado = false;
     validar({ data: { sessaoId: stored.sessaoId, comandaId: stored.comandaId } })
-      .then((r) => {
+      .then(async (r) => {
         if (cancelado) return;
-        if (!r.valida) setPrecisaRehidratarSessao(true);
-        setHidratado(true);
+        if (!r.valida) await recuperarSessao(stored);
       })
-      .catch(() => {
+      .catch(async () => {
         if (cancelado) return;
-        setPrecisaRehidratarSessao(true);
-        setHidratado(true);
+        await recuperarSessao(stored);
+      })
+      .finally(() => {
+        if (!cancelado) setHidratado(true);
       });
     return () => {
       cancelado = true;
     };
-  }, [qrToken, validar]);
+  }, [qrToken, validar, recuperarSessao]);
 
   const salvar = useCallback(
     (next: ClienteMesaIdentidade) => {
-      if (typeof window !== "undefined") {
-        localStorage.setItem(key(qrToken), JSON.stringify(next));
-      }
-      setIdentidade(next);
-      setPrecisaRehidratarSessao(false);
+      setConflito(null);
+      persistir(next);
     },
-    [qrToken],
+    [persistir],
   );
 
   const limpar = useCallback(() => {
-    if (typeof window !== "undefined") {
-      localStorage.removeItem(key(qrToken));
-    }
-    setIdentidade(null);
-    setPrecisaRehidratarSessao(false);
-  }, [qrToken]);
+    setConflito(null);
+    persistir(null);
+  }, [persistir]);
 
-  return { identidade, hidratado, precisaRehidratarSessao, salvar, limpar };
+  return { identidade, hidratado, conflito, salvar, limpar, recuperarSessao };
 }
