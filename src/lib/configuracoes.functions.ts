@@ -167,6 +167,7 @@ export const atualizarConfiguracoesFn = createServerFn({ method: "POST" })
           url_publica_cardapio: data.url_publica_cardapio
             ? data.url_publica_cardapio.replace(/\/+$/, "")
             : null,
+          sessao_ociosa_horas: data.sessao_ociosa_horas,
         } as TablesUpdate<"restaurantes">;
         break;
       }
