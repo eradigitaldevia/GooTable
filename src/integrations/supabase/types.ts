@@ -1857,6 +1857,7 @@ export type Database = {
           pix_chave: string | null
           pix_habilitado: boolean
           pix_nome_titular: string | null
+          sessao_ociosa_horas: number
           slug: string
           taxa_servico_descricao: string | null
           taxa_servico_habilitada: boolean
@@ -1914,6 +1915,7 @@ export type Database = {
           pix_chave?: string | null
           pix_habilitado?: boolean
           pix_nome_titular?: string | null
+          sessao_ociosa_horas?: number
           slug: string
           taxa_servico_descricao?: string | null
           taxa_servico_habilitada?: boolean
@@ -1971,6 +1973,7 @@ export type Database = {
           pix_chave?: string | null
           pix_habilitado?: boolean
           pix_nome_titular?: string | null
+          sessao_ociosa_horas?: number
           slug?: string
           taxa_servico_descricao?: string | null
           taxa_servico_habilitada?: boolean
@@ -2205,6 +2208,7 @@ export type Database = {
         Args: { _pedido_id: string }
         Returns: undefined
       }
+      encerrar_sessoes_ociosas: { Args: never; Returns: number }
       encerrar_turno_garcom: { Args: { _garcom_id: string }; Returns: number }
       encerrar_turnos_expirados: { Args: never; Returns: number }
       fechar_comanda_se_quitada: {
