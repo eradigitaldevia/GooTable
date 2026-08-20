@@ -18,6 +18,7 @@ import { useCardapioPublico } from "@/hooks/use-cardapio-publico";
 import { UpsellCarrinho } from "@/components/cliente/upsell-carrinho";
 import { usePedidosComanda } from "@/hooks/use-pedidos-comanda";
 import { TemaCardapioProvider } from "@/components/cliente/tema-cardapio-provider";
+import { SESSAO_ENCERRADA_MENSAGEM } from "@/lib/sessao-messages";
 
 export const Route = createFileRoute("/m/$qrToken_/carrinho")({
   component: Carrinho,
