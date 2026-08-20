@@ -8,7 +8,7 @@ A mudança remove essa reabertura silenciosa e passa a exigir uma ação explíc
 
 - Sessão ainda aberta: nada muda.
 - Sessão liberada por ociosidade: ao abrir qualquer tela do cliente aparece a mensagem "Sua mesa foi liberada por inatividade. Leia o QR Code da mesa para pedir novamente" e o app volta para a tela de identificação (telefone), sem reabrir nada por conta própria.
-- Se o cliente tentar enviar um pedido com sessão liberada, o pedido é recusado, o carrinho é preservado e ele é levado à tela de identificação.
+- Se o cliente tentar adicionar um item ao carrinho ou enviar um pedido com sessão liberada, a ação é recusada, o carrinho é preservado e ele é levado à tela de identificação com o mesmo aviso.
 - Sem janela de graça: o tempo tolerado já é o configurável em Configurações → Geral ("Liberar mesa sem pedido após (horas)").
 
 ## Escopo técnico
