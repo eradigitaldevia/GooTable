@@ -49,8 +49,8 @@ function ClienteMenu() {
     hidratado,
     conflito: conflitoSessao,
     salvar,
-    } = useClienteMesa(qrToken);
   } = useClienteMesa(qrToken);
+
   const identificar = useServerFn(identificarClienteFn);
   const entrarNaMesa = useServerFn(entrarNaMesaFn);
   const buscarPorTelefone = useServerFn(buscarClientePorTelefoneFn);
