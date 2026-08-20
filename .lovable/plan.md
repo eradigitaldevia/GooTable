@@ -7,7 +7,8 @@ A mudança remove essa reabertura silenciosa e passa a exigir uma ação explíc
 ## O que muda para o cliente
 
 - Sessão liberada por ociosidade: toda ação do cliente no cardápio ou carrinho — seja abrir a tela ou clicar em adicionar/enviar — exibe a mensagem "Sua mesa foi liberada por inatividade. Leia o QR Code da mesa para pedir novamente" e o app volta para a tela de identificação. O cliente só volta a pedir após ler o QR Code da mesa novamente e seguir o fluxo de identificação.
-- Sem janela de graça: o tempo tolerado já é o configurável em Configurações → Geral ("Liberar mesa sem pedido após (horas)").
+
+> Nota: a regra existente de liberação automática por ociosidade só encerra mesas sem consumo/pedidos lançados; mesas com consumo nunca são liberadas automaticamente.
 
 ## Escopo técnico
 
