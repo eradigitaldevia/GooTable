@@ -23,6 +23,7 @@ export type ConfigPayload =
       endereco: string | null;
       horario_funcionamento: HorarioFuncionamento;
       url_publica_cardapio: string | null;
+      sessao_ociosa_horas: number;
     })
   | (Base & {
       aba: "identidade";

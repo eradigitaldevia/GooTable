@@ -11,6 +11,7 @@ type GeralPatch = {
   horario_funcionamento_habilitado?: boolean;
   horario_funcionamento?: HorarioFuncionamento;
   url_publica_cardapio?: string;
+  sessao_ociosa_horas?: number;
 };
 
 export function GeralForm({
@@ -21,6 +22,7 @@ export function GeralForm({
   horarioHabilitado,
   horario,
   urlPublicaCardapio,
+  sessaoOciosaHoras,
   onChange,
 }: {
   nome: string;
@@ -30,6 +32,7 @@ export function GeralForm({
   horarioHabilitado: boolean;
   horario: HorarioFuncionamento;
   urlPublicaCardapio: string;
+  sessaoOciosaHoras: number;
   onChange: (patch: GeralPatch) => void;
 }) {
   return (
@@ -106,6 +109,24 @@ export function GeralForm({
             Endereço usado nos QR Codes das mesas. Deixe em branco para usar o
             domínio atual. Use o domínio publicado (ou o seu domínio próprio)
             para que clientes consigam abrir o cardápio sem fazer login.
+          </p>
+        </div>
+        <div className="space-y-2">
+          <Label>Liberar mesa sem pedido após (horas)</Label>
+          <Input
+            type="number"
+            min={1}
+            max={48}
+            value={sessaoOciosaHoras}
+            onChange={(e) =>
+              onChange({ sessao_ociosa_horas: Number(e.target.value) })
+            }
+            className="max-w-[140px]"
+          />
+          <p className="text-xs text-muted-foreground">
+            Mesas que abriram sessão pelo QR Code e ficaram sem nenhum pedido
+            voltam para "Livre" automaticamente após esse tempo. Mesas com
+            consumo lançado nunca são liberadas automaticamente.
           </p>
         </div>
       </section>

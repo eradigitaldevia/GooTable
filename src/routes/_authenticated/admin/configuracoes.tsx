@@ -75,6 +75,7 @@ function Configuracoes() {
     horario_funcionamento_habilitado: false,
     horario_funcionamento: diasPadrao() as HorarioFuncionamento,
     url_publica_cardapio: "" as string,
+    sessao_ociosa_horas: 4,
     pix_habilitado: false,
     pix_chave: "",
     pix_nome_titular: "",
@@ -131,6 +132,7 @@ function Configuracoes() {
         ? normalizarHorario(horarioRaw)
         : diasPadrao(),
       url_publica_cardapio: (restaurante as any).url_publica_cardapio ?? "",
+      sessao_ociosa_horas: (restaurante as any).sessao_ociosa_horas ?? 4,
       pix_habilitado: restaurante.pix_habilitado,
       pix_chave: restaurante.pix_chave ?? "",
       pix_nome_titular: restaurante.pix_nome_titular ?? "",
@@ -240,6 +242,7 @@ function Configuracoes() {
         ? normalizarHorario(horarioRaw)
         : diasPadrao(),
       url_publica_cardapio: (restaurante as any).url_publica_cardapio ?? "",
+      sessao_ociosa_horas: (restaurante as any).sessao_ociosa_horas ?? 4,
       pix_habilitado: restaurante.pix_habilitado,
       pix_chave: restaurante.pix_chave ?? "",
       pix_nome_titular: restaurante.pix_nome_titular ?? "",
@@ -314,6 +317,7 @@ function Configuracoes() {
       "horario_funcionamento_habilitado",
       "horario_funcionamento",
       "url_publica_cardapio",
+      "sessao_ociosa_horas",
     ],
     identidade: [
       "cor_primaria",
@@ -464,6 +468,7 @@ function Configuracoes() {
           ? f.horario_funcionamento
           : [],
         url_publica_cardapio: f.url_publica_cardapio.trim() || null,
+        sessao_ociosa_horas: f.sessao_ociosa_horas,
       };
     } else if (aba === "identidade") {
       payload = {
@@ -714,6 +719,7 @@ function Configuracoes() {
             horarioHabilitado={form.horario_funcionamento_habilitado}
             horario={form.horario_funcionamento}
             urlPublicaCardapio={form.url_publica_cardapio}
+            sessaoOciosaHoras={form.sessao_ociosa_horas}
             onChange={patch}
           />
           <SaveBtn aba="geral" />

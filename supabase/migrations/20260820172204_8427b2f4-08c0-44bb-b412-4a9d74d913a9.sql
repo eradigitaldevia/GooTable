@@ -1,0 +1,1 @@
+REVOKE EXECUTE ON FUNCTION public.encerrar_sessoes_ociosas() FROM PUBLIC, anon, authenticated;
