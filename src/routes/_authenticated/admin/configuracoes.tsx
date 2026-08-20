@@ -132,6 +132,7 @@ function Configuracoes() {
         ? normalizarHorario(horarioRaw)
         : diasPadrao(),
       url_publica_cardapio: (restaurante as any).url_publica_cardapio ?? "",
+      sessao_ociosa_horas: (restaurante as any).sessao_ociosa_horas ?? 4,
       pix_habilitado: restaurante.pix_habilitado,
       pix_chave: restaurante.pix_chave ?? "",
       pix_nome_titular: restaurante.pix_nome_titular ?? "",
