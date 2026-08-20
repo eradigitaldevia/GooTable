@@ -10,7 +10,10 @@ import { CarrinhoItemRow } from "@/components/cliente/carrinho-item-row";
 import { ConfirmarPedidoDialog } from "@/components/cliente/confirmar-pedido-dialog";
 import { estimarTempoCart } from "@/lib/tempo-preparo";
 import { useCriarPedidoPublico } from "@/hooks/use-pedidos";
-import { useClienteMesa } from "@/hooks/use-cliente-mesa";
+import {
+  useClienteMesa,
+  type ClienteMesaIdentidade,
+} from "@/hooks/use-cliente-mesa";
 import { useCardapioPublico } from "@/hooks/use-cardapio-publico";
 import { UpsellCarrinho } from "@/components/cliente/upsell-carrinho";
 import { usePedidosComanda } from "@/hooks/use-pedidos-comanda";
@@ -23,7 +26,7 @@ export const Route = createFileRoute("/m/$qrToken_/carrinho")({
 function Carrinho() {
   const { qrToken } = Route.useParams();
   const navigate = useNavigate();
-  const { identidade, hidratado } = useClienteMesa(qrToken);
+  const { identidade, hidratado, recuperarSessao } = useClienteMesa(qrToken);
   const { data: cardapio } = useCardapioPublico(qrToken);
   const restauranteTema =
     cardapio && !("erro" in cardapio) ? cardapio.restaurante : null;
