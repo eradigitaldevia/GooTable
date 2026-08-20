@@ -719,6 +719,7 @@ function Configuracoes() {
             horarioHabilitado={form.horario_funcionamento_habilitado}
             horario={form.horario_funcionamento}
             urlPublicaCardapio={form.url_publica_cardapio}
+            sessaoOciosaHoras={form.sessao_ociosa_horas}
             onChange={patch}
           />
           <SaveBtn aba="geral" />
