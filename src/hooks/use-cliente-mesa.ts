@@ -1,9 +1,6 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import {
-  buscarClientePorTelefoneFn,
-  validarSessaoComandaFn,
-} from "@/lib/cliente-mesa.functions";
+import { validarSessaoComandaFn } from "@/lib/cliente-mesa.functions";
 
 export interface ClienteMesaIdentidade {
   clienteId: string;
@@ -51,18 +48,16 @@ function readFromStorage(qrToken: string): ClienteMesaIdentidade | null {
  * Mantém a identidade do cliente persistida em localStorage por qrToken.
  *
  * Ao hidratar, valida sessão/comanda no backend. Se estiverem fechadas
- * (por exemplo, após a liberação automática de mesa ociosa), tenta recuperar
- * automaticamente pelo telefone salvo, abrindo nova sessão/comanda. A
- * recuperação vale para qualquer tela do cliente que use este hook.
+ * (por exemplo, após a liberação automática de mesa ociosa), a identidade
+ * é apagada e o componente consumidor deve exigir reidentificação — o cliente
+ * precisa ler o QR Code da mesa novamente para continuar.
  */
 export function useClienteMesa(qrToken: string) {
   const [identidade, setIdentidade] = useState<ClienteMesaIdentidade | null>(null);
   const [hidratado, setHidratado] = useState(false);
   const [conflito, setConflito] = useState<ClienteMesaConflito | null>(null);
+  const [sessaoEncerrada, setSessaoEncerrada] = useState(false);
   const validar = useServerFn(validarSessaoComandaFn);
-  const buscarPorTelefone = useServerFn(buscarClientePorTelefoneFn);
-  const buscarRef = useRef(buscarPorTelefone);
-  buscarRef.current = buscarPorTelefone;
 
   const persistir = useCallback(
     (next: ClienteMesaIdentidade | null) => {
@@ -75,67 +70,29 @@ export function useClienteMesa(qrToken: string) {
     [qrToken],
   );
 
-  /**
-   * Reabre sessão/comanda para o telefone informado e regrava a identidade.
-   * Retorna a nova identidade, ou null quando não foi possível recuperar.
-   */
-  const recuperarSessao = useCallback(
-    async (base: ClienteMesaIdentidade): Promise<ClienteMesaIdentidade | null> => {
-      try {
-        const r = await buscarRef.current({
-          data: { qrToken, telefone: base.telefone },
-        });
-        if (r.encontrado && !r.conflito) {
-          const next: ClienteMesaIdentidade = {
-            clienteId: r.cliente.id,
-            nome: r.cliente.nome,
-            telefone: r.cliente.telefone,
-            sessaoId: r.sessaoId,
-            comandaId: r.comandaId,
-          };
-          setConflito(null);
-          persistir(next);
-          return next;
-        }
-        if (r.encontrado && r.conflito) {
-          setConflito({
-            clienteId: r.cliente.id,
-            nome: r.cliente.nome,
-            telefone: r.cliente.telefone,
-            sessaoOrigemId: r.conflito.sessaoId,
-            comandaOrigemId: r.conflito.comandaId,
-            numeroMesaAtual: r.conflito.numeroMesa,
-            podeTransferir: r.conflito.podeTransferir,
-          });
-        }
-        persistir(null);
-        return null;
-      } catch {
-        persistir(null);
-        return null;
-      }
-    },
-    [qrToken, persistir],
-  );
-
   useEffect(() => {
     const stored = readFromStorage(qrToken);
-    setIdentidade(stored);
+    setSessaoEncerrada(false);
     setConflito(null);
     setHidratado(false);
+    setIdentidade(stored);
     if (!stored) {
       setHidratado(true);
       return;
     }
     let cancelado = false;
     validar({ data: { sessaoId: stored.sessaoId, comandaId: stored.comandaId } })
-      .then(async (r) => {
+      .then((r) => {
         if (cancelado) return;
-        if (!r.valida) await recuperarSessao(stored);
+        if (!r.valida) {
+          persistir(null);
+          setSessaoEncerrada(true);
+        }
       })
-      .catch(async () => {
+      .catch(() => {
         if (cancelado) return;
-        await recuperarSessao(stored);
+        persistir(null);
+        setSessaoEncerrada(true);
       })
       .finally(() => {
         if (!cancelado) setHidratado(true);
@@ -143,11 +100,12 @@ export function useClienteMesa(qrToken: string) {
     return () => {
       cancelado = true;
     };
-  }, [qrToken, validar, recuperarSessao]);
+  }, [qrToken, validar, persistir]);
 
   const salvar = useCallback(
     (next: ClienteMesaIdentidade) => {
       setConflito(null);
+      setSessaoEncerrada(false);
       persistir(next);
     },
     [persistir],
@@ -155,8 +113,9 @@ export function useClienteMesa(qrToken: string) {
 
   const limpar = useCallback(() => {
     setConflito(null);
+    setSessaoEncerrada(false);
     persistir(null);
   }, [persistir]);
 
-  return { identidade, hidratado, conflito, salvar, limpar, recuperarSessao };
+  return { identidade, hidratado, conflito, sessaoEncerrada, salvar, limpar };
 }

@@ -4,6 +4,7 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { assertAcessoRestaurante } from "./auth.server";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { assertClienteNaSessao } from "./sessoes.server";
+import { SESSAO_ENCERRADA_MENSAGEM } from "./sessao-messages";
 
 export type CupomTipo = "percentual" | "valor_fixo";
 
@@ -154,7 +155,7 @@ export const aplicarCupomComandaFn = createServerFn({ method: "POST" })
     // valida que a comanda pertence à mesa do qrToken
     const { data: comanda, error: cErr } = await supabaseAdmin
       .from("comandas")
-      .select("id, sessao_id, restaurante_id")
+      .select("id, sessao_id, restaurante_id, status")
       .eq("id", data.comandaId)
       .maybeSingle();
     if (cErr) throw new Error(cErr.message);
@@ -162,7 +163,7 @@ export const aplicarCupomComandaFn = createServerFn({ method: "POST" })
 
     const { data: sessao, error: sErr } = await supabaseAdmin
       .from("mesa_sessoes")
-      .select("mesa_id")
+      .select("mesa_id, status")
       .eq("id", comanda.sessao_id as string)
       .maybeSingle();
     if (sErr) throw new Error(sErr.message);
@@ -172,6 +173,9 @@ export const aplicarCupomComandaFn = createServerFn({ method: "POST" })
       .eq("id", sessao?.mesa_id as string)
       .maybeSingle();
     if (!mesa || mesa.qr_token !== data.qrToken) throw new Error("Mesa inválida");
+    if (!sessao || sessao.status !== "aberta" || comanda.status !== "aberta") {
+      throw new Error(SESSAO_ENCERRADA_MENSAGEM);
+    }
 
     if (data.clienteId) {
       await assertClienteNaSessao(comanda.sessao_id as string, data.clienteId);
@@ -201,13 +205,13 @@ export const removerCupomComandaFn = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const { data: comanda } = await supabaseAdmin
       .from("comandas")
-      .select("id, sessao_id")
+      .select("id, sessao_id, status")
       .eq("id", data.comandaId)
       .maybeSingle();
     if (!comanda) throw new Error("Comanda não encontrada");
     const { data: sessao } = await supabaseAdmin
       .from("mesa_sessoes")
-      .select("mesa_id")
+      .select("mesa_id, status")
       .eq("id", comanda.sessao_id as string)
       .maybeSingle();
     const { data: mesa } = await supabaseAdmin
@@ -216,6 +220,9 @@ export const removerCupomComandaFn = createServerFn({ method: "POST" })
       .eq("id", sessao?.mesa_id as string)
       .maybeSingle();
     if (!mesa || mesa.qr_token !== data.qrToken) throw new Error("Mesa inválida");
+    if (!sessao || sessao.status !== "aberta" || comanda.status !== "aberta") {
+      throw new Error(SESSAO_ENCERRADA_MENSAGEM);
+    }
 
     const { error } = await supabaseAdmin.rpc("remover_cupom_comanda", {
       _comanda_id: data.comandaId,

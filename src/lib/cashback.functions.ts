@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { assertClienteNaSessao } from "./sessoes.server";
+import { SESSAO_ENCERRADA_MENSAGEM } from "./sessao-messages";
 
 /**
  * Aplica resgate de cashback do cliente em uma comanda.
@@ -36,7 +37,7 @@ export const aplicarCashbackFn = createServerFn({ method: "POST" })
       .maybeSingle();
     if (sErr) throw new Error(sErr.message);
     if (!sessao || sessao.mesa_id !== mesa.id || sessao.status !== "aberta") {
-      throw new Error("Sessão indisponível");
+      throw new Error(SESSAO_ENCERRADA_MENSAGEM);
     }
 
     const { data: comanda, error: cErr } = await supabaseAdmin
@@ -51,7 +52,7 @@ export const aplicarCashbackFn = createServerFn({ method: "POST" })
       comanda.status !== "aberta" ||
       comanda.restaurante_id !== mesa.restaurante_id
     ) {
-      throw new Error("Comanda indisponível");
+      throw new Error(SESSAO_ENCERRADA_MENSAGEM);
     }
 
     const { data: cliente, error: cliErr } = await supabaseAdmin

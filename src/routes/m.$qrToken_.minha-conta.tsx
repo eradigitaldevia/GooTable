@@ -31,15 +31,15 @@ const PAGE_SIZE = 10;
 function MinhaConta() {
   const { qrToken } = Route.useParams();
   const navigate = useNavigate();
-  const { identidade, hidratado } = useClienteMesa(qrToken);
+  const { identidade, hidratado, sessaoEncerrada } = useClienteMesa(qrToken);
   const [page, setPage] = useState(0);
   const [sessaoSelecionada, setSessaoSelecionada] = useState<string | null>(null);
 
   useEffect(() => {
-    if (hidratado && !identidade) {
+    if (hidratado && (!identidade || sessaoEncerrada)) {
       navigate({ to: "/m/$qrToken", params: { qrToken } });
     }
-  }, [hidratado, identidade, navigate, qrToken]);
+  }, [hidratado, identidade, sessaoEncerrada, navigate, qrToken]);
 
   const { data, isLoading } = useMinhaConta({
     qrToken,

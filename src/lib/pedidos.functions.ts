@@ -6,6 +6,7 @@ import type { TablesUpdate } from "@/integrations/supabase/types";
 import { assertAcessoRestaurante } from "./auth.server";
 import { sanitizarComandasOrfas, assertClienteNaSessao } from "./sessoes.server";
 import { inicioDoDia, fimDoDia } from "./data-fuso";
+import { SESSAO_ENCERRADA_MENSAGEM } from "./sessao-messages";
 
 export type StatusPedido =
   | "recebido"
@@ -292,7 +293,7 @@ export const criarPedidoPublicoFn = createServerFn({ method: "POST" })
       .maybeSingle();
     if (sErr) throw new Error(sErr.message);
     if (!sessao || sessao.mesa_id !== mesa.id || sessao.status !== "aberta") {
-      throw new Error("Sessão da mesa indisponível");
+      throw new Error(SESSAO_ENCERRADA_MENSAGEM);
     }
 
     // Valida comanda pertence à sessão e está aberta
@@ -308,7 +309,7 @@ export const criarPedidoPublicoFn = createServerFn({ method: "POST" })
       comanda.status !== "aberta" ||
       comanda.restaurante_id !== mesa.restaurante_id
     ) {
-      throw new Error("Comanda indisponível");
+      throw new Error(SESSAO_ENCERRADA_MENSAGEM);
     }
 
     // Valida cliente pertence ao restaurante
@@ -442,6 +443,27 @@ export const resumoContaFn = createServerFn({ method: "POST" })
       )
       .eq("id", mesa.restaurante_id as string)
       .maybeSingle();
+
+    // Verifica se sessão e comanda ainda estão abertas antes de exibir a conta
+    const { data: sessao, error: sErr } = await supabaseAdmin
+      .from("mesa_sessoes")
+      .select("id, mesa_id, status")
+      .eq("id", data.sessaoId)
+      .maybeSingle();
+    if (sErr) throw new Error(sErr.message);
+    if (!sessao || sessao.mesa_id !== mesa.id || sessao.status !== "aberta") {
+      throw new Error(SESSAO_ENCERRADA_MENSAGEM);
+    }
+
+    const { data: comanda, error: coErr } = await supabaseAdmin
+      .from("comandas")
+      .select("id, sessao_id, status")
+      .eq("id", data.comandaId)
+      .maybeSingle();
+    if (coErr) throw new Error(coErr.message);
+    if (!comanda || comanda.sessao_id !== sessao.id || comanda.status !== "aberta") {
+      throw new Error(SESSAO_ENCERRADA_MENSAGEM);
+    }
 
     await assertClienteNaSessao(data.sessaoId, data.clienteId);
 

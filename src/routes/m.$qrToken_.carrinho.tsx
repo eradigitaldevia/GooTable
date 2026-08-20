@@ -18,6 +18,7 @@ import { useCardapioPublico } from "@/hooks/use-cardapio-publico";
 import { UpsellCarrinho } from "@/components/cliente/upsell-carrinho";
 import { usePedidosComanda } from "@/hooks/use-pedidos-comanda";
 import { TemaCardapioProvider } from "@/components/cliente/tema-cardapio-provider";
+import { SESSAO_ENCERRADA_MENSAGEM } from "@/lib/sessao-messages";
 
 export const Route = createFileRoute("/m/$qrToken_/carrinho")({
   component: Carrinho,
@@ -26,7 +27,7 @@ export const Route = createFileRoute("/m/$qrToken_/carrinho")({
 function Carrinho() {
   const { qrToken } = Route.useParams();
   const navigate = useNavigate();
-  const { identidade, hidratado, recuperarSessao } = useClienteMesa(qrToken);
+  const { identidade, hidratado, sessaoEncerrada } = useClienteMesa(qrToken);
   const { data: cardapio } = useCardapioPublico(qrToken);
   const restauranteTema =
     cardapio && !("erro" in cardapio) ? cardapio.restaurante : null;
@@ -40,10 +41,10 @@ function Carrinho() {
   }, [qrToken]);
 
   useEffect(() => {
-    if (hidratado && !identidade) {
+    if (hidratado && (!identidade || sessaoEncerrada)) {
       navigate({ to: "/m/$qrToken", params: { qrToken } });
     }
-  }, [hidratado, identidade, navigate, qrToken]);
+  }, [hidratado, identidade, sessaoEncerrada, navigate, qrToken]);
 
   const atualizar = (next: CartItem[]) => {
     setItems(next);
@@ -88,25 +89,7 @@ function Carrinho() {
       });
 
     try {
-      let resultado: { id: string };
-      try {
-        resultado = await enviarCom(identidade);
-      } catch (e) {
-        const msg = e instanceof Error ? e.message : "";
-        const sessaoExpirada = /Sess[aã]o da mesa indispon[ií]vel|Comanda indispon[ií]vel/i.test(
-          msg,
-        );
-        if (!sessaoExpirada) throw e;
-        // A mesa pode ter sido liberada por inatividade: reabre a sessão e reenvia.
-        const nova = await recuperarSessao(identidade);
-        if (!nova) {
-          toast.error(
-            "Sua mesa foi liberada. Volte ao cardápio e identifique-se novamente.",
-          );
-          return;
-        }
-        resultado = await enviarCom(nova);
-      }
+      const resultado = await enviarCom(identidade);
       clearCart(qrToken);
       toast.success("Pedido enviado!");
       navigate({
@@ -114,6 +97,12 @@ function Carrinho() {
         params: { qrToken, pedidoId: resultado.id },
       });
     } catch (e) {
+      const msg = e instanceof Error ? e.message : "";
+      if (msg === SESSAO_ENCERRADA_MENSAGEM) {
+        toast.error(SESSAO_ENCERRADA_MENSAGEM);
+        navigate({ to: "/m/$qrToken", params: { qrToken } });
+        return;
+      }
       toast.error(e instanceof Error ? e.message : "Erro ao enviar pedido");
     }
   };

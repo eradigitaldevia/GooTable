@@ -1,5 +1,6 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
+import { useEffect } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { Button } from "@/components/ui/button";
 import { StatusTimeline } from "@/components/cliente/status-timeline";
@@ -23,12 +24,19 @@ export const Route = createFileRoute("/m/$qrToken_/status/$pedidoId")({
 
 function Status() {
   const { qrToken, pedidoId } = Route.useParams();
-  const { identidade } = useClienteMesa(qrToken);
+  const navigate = useNavigate();
+  const { identidade, hidratado, sessaoEncerrada } = useClienteMesa(qrToken);
   const fn = useServerFn(carregarStatusPedidoPublicoFn);
   const { data, isLoading } = useQuery({
     queryKey: ["status-pedido-publico", qrToken, pedidoId],
     queryFn: () => fn({ data: { qrToken, pedidoId } }),
   });
+
+  useEffect(() => {
+    if (hidratado && (!identidade || sessaoEncerrada)) {
+      navigate({ to: "/m/$qrToken", params: { qrToken } });
+    }
+  }, [hidratado, identidade, sessaoEncerrada, navigate, qrToken]);
 
   useRealtimePedidoPublico(qrToken, pedidoId, identidade?.comandaId);
   useNotificarPedidoPronto(pedidoId, data?.pedido?.status);
