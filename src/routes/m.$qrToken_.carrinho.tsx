@@ -66,12 +66,12 @@ function Carrinho() {
       toast.error("Identifique-se primeiro");
       return;
     }
-    try {
-      const { id } = await criarPedido.mutateAsync({
+    const enviarCom = async (id: ClienteMesaIdentidade) =>
+      criarPedido.mutateAsync({
         qrToken,
-        clienteId: identidade.clienteId,
-        comandaId: identidade.comandaId,
-        sessaoId: identidade.sessaoId,
+        clienteId: id.clienteId,
+        comandaId: id.comandaId,
+        sessaoId: id.sessaoId,
         observacao: obsGeral.trim() || undefined,
         itens: items.map((it) => ({
           produto_id: it.produto_id,
@@ -79,17 +79,42 @@ function Carrinho() {
           preco: it.preco,
           quantidade: it.quantidade,
           observacao: it.observacao ?? undefined,
-          cliente_nome: it.cliente_nome ?? identidade.nome,
-          cliente_id: it.cliente_id ?? identidade.clienteId,
+          cliente_nome: it.cliente_nome ?? id.nome,
+          cliente_id: it.cliente_id ?? id.clienteId,
         })),
       });
+
+    try {
+      let resultado: { id: string };
+      try {
+        resultado = await enviarCom(identidade);
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : "";
+        const sessaoExpirada = /Sess[aã]o da mesa indispon[ií]vel|Comanda indispon[ií]vel/i.test(
+          msg,
+        );
+        if (!sessaoExpirada) throw e;
+        // A mesa pode ter sido liberada por inatividade: reabre a sessão e reenvia.
+        const nova = await recuperarSessao(identidade);
+        if (!nova) {
+          toast.error(
+            "Sua mesa foi liberada. Volte ao cardápio e identifique-se novamente.",
+          );
+          return;
+        }
+        resultado = await enviarCom(nova);
+      }
       clearCart(qrToken);
       toast.success("Pedido enviado!");
-      navigate({ to: "/m/$qrToken/status/$pedidoId", params: { qrToken, pedidoId: id } });
+      navigate({
+        to: "/m/$qrToken/status/$pedidoId",
+        params: { qrToken, pedidoId: resultado.id },
+      });
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Erro ao enviar pedido");
     }
   };
+
 
   return (
     <TemaCardapioProvider restaurante={restauranteTema} className="min-h-screen pb-28">
