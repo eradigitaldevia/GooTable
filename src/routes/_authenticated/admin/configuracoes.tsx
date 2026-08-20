@@ -75,6 +75,7 @@ function Configuracoes() {
     horario_funcionamento_habilitado: false,
     horario_funcionamento: diasPadrao() as HorarioFuncionamento,
     url_publica_cardapio: "" as string,
+    sessao_ociosa_horas: 4,
     pix_habilitado: false,
     pix_chave: "",
     pix_nome_titular: "",
