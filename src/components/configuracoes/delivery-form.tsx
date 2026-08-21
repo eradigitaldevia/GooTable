@@ -57,7 +57,8 @@ export function DeliveryForm({
           <div className="min-w-0">
             <h2 className="text-base font-semibold">Delivery</h2>
             <p className="mt-1 text-sm text-muted-foreground">
-              Ative para receber pedidos pelo link público de delivery.
+              Quando desligado, o delivery não recebe pedidos. Quando ligado,
+              recebe apenas dentro do horário de funcionamento (aba Geral).
             </p>
           </div>
           <Switch

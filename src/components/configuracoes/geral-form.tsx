@@ -8,7 +8,6 @@ type GeralPatch = {
   cnpj?: string;
   telefone?: string;
   endereco?: string;
-  horario_funcionamento_habilitado?: boolean;
   horario_funcionamento?: HorarioFuncionamento;
   url_publica_cardapio?: string;
   sessao_ociosa_horas?: number;
@@ -19,7 +18,6 @@ export function GeralForm({
   cnpj,
   telefone,
   endereco,
-  horarioHabilitado,
   horario,
   urlPublicaCardapio,
   sessaoOciosaHoras,
@@ -29,7 +27,6 @@ export function GeralForm({
   cnpj: string;
   telefone: string;
   endereco: string;
-  horarioHabilitado: boolean;
   horario: HorarioFuncionamento;
   urlPublicaCardapio: string;
   sessaoOciosaHoras: number;
@@ -135,9 +132,7 @@ export function GeralForm({
       </section>
 
       <HorarioFuncionamentoForm
-        habilitado={horarioHabilitado}
         horario={horario}
-        onChangeHabilitado={(v) => onChange({ horario_funcionamento_habilitado: v })}
         onChangeHorario={(h) => onChange({ horario_funcionamento: h })}
       />
     </div>
