@@ -135,9 +135,7 @@ export function GeralForm({
       </section>
 
       <HorarioFuncionamentoForm
-        habilitado={horarioHabilitado}
         horario={horario}
-        onChangeHabilitado={(v) => onChange({ horario_funcionamento_habilitado: v })}
         onChangeHorario={(h) => onChange({ horario_funcionamento: h })}
       />
     </div>
