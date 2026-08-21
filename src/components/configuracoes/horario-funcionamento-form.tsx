@@ -22,6 +22,14 @@ export function diasPadrao(): HorarioFuncionamento {
   }));
 }
 
+export function horarioPadrao(): HorarioFuncionamento {
+  return DIAS.map((_, i) => ({
+    dia: i,
+    aberto: true,
+    turnos: [{ inicio: "11:00", fim: "23:00" }],
+  }));
+}
+
 export function normalizarHorario(h: HorarioFuncionamento): HorarioFuncionamento {
   const base = diasPadrao();
   for (const d of h) {
