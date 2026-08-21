@@ -12,6 +12,7 @@ import { IdentidadeForm } from "@/components/configuracoes/identidade-form";
 import { GeralForm } from "@/components/configuracoes/geral-form";
 import {
   diasPadrao,
+  horarioPadrao,
   normalizarHorario,
 } from "@/components/configuracoes/horario-funcionamento-form";
 import type { HorarioFuncionamento } from "@/lib/configuracoes.functions";
@@ -72,8 +73,7 @@ function Configuracoes() {
     cnpj: "",
     telefone: "",
     endereco: "",
-    horario_funcionamento_habilitado: false,
-    horario_funcionamento: diasPadrao() as HorarioFuncionamento,
+    horario_funcionamento: horarioPadrao() as HorarioFuncionamento,
     url_publica_cardapio: "" as string,
     sessao_ociosa_horas: 4,
     pix_habilitado: false,
@@ -115,7 +115,7 @@ function Configuracoes() {
   useEffect(() => {
     if (!restaurante) return;
     const horarioRaw = ((restaurante as any).horario_funcionamento ?? []) as HorarioFuncionamento;
-    const horarioHabilitado = Array.isArray(horarioRaw) && horarioRaw.length > 0;
+    const temHorario = Array.isArray(horarioRaw) && horarioRaw.length > 0;
     const next: typeof form = {
       nome: restaurante.nome,
       cor_primaria: restaurante.cor_primaria || "#c2410c",
@@ -127,10 +127,9 @@ function Configuracoes() {
       cnpj: (restaurante as any).cnpj ?? "",
       telefone: (restaurante as any).telefone ?? "",
       endereco: (restaurante as any).endereco ?? "",
-      horario_funcionamento_habilitado: horarioHabilitado,
-      horario_funcionamento: horarioHabilitado
+      horario_funcionamento: temHorario
         ? normalizarHorario(horarioRaw)
-        : diasPadrao(),
+        : horarioPadrao(),
       url_publica_cardapio: (restaurante as any).url_publica_cardapio ?? "",
       sessao_ociosa_horas: (restaurante as any).sessao_ociosa_horas ?? 4,
       pix_habilitado: restaurante.pix_habilitado,
@@ -225,7 +224,7 @@ function Configuracoes() {
   const snapshot = useMemo(() => {
     if (!restaurante) return null;
     const horarioRaw = ((restaurante as any).horario_funcionamento ?? []) as HorarioFuncionamento;
-    const horarioHabilitado = Array.isArray(horarioRaw) && horarioRaw.length > 0;
+    const temHorario = Array.isArray(horarioRaw) && horarioRaw.length > 0;
     return {
       nome: restaurante.nome,
       cor_primaria: restaurante.cor_primaria || "#c2410c",
@@ -237,10 +236,9 @@ function Configuracoes() {
       cnpj: (restaurante as any).cnpj ?? "",
       telefone: (restaurante as any).telefone ?? "",
       endereco: (restaurante as any).endereco ?? "",
-      horario_funcionamento_habilitado: horarioHabilitado,
-      horario_funcionamento: horarioHabilitado
+      horario_funcionamento: temHorario
         ? normalizarHorario(horarioRaw)
-        : diasPadrao(),
+        : horarioPadrao(),
       url_publica_cardapio: (restaurante as any).url_publica_cardapio ?? "",
       sessao_ociosa_horas: (restaurante as any).sessao_ociosa_horas ?? 4,
       pix_habilitado: restaurante.pix_habilitado,
@@ -314,7 +312,6 @@ function Configuracoes() {
       "cnpj",
       "telefone",
       "endereco",
-      "horario_funcionamento_habilitado",
       "horario_funcionamento",
       "url_publica_cardapio",
       "sessao_ociosa_horas",
@@ -414,18 +411,16 @@ function Configuracoes() {
         toast.error("Nome muito curto");
         return;
       }
-      if (f.horario_funcionamento_habilitado) {
-        for (const d of f.horario_funcionamento) {
-          if (!d.aberto) continue;
-          for (const t of d.turnos) {
-            if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(t.inicio) || !/^([01]\d|2[0-3]):[0-5]\d$/.test(t.fim)) {
-              toast.error("Horário inválido em algum dia.");
-              return;
-            }
-            if (t.inicio === t.fim) {
-              toast.error("Início e fim do turno devem ser diferentes.");
-              return;
-            }
+      for (const d of f.horario_funcionamento) {
+        if (!d.aberto) continue;
+        for (const t of d.turnos) {
+          if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(t.inicio) || !/^([01]\d|2[0-3]):[0-5]\d$/.test(t.fim)) {
+            toast.error("Horário inválido em algum dia.");
+            return;
+          }
+          if (t.inicio === t.fim) {
+            toast.error("Início e fim do turno devem ser diferentes.");
+            return;
           }
         }
       }
@@ -464,9 +459,7 @@ function Configuracoes() {
         cnpj: f.cnpj.trim() || null,
         telefone: f.telefone.trim() || null,
         endereco: f.endereco.trim() || null,
-        horario_funcionamento: f.horario_funcionamento_habilitado
-          ? f.horario_funcionamento
-          : [],
+        horario_funcionamento: f.horario_funcionamento,
         url_publica_cardapio: f.url_publica_cardapio.trim() || null,
         sessao_ociosa_horas: f.sessao_ociosa_horas,
       };
@@ -716,7 +709,6 @@ function Configuracoes() {
             cnpj={form.cnpj}
             telefone={form.telefone}
             endereco={form.endereco}
-            horarioHabilitado={form.horario_funcionamento_habilitado}
             horario={form.horario_funcionamento}
             urlPublicaCardapio={form.url_publica_cardapio}
             sessaoOciosaHoras={form.sessao_ociosa_horas}
