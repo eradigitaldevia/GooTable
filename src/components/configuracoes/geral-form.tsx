@@ -125,8 +125,11 @@ export function GeralForm({
           />
           <p className="text-xs text-muted-foreground">
             Mesas que abriram sessão pelo QR Code e ficaram sem nenhum pedido
-            voltam para "Livre" automaticamente após esse tempo. Mesas com
-            consumo lançado nunca são liberadas automaticamente.
+            voltam para "Livre" automaticamente após esse tempo. Quando a mesa
+            é liberada, o cliente verá a mensagem "Sua mesa foi liberada por
+            inatividade. Leia o QR Code da mesa para pedir novamente" e precisará
+            ler o QR Code novamente para fazer novos pedidos. Mesas com consumo
+            lançado nunca são liberadas automaticamente.
           </p>
         </div>
       </section>
