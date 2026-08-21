@@ -11,7 +11,6 @@ import { toast } from "sonner";
 import { IdentidadeForm } from "@/components/configuracoes/identidade-form";
 import { GeralForm } from "@/components/configuracoes/geral-form";
 import {
-  diasPadrao,
   horarioPadrao,
   normalizarHorario,
 } from "@/components/configuracoes/horario-funcionamento-form";
