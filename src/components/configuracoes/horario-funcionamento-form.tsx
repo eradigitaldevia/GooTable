@@ -45,17 +45,14 @@ export function normalizarHorario(h: HorarioFuncionamento): HorarioFuncionamento
 }
 
 export function HorarioFuncionamentoForm({
-  habilitado,
   horario,
-  onChangeHabilitado,
   onChangeHorario,
 }: {
-  habilitado: boolean;
   horario: HorarioFuncionamento;
-  onChangeHabilitado: (v: boolean) => void;
   onChangeHorario: (h: HorarioFuncionamento) => void;
 }) {
   const dias = normalizarHorario(horario);
+  const nenhumDiaAberto = !dias.some((d) => d.aberto && d.turnos.length > 0);
 
   function updateDia(idx: number, patch: Partial<HorarioDia>) {
     const next = dias.map((d, i) => (i === idx ? { ...d, ...patch } : d));
