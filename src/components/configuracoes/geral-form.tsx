@@ -8,7 +8,6 @@ type GeralPatch = {
   cnpj?: string;
   telefone?: string;
   endereco?: string;
-  horario_funcionamento_habilitado?: boolean;
   horario_funcionamento?: HorarioFuncionamento;
   url_publica_cardapio?: string;
   sessao_ociosa_horas?: number;
