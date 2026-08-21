@@ -93,25 +93,21 @@ export function HorarioFuncionamentoForm({
 
   return (
     <section className="space-y-4 rounded-lg border border-border bg-card p-4">
-      <header className="flex items-start justify-between gap-4">
-        <div className="min-w-0">
-          <h2 className="text-base font-semibold">Horário de funcionamento</h2>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Define quando o cardápio de delivery aceita pedidos. Fora do horário,
-            o cardápio fica somente leitura.
-          </p>
-          <p className="mt-1 text-xs text-muted-foreground">
-            Quando desligado, o delivery aceita pedidos a qualquer momento.
-          </p>
-        </div>
-        <Switch
-          checked={habilitado}
-          onCheckedChange={onChangeHabilitado}
-          aria-label="Restringir por horário de funcionamento"
-        />
+      <header className="min-w-0">
+        <h2 className="text-base font-semibold">Horário de funcionamento</h2>
+        <p className="mt-1 text-sm text-muted-foreground">
+          O delivery aceita pedidos apenas nos dias e horários definidos abaixo.
+          Fora do horário, o cardápio fica somente leitura.
+        </p>
       </header>
 
-      {habilitado && (
+      {nenhumDiaAberto && (
+        <div className="rounded-md border border-amber-500/30 bg-amber-500/10 p-3 text-sm text-amber-700 dark:text-amber-300">
+          Nenhum dia configurado — o delivery não aceitará pedidos.
+        </div>
+      )}
+
+      {(
         <>
           <div className="flex justify-end">
             <Button type="button" variant="outline" size="sm" onClick={aplicarATodos}>
