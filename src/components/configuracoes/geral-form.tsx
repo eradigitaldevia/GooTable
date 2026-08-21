@@ -18,7 +18,6 @@ export function GeralForm({
   cnpj,
   telefone,
   endereco,
-  horarioHabilitado,
   horario,
   urlPublicaCardapio,
   sessaoOciosaHoras,
@@ -28,7 +27,6 @@ export function GeralForm({
   cnpj: string;
   telefone: string;
   endereco: string;
-  horarioHabilitado: boolean;
   horario: HorarioFuncionamento;
   urlPublicaCardapio: string;
   sessaoOciosaHoras: number;
