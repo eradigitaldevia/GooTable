@@ -2113,6 +2113,10 @@ export type Database = {
         Returns: string
       }
       abrir_turno_garcom: { Args: { _garcom_id: string }; Returns: string }
+      ajustar_descontos_comanda: {
+        Args: { _comanda_id: string }
+        Returns: undefined
+      }
       aplicar_cashback: {
         Args: { _cliente_id: string; _comanda_id: string; _valor: number }
         Returns: Json
