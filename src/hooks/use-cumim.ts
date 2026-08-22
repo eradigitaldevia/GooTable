@@ -96,7 +96,27 @@ export function useRealtimeCumim(
           qc.invalidateQueries({ queryKey: keyRef.current });
         },
       )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "pedido_itens" },
+        () => {
+          qc.invalidateQueries({ queryKey: keyRef.current });
+        },
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "pedido_destino_status" },
+        (payload) => {
+          const novo = payload.new as { status?: string } | null;
+          const antigo = payload.old as { status?: string } | null;
+          if (novo?.status === "pronto" && antigo?.status !== "pronto") {
+            playBeep(880);
+          }
+          qc.invalidateQueries({ queryKey: keyRef.current });
+        },
+      )
       .subscribe();
+
     return () => {
       supabase.removeChannel(channel);
     };
