@@ -1457,7 +1457,9 @@ export const resumoComandaImpressaoFn = createServerFn({ method: "POST" })
       totais: {
         subtotal,
         couvert: couvertTotal,
+        taxa_servico: Number(com.taxa_servico_valor ?? 0),
         desconto,
+
         total,
         total_pago,
         saldo: Math.max(0, total - total_pago),
