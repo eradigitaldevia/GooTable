@@ -19,6 +19,12 @@ import {
 export type { ModoDivisao, DivisaoContaResultado, JuntarComandasResultado };
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { assertAcessoRestaurante } from "./auth.server";
+import {
+  IDENTIFICACAO_BLOQUEADA_MENSAGEM,
+  identificacaoBloqueada,
+  primeiroNome,
+  registrarTentativaIdentificacao,
+} from "./identificacao-throttle.server";
 
 const onlyDigits = (s: string) => s.replace(/\D/g, "");
 
@@ -61,12 +67,12 @@ export type BuscarClientePorTelefoneResultado =
   | {
       encontrado: true;
       conflito: ConflitoMesa;
-      cliente: { id: string; nome: string; telefone: string };
+      cliente: { id: string; nome: string };
     }
   | {
       encontrado: true;
       conflito?: undefined;
-      cliente: { id: string; nome: string; telefone: string };
+      cliente: { id: string; nome: string };
       sessaoId: string;
       comandaId: string;
       mesaId: string;
@@ -107,6 +113,16 @@ export const buscarClientePorTelefoneFn = createServerFn({ method: "POST" })
     if (rErr) throw new Error(rErr.message);
     if (!rest?.ativo) throw new Error("Restaurante indisponível");
 
+    if (
+      await identificacaoBloqueada({
+        restauranteId: mesa.restaurante_id,
+        qrToken: data.qrToken,
+        telefone: data.telefone,
+      })
+    ) {
+      throw new Error(IDENTIFICACAO_BLOQUEADA_MENSAGEM);
+    }
+
     const { data: cli, error: cErr } = await supabaseAdmin
       .from("clientes")
       .select("id, nome, telefone")
@@ -114,7 +130,22 @@ export const buscarClientePorTelefoneFn = createServerFn({ method: "POST" })
       .eq("telefone", data.telefone)
       .maybeSingle();
     if (cErr) throw new Error(cErr.message);
-    if (!cli) return { encontrado: false };
+    if (!cli) {
+      await registrarTentativaIdentificacao({
+        restauranteId: mesa.restaurante_id,
+        qrToken: data.qrToken,
+        telefone: data.telefone,
+        sucesso: false,
+      });
+      return { encontrado: false };
+    }
+
+    await registrarTentativaIdentificacao({
+      restauranteId: mesa.restaurante_id,
+      qrToken: data.qrToken,
+      telefone: data.telefone,
+      sucesso: true,
+    });
 
     // Bloqueio: cliente já está em outra mesa do mesmo restaurante.
     const conflito = await detectarConflitoMesa(
@@ -128,8 +159,7 @@ export const buscarClientePorTelefoneFn = createServerFn({ method: "POST" })
         conflito,
         cliente: {
           id: cli.id as string,
-          nome: cli.nome as string,
-          telefone: cli.telefone as string,
+          nome: primeiroNome(cli.nome as string),
         },
       };
     }
@@ -181,8 +211,7 @@ export const buscarClientePorTelefoneFn = createServerFn({ method: "POST" })
       encontrado: true,
       cliente: {
         id: cli.id as string,
-        nome: cli.nome as string,
-        telefone: cli.telefone as string,
+        nome: primeiroNome(cli.nome as string),
       },
       sessaoId: sessao.id,
       comandaId,
