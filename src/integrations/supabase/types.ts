@@ -1032,6 +1032,44 @@ export type Database = {
           },
         ]
       }
+      identificacao_tentativas: {
+        Row: {
+          criado_em: string
+          id: string
+          ip_hash: string | null
+          qr_token: string
+          restaurante_id: string
+          sucesso: boolean
+          telefone_hash: string
+        }
+        Insert: {
+          criado_em?: string
+          id?: string
+          ip_hash?: string | null
+          qr_token: string
+          restaurante_id: string
+          sucesso?: boolean
+          telefone_hash: string
+        }
+        Update: {
+          criado_em?: string
+          id?: string
+          ip_hash?: string | null
+          qr_token?: string
+          restaurante_id?: string
+          sucesso?: boolean
+          telefone_hash?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "identificacao_tentativas_restaurante_id_fkey"
+            columns: ["restaurante_id"]
+            isOneToOne: false
+            referencedRelation: "restaurantes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       mesa_garcom: {
         Row: {
           atribuido_em: string

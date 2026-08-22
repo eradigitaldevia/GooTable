@@ -140,7 +140,7 @@ function ClienteMenu() {
         setConflito({
           clienteId: r.cliente.id,
           nome: r.cliente.nome,
-          telefone: r.cliente.telefone,
+          telefone,
           sessaoOrigemId: r.conflito.sessaoId,
           comandaOrigemId: r.conflito.comandaId,
           numeroMesaAtual: r.conflito.numeroMesa,
@@ -151,7 +151,7 @@ function ClienteMenu() {
       salvar({
         clienteId: r.cliente.id,
         nome: r.cliente.nome,
-        telefone: r.cliente.telefone,
+        telefone,
         sessaoId: r.sessaoId,
         comandaId: r.comandaId,
       });
