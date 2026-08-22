@@ -993,7 +993,7 @@ export const resumoContaMesaFn = createServerFn({ method: "POST" })
       const { data: cs, error: cErr } = await supabaseAdmin
         .from("comandas")
         .select(
-          "id, tipo, subtotal, desconto_cupom, cashback_resgatado, total, total_pago, titular_cliente_id",
+          "id, tipo, subtotal, desconto_cupom, cashback_resgatado, taxa_servico_valor, total, total_pago, titular_cliente_id",
         )
         .eq("sessao_id", sessaoInfo.id)
         .eq("status", "aberta")
@@ -1005,6 +1005,7 @@ export const resumoContaMesaFn = createServerFn({ method: "POST" })
         subtotal: number;
         desconto_cupom: number;
         cashback_resgatado: number;
+        taxa_servico_valor: number;
         total: number;
         total_pago: number;
         titular_cliente_id: string | null;
@@ -1100,6 +1101,7 @@ export const resumoContaMesaFn = createServerFn({ method: "POST" })
           subtotal: Number(c.subtotal ?? 0),
           desconto_cupom: Number(c.desconto_cupom ?? 0),
           cashback_resgatado: Number(c.cashback_resgatado ?? 0),
+          taxa_servico_valor: Number(c.taxa_servico_valor ?? 0),
           total,
           total_pago: pago,
           saldo: total - pago,
@@ -1244,6 +1246,7 @@ export const resumoContaMesaFn = createServerFn({ method: "POST" })
         subtotal: acc.subtotal + c.subtotal,
         desconto_cupom: acc.desconto_cupom + c.desconto_cupom,
         cashback_resgatado: acc.cashback_resgatado + c.cashback_resgatado,
+        taxa_servico_valor: acc.taxa_servico_valor + c.taxa_servico_valor,
         total: acc.total + c.total,
         total_pago: acc.total_pago + c.total_pago,
         saldo: acc.saldo + c.saldo,
@@ -1252,6 +1255,7 @@ export const resumoContaMesaFn = createServerFn({ method: "POST" })
         subtotal: 0,
         desconto_cupom: 0,
         cashback_resgatado: 0,
+        taxa_servico_valor: 0,
         total: 0,
         total_pago: 0,
         saldo: 0,
