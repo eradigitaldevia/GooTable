@@ -1293,11 +1293,13 @@ export interface ResumoComandaImpressao {
   totais: {
     subtotal: number;
     couvert: number;
+    taxa_servico: number;
     desconto: number;
     total: number;
     total_pago: number;
     saldo: number;
   };
+
   pagamentos: Array<{ metodo: string; valor: number; quando: string }>;
 }
 
