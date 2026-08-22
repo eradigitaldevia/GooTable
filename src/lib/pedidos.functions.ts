@@ -1326,8 +1326,9 @@ export const resumoComandaImpressaoFn = createServerFn({ method: "POST" })
       supabaseAdmin
         .from("comandas")
         .select(
-          "id, sessao_id, titular_cliente_id, subtotal, desconto_cupom, cashback_resgatado, total, total_pago",
+          "id, sessao_id, titular_cliente_id, subtotal, desconto_cupom, cashback_resgatado, taxa_servico_valor, total, total_pago",
         )
+
         .eq("id", data.comandaId)
         .maybeSingle(),
     ]);
