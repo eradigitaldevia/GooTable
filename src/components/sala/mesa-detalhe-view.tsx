@@ -605,6 +605,8 @@ export function MesaDetalheView({
           totais={{
             subtotal: data.totais.subtotal,
             couvert: couvertTotalConsolidado,
+            taxa_servico: data.totais.taxa_servico_valor ?? 0,
+
             desconto:
               (data.totais.desconto_cupom ?? 0) +
               (data.totais.cashback_resgatado ?? 0),

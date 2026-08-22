@@ -161,12 +161,19 @@ export const atualizarStatusPedidoFn = createServerFn({ method: "POST" })
         .maybeSingle();
       if (garcom?.id) update.entregue_por_garcom_id = garcom.id as string;
     }
-    const { error } = await supabase
+    let q = supabase
       .from("pedidos")
       .update(update)
       .eq("id", data.id)
       .eq("restaurante_id", data.restauranteId);
+    // Nunca avançar um pedido já cancelado (corrida entrega × cancelamento)
+    if (data.status !== "cancelado") q = q.neq("status", "cancelado");
+    const { data: afetados, error } = await q.select("id");
     if (error) throw new Error(error.message);
+    if (!afetados || afetados.length === 0) {
+      throw new Error("Pedido não pôde ser atualizado (já cancelado ou inexistente)");
+    }
+
 
     if (data.status === "entregue") {
       const { error: rpcErr } = await supabaseAdmin.rpc("creditar_cashback_pedido", {
@@ -909,7 +916,9 @@ export interface ResumoMesaComanda {
   subtotal: number;
   desconto_cupom: number;
   cashback_resgatado: number;
+  taxa_servico_valor: number;
   total: number;
+
   total_pago: number;
   saldo: number;
   couverts: {
@@ -931,7 +940,9 @@ export interface ResumoContaMesa {
     subtotal: number;
     desconto_cupom: number;
     cashback_resgatado: number;
+    taxa_servico_valor: number;
     total: number;
+
     total_pago: number;
     saldo: number;
   };
@@ -982,7 +993,7 @@ export const resumoContaMesaFn = createServerFn({ method: "POST" })
       const { data: cs, error: cErr } = await supabaseAdmin
         .from("comandas")
         .select(
-          "id, tipo, subtotal, desconto_cupom, cashback_resgatado, total, total_pago, titular_cliente_id",
+          "id, tipo, subtotal, desconto_cupom, cashback_resgatado, taxa_servico_valor, total, total_pago, titular_cliente_id",
         )
         .eq("sessao_id", sessaoInfo.id)
         .eq("status", "aberta")
@@ -994,6 +1005,7 @@ export const resumoContaMesaFn = createServerFn({ method: "POST" })
         subtotal: number;
         desconto_cupom: number;
         cashback_resgatado: number;
+        taxa_servico_valor: number;
         total: number;
         total_pago: number;
         titular_cliente_id: string | null;
@@ -1089,6 +1101,7 @@ export const resumoContaMesaFn = createServerFn({ method: "POST" })
           subtotal: Number(c.subtotal ?? 0),
           desconto_cupom: Number(c.desconto_cupom ?? 0),
           cashback_resgatado: Number(c.cashback_resgatado ?? 0),
+          taxa_servico_valor: Number(c.taxa_servico_valor ?? 0),
           total,
           total_pago: pago,
           saldo: total - pago,
@@ -1233,6 +1246,7 @@ export const resumoContaMesaFn = createServerFn({ method: "POST" })
         subtotal: acc.subtotal + c.subtotal,
         desconto_cupom: acc.desconto_cupom + c.desconto_cupom,
         cashback_resgatado: acc.cashback_resgatado + c.cashback_resgatado,
+        taxa_servico_valor: acc.taxa_servico_valor + c.taxa_servico_valor,
         total: acc.total + c.total,
         total_pago: acc.total_pago + c.total_pago,
         saldo: acc.saldo + c.saldo,
@@ -1241,6 +1255,7 @@ export const resumoContaMesaFn = createServerFn({ method: "POST" })
         subtotal: 0,
         desconto_cupom: 0,
         cashback_resgatado: 0,
+        taxa_servico_valor: 0,
         total: 0,
         total_pago: 0,
         saldo: 0,
@@ -1286,11 +1301,13 @@ export interface ResumoComandaImpressao {
   totais: {
     subtotal: number;
     couvert: number;
+    taxa_servico: number;
     desconto: number;
     total: number;
     total_pago: number;
     saldo: number;
   };
+
   pagamentos: Array<{ metodo: string; valor: number; quando: string }>;
 }
 
@@ -1317,8 +1334,9 @@ export const resumoComandaImpressaoFn = createServerFn({ method: "POST" })
       supabaseAdmin
         .from("comandas")
         .select(
-          "id, sessao_id, titular_cliente_id, subtotal, desconto_cupom, cashback_resgatado, total, total_pago",
+          "id, sessao_id, titular_cliente_id, subtotal, desconto_cupom, cashback_resgatado, taxa_servico_valor, total, total_pago",
         )
+
         .eq("id", data.comandaId)
         .maybeSingle(),
     ]);
@@ -1447,7 +1465,9 @@ export const resumoComandaImpressaoFn = createServerFn({ method: "POST" })
       totais: {
         subtotal,
         couvert: couvertTotal,
+        taxa_servico: Number(com.taxa_servico_valor ?? 0),
         desconto,
+
         total,
         total_pago,
         saldo: Math.max(0, total - total_pago),
@@ -1742,25 +1762,36 @@ export const marcarPedidosEntreguesEmLoteFn = createServerFn({ method: "POST" })
     let ok = 0;
     const erros: { pedidoId: string; mensagem: string }[] = [];
     for (const id of data.pedidoIds) {
-      const { error } = await supabase
+      const { data: afetados, error } = await supabase
         .from("pedidos")
         .update({ status: "entregue", atualizado_em: agora, entregue_em: agora })
         .eq("id", id)
         .eq("restaurante_id", data.restauranteId)
-        .in("status", ["recebido", "em_preparo", "pronto"]);
-      if (error) erros.push({ pedidoId: id, mensagem: error.message });
-      else {
-        ok++;
-        const { error: cbErr } = await supabaseAdmin.rpc("creditar_cashback_pedido", {
-          _pedido_id: id,
+        .in("status", ["recebido", "em_preparo", "pronto"])
+        .select("id");
+      if (error) {
+        erros.push({ pedidoId: id, mensagem: error.message });
+        continue;
+      }
+      if (!afetados || afetados.length === 0) {
+        erros.push({
+          pedidoId: id,
+          mensagem: "Pedido não foi atualizado (já entregue ou cancelado).",
         });
-        if (cbErr) {
-          erros.push({
-            pedidoId: id,
-            mensagem: `Entregue, mas o cashback não foi creditado: ${cbErr.message}`,
-          });
-        }
+        continue;
+      }
+      ok++;
+      const { error: cbErr } = await supabaseAdmin.rpc("creditar_cashback_pedido", {
+        _pedido_id: id,
+      });
+      if (cbErr) {
+        erros.push({
+          pedidoId: id,
+          mensagem: `Entregue, mas o cashback não foi creditado: ${cbErr.message}`,
+        });
       }
     }
+
+
     return { ok, erros };
   });
