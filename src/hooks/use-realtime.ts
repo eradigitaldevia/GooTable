@@ -46,7 +46,23 @@ export function useRealtimePedidos(restauranteId: string | undefined) {
           if (id) qc.invalidateQueries({ queryKey: queryKeys.pedido(id) });
         },
       )
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "pedido_destino_status",
+        },
+        (payload) => {
+          const id =
+            (payload.new as { pedido_id?: string } | null)?.pedido_id ??
+            (payload.old as { pedido_id?: string } | null)?.pedido_id;
+          qc.invalidateQueries({ queryKey: queryKeys.pedidos(restauranteId) });
+          if (id) qc.invalidateQueries({ queryKey: queryKeys.pedido(id) });
+        },
+      )
       .subscribe();
+
 
     return () => {
       supabase.removeChannel(channel);
