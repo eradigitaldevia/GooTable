@@ -916,7 +916,9 @@ export interface ResumoMesaComanda {
   subtotal: number;
   desconto_cupom: number;
   cashback_resgatado: number;
+  taxa_servico_valor: number;
   total: number;
+
   total_pago: number;
   saldo: number;
   couverts: {
