@@ -50,7 +50,7 @@ export function ProdutoDialog({
 
   return (
     <Dialog open={!!produto} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="max-w-md p-0 overflow-hidden">
+      <DialogContent className="max-w-md p-0 overflow-hidden" onOpenAutoFocus={(e) => e.preventDefault()}>
         {produto.imagem_url && (
           <img src={produto.imagem_url} alt={produto.nome} className="aspect-[4/3] w-full object-cover" loading="lazy" decoding="async" />
         )}
