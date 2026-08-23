@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Loader2, ShieldCheck } from "lucide-react";
+import { HelpCircle, Loader2, ShieldCheck, UserPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -7,15 +7,22 @@ import { Label } from "@/components/ui/label";
 export function ConfirmarIdentidadeStep({
   onConfirmar,
   onCancelar,
+  onSeguirSemVincular,
+  onChamarGarcom,
   enviando,
+  falhas,
 }: {
   onConfirmar: (v: { nome: string; ultimos4: string }) => void;
   onCancelar: () => void;
+  onSeguirSemVincular: (nome: string) => void;
+  onChamarGarcom: () => void;
   enviando: boolean;
+  falhas: number;
 }) {
   const [nome, setNome] = useState("");
   const [ultimos4, setUltimos4] = useState("");
   const [erro, setErro] = useState<string | null>(null);
+  const mostrarAjuda = falhas >= 2;
 
   const handle = (e: React.FormEvent) => {
     e.preventDefault();
@@ -78,6 +85,40 @@ export function ConfirmarIdentidadeStep({
             {enviando ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : null}
             Confirmar
           </Button>
+
+          {mostrarAjuda && (
+            <div className="space-y-3 rounded-2xl border bg-muted/40 p-4">
+              <p className="text-sm text-muted-foreground">
+                Não conseguiu confirmar? Você pode continuar seu pedido nesta
+                mesa ou pedir ajuda a um atendente.
+              </p>
+              <Button
+                type="button"
+                variant="secondary"
+                className="h-11 w-full rounded-2xl"
+                disabled={enviando || nome.trim().length < 2}
+                onClick={() => onSeguirSemVincular(nome.trim())}
+              >
+                <UserPlus className="mr-2 h-4 w-4" />
+                Continuar sem vincular
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                className="h-11 w-full rounded-2xl"
+                disabled={enviando}
+                onClick={onChamarGarcom}
+              >
+                <HelpCircle className="mr-2 h-4 w-4" />
+                Chamar garçom para me identificar
+              </Button>
+              {nome.trim().length < 2 && (
+                <p className="text-xs text-muted-foreground">
+                  Informe seu nome acima para continuar sem vincular.
+                </p>
+              )}
+            </div>
+          )}
 
           <button
             type="button"
