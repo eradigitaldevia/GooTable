@@ -212,6 +212,7 @@ function ClienteMenu() {
       salvar({
         clienteId: r.cliente.id,
         nome: r.cliente.nome,
+        telefone: "",
         sessaoId: r.sessaoId,
         comandaId: r.comandaId,
       });
