@@ -11,6 +11,15 @@ import {
   type ConflitoMesa,
 } from "./sessoes.server";
 import { assertClienteNaSessao } from "./sessoes.server";
+import {
+  CONFIRMACAO_INVALIDA_MENSAGEM,
+  confirmacaoIdentidadeConfere,
+} from "./identificacao-cliente.server";
+import {
+  identificacaoBloqueada,
+  mensagemBloqueio,
+  registrarTentativaIdentificacao,
+} from "./identificacao-throttle.server";
 
 export interface ClienteIdentificado {
   id: string;
