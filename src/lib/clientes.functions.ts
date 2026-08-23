@@ -11,6 +11,15 @@ import {
   type ConflitoMesa,
 } from "./sessoes.server";
 import { assertClienteNaSessao } from "./sessoes.server";
+import {
+  CONFIRMACAO_INVALIDA_MENSAGEM,
+  confirmacaoIdentidadeConfere,
+} from "./identificacao-cliente.server";
+import {
+  identificacaoBloqueada,
+  mensagemBloqueio,
+  registrarTentativaIdentificacao,
+} from "./identificacao-throttle.server";
 
 export interface ClienteIdentificado {
   id: string;
@@ -98,6 +107,38 @@ export const identificarClienteFn = createServerFn({ method: "POST" })
 
     let cliente: ClienteIdentificado;
     if (existente) {
+      // Telefone já cadastrado e com comanda aberta em outra mesa: exige que o
+      // nome informado confira antes de qualquer dado ser revelado/alterado.
+      const conflitoPrevio = await detectarConflitoMesa(
+        existente.id as string,
+        mesa.restaurante_id,
+        mesa.id,
+      );
+      if (conflitoPrevio) {
+        const bloqueio = await identificacaoBloqueada({
+          restauranteId: mesa.restaurante_id as string,
+          qrToken: data.qrToken,
+          telefone: data.telefone,
+          escopo: "confirmacao",
+        });
+        if (bloqueio.bloqueado) throw new Error(mensagemBloqueio(bloqueio.bloqueadoAte));
+
+        const confere = confirmacaoIdentidadeConfere({
+          nomeCadastro: existente.nome as string,
+          telefoneCadastro: existente.telefone as string,
+          nomeInformado: data.nome,
+          ultimos4: data.telefone.slice(-4),
+        });
+        await registrarTentativaIdentificacao({
+          restauranteId: mesa.restaurante_id as string,
+          qrToken: data.qrToken,
+          telefone: data.telefone,
+          sucesso: confere,
+          escopo: "confirmacao",
+        });
+        if (!confere) throw new Error(CONFIRMACAO_INVALIDA_MENSAGEM);
+      }
+
       const { data: upd, error: upErr } = await supabaseAdmin
         .from("clientes")
         .update({ nome: data.nome, ultima_visita: agora })

@@ -1035,6 +1035,7 @@ export type Database = {
       identificacao_tentativas: {
         Row: {
           criado_em: string
+          escopo: string
           id: string
           ip_hash: string | null
           qr_token: string
@@ -1044,6 +1045,7 @@ export type Database = {
         }
         Insert: {
           criado_em?: string
+          escopo?: string
           id?: string
           ip_hash?: string | null
           qr_token: string
@@ -1053,6 +1055,7 @@ export type Database = {
         }
         Update: {
           criado_em?: string
+          escopo?: string
           id?: string
           ip_hash?: string | null
           qr_token?: string
@@ -2288,6 +2291,7 @@ export type Database = {
         Returns: boolean
       }
       liberar_garcom_mesa: { Args: { _mesa_id: string }; Returns: undefined }
+      limpar_identificacao_tentativas: { Args: never; Returns: number }
       metricas_chamados: { Args: { _restaurante_id: string }; Returns: Json }
       pagar_bonus: { Args: { _ids: string[] }; Returns: number }
       pagar_comissoes: { Args: { _ids: string[] }; Returns: number }

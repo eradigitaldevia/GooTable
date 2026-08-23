@@ -26,8 +26,8 @@ import {
   resolverMesaAtivaPorQr,
 } from "./identificacao-cliente.server";
 import {
-  IDENTIFICACAO_BLOQUEADA_MENSAGEM,
   identificacaoBloqueada,
+  mensagemBloqueio,
   primeiroNome,
   registrarTentativaIdentificacao,
 } from "./identificacao-throttle.server";
@@ -120,14 +120,14 @@ export const buscarClientePorTelefoneFn = createServerFn({ method: "POST" })
   .handler(async ({ data }): Promise<BuscarClientePorTelefoneResultado> => {
     const mesa = await resolverMesaAtivaPorQr(data.qrToken);
 
-    if (
-      await identificacaoBloqueada({
-        restauranteId: mesa.restaurante_id,
-        qrToken: data.qrToken,
-        telefone: data.telefone,
-      })
-    ) {
-      throw new Error(IDENTIFICACAO_BLOQUEADA_MENSAGEM);
+    const bloqueio = await identificacaoBloqueada({
+      restauranteId: mesa.restaurante_id,
+      qrToken: data.qrToken,
+      telefone: data.telefone,
+      escopo: "lookup",
+    });
+    if (bloqueio.bloqueado) {
+      throw new Error(mensagemBloqueio(bloqueio.bloqueadoAte));
     }
 
     const { data: cli, error: cErr } = await supabaseAdmin
@@ -143,6 +143,7 @@ export const buscarClientePorTelefoneFn = createServerFn({ method: "POST" })
         qrToken: data.qrToken,
         telefone: data.telefone,
         sucesso: false,
+        escopo: "lookup",
       });
       return { encontrado: false };
     }
@@ -152,6 +153,7 @@ export const buscarClientePorTelefoneFn = createServerFn({ method: "POST" })
       qrToken: data.qrToken,
       telefone: data.telefone,
       sucesso: true,
+      escopo: "lookup",
     });
 
     // Cliente já está em outra mesa: exige confirmação antes de revelar
@@ -208,14 +210,14 @@ export const confirmarIdentidadeConflitoFn = createServerFn({ method: "POST" })
   .handler(async ({ data }): Promise<ConfirmarIdentidadeResultado> => {
     const mesa = await resolverMesaAtivaPorQr(data.qrToken);
 
-    if (
-      await identificacaoBloqueada({
-        restauranteId: mesa.restaurante_id,
-        qrToken: data.qrToken,
-        telefone: data.telefone,
-      })
-    ) {
-      throw new Error(IDENTIFICACAO_BLOQUEADA_MENSAGEM);
+    const bloqueio = await identificacaoBloqueada({
+      restauranteId: mesa.restaurante_id,
+      qrToken: data.qrToken,
+      telefone: data.telefone,
+      escopo: "confirmacao",
+    });
+    if (bloqueio.bloqueado) {
+      throw new Error(mensagemBloqueio(bloqueio.bloqueadoAte));
     }
 
     const { data: cli, error: cErr } = await supabaseAdmin
@@ -241,6 +243,7 @@ export const confirmarIdentidadeConflitoFn = createServerFn({ method: "POST" })
         qrToken: data.qrToken,
         telefone: data.telefone,
         sucesso: false,
+        escopo: "confirmacao",
       });
       throw new Error(CONFIRMACAO_INVALIDA_MENSAGEM);
     }
@@ -250,6 +253,7 @@ export const confirmarIdentidadeConflitoFn = createServerFn({ method: "POST" })
       qrToken: data.qrToken,
       telefone: data.telefone,
       sucesso: true,
+      escopo: "confirmacao",
     });
 
     const clienteId = cli!.id as string;
@@ -429,4 +433,98 @@ export const sanitizarComandasOrfasFn = createServerFn({ method: "POST" })
     await assertAcessoRestaurante(supabase, userId, data.restauranteId);
     const fechadas = await sanitizarComandasOrfas(data.sessaoId);
     return { fechadas };
+  });
+
+/**
+ * Saída de impasse: quando o cliente não consegue confirmar a identidade,
+ * ele segue como cadastro avulso na mesa atual, com comanda própria.
+ * Nada do cadastro conflitante é lido, exibido ou alterado.
+ */
+export const entrarSemVincularFn = createServerFn({ method: "POST" })
+  .inputValidator((d) =>
+    z
+      .object({
+        qrToken: z.string().min(1).max(80),
+        nome: z.string().trim().min(2).max(80),
+      })
+      .parse(d),
+  )
+  .handler(
+    async ({
+      data,
+    }): Promise<{
+      cliente: { id: string; nome: string };
+      sessaoId: string;
+      comandaId: string;
+      mesaId: string;
+      restauranteId: string;
+    }> => {
+      const mesa = await resolverMesaAtivaPorQr(data.qrToken);
+
+      const marcador = `avulso-${crypto.randomUUID().slice(0, 8)}`;
+      const { data: ins, error: insErr } = await supabaseAdmin
+        .from("clientes")
+        .insert({
+          restaurante_id: mesa.restaurante_id,
+          nome: data.nome,
+          telefone: marcador,
+          ultima_visita: new Date().toISOString(),
+        })
+        .select("id, nome")
+        .single();
+      if (insErr || !ins) throw new Error(insErr?.message ?? "Falha ao criar cadastro");
+
+      const clienteId = ins.id as string;
+      const { sessaoId, comandaId } = await entrarComClienteExistente(mesa, clienteId);
+
+      return {
+        cliente: { id: clienteId, nome: primeiroNome(ins.nome as string) },
+        sessaoId,
+        comandaId,
+        mesaId: mesa.id,
+        restauranteId: mesa.restaurante_id,
+      };
+    },
+  );
+
+/**
+ * Abre um chamado na mesa para que o garçom identifique o cliente
+ * presencialmente. Não revela nada do cadastro.
+ */
+export const chamarGarcomIdentificacaoFn = createServerFn({ method: "POST" })
+  .inputValidator((d) => z.object({ qrToken: z.string().min(1).max(80) }).parse(d))
+  .handler(async ({ data }): Promise<{ ok: boolean; motivo?: string }> => {
+    const mesa = await resolverMesaAtivaPorQr(data.qrToken);
+
+    const { data: tipos, error: tErr } = await supabaseAdmin
+      .from("tipos_chamado")
+      .select("id, nome, ordem")
+      .eq("restaurante_id", mesa.restaurante_id)
+      .eq("ativo", true)
+      .order("ordem", { ascending: true });
+    if (tErr) throw new Error(tErr.message);
+    if (!tipos || tipos.length === 0) {
+      return { ok: false, motivo: "Chamado indisponível. Procure um atendente." };
+    }
+    const tipo =
+      tipos.find((t) => /gar[cç]om|atend/i.test(String(t.nome))) ?? tipos[0]!;
+
+    const limite = new Date(Date.now() - 2 * 60 * 1000).toISOString();
+    const { data: existente } = await supabaseAdmin
+      .from("chamados_garcom")
+      .select("id")
+      .eq("mesa_id", mesa.id)
+      .eq("tipo_chamado_id", tipo.id as string)
+      .eq("status", "pendente")
+      .gte("criado_em", limite)
+      .maybeSingle();
+    if (existente) return { ok: true };
+
+    const { error } = await supabaseAdmin.from("chamados_garcom").insert({
+      restaurante_id: mesa.restaurante_id,
+      mesa_id: mesa.id,
+      tipo_chamado_id: tipo.id as string,
+    });
+    if (error) throw new Error(error.message);
+    return { ok: true };
   });

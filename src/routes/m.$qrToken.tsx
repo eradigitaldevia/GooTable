@@ -23,7 +23,9 @@ import { LookupTelefoneStep } from "@/components/cliente/lookup-telefone-step";
 import { entrarNaMesaFn, identificarClienteFn } from "@/lib/clientes.functions";
 import {
   buscarClientePorTelefoneFn,
+  chamarGarcomIdentificacaoFn,
   confirmarIdentidadeConflitoFn,
+  entrarSemVincularFn,
   transferirClienteParaMesaFn,
 } from "@/lib/cliente-mesa.functions";
 import { ConfirmarIdentidadeStep } from "@/components/cliente/confirmar-identidade-step";
@@ -60,6 +62,8 @@ function ClienteMenu() {
   const buscarPorTelefone = useServerFn(buscarClientePorTelefoneFn);
   const confirmarIdentidade = useServerFn(confirmarIdentidadeConflitoFn);
   const transferirParaMesa = useServerFn(transferirClienteParaMesaFn);
+  const entrarSemVincular = useServerFn(entrarSemVincularFn);
+  const chamarGarcomIdentificacao = useServerFn(chamarGarcomIdentificacaoFn);
   const [enviando, setEnviando] = useState(false);
   const [conflitoLocal, setConflitoLocal] = useState<PendenteConflito | null>(null);
   const [busca, setBusca] = useState("");
@@ -68,6 +72,7 @@ function ClienteMenu() {
   const [count, setCount] = useState(0);
   const [modoLookup, setModoLookup] = useState(true);
   const [telefoneConfirmacao, setTelefoneConfirmacao] = useState<string | null>(null);
+  const [falhasConfirmacao, setFalhasConfirmacao] = useState(0);
   const conflito = conflitoLocal ?? conflitoSessao;
   const setConflito = setConflitoLocal;
 
@@ -181,6 +186,7 @@ function ClienteMenu() {
         return;
       }
       setTelefoneConfirmacao(null);
+      setFalhasConfirmacao(0);
       salvar({
         clienteId: r.cliente.id,
         nome: r.cliente.nome,
@@ -190,7 +196,42 @@ function ClienteMenu() {
       });
       showWelcome(r.cliente.nome);
     } catch (e) {
+      setFalhasConfirmacao((n) => n + 1);
       toast.error(e instanceof Error ? e.message : "Não foi possível continuar");
+    } finally {
+      setEnviando(false);
+    }
+  };
+
+  const handleSeguirSemVincular = async (nome: string) => {
+    try {
+      setEnviando(true);
+      const r = await entrarSemVincular({ data: { qrToken, nome } });
+      setTelefoneConfirmacao(null);
+      setFalhasConfirmacao(0);
+      salvar({
+        clienteId: r.cliente.id,
+        nome: r.cliente.nome,
+        telefone: "",
+        sessaoId: r.sessaoId,
+        comandaId: r.comandaId,
+      });
+      toast.success("Tudo certo! Você pode fazer seu pedido nesta mesa.");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Não foi possível continuar");
+    } finally {
+      setEnviando(false);
+    }
+  };
+
+  const handleChamarGarcomIdentificacao = async () => {
+    try {
+      setEnviando(true);
+      const r = await chamarGarcomIdentificacao({ data: { qrToken } });
+      if (r.ok) toast.success("Garçom a caminho da sua mesa.");
+      else toast.message(r.motivo ?? "Procure um atendente.");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Não foi possível chamar o garçom");
     } finally {
       setEnviando(false);
     }
@@ -302,6 +343,9 @@ function ClienteMenu() {
             enviando={enviando}
             onConfirmar={handleConfirmarIdentidade}
             onCancelar={() => setTelefoneConfirmacao(null)}
+            onSeguirSemVincular={handleSeguirSemVincular}
+            onChamarGarcom={handleChamarGarcomIdentificacao}
+            falhas={falhasConfirmacao}
           />
         ) : modoLookup ? (
           <LookupTelefoneStep
