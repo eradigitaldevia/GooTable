@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import {
@@ -36,13 +35,11 @@ export function ProdutoDialog({
 }) {
   const [qtd, setQtd] = useState(1);
   const [obs, setObs] = useState("");
-  const [nome, setNome] = useState("");
 
   useEffect(() => {
     if (produto) {
       setQtd(1);
       setObs("");
-      setNome("");
     }
   }, [produto]);
 
@@ -68,10 +65,6 @@ export function ProdutoDialog({
               <Label htmlFor="obs">Observação (opcional)</Label>
               <Textarea id="obs" value={obs} onChange={(e) => setObs(e.target.value)} placeholder="Ex: sem cebola" rows={2} />
             </div>
-            <div>
-              <Label htmlFor="nome">Seu nome (para dividir a conta)</Label>
-              <Input id="nome" value={nome} onChange={(e) => setNome(e.target.value)} placeholder="Opcional" />
-            </div>
           </div>
         </div>
 
@@ -94,7 +87,6 @@ export function ProdutoDialog({
                 preco: Number(produto.preco),
                 quantidade: qtd,
                 observacao: obs.trim() || undefined,
-                cliente_nome: nome.trim() || undefined,
                 imagem_url: produto.imagem_url,
               })
             }
