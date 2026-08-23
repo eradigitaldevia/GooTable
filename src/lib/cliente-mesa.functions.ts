@@ -20,6 +20,12 @@ export type { ModoDivisao, DivisaoContaResultado, JuntarComandasResultado };
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { assertAcessoRestaurante } from "./auth.server";
 import {
+  CONFIRMACAO_INVALIDA_MENSAGEM,
+  confirmacaoIdentidadeConfere,
+  entrarComClienteExistente,
+  resolverMesaAtivaPorQr,
+} from "./identificacao-cliente.server";
+import {
   IDENTIFICACAO_BLOQUEADA_MENSAGEM,
   identificacaoBloqueada,
   primeiroNome,
