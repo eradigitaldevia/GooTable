@@ -26,8 +26,8 @@ import {
   resolverMesaAtivaPorQr,
 } from "./identificacao-cliente.server";
 import {
-  IDENTIFICACAO_BLOQUEADA_MENSAGEM,
   identificacaoBloqueada,
+  mensagemBloqueio,
   primeiroNome,
   registrarTentativaIdentificacao,
 } from "./identificacao-throttle.server";
@@ -120,14 +120,14 @@ export const buscarClientePorTelefoneFn = createServerFn({ method: "POST" })
   .handler(async ({ data }): Promise<BuscarClientePorTelefoneResultado> => {
     const mesa = await resolverMesaAtivaPorQr(data.qrToken);
 
-    if (
-      await identificacaoBloqueada({
-        restauranteId: mesa.restaurante_id,
-        qrToken: data.qrToken,
-        telefone: data.telefone,
-      })
-    ) {
-      throw new Error(IDENTIFICACAO_BLOQUEADA_MENSAGEM);
+    const bloqueio = await identificacaoBloqueada({
+      restauranteId: mesa.restaurante_id,
+      qrToken: data.qrToken,
+      telefone: data.telefone,
+      escopo: "lookup",
+    });
+    if (bloqueio.bloqueado) {
+      throw new Error(mensagemBloqueio(bloqueio.bloqueadoAte));
     }
 
     const { data: cli, error: cErr } = await supabaseAdmin
@@ -143,6 +143,7 @@ export const buscarClientePorTelefoneFn = createServerFn({ method: "POST" })
         qrToken: data.qrToken,
         telefone: data.telefone,
         sucesso: false,
+        escopo: "lookup",
       });
       return { encontrado: false };
     }
@@ -152,6 +153,7 @@ export const buscarClientePorTelefoneFn = createServerFn({ method: "POST" })
       qrToken: data.qrToken,
       telefone: data.telefone,
       sucesso: true,
+      escopo: "lookup",
     });
 
     // Cliente já está em outra mesa: exige confirmação antes de revelar
@@ -208,14 +210,14 @@ export const confirmarIdentidadeConflitoFn = createServerFn({ method: "POST" })
   .handler(async ({ data }): Promise<ConfirmarIdentidadeResultado> => {
     const mesa = await resolverMesaAtivaPorQr(data.qrToken);
 
-    if (
-      await identificacaoBloqueada({
-        restauranteId: mesa.restaurante_id,
-        qrToken: data.qrToken,
-        telefone: data.telefone,
-      })
-    ) {
-      throw new Error(IDENTIFICACAO_BLOQUEADA_MENSAGEM);
+    const bloqueio = await identificacaoBloqueada({
+      restauranteId: mesa.restaurante_id,
+      qrToken: data.qrToken,
+      telefone: data.telefone,
+      escopo: "confirmacao",
+    });
+    if (bloqueio.bloqueado) {
+      throw new Error(mensagemBloqueio(bloqueio.bloqueadoAte));
     }
 
     const { data: cli, error: cErr } = await supabaseAdmin
@@ -241,6 +243,7 @@ export const confirmarIdentidadeConflitoFn = createServerFn({ method: "POST" })
         qrToken: data.qrToken,
         telefone: data.telefone,
         sucesso: false,
+        escopo: "confirmacao",
       });
       throw new Error(CONFIRMACAO_INVALIDA_MENSAGEM);
     }
@@ -250,6 +253,7 @@ export const confirmarIdentidadeConflitoFn = createServerFn({ method: "POST" })
       qrToken: data.qrToken,
       telefone: data.telefone,
       sucesso: true,
+      escopo: "confirmacao",
     });
 
     const clienteId = cli!.id as string;
