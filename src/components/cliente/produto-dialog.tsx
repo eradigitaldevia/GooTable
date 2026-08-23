@@ -68,10 +68,6 @@ export function ProdutoDialog({
               <Label htmlFor="obs">Observação (opcional)</Label>
               <Textarea id="obs" value={obs} onChange={(e) => setObs(e.target.value)} placeholder="Ex: sem cebola" rows={2} />
             </div>
-            <div>
-              <Label htmlFor="nome">Seu nome (para dividir a conta)</Label>
-              <Input id="nome" value={nome} onChange={(e) => setNome(e.target.value)} placeholder="Opcional" />
-            </div>
           </div>
         </div>
 
