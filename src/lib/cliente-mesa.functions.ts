@@ -20,6 +20,12 @@ export type { ModoDivisao, DivisaoContaResultado, JuntarComandasResultado };
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { assertAcessoRestaurante } from "./auth.server";
 import {
+  CONFIRMACAO_INVALIDA_MENSAGEM,
+  confirmacaoIdentidadeConfere,
+  entrarComClienteExistente,
+  resolverMesaAtivaPorQr,
+} from "./identificacao-cliente.server";
+import {
   IDENTIFICACAO_BLOQUEADA_MENSAGEM,
   identificacaoBloqueada,
   primeiroNome,
@@ -64,13 +70,28 @@ export const validarSessaoComandaFn = createServerFn({ method: "POST" })
 
 export type BuscarClientePorTelefoneResultado =
   | { encontrado: false }
+  /**
+   * Telefone existe e o cliente tem comanda aberta em outra mesa.
+   * Nenhum dado do cliente é revelado antes da confirmação (nome + 4 dígitos).
+   */
+  | { encontrado: true; exigeConfirmacao: true }
   | {
       encontrado: true;
+      exigeConfirmacao?: false;
+      conflito?: undefined;
+      cliente: { id: string; nome: string };
+      sessaoId: string;
+      comandaId: string;
+      mesaId: string;
+      restauranteId: string;
+    };
+
+export type ConfirmarIdentidadeResultado =
+  | {
       conflito: ConflitoMesa;
       cliente: { id: string; nome: string };
     }
   | {
-      encontrado: true;
       conflito?: undefined;
       cliente: { id: string; nome: string };
       sessaoId: string;
@@ -97,21 +118,7 @@ export const buscarClientePorTelefoneFn = createServerFn({ method: "POST" })
       .parse(d),
   )
   .handler(async ({ data }): Promise<BuscarClientePorTelefoneResultado> => {
-    const { data: mesa, error: mErr } = await supabaseAdmin
-      .from("mesas")
-      .select("id, restaurante_id, ativa")
-      .eq("qr_token", data.qrToken)
-      .maybeSingle();
-    if (mErr) throw new Error(mErr.message);
-    if (!mesa || !mesa.ativa) throw new Error("Mesa indisponível");
-
-    const { data: rest, error: rErr } = await supabaseAdmin
-      .from("restaurantes")
-      .select("ativo")
-      .eq("id", mesa.restaurante_id)
-      .maybeSingle();
-    if (rErr) throw new Error(rErr.message);
-    if (!rest?.ativo) throw new Error("Restaurante indisponível");
+    const mesa = await resolverMesaAtivaPorQr(data.qrToken);
 
     if (
       await identificacaoBloqueada({
@@ -147,65 +154,21 @@ export const buscarClientePorTelefoneFn = createServerFn({ method: "POST" })
       sucesso: true,
     });
 
-    // Bloqueio: cliente já está em outra mesa do mesmo restaurante.
+    // Cliente já está em outra mesa: exige confirmação antes de revelar
+    // nome e mesa de origem.
     const conflito = await detectarConflitoMesa(
       cli.id as string,
       mesa.restaurante_id,
       mesa.id,
     );
     if (conflito) {
-      return {
-        encontrado: true,
-        conflito,
-        cliente: {
-          id: cli.id as string,
-          nome: primeiroNome(cli.nome as string),
-        },
-      };
+      return { encontrado: true, exigeConfirmacao: true };
     }
 
-    const sessao = await garantirSessaoAberta(mesa.id, mesa.restaurante_id);
-
-    // Re-identificação idempotente: se o mesmo cliente já tem vínculo ativo
-    // (saiu_em IS NULL) com uma comanda `aberta` nesta sessão, reutilizar essa
-    // comanda em vez de criar uma nova compartilhada (que deixaria a individual
-    // original órfã).
-    let comandaId: string | null = null;
-    const { data: vincExistente, error: vExistErr } = await supabaseAdmin
-      .from("mesa_sessao_clientes")
-      .select("comanda_id")
-      .eq("sessao_id", sessao.id)
-      .eq("cliente_id", cli.id)
-      .is("saiu_em", null)
-      .maybeSingle();
-    if (vExistErr) throw new Error(vExistErr.message);
-    if (vincExistente?.comanda_id) {
-      const { data: comandaExist, error: cExistErr } = await supabaseAdmin
-        .from("comandas")
-        .select("id, status")
-        .eq("id", vincExistente.comanda_id as string)
-        .maybeSingle();
-      if (cExistErr) throw new Error(cExistErr.message);
-      if (comandaExist && comandaExist.status === "aberta") {
-        comandaId = comandaExist.id as string;
-      }
-    }
-
-    if (!comandaId) {
-      // Sempre individual: cada cliente entra com sua própria comanda.
-      comandaId = await criarComandaIndividual(
-        sessao.id,
-        mesa.restaurante_id,
-        cli.id as string,
-      );
-    }
-
-    await vincularClienteSessao(sessao.id, cli.id as string, comandaId);
-
-    await supabaseAdmin
-      .from("clientes")
-      .update({ ultima_visita: new Date().toISOString() })
-      .eq("id", cli.id);
+    const { sessaoId, comandaId } = await entrarComClienteExistente(
+      mesa,
+      cli.id as string,
+    );
 
     return {
       encontrado: true,
@@ -213,12 +176,102 @@ export const buscarClientePorTelefoneFn = createServerFn({ method: "POST" })
         id: cli.id as string,
         nome: primeiroNome(cli.nome as string),
       },
-      sessaoId: sessao.id,
+      sessaoId,
       comandaId,
       mesaId: mesa.id,
       restauranteId: mesa.restaurante_id,
     };
   });
+
+/**
+ * Confirma a identidade (nome + 4 últimos dígitos) quando o telefone existe e
+ * o cliente está com comanda aberta em outra mesa. Só após acertar é que o
+ * nome e a mesa de origem são revelados.
+ */
+export const confirmarIdentidadeConflitoFn = createServerFn({ method: "POST" })
+  .inputValidator((d) =>
+    z
+      .object({
+        qrToken: z.string().min(1).max(80),
+        telefone: z
+          .string()
+          .transform(onlyDigits)
+          .pipe(z.string().min(10, "Telefone inválido").max(15, "Telefone inválido")),
+        nome: z.string().trim().min(2).max(80),
+        ultimos4: z
+          .string()
+          .transform(onlyDigits)
+          .pipe(z.string().length(4, "Informe os 4 últimos dígitos")),
+      })
+      .parse(d),
+  )
+  .handler(async ({ data }): Promise<ConfirmarIdentidadeResultado> => {
+    const mesa = await resolverMesaAtivaPorQr(data.qrToken);
+
+    if (
+      await identificacaoBloqueada({
+        restauranteId: mesa.restaurante_id,
+        qrToken: data.qrToken,
+        telefone: data.telefone,
+      })
+    ) {
+      throw new Error(IDENTIFICACAO_BLOQUEADA_MENSAGEM);
+    }
+
+    const { data: cli, error: cErr } = await supabaseAdmin
+      .from("clientes")
+      .select("id, nome, telefone")
+      .eq("restaurante_id", mesa.restaurante_id)
+      .eq("telefone", data.telefone)
+      .maybeSingle();
+    if (cErr) throw new Error(cErr.message);
+
+    const confere =
+      !!cli &&
+      confirmacaoIdentidadeConfere({
+        nomeCadastro: cli.nome as string,
+        telefoneCadastro: cli.telefone as string,
+        nomeInformado: data.nome,
+        ultimos4: data.ultimos4,
+      });
+
+    if (!confere) {
+      await registrarTentativaIdentificacao({
+        restauranteId: mesa.restaurante_id,
+        qrToken: data.qrToken,
+        telefone: data.telefone,
+        sucesso: false,
+      });
+      throw new Error(CONFIRMACAO_INVALIDA_MENSAGEM);
+    }
+
+    await registrarTentativaIdentificacao({
+      restauranteId: mesa.restaurante_id,
+      qrToken: data.qrToken,
+      telefone: data.telefone,
+      sucesso: true,
+    });
+
+    const clienteId = cli!.id as string;
+    const cliente = { id: clienteId, nome: primeiroNome(cli!.nome as string) };
+
+    const conflito = await detectarConflitoMesa(
+      clienteId,
+      mesa.restaurante_id,
+      mesa.id,
+    );
+    if (conflito) return { conflito, cliente };
+
+    const { sessaoId, comandaId } = await entrarComClienteExistente(mesa, clienteId);
+    return {
+      cliente,
+      sessaoId,
+      comandaId,
+      mesaId: mesa.id,
+      restauranteId: mesa.restaurante_id,
+    };
+  });
+
 
 /**
  * Transfere a identidade do cliente de uma comanda/sessão de outra mesa
