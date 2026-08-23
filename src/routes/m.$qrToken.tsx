@@ -23,8 +23,10 @@ import { LookupTelefoneStep } from "@/components/cliente/lookup-telefone-step";
 import { entrarNaMesaFn, identificarClienteFn } from "@/lib/clientes.functions";
 import {
   buscarClientePorTelefoneFn,
+  confirmarIdentidadeConflitoFn,
   transferirClienteParaMesaFn,
 } from "@/lib/cliente-mesa.functions";
+import { ConfirmarIdentidadeStep } from "@/components/cliente/confirmar-identidade-step";
 import { ConflitoMesaModal } from "@/components/cliente/conflito-mesa-modal";
 import { TemaCardapioProvider } from "@/components/cliente/tema-cardapio-provider";
 
@@ -56,6 +58,7 @@ function ClienteMenu() {
   const identificar = useServerFn(identificarClienteFn);
   const entrarNaMesa = useServerFn(entrarNaMesaFn);
   const buscarPorTelefone = useServerFn(buscarClientePorTelefoneFn);
+  const confirmarIdentidade = useServerFn(confirmarIdentidadeConflitoFn);
   const transferirParaMesa = useServerFn(transferirClienteParaMesaFn);
   const [enviando, setEnviando] = useState(false);
   const [conflitoLocal, setConflitoLocal] = useState<PendenteConflito | null>(null);
@@ -64,6 +67,7 @@ function ClienteMenu() {
   const [selecionado, setSelecionado] = useState<ProdutoPublico | null>(null);
   const [count, setCount] = useState(0);
   const [modoLookup, setModoLookup] = useState(true);
+  const [telefoneConfirmacao, setTelefoneConfirmacao] = useState<string | null>(null);
   const conflito = conflitoLocal ?? conflitoSessao;
   const setConflito = setConflitoLocal;
 
@@ -136,7 +140,35 @@ function ClienteMenu() {
         setModoLookup(false);
         return;
       }
+      if (r.exigeConfirmacao) {
+        setTelefoneConfirmacao(telefone);
+        return;
+      }
+      salvar({
+        clienteId: r.cliente.id,
+        nome: r.cliente.nome,
+        telefone,
+        sessaoId: r.sessaoId,
+        comandaId: r.comandaId,
+      });
+      showWelcome(r.cliente.nome);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Não foi possível continuar");
+    } finally {
+      setEnviando(false);
+    }
+  };
+
+  const handleConfirmarIdentidade = async (v: { nome: string; ultimos4: string }) => {
+    if (!telefoneConfirmacao) return;
+    const telefone = telefoneConfirmacao;
+    try {
+      setEnviando(true);
+      const r = await confirmarIdentidade({
+        data: { qrToken, telefone, nome: v.nome, ultimos4: v.ultimos4 },
+      });
       if (r.conflito) {
+        setTelefoneConfirmacao(null);
         setConflito({
           clienteId: r.cliente.id,
           nome: r.cliente.nome,
@@ -148,6 +180,7 @@ function ClienteMenu() {
         });
         return;
       }
+      setTelefoneConfirmacao(null);
       salvar({
         clienteId: r.cliente.id,
         nome: r.cliente.nome,
@@ -263,6 +296,12 @@ function ClienteMenu() {
             enviando={enviando}
             onTransferir={handleTransferir}
             onCancelar={() => setConflito(null)}
+          />
+        ) : telefoneConfirmacao ? (
+          <ConfirmarIdentidadeStep
+            enviando={enviando}
+            onConfirmar={handleConfirmarIdentidade}
+            onCancelar={() => setTelefoneConfirmacao(null)}
           />
         ) : modoLookup ? (
           <LookupTelefoneStep
