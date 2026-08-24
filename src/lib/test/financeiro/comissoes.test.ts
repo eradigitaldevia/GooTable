@@ -29,12 +29,13 @@ describe("Comissões", () => {
       percentual_comissao: 10,
     });
 
-    // Atribui garçom à mesa
-    await supabaseAdmin.rpc("atribuir_garcom_mesa", {
+    // Atribui garçom à mesa como usuário autenticado (membro do restaurante)
+    const { error: atribuirError } = await client.rpc("atribuir_garcom_mesa", {
       _mesa_id: base.mesa.id,
       _garcom_id: garcom.id,
       _sessao_id: base.sessao.id,
     });
+    if (atribuirError) throw atribuirError;
 
     // Cria pedido de R$ 100 para a mesa
     const { data: pedidoId, error: pedidoError } = await supabaseAdmin.rpc("criar_pedido_publico", {
