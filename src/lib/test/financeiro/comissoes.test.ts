@@ -111,6 +111,11 @@ describe("Comissões", () => {
     });
     console.log("manualError", manualError);
 
+    const { data: todasComissoes } = await client
+      .from("comissoes")
+      .select("*");
+    console.log("todasComissoes", todasComissoes);
+
     const { data: comissoes } = await client
       .from("comissoes")
       .select("valor_comissao, percentual, status, pedido_id, garcom_id")
