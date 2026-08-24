@@ -109,7 +109,6 @@ describe("Comissões", () => {
       .select("valor_comissao, percentual, status, pedido_id, garcom_id")
       .eq("garcom_id", ctx.garcom.id);
 
-    console.log("comissoes", comissoes);
     expect(comissoes?.length).toBeGreaterThan(0);
     const comissao = comissoes?.[0];
     expect(comissao?.percentual).toBe(10);
