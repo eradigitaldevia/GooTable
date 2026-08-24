@@ -99,10 +99,17 @@ describe("Comissões", () => {
 
     const { data: comanda } = await client
       .from("comandas")
-      .select("status")
+      .select("status, total, total_pago")
       .eq("id", ctx.comanda.id)
       .single();
     expect(comanda?.status).toBe("fechada");
+    console.log("comandaApos", comanda);
+
+    // Chama geração manualmente para debug
+    const { error: manualError } = await client.rpc("gerar_comissao_comanda", {
+      _comanda_id: ctx.comanda.id,
+    });
+    console.log("manualError", manualError);
 
     const { data: comissoes } = await client
       .from("comissoes")
