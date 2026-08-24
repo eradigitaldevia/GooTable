@@ -105,6 +105,13 @@ describe("Comissões", () => {
     expect(comanda?.status).toBe("fechada");
     console.log("comandaApos", comanda);
 
+    const { data: restaurante } = await client
+      .from("restaurantes")
+      .select("comissao_ativa, comissao_modo, comissao_pedido_cliente, comissao_pedido_cliente_percentual")
+      .eq("id", ctx.restaurante.id)
+      .single();
+    console.log("restaurante", restaurante);
+
     // Chama geração manualmente para debug
     const { error: manualError } = await client.rpc("gerar_comissao_comanda", {
       _comanda_id: ctx.comanda.id,
