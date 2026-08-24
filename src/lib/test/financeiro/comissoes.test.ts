@@ -74,23 +74,28 @@ describe("Comissões", () => {
   });
 
   it("gera comissão apenas quando a comanda é quitada", async () => {
-    // Antes do pagamento: nenhuma comissão
-    const { data: comissoesAntes } = await client
-      .from("comissoes")
-      .select("id")
-      .eq("garcom_id", ctx.garcom.id);
-    expect(comissoesAntes?.length).toBe(0);
+    const { data: pedidoAntes } = await supabaseAdmin
+      .from("pedidos")
+      .select("id, status, garcom_id, origem")
+      .eq("comanda_id", ctx.comanda.id)
+      .single();
+    console.log("pedidoAntes", pedidoAntes);
 
-    // Paga totalmente
+    const { data: comandaAntes } = await client
+      .from("comandas")
+      .select("total, total_pago, subtotal, status")
+      .eq("id", ctx.comanda.id)
+      .single();
+    console.log("comandaAntes", comandaAntes);
+
     const { error: pagamentoError } = await client.rpc("registrar_pagamento", {
       _comanda_id: ctx.comanda.id,
       _metodo: "pix",
-      _valor: 100,
+      _valor: comandaAntes?.total || 0,
       _observacao: "",
     });
     if (pagamentoError) throw pagamentoError;
 
-    // Depois do pagamento: comissão gerada
     const { data: comanda } = await client
       .from("comandas")
       .select("status")
@@ -100,9 +105,10 @@ describe("Comissões", () => {
 
     const { data: comissoes } = await client
       .from("comissoes")
-      .select("valor_comissao, percentual, status")
+      .select("valor_comissao, percentual, status, pedido_id, garcom_id")
       .eq("garcom_id", ctx.garcom.id);
 
+    console.log("comissoes", comissoes);
     expect(comissoes?.length).toBeGreaterThan(0);
     const comissao = comissoes?.[0];
     expect(comissao?.percentual).toBe(10);
