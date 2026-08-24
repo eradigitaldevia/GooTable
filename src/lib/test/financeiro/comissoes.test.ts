@@ -60,11 +60,10 @@ describe("Comissões", () => {
     if (pedidoError) throw pedidoError;
 
     // Marca pedido como entregue para gerar comissão
-    await supabaseAdmin.rpc("atualizar_status_destino", {
-      _pedido_id: pedidoId,
-      _destino: "cozinha",
-      _status: "entregue",
-    });
+    await supabaseAdmin
+      .from("pedidos")
+      .update({ status: "entregue", entregue_em: new Date().toISOString() })
+      .eq("id", pedidoId);
 
     ctx = { ...base, garcom };
   });
