@@ -82,19 +82,12 @@ describe("Comissões", () => {
   });
 
   it("gera comissão apenas quando a comanda é quitada", async () => {
-    const { data: pedidoAntes } = await supabaseAdmin
-      .from("pedidos")
-      .select("id, status, garcom_id, origem")
-      .eq("comanda_id", ctx.comanda.id)
-      .single();
-    console.log("pedidoAntes", pedidoAntes);
-
     const { data: comandaAntes } = await client
       .from("comandas")
-      .select("total, total_pago, subtotal, status")
+      .select("total, status")
       .eq("id", ctx.comanda.id)
       .single();
-    console.log("comandaAntes", comandaAntes);
+    expect(comandaAntes?.status).toBe("aberta");
 
     const { error: pagamentoError } = await client.rpc("registrar_pagamento", {
       _comanda_id: ctx.comanda.id,
