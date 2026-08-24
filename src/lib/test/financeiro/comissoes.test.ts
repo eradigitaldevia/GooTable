@@ -37,6 +37,13 @@ describe("Comissões", () => {
     });
     if (atribuirError) throw atribuirError;
 
+    // Ativa comissão para o restaurante
+    const { error: ativaError } = await supabaseAdmin
+      .from("restaurantes")
+      .update({ comissao_ativa: true })
+      .eq("id", base.restaurante.id);
+    if (ativaError) throw ativaError;
+
     // Cria pedido de R$ 100 para a mesa
     const { data: pedidoId, error: pedidoError } = await supabaseAdmin.rpc("criar_pedido_publico", {
       _restaurante_id: base.restaurante.id,
