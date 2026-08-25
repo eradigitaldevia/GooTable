@@ -26,10 +26,16 @@ function Cadastro() {
   const navigate = useNavigate();
   const [form, setForm] = useState({ nomeRestaurante: "", email: "", password: "" });
   const [loading, setLoading] = useState(false);
+  const [aceite, setAceite] = useState(false);
   const criarMut = useCriarRestaurante(undefined);
+  const registrarConsentimento = useServerFn(registrarConsentimentoRestauranteFn);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    if (!aceite) {
+      toast.error("É necessário aceitar os Termos de Uso e a Política de Privacidade");
+      return;
+    }
     const parsed = schema.safeParse(form);
     if (!parsed.success) {
       toast.error(parsed.error.issues[0].message);
