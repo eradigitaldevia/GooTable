@@ -51,9 +51,10 @@ function Landing() {
             <Link to="/login">
               <Button variant="ghost" size="sm">Entrar</Button>
             </Link>
-            <a href={vendas.href} {...vendasProps}>
-              <Button size="sm">Fale com vendas</Button>
+            <a href={vendas?.href ?? undefined} {...vendasProps}>
+              <Button size="sm" disabled={!vendas}>Fale com vendas</Button>
             </a>
+
           </nav>
         </div>
       </header>
