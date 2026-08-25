@@ -113,8 +113,10 @@ function Login() {
   const { data: plataformaConfig } = usePlataformaConfig();
   const vendas = montarLinkVendas(
     plataformaConfig?.vendas_whatsapp,
+    plataformaConfig?.vendas_link,
     plataformaConfig?.vendas_mensagem,
   );
+
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
