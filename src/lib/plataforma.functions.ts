@@ -5,24 +5,39 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 export type ConfigPlataforma = {
   vendas_whatsapp: string | null;
   vendas_mensagem: string | null;
+  social_instagram: string | null;
+  social_facebook: string | null;
+  social_youtube: string | null;
+  social_linkedin: string | null;
+  social_tiktok: string | null;
+  social_x: string | null;
 };
 
-/** Configuração pública da plataforma (link de vendas). */
+/** Configuração pública da plataforma (link de vendas e redes sociais). */
 export const getConfigPlataforma = createServerFn({ method: "GET" }).handler(
   async (): Promise<ConfigPlataforma> => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data } = await supabaseAdmin
       .from("plataforma_config")
-      .select("vendas_whatsapp, vendas_mensagem")
+      .select(
+        "vendas_whatsapp, vendas_mensagem, social_instagram, social_facebook, social_youtube, social_linkedin, social_tiktok, social_x",
+      )
       .order("criado_em", { ascending: true })
       .limit(1)
       .maybeSingle();
     return {
       vendas_whatsapp: data?.vendas_whatsapp ?? null,
       vendas_mensagem: data?.vendas_mensagem ?? null,
+      social_instagram: data?.social_instagram ?? null,
+      social_facebook: data?.social_facebook ?? null,
+      social_youtube: data?.social_youtube ?? null,
+      social_linkedin: data?.social_linkedin ?? null,
+      social_tiktok: data?.social_tiktok ?? null,
+      social_x: data?.social_x ?? null,
     };
   },
 );
+
 
 /** Atualiza o WhatsApp de vendas (somente platform admin). */
 export const atualizarConfigVendas = createServerFn({ method: "POST" })
