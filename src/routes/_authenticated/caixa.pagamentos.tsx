@@ -69,7 +69,17 @@ function CaixaPagamentosPage() {
   const [modoTv, setModoTv] = useState(false);
 
   const resumoFn = useServerFn(resumoComandaImpressaoFn);
-  const imprimir = useImprimir();
+  const [segundaVia, setSegundaVia] = useState(false);
+  const imprimir = useImprimir(
+    restaurante
+      ? {
+          nome: restaurante.nome,
+          cnpj: (restaurante as any).cnpj ?? null,
+          telefone: (restaurante as any).telefone ?? null,
+          endereco: (restaurante as any).endereco ?? null,
+        }
+      : null,
+  );
   const { data: dadosImpressao, isFetching: carregandoImpressao } = useQuery({
     queryKey: ["resumo-comanda-impressao", imprimirComandaId, restaurante?.id],
     queryFn: () =>
