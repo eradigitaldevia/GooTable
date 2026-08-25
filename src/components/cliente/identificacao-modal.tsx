@@ -1,8 +1,10 @@
 import { useState } from "react";
 import { Loader2 } from "lucide-react";
+import { Link } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 
 export interface IdentificacaoValores {
   nome: string;
@@ -28,6 +30,7 @@ export function IdentificacaoModal({
   const [nome, setNome] = useState("");
   const [telefone, setTelefone] = useState("");
   const [erro, setErro] = useState<string | null>(null);
+  const [aceite, setAceite] = useState(false);
 
   const handle = (e: React.FormEvent) => {
     e.preventDefault();
@@ -39,6 +42,10 @@ export function IdentificacaoModal({
     }
     if (digitos.length < 10) {
       setErro("Informe um telefone válido com DDD.");
+      return;
+    }
+    if (!aceite) {
+      setErro("É necessário aceitar os Termos de Uso e a Política de Privacidade.");
       return;
     }
     setErro(null);
@@ -84,13 +91,36 @@ export function IdentificacaoModal({
             />
           </div>
 
+          <div className="flex items-start gap-2">
+            <Checkbox
+              id="aceite-lgpd"
+              checked={aceite}
+              onCheckedChange={(v) => setAceite(v === true)}
+              className="mt-0.5"
+            />
+            <Label
+              htmlFor="aceite-lgpd"
+              className="text-xs font-normal leading-snug text-muted-foreground"
+            >
+              Li e aceito os{" "}
+              <Link to="/termos" target="_blank" className="font-medium text-primary underline">
+                Termos de Uso
+              </Link>{" "}
+              e a{" "}
+              <Link to="/privacidade" target="_blank" className="font-medium text-primary underline">
+                Política de Privacidade
+              </Link>
+              .
+            </Label>
+          </div>
+
           {erro && <p className="text-sm text-destructive">{erro}</p>}
 
           <Button
             type="submit"
             size="lg"
             className="h-12 w-full rounded-2xl text-base font-semibold"
-            disabled={enviando}
+            disabled={enviando || !aceite}
           >
             {enviando ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : null}
             Continuar
