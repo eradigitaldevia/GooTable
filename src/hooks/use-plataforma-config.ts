@@ -29,3 +29,21 @@ export function useAtualizarConfigVendas() {
     },
   });
 }
+
+export function useAtualizarConfigSociais() {
+  const fn = useServerFn(atualizarConfigSociais);
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (data: {
+      social_instagram: string | null;
+      social_facebook: string | null;
+      social_youtube: string | null;
+      social_linkedin: string | null;
+      social_tiktok: string | null;
+      social_x: string | null;
+    }) => fn({ data }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: plataformaConfigKey });
+    },
+  });
+}
