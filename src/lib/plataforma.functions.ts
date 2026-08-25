@@ -30,7 +30,9 @@ export const getConfigPlataforma = createServerFn({ method: "GET" }).handler(
       .maybeSingle();
     return {
       vendas_whatsapp: data?.vendas_whatsapp ?? null,
+      vendas_link: data?.vendas_link ?? null,
       vendas_mensagem: data?.vendas_mensagem ?? null,
+
       social_instagram: data?.social_instagram ?? null,
       social_facebook: data?.social_facebook ?? null,
       social_youtube: data?.social_youtube ?? null,
