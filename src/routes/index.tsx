@@ -4,6 +4,8 @@ import { QrCode, ChefHat, Zap, Smartphone, BarChart3, Wallet } from "lucide-reac
 import { ClientOnly } from "@tanstack/react-router";
 import { lazy, Suspense } from "react";
 import { useCookieConsent } from "@/hooks/use-cookie-consent";
+import { usePlataformaConfig } from "@/hooks/use-plataforma-config";
+import { montarLinkVendas } from "@/lib/vendas-link";
 
 const CookieBanner = lazy(() =>
   import("@/components/legal/cookie-banner").then((m) => ({ default: m.CookieBanner })),
