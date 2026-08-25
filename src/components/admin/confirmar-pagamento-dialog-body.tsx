@@ -102,7 +102,8 @@ export default function ConfirmarPagamentoDialogBody({
               setSegundaViaComprovante(
                 registrarImpressao(`comprovante:${comandaId}`),
               );
-              imprimir();
+              // aguarda o cupom re-renderizar com a marca de 2ª via
+              setTimeout(() => imprimir(), 60);
             }}
             disabled={carregandoImpressao || !dadosImpressao}
           >

@@ -126,7 +126,7 @@ export function MesaDetalheView({
     setSegundaVia(registrarImpressao(`comanda:${comandaId}`));
     if (imprimirComandaId === comandaId && dadosComanda) {
       setImprimirMesaPendente(false);
-      imprimir();
+      setTimeout(() => imprimir(), 60);
       return;
     }
     setImprimirMesaPendente(false);

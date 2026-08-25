@@ -96,7 +96,7 @@ function CaixaPagamentosPage() {
     const reimpressao = registrarImpressao(`comanda:${comandaId}`);
     setSegundaVia(reimpressao);
     if (imprimirComandaId === comandaId && dadosImpressao) {
-      imprimir();
+      setTimeout(() => imprimir(), 60);
       return;
     }
     setImprimirComandaId(comandaId);
