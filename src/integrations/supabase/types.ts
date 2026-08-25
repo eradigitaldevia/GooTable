@@ -1073,6 +1073,69 @@ export type Database = {
           },
         ]
       }
+      lgpd_consentimentos: {
+        Row: {
+          aceito_em: string
+          entidade_id: string
+          entidade_tipo: string
+          escopo: string
+          id: string
+          versao: string
+        }
+        Insert: {
+          aceito_em?: string
+          entidade_id: string
+          entidade_tipo: string
+          escopo: string
+          id?: string
+          versao?: string
+        }
+        Update: {
+          aceito_em?: string
+          entidade_id?: string
+          entidade_tipo?: string
+          escopo?: string
+          id?: string
+          versao?: string
+        }
+        Relationships: []
+      }
+      lgpd_solicitacoes: {
+        Row: {
+          atualizado_em: string
+          criado_em: string
+          email: string
+          id: string
+          mensagem: string | null
+          nome: string
+          status: string
+          telefone: string | null
+          tipo: string
+        }
+        Insert: {
+          atualizado_em?: string
+          criado_em?: string
+          email: string
+          id?: string
+          mensagem?: string | null
+          nome: string
+          status?: string
+          telefone?: string | null
+          tipo: string
+        }
+        Update: {
+          atualizado_em?: string
+          criado_em?: string
+          email?: string
+          id?: string
+          mensagem?: string | null
+          nome?: string
+          status?: string
+          telefone?: string | null
+          tipo?: string
+        }
+        Relationships: []
+      }
       mesa_garcom: {
         Row: {
           atribuido_em: string
