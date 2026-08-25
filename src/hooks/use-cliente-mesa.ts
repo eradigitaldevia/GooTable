@@ -90,9 +90,9 @@ export function useClienteMesa(qrToken: string) {
         }
       })
       .catch(() => {
+        // Falhas transitórias de rede/DB não devem apagar a identidade.
+        // A sessão só é considerada encerrada quando o servidor retorna valida=false.
         if (cancelado) return;
-        persistir(null);
-        setSessaoEncerrada(true);
       })
       .finally(() => {
         if (!cancelado) setHidratado(true);
