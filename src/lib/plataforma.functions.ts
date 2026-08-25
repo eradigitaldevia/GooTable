@@ -98,8 +98,12 @@ export const atualizarConfigVendas = createServerFn({ method: "POST" })
       acao: "atualizar_config_vendas",
       entidade: "plataforma_config",
       entidade_id: null,
-      metadata: { vendas_whatsapp: payload.vendas_whatsapp } as never,
+      metadata: {
+        vendas_whatsapp: payload.vendas_whatsapp,
+        vendas_link: payload.vendas_link,
+      } as never,
     });
+
 
     return { ok: true };
   });
