@@ -94,3 +94,68 @@ export const atualizarConfigVendas = createServerFn({ method: "POST" })
 
     return { ok: true };
   });
+
+/** Atualiza os perfis de redes sociais (somente platform admin). */
+export const atualizarConfigSociais = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) => {
+    const campo = z.string().trim().max(200).nullable();
+    return z
+      .object({
+        social_instagram: campo,
+        social_facebook: campo,
+        social_youtube: campo,
+        social_linkedin: campo,
+        social_tiktok: campo,
+        social_x: campo,
+      })
+      .parse(d);
+  })
+  .handler(async ({ context, data }) => {
+    const { supabase, userId } = context;
+    const { data: pa, error: errPa } = await supabase
+      .from("platform_admins")
+      .select("user_id")
+      .eq("user_id", userId)
+      .maybeSingle();
+    if (errPa) throw new Error(errPa.message);
+    if (!pa) throw new Response("Forbidden: not a platform admin", { status: 403 });
+
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: existente } = await supabaseAdmin
+      .from("plataforma_config")
+      .select("id")
+      .order("criado_em", { ascending: true })
+      .limit(1)
+      .maybeSingle();
+
+    const payload = {
+      social_instagram: data.social_instagram || null,
+      social_facebook: data.social_facebook || null,
+      social_youtube: data.social_youtube || null,
+      social_linkedin: data.social_linkedin || null,
+      social_tiktok: data.social_tiktok || null,
+      social_x: data.social_x || null,
+    };
+
+    if (existente) {
+      const { error } = await supabaseAdmin
+        .from("plataforma_config")
+        .update(payload)
+        .eq("id", existente.id);
+      if (error) throw new Error(error.message);
+    } else {
+      const { error } = await supabaseAdmin.from("plataforma_config").insert(payload);
+      if (error) throw new Error(error.message);
+    }
+
+    await supabaseAdmin.from("audit_logs").insert({
+      actor_user_id: userId,
+      acao: "atualizar_config_sociais",
+      entidade: "plataforma_config",
+      entidade_id: null,
+      metadata: payload as never,
+    });
+
+    return { ok: true };
+  });
