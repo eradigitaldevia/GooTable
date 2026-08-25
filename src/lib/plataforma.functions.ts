@@ -51,8 +51,10 @@ export const atualizarConfigVendas = createServerFn({ method: "POST" })
     z
       .object({
         vendas_whatsapp: z.string().trim().max(30).nullable(),
+        vendas_link: z.string().trim().max(200).nullable(),
         vendas_mensagem: z.string().trim().max(300).nullable(),
       })
+
       .parse(d),
   )
   .handler(async ({ context, data }) => {
