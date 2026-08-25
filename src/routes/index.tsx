@@ -76,7 +76,7 @@ function Landing() {
               painel da cozinha. Você só precisa servir.
             </p>
             <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
-              <a href="mailto:comercial@mesasistema.com.br">
+              <a href={vendas.href} {...vendasProps}>
                 <Button size="lg" className="h-12 px-7 text-base shadow-[var(--shadow-elegant)]">
                   Fale com vendas
                 </Button>
