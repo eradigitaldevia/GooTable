@@ -108,6 +108,11 @@ function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const { data: plataformaConfig } = usePlataformaConfig();
+  const vendas = montarLinkVendas(
+    plataformaConfig?.vendas_whatsapp,
+    plataformaConfig?.vendas_mensagem,
+  );
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
