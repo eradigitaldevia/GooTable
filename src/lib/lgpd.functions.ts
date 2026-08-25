@@ -50,3 +50,26 @@ export const enviarSolicitacaoLgpdFn = createServerFn({ method: "POST" })
     if (error) throw new Error("Não foi possível registrar sua solicitação agora.");
     return { ok: true };
   });
+
+/** Registra a escolha de cookies do visitante (público, anônimo). */
+export const registrarConsentimentoCookiesFn = createServerFn({ method: "POST" })
+  .inputValidator((d) =>
+    z
+      .object({
+        visitanteId: z.string().uuid(),
+        funcionais: z.boolean(),
+        analise: z.boolean(),
+        origem: z.string().trim().min(1).max(40).default("landing"),
+      })
+      .parse(d),
+  )
+  .handler(async ({ data }) => {
+    const { registrarConsentimentoCookies } = await import("./lgpd.server");
+    await registrarConsentimentoCookies({
+      visitanteId: data.visitanteId,
+      funcionais: data.funcionais,
+      analise: data.analise,
+      origem: data.origem,
+    });
+    return { ok: true };
+  });
