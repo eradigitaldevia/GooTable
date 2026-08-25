@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -969,6 +969,17 @@ function StepRevisao({
               {enviando ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : null}
               Enviar pedido · {formatBRL(total)}
             </Button>
+            <p className="mt-2 text-center text-[11px] leading-snug text-muted-foreground">
+              Ao enviar, você concorda com os{" "}
+              <Link to="/termos" target="_blank" className="underline">
+                Termos de Uso
+              </Link>{" "}
+              e a{" "}
+              <Link to="/privacidade" target="_blank" className="underline">
+                Política de Privacidade
+              </Link>
+              .
+            </p>
           </div>
         </div>
       )}

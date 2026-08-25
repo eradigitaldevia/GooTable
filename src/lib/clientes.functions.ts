@@ -172,6 +172,14 @@ export const identificarClienteFn = createServerFn({ method: "POST" })
       };
     }
 
+    // Registra o aceite dos documentos legais (versão vigente).
+    const { registrarConsentimentoLgpd } = await import("./lgpd.server");
+    await registrarConsentimentoLgpd({
+      escopo: "cliente_identificacao",
+      entidadeTipo: "cliente",
+      entidadeId: cliente.id,
+    });
+
     // Bloqueio: cliente já está em outra mesa do mesmo restaurante.
     const conflito = await detectarConflitoMesa(
       cliente.id,

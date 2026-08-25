@@ -195,6 +195,20 @@ function Login() {
               Criar conta
             </Link>
           </p>
+
+          <p className="mt-3 text-center text-xs text-muted-foreground">
+            <Link to="/termos" className="hover:underline">
+              Termos
+            </Link>
+            {" · "}
+            <Link to="/privacidade" className="hover:underline">
+              Privacidade
+            </Link>
+            {" · "}
+            <Link to="/direitos" className="hover:underline">
+              Direitos do titular
+            </Link>
+          </p>
         </div>
       </div>
     </div>

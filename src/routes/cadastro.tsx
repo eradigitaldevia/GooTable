@@ -1,4 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
 import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
@@ -6,6 +7,8 @@ import { useCriarRestaurante } from "@/hooks/use-restaurante";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
+import { registrarConsentimentoRestauranteFn } from "@/lib/lgpd.functions";
 import { toast } from "sonner";
 import { QrCode, Loader2 } from "lucide-react";
 
@@ -23,10 +26,16 @@ function Cadastro() {
   const navigate = useNavigate();
   const [form, setForm] = useState({ nomeRestaurante: "", email: "", password: "" });
   const [loading, setLoading] = useState(false);
+  const [aceite, setAceite] = useState(false);
   const criarMut = useCriarRestaurante(undefined);
+  const registrarConsentimento = useServerFn(registrarConsentimentoRestauranteFn);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    if (!aceite) {
+      toast.error("É necessário aceitar os Termos de Uso e a Política de Privacidade");
+      return;
+    }
     const parsed = schema.safeParse(form);
     if (!parsed.success) {
       toast.error(parsed.error.issues[0].message);
@@ -59,7 +68,14 @@ function Cadastro() {
 
       if (!userId) throw new Error("Não foi possível obter o usuário");
 
-      await criarMut.mutateAsync({ nome: parsed.data.nomeRestaurante });
+      const rest = await criarMut.mutateAsync({ nome: parsed.data.nomeRestaurante });
+      if (rest?.id) {
+        try {
+          await registrarConsentimento({ data: { restauranteId: rest.id } });
+        } catch {
+          // Falha no registro do aceite não bloqueia o cadastro.
+        }
+      }
       toast.success("Conta e restaurante criados!");
       navigate({ to: "/admin" });
     } catch (err) {
@@ -121,7 +137,30 @@ function Cadastro() {
                 required
               />
             </div>
-            <Button type="submit" className="h-11 w-full text-base" disabled={loading}>
+            <div className="flex items-start gap-2">
+              <Checkbox
+                id="aceite"
+                checked={aceite}
+                onCheckedChange={(v) => setAceite(v === true)}
+                className="mt-0.5"
+              />
+              <Label htmlFor="aceite" className="text-sm font-normal leading-snug text-muted-foreground">
+                Li e aceito os{" "}
+                <Link to="/termos" target="_blank" className="font-medium text-primary hover:underline">
+                  Termos de Uso
+                </Link>{" "}
+                e a{" "}
+                <Link to="/privacidade" target="_blank" className="font-medium text-primary hover:underline">
+                  Política de Privacidade
+                </Link>
+                .
+              </Label>
+            </div>
+            <Button
+              type="submit"
+              className="h-11 w-full text-base"
+              disabled={loading || !aceite}
+            >
               {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Criar conta
             </Button>
@@ -131,6 +170,20 @@ function Cadastro() {
             Já tem conta?{" "}
             <Link to="/login" className="font-semibold text-primary hover:underline">
               Entrar
+            </Link>
+          </p>
+
+          <p className="mt-3 text-center text-xs text-muted-foreground">
+            <Link to="/termos" className="hover:underline">
+              Termos
+            </Link>
+            {" · "}
+            <Link to="/privacidade" className="hover:underline">
+              Privacidade
+            </Link>
+            {" · "}
+            <Link to="/direitos" className="hover:underline">
+              Direitos do titular
             </Link>
           </p>
         </div>
