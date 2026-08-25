@@ -41,7 +41,7 @@ function Landing() {
             <Link to="/login">
               <Button variant="ghost" size="sm">Entrar</Button>
             </Link>
-            <a href="mailto:comercial@mesasistema.com.br">
+            <a href={vendas.href} {...vendasProps}>
               <Button size="sm">Fale com vendas</Button>
             </a>
           </nav>
