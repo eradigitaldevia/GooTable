@@ -1,6 +1,11 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { atualizarConfigVendas, getConfigPlataforma } from "@/lib/plataforma.functions";
+import {
+  atualizarConfigSociais,
+  atualizarConfigVendas,
+  getConfigPlataforma,
+} from "@/lib/plataforma.functions";
+
 
 export const plataformaConfigKey = ["plataforma-config"] as const;
 
