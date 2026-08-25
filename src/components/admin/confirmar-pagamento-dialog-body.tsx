@@ -98,7 +98,12 @@ export default function ConfirmarPagamentoDialogBody({
             Fechar
           </Button>
           <Button
-            onClick={() => imprimir()}
+            onClick={() => {
+              setSegundaViaComprovante(
+                registrarImpressao(`comprovante:${comandaId}`),
+              );
+              imprimir();
+            }}
             disabled={carregandoImpressao || !dadosImpressao}
           >
             {carregandoImpressao ? (
