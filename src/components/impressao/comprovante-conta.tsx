@@ -136,9 +136,23 @@ export function ComprovanteConta({
 
       <Sep />
 
-      <div style={{ textAlign: "center", fontWeight: 700 }}>
+      <div style={{ textAlign: "center", fontWeight: 700, fontSize: 12 }}>
         {variante === "pago" ? "COMPROVANTE DE PAGAMENTO" : "CONTA"}
       </div>
+      {segundaVia ? (
+        <div
+          style={{
+            textAlign: "center",
+            fontWeight: 700,
+            letterSpacing: 1,
+            border: "1px dashed #000",
+            padding: "2px 0",
+            margin: "3px 0",
+          }}
+        >
+          2ª VIA — REIMPRESSÃO
+        </div>
+      ) : null}
       <div style={{ textAlign: "center", marginTop: 2 }}>
         {contexto.tipo === "mesa"
           ? `Mesa ${contexto.mesaNumero ?? "—"}`
