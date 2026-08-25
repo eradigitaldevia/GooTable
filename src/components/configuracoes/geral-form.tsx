@@ -66,6 +66,16 @@ export function GeralForm({
               impressos. Campos opcionais — só aparece o que estiver preenchido.
             </p>
           </div>
+          {faltandoImpressao.length > 0 && (
+            <Alert variant="destructive">
+              <AlertTriangle className="h-4 w-4" />
+              <AlertDescription className="text-xs">
+                Comprovantes serão impressos sem:{" "}
+                {faltandoImpressao.join(", ")}. Preencha para que a conta saia
+                completa para o cliente.
+              </AlertDescription>
+            </Alert>
+          )}
           <div className="grid gap-3 sm:grid-cols-2">
             <div className="space-y-1">
               <Label>CNPJ</Label>
