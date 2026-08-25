@@ -22,8 +22,9 @@ export const getConfigPlataforma = createServerFn({ method: "GET" }).handler(
     const { data } = await supabaseAdmin
       .from("plataforma_config")
       .select(
-        "vendas_whatsapp, vendas_mensagem, social_instagram, social_facebook, social_youtube, social_linkedin, social_tiktok, social_x",
+        "vendas_whatsapp, vendas_link, vendas_mensagem, social_instagram, social_facebook, social_youtube, social_linkedin, social_tiktok, social_x",
       )
+
       .order("criado_em", { ascending: true })
       .limit(1)
       .maybeSingle();
