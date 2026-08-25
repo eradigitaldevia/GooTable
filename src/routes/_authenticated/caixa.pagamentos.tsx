@@ -93,6 +93,8 @@ function CaixaPagamentosPage() {
   });
 
   function dispararImpressao(comandaId: string) {
+    const reimpressao = registrarImpressao(`comanda:${comandaId}`);
+    setSegundaVia(reimpressao);
     if (imprimirComandaId === comandaId && dadosImpressao) {
       imprimir();
       return;
