@@ -201,12 +201,13 @@ function Login() {
           <p className="mt-6 text-center text-sm text-muted-foreground">
             Quer contratar?{" "}
             <a
-              href={vendas.href}
-              {...(vendas.isWhatsapp ? { target: "_blank", rel: "noreferrer" } : {})}
+              href={vendas?.href ?? undefined}
+              {...(vendas?.isWhatsapp ? { target: "_blank", rel: "noreferrer" } : {})}
               className="font-semibold text-primary hover:underline"
             >
               Fale com vendas
             </a>
+
           </p>
 
           <p className="mt-3 text-center text-xs text-muted-foreground">
