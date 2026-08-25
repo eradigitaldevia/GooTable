@@ -68,7 +68,14 @@ function Cadastro() {
 
       if (!userId) throw new Error("Não foi possível obter o usuário");
 
-      await criarMut.mutateAsync({ nome: parsed.data.nomeRestaurante });
+      const rest = await criarMut.mutateAsync({ nome: parsed.data.nomeRestaurante });
+      if (rest?.id) {
+        try {
+          await registrarConsentimento({ data: { restauranteId: rest.id } });
+        } catch {
+          // Falha no registro do aceite não bloqueia o cadastro.
+        }
+      }
       toast.success("Conta e restaurante criados!");
       navigate({ to: "/admin" });
     } catch (err) {
