@@ -29,7 +29,7 @@ import { ConfirmarPagamentoDialog } from "@/components/admin/confirmar-pagamento
 import { formatBRL } from "@/lib/cart";
 import { useTick } from "@/hooks/use-tick";
 import { ComprovanteConta } from "@/components/impressao/comprovante-conta";
-import { useImprimir } from "@/hooks/use-imprimir";
+import { useImprimir, registrarImpressao } from "@/hooks/use-imprimir";
 import { resumoComandaImpressaoFn } from "@/lib/pedidos.functions";
 import { toast } from "sonner";
 
@@ -69,7 +69,17 @@ function CaixaPagamentosPage() {
   const [modoTv, setModoTv] = useState(false);
 
   const resumoFn = useServerFn(resumoComandaImpressaoFn);
-  const imprimir = useImprimir();
+  const [segundaVia, setSegundaVia] = useState(false);
+  const imprimir = useImprimir(
+    restaurante
+      ? {
+          nome: restaurante.nome,
+          cnpj: (restaurante as any).cnpj ?? null,
+          telefone: (restaurante as any).telefone ?? null,
+          endereco: (restaurante as any).endereco ?? null,
+        }
+      : null,
+  );
   const { data: dadosImpressao, isFetching: carregandoImpressao } = useQuery({
     queryKey: ["resumo-comanda-impressao", imprimirComandaId, restaurante?.id],
     queryFn: () =>
@@ -83,8 +93,10 @@ function CaixaPagamentosPage() {
   });
 
   function dispararImpressao(comandaId: string) {
+    const reimpressao = registrarImpressao(`comanda:${comandaId}`);
+    setSegundaVia(reimpressao);
     if (imprimirComandaId === comandaId && dadosImpressao) {
-      imprimir();
+      setTimeout(() => imprimir(), 60);
       return;
     }
     setImprimirComandaId(comandaId);
@@ -398,6 +410,7 @@ function CaixaPagamentosPage() {
             variante={
               dadosImpressao.totais.saldo <= 0 ? "pago" : "rascunho"
             }
+            segundaVia={segundaVia}
           />
         </div>
       )}

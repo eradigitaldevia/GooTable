@@ -24,7 +24,7 @@ import { useRegistrarPagamento } from "@/hooks/use-pagamentos";
 import type { PagamentoMetodo } from "@/lib/pagamentos.functions";
 import { formatBRL } from "@/lib/cart";
 import { ComprovanteConta } from "@/components/impressao/comprovante-conta";
-import { useImprimir } from "@/hooks/use-imprimir";
+import { useImprimir, registrarImpressao } from "@/hooks/use-imprimir";
 import { resumoComandaImpressaoFn } from "@/lib/pedidos.functions";
 
 export default function ConfirmarPagamentoDialogBody({
@@ -46,6 +46,7 @@ export default function ConfirmarPagamentoDialogBody({
   const [pago, setPago] = useState(false);
   const registrar = useRegistrarPagamento(restauranteId);
   const imprimir = useImprimir();
+  const [segundaViaComprovante, setSegundaViaComprovante] = useState(false);
   const resumoFn = useServerFn(resumoComandaImpressaoFn);
   const { data: dadosImpressao, isFetching: carregandoImpressao } = useQuery({
     queryKey: ["resumo-comanda-impressao-dialog", comandaId, pago],
@@ -97,7 +98,13 @@ export default function ConfirmarPagamentoDialogBody({
             Fechar
           </Button>
           <Button
-            onClick={() => imprimir()}
+            onClick={() => {
+              setSegundaViaComprovante(
+                registrarImpressao(`comprovante:${comandaId}`),
+              );
+              // aguarda o cupom re-renderizar com a marca de 2ª via
+              setTimeout(() => imprimir(), 60);
+            }}
             disabled={carregandoImpressao || !dadosImpressao}
           >
             {carregandoImpressao ? (
@@ -122,6 +129,7 @@ export default function ConfirmarPagamentoDialogBody({
             totais={dadosImpressao.totais}
             pagamentos={dadosImpressao.pagamentos}
             variante="pago"
+            segundaVia={segundaViaComprovante}
           />
         )}
       </DialogContent>

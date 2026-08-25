@@ -1,7 +1,10 @@
+import { AlertTriangle } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { HorarioFuncionamentoForm } from "./horario-funcionamento-form";
 import type { HorarioFuncionamento } from "@/lib/configuracoes.functions";
+import { camposImpressaoFaltando } from "@/lib/impressao";
 
 type GeralPatch = {
   nome?: string;
@@ -32,6 +35,13 @@ export function GeralForm({
   sessaoOciosaHoras: number;
   onChange: (patch: GeralPatch) => void;
 }) {
+  const faltandoImpressao = camposImpressaoFaltando({
+    nome,
+    cnpj,
+    telefone,
+    endereco,
+  });
+
   return (
     <div className="space-y-6">
       <section className="space-y-5 rounded-2xl border border-border bg-card p-6 shadow-[var(--shadow-soft)]">
@@ -63,6 +73,16 @@ export function GeralForm({
               impressos. Campos opcionais — só aparece o que estiver preenchido.
             </p>
           </div>
+          {faltandoImpressao.length > 0 && (
+            <Alert variant="destructive">
+              <AlertTriangle className="h-4 w-4" />
+              <AlertDescription className="text-xs">
+                Comprovantes serão impressos sem:{" "}
+                {faltandoImpressao.join(", ")}. Preencha para que a conta saia
+                completa para o cliente.
+              </AlertDescription>
+            </Alert>
+          )}
           <div className="grid gap-3 sm:grid-cols-2">
             <div className="space-y-1">
               <Label>CNPJ</Label>

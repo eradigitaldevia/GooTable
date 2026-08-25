@@ -1,3 +1,5 @@
+import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { formatBRL } from "@/lib/cart";
 
 type Restaurante = {
@@ -41,6 +43,8 @@ export type ComprovanteContaProps = {
   pagamentos?: Pagamento[];
   divisao?: { pessoas: number; valorPorPessoa: number };
   variante: "rascunho" | "pago";
+  /** Marca o cupom como reimpressão ("2ª VIA"). */
+  segundaVia?: boolean;
 };
 
 const METODO_LABEL: Record<string, string> = {
@@ -101,9 +105,16 @@ export function ComprovanteConta({
   pagamentos = [],
   divisao,
   variante,
+  segundaVia = false,
 }: ComprovanteContaProps) {
-  return (
-    <div className="print-only">
+  // O cupom é renderizado direto no <body> para que a regra de impressão possa
+  // esconder toda a interface sem deixar páginas em branco.
+  const [montado, setMontado] = useState(false);
+  useEffect(() => setMontado(true), []);
+  if (!montado) return null;
+
+  const conteudo = (
+    <div className="print-only" data-print-root="">
       <div style={{ textAlign: "center" }}>
         {restaurante.logo_url ? (
           <img
@@ -125,9 +136,23 @@ export function ComprovanteConta({
 
       <Sep />
 
-      <div style={{ textAlign: "center", fontWeight: 700 }}>
+      <div style={{ textAlign: "center", fontWeight: 700, fontSize: 12 }}>
         {variante === "pago" ? "COMPROVANTE DE PAGAMENTO" : "CONTA"}
       </div>
+      {segundaVia ? (
+        <div
+          style={{
+            textAlign: "center",
+            fontWeight: 700,
+            letterSpacing: 1,
+            border: "1px dashed #000",
+            padding: "2px 0",
+            margin: "3px 0",
+          }}
+        >
+          2ª VIA — REIMPRESSÃO
+        </div>
+      ) : null}
       <div style={{ textAlign: "center", marginTop: 2 }}>
         {contexto.tipo === "mesa"
           ? `Mesa ${contexto.mesaNumero ?? "—"}`
@@ -247,6 +272,9 @@ export function ComprovanteConta({
       <div style={{ textAlign: "center", fontSize: 10 }}>
         Não é documento fiscal
       </div>
+      <div style={{ height: "8mm" }} />
     </div>
   );
+
+  return createPortal(conteudo, document.body);
 }

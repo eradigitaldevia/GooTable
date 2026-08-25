@@ -100,9 +100,18 @@ export function DividirTotalDialog({
 
   const [resultado, setResultado] = useState<DivisaoContaResultado | null>(null);
   const gerar = useGerarDivisaoConta(restauranteId);
-  const imprimir = useImprimir();
   const { user } = useAuth();
   const { data: restaurante } = useMeuRestaurante(user?.id);
+  const imprimir = useImprimir(
+    restaurante
+      ? {
+          nome: restaurante.nome,
+          cnpj: (restaurante as any).cnpj ?? null,
+          telefone: (restaurante as any).telefone ?? null,
+          endereco: (restaurante as any).endereco ?? null,
+        }
+      : null,
+  );
   const [imprimirPendente, setImprimirPendente] = useState(false);
 
   const toggleComanda = (id: string) => {
