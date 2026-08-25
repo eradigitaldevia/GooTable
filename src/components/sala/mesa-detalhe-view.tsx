@@ -24,7 +24,7 @@ import { LancarCouvertDialog } from "@/components/sala/lancar-couvert-dialog";
 import { useRemoverCouvert } from "@/hooks/use-couvert";
 import { toast } from "sonner";
 import { ComprovanteConta } from "@/components/impressao/comprovante-conta";
-import { useImprimir } from "@/hooks/use-imprimir";
+import { useImprimir, registrarImpressao } from "@/hooks/use-imprimir";
 import { resumoComandaImpressaoFn } from "@/lib/pedidos.functions";
 
 type StatusPedido =
@@ -90,7 +90,17 @@ export function MesaDetalheView({
   const removerCouvert = useRemoverCouvert();
 
   // Impressão
-  const imprimir = useImprimir();
+  const imprimir = useImprimir(
+    restaurante
+      ? {
+          nome: restaurante.nome,
+          cnpj: (restaurante as any).cnpj ?? null,
+          telefone: (restaurante as any).telefone ?? null,
+          endereco: (restaurante as any).endereco ?? null,
+        }
+      : null,
+  );
+  const [segundaVia, setSegundaVia] = useState(false);
   const [imprimirComandaId, setImprimirComandaId] = useState<string | null>(
     null,
   );
@@ -113,6 +123,7 @@ export function MesaDetalheView({
   });
 
   function pedirImpressaoComanda(comandaId: string) {
+    setSegundaVia(registrarImpressao(`comanda:${comandaId}`));
     if (imprimirComandaId === comandaId && dadosComanda) {
       setImprimirMesaPendente(false);
       imprimir();
@@ -157,6 +168,7 @@ export function MesaDetalheView({
   );
 
   function pedirImpressaoMesa() {
+    setSegundaVia(registrarImpressao(`mesa:${mesaId}`));
     setImprimirComandaId(null);
     setImprimirMesaPendente(true);
     setTimeout(() => imprimir(), 150);
@@ -615,6 +627,7 @@ export function MesaDetalheView({
             saldo: data.totais.saldo,
           }}
           variante="rascunho"
+          segundaVia={segundaVia}
         />
       )}
 
@@ -633,6 +646,7 @@ export function MesaDetalheView({
             totais={dadosComanda.totais}
             pagamentos={dadosComanda.pagamentos}
             variante={dadosComanda.totais.saldo <= 0 ? "pago" : "rascunho"}
+            segundaVia={segundaVia}
           />
         </div>
       )}
