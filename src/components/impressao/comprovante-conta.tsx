@@ -43,6 +43,8 @@ export type ComprovanteContaProps = {
   pagamentos?: Pagamento[];
   divisao?: { pessoas: number; valorPorPessoa: number };
   variante: "rascunho" | "pago";
+  /** Marca o cupom como reimpressão ("2ª VIA"). */
+  segundaVia?: boolean;
 };
 
 const METODO_LABEL: Record<string, string> = {
