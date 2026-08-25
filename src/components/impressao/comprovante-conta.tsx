@@ -258,6 +258,9 @@ export function ComprovanteConta({
       <div style={{ textAlign: "center", fontSize: 10 }}>
         Não é documento fiscal
       </div>
+      <div style={{ height: "8mm" }} />
     </div>
   );
+
+  return createPortal(conteudo, document.body);
 }
