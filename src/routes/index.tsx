@@ -22,6 +22,9 @@ export const Route = createFileRoute("/")({
 
 function Landing() {
   const cookies = useCookieConsent("landing");
+  const { data: config } = usePlataformaConfig();
+  const vendas = montarLinkVendas(config?.vendas_whatsapp, config?.vendas_mensagem);
+  const vendasProps = vendas.isWhatsapp ? { target: "_blank", rel: "noreferrer" } : {};
 
   return (
     <div className="min-h-screen bg-background">
