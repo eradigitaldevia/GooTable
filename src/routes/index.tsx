@@ -124,9 +124,35 @@ function Landing() {
             <Link to="/direitos" className="hover:text-foreground">
               Direitos do titular
             </Link>
+            <button
+              type="button"
+              onClick={cookies.abrirPreferencias}
+              className="text-left hover:text-foreground"
+            >
+              Preferências de cookies
+            </button>
           </nav>
         </div>
       </footer>
+
+      <ClientOnly>
+        <Suspense fallback={null}>
+          {cookies.mostrarBanner && (
+            <CookieBanner
+              onAceitarTodos={cookies.aceitarTodos}
+              onRejeitar={cookies.rejeitarNaoEssenciais}
+              onPersonalizar={cookies.abrirPreferencias}
+            />
+          )}
+          <CookiePreferenciasDialog
+            open={cookies.dialogAberto}
+            onOpenChange={(o) => (o ? cookies.abrirPreferencias() : cookies.fecharPreferencias())}
+            preferencias={cookies.preferencias}
+            onSalvar={cookies.salvarPreferencias}
+          />
+        </Suspense>
+      </ClientOnly>
     </div>
+
   );
 }
