@@ -77,8 +77,10 @@ export const atualizarConfigVendas = createServerFn({ method: "POST" })
 
     const payload = {
       vendas_whatsapp: data.vendas_whatsapp || null,
+      vendas_link: data.vendas_link || null,
       vendas_mensagem: data.vendas_mensagem || null,
     };
+
 
     if (existente) {
       const { error } = await supabaseAdmin
