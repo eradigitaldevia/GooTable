@@ -1929,6 +1929,8 @@ export type Database = {
           comissao_pedido_cliente: boolean
           comissao_pedido_cliente_percentual: number | null
           comissao_rateio_troca_turno: boolean
+          contrato_notas: string | null
+          contrato_vencimento_em: string | null
           cor_acento: string | null
           cor_primaria: string | null
           cor_secundaria: string | null
@@ -1987,6 +1989,8 @@ export type Database = {
           comissao_pedido_cliente?: boolean
           comissao_pedido_cliente_percentual?: number | null
           comissao_rateio_troca_turno?: boolean
+          contrato_notas?: string | null
+          contrato_vencimento_em?: string | null
           cor_acento?: string | null
           cor_primaria?: string | null
           cor_secundaria?: string | null
@@ -2045,6 +2049,8 @@ export type Database = {
           comissao_pedido_cliente?: boolean
           comissao_pedido_cliente_percentual?: number | null
           comissao_rateio_troca_turno?: boolean
+          contrato_notas?: string | null
+          contrato_vencimento_em?: string | null
           cor_acento?: string | null
           cor_primaria?: string | null
           cor_secundaria?: string | null

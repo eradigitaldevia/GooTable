@@ -190,10 +190,10 @@ function Login() {
           </form>
 
           <p className="mt-6 text-center text-sm text-muted-foreground">
-            Não tem conta?{" "}
-            <Link to="/cadastro" className="font-semibold text-primary hover:underline">
-              Criar conta
-            </Link>
+            Quer contratar?{" "}
+            <a href="mailto:comercial@mesasistema.com.br" className="font-semibold text-primary hover:underline">
+              Fale com vendas
+            </a>
           </p>
 
           <p className="mt-3 text-center text-xs text-muted-foreground">

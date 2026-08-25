@@ -22,9 +22,9 @@ function Landing() {
             <Link to="/login">
               <Button variant="ghost" size="sm">Entrar</Button>
             </Link>
-            <Link to="/cadastro">
-              <Button size="sm">Criar conta</Button>
-            </Link>
+            <a href="mailto:comercial@mesasistema.com.br">
+              <Button size="sm">Fale com vendas</Button>
+            </a>
           </nav>
         </div>
       </header>
@@ -57,11 +57,11 @@ function Landing() {
               painel da cozinha. Você só precisa servir.
             </p>
             <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
-              <Link to="/cadastro">
+              <a href="mailto:comercial@mesasistema.com.br">
                 <Button size="lg" className="h-12 px-7 text-base shadow-[var(--shadow-elegant)]">
-                  Começar grátis
+                  Fale com vendas
                 </Button>
-              </Link>
+              </a>
               <Link to="/login">
                 <Button size="lg" variant="outline" className="h-12 px-7 text-base">
                   Já tenho conta

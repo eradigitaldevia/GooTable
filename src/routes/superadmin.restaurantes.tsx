@@ -12,6 +12,7 @@ import {
 import { FiltrosRestaurantes, type FiltroStatus } from "@/components/superadmin/filtros-restaurantes";
 import { RestauranteRow, type RestauranteRowData } from "@/components/superadmin/restaurante-row";
 import { NovoRestauranteDialog } from "@/components/superadmin/novo-restaurante-dialog";
+import { EditarContratoDialog } from "@/components/superadmin/editar-contrato-dialog";
 
 export const Route = createFileRoute("/superadmin/restaurantes")({
   component: RestaurantesList,
@@ -25,18 +26,27 @@ function RestaurantesList() {
   const [busca, setBusca] = useState("");
   const [filtro, setFiltro] = useState<FiltroStatus>("todos");
   const [novoOpen, setNovoOpen] = useState(false);
+  const [contratoRestaurante, setContratoRestaurante] = useState<RestauranteRowData | null>(null);
 
   const rows: RestauranteRowData[] = data?.rows ?? [];
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
 
   const filtradas = useMemo(
     () =>
       rows.filter((r) => {
         if (filtro === "ativos" && !r.ativo) return false;
         if (filtro === "suspensos" && r.ativo) return false;
+        if (filtro === "a_vencer" && (!r.contrato_vencimento_em || new Date(r.contrato_vencimento_em) < today)) return false;
+        if (filtro === "vencidos") {
+          if (!r.contrato_vencimento_em) return false;
+          if (new Date(r.contrato_vencimento_em) >= today) return false;
+        }
         if (busca && !`${r.nome} ${r.slug}`.toLowerCase().includes(busca.toLowerCase())) return false;
         return true;
       }),
-    [rows, busca, filtro]
+    [rows, busca, filtro, today]
   );
 
   const onSuspender = async (r: RestauranteRowData) => {
@@ -57,6 +67,10 @@ function RestaurantesList() {
     } catch (e: any) {
       toast.error(e.message ?? "Erro");
     }
+  };
+
+  const onEditarContrato = (r: RestauranteRowData) => {
+    setContratoRestaurante(r);
   };
 
   return (
@@ -107,7 +121,13 @@ function RestaurantesList() {
                 </tr>
               )}
               {filtradas.map((r) => (
-                <RestauranteRow key={r.id} r={r} onSuspender={onSuspender} onExcluir={onExcluir} />
+                <RestauranteRow
+                  key={r.id}
+                  r={r}
+                  onSuspender={onSuspender}
+                  onExcluir={onExcluir}
+                  onEditarContrato={onEditarContrato}
+                />
               ))}
             </tbody>
           </table>
@@ -115,6 +135,11 @@ function RestaurantesList() {
       </Card>
 
       <NovoRestauranteDialog open={novoOpen} onClose={() => setNovoOpen(false)} />
+      <EditarContratoDialog
+        open={!!contratoRestaurante}
+        onClose={() => setContratoRestaurante(null)}
+        restaurante={contratoRestaurante}
+      />
     </div>
   );
 }

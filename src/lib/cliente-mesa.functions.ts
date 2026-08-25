@@ -50,11 +50,14 @@ export const validarSessaoComandaFn = createServerFn({ method: "POST" })
   .handler(async ({ data }): Promise<{ valida: boolean }> => {
     const { data: sessao, error: sErr } = await supabaseAdmin
       .from("mesa_sessoes")
-      .select("id, status")
+      .select("id, status, mesa_id, mesas!inner(restaurante_id, restaurantes!inner(ativo))")
       .eq("id", data.sessaoId)
       .maybeSingle();
     if (sErr) throw new Error(sErr.message);
     if (!sessao || sessao.status !== "aberta") return { valida: false };
+
+    const restAtivo = (sessao as any).mesas?.restaurantes?.ativo ?? false;
+    if (!restAtivo) return { valida: false };
 
     const { data: comanda, error: cErr } = await supabaseAdmin
       .from("comandas")
