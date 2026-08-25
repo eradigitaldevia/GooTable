@@ -22,8 +22,12 @@ export function useAtualizarConfigVendas() {
   const fn = useServerFn(atualizarConfigVendas);
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (data: { vendas_whatsapp: string | null; vendas_mensagem: string | null }) =>
-      fn({ data }),
+    mutationFn: (data: {
+      vendas_whatsapp: string | null;
+      vendas_link: string | null;
+      vendas_mensagem: string | null;
+    }) => fn({ data }),
+
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: plataformaConfigKey });
     },

@@ -4,6 +4,7 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 export type ConfigPlataforma = {
   vendas_whatsapp: string | null;
+  vendas_link: string | null;
   vendas_mensagem: string | null;
   social_instagram: string | null;
   social_facebook: string | null;
@@ -13,6 +14,7 @@ export type ConfigPlataforma = {
   social_x: string | null;
 };
 
+
 /** Configuração pública da plataforma (link de vendas e redes sociais). */
 export const getConfigPlataforma = createServerFn({ method: "GET" }).handler(
   async (): Promise<ConfigPlataforma> => {
@@ -20,14 +22,17 @@ export const getConfigPlataforma = createServerFn({ method: "GET" }).handler(
     const { data } = await supabaseAdmin
       .from("plataforma_config")
       .select(
-        "vendas_whatsapp, vendas_mensagem, social_instagram, social_facebook, social_youtube, social_linkedin, social_tiktok, social_x",
+        "vendas_whatsapp, vendas_link, vendas_mensagem, social_instagram, social_facebook, social_youtube, social_linkedin, social_tiktok, social_x",
       )
+
       .order("criado_em", { ascending: true })
       .limit(1)
       .maybeSingle();
     return {
       vendas_whatsapp: data?.vendas_whatsapp ?? null,
+      vendas_link: data?.vendas_link ?? null,
       vendas_mensagem: data?.vendas_mensagem ?? null,
+
       social_instagram: data?.social_instagram ?? null,
       social_facebook: data?.social_facebook ?? null,
       social_youtube: data?.social_youtube ?? null,
@@ -46,8 +51,10 @@ export const atualizarConfigVendas = createServerFn({ method: "POST" })
     z
       .object({
         vendas_whatsapp: z.string().trim().max(30).nullable(),
+        vendas_link: z.string().trim().max(200).nullable(),
         vendas_mensagem: z.string().trim().max(300).nullable(),
       })
+
       .parse(d),
   )
   .handler(async ({ context, data }) => {
@@ -70,8 +77,10 @@ export const atualizarConfigVendas = createServerFn({ method: "POST" })
 
     const payload = {
       vendas_whatsapp: data.vendas_whatsapp || null,
+      vendas_link: data.vendas_link || null,
       vendas_mensagem: data.vendas_mensagem || null,
     };
+
 
     if (existente) {
       const { error } = await supabaseAdmin
@@ -89,8 +98,12 @@ export const atualizarConfigVendas = createServerFn({ method: "POST" })
       acao: "atualizar_config_vendas",
       entidade: "plataforma_config",
       entidade_id: null,
-      metadata: { vendas_whatsapp: payload.vendas_whatsapp } as never,
+      metadata: {
+        vendas_whatsapp: payload.vendas_whatsapp,
+        vendas_link: payload.vendas_link,
+      } as never,
     });
+
 
     return { ok: true };
   });

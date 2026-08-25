@@ -26,8 +26,9 @@ export const Route = createFileRoute("/")({
 function Landing() {
   const cookies = useCookieConsent("landing");
   const { data: config } = usePlataformaConfig();
-  const vendas = montarLinkVendas(config?.vendas_whatsapp, config?.vendas_mensagem);
-  const vendasProps = vendas.isWhatsapp ? { target: "_blank", rel: "noreferrer" } : {};
+  const vendas = montarLinkVendas(config?.vendas_whatsapp, config?.vendas_link, config?.vendas_mensagem);
+  const vendasProps = vendas?.isWhatsapp ? { target: "_blank", rel: "noreferrer" } : {};
+
   const sociais = REDES_SOCIAIS.map((rede) => ({
     chave: rede.chave,
     rotulo: rede.rotulo,
@@ -50,9 +51,10 @@ function Landing() {
             <Link to="/login">
               <Button variant="ghost" size="sm">Entrar</Button>
             </Link>
-            <a href={vendas.href} {...vendasProps}>
-              <Button size="sm">Fale com vendas</Button>
+            <a href={vendas?.href ?? undefined} {...vendasProps}>
+              <Button size="sm" disabled={!vendas}>Fale com vendas</Button>
             </a>
+
           </nav>
         </div>
       </header>
@@ -85,11 +87,12 @@ function Landing() {
               painel da cozinha. Você só precisa servir.
             </p>
             <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
-              <a href={vendas.href} {...vendasProps}>
-                <Button size="lg" className="h-12 px-7 text-base shadow-[var(--shadow-elegant)]">
+              <a href={vendas?.href ?? undefined} {...vendasProps}>
+                <Button size="lg" className="h-12 px-7 text-base shadow-[var(--shadow-elegant)]" disabled={!vendas}>
                   Fale com vendas
                 </Button>
               </a>
+
               <Link to="/login">
                 <Button size="lg" variant="outline" className="h-12 px-7 text-base">
                   Já tenho conta

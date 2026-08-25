@@ -12,20 +12,29 @@ export function VendasConfigCard() {
   const { data, isLoading } = usePlataformaConfig();
   const salvar = useAtualizarConfigVendas();
   const [numero, setNumero] = useState("");
+  const [link, setLink] = useState("");
   const [mensagem, setMensagem] = useState("");
 
   useEffect(() => {
     if (!data) return;
     setNumero(data.vendas_whatsapp ?? "");
+    setLink(data.vendas_link ?? "");
     setMensagem(data.vendas_mensagem ?? MENSAGEM_VENDAS_PADRAO);
   }, [data]);
 
-  const link = useMemo(() => montarLinkVendas(numero, mensagem), [numero, mensagem]);
+  const vendasLink = useMemo(
+    () => montarLinkVendas(numero, link, mensagem),
+    [numero, link, mensagem],
+  );
 
   const onSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     salvar.mutate(
-      { vendas_whatsapp: numero.trim() || null, vendas_mensagem: mensagem.trim() || null },
+      {
+        vendas_whatsapp: numero.trim() || null,
+        vendas_link: link.trim() || null,
+        vendas_mensagem: mensagem.trim() || null,
+      },
       {
         onSuccess: () => toast.success("Configuração de vendas salva"),
         onError: (err: unknown) =>
@@ -51,7 +60,21 @@ export function VendasConfigCard() {
 
       <form onSubmit={onSubmit} className="mt-4 space-y-4">
         <div className="space-y-1.5">
-          <Label htmlFor="vendas-whatsapp">Número de WhatsApp</Label>
+          <Label htmlFor="vendas-link">Link do WhatsApp de vendas</Label>
+          <Input
+            id="vendas-link"
+            value={link}
+            onChange={(e) => setLink(e.target.value)}
+            placeholder="https://wa.me/message/XXXX"
+          />
+          <p className="text-xs text-muted-foreground">
+            Quando preenchido, tem prioridade. Aceita wa.me, api.whatsapp.com e links de convite do
+            WhatsApp Business.
+          </p>
+        </div>
+
+        <div className="space-y-1.5">
+          <Label htmlFor="vendas-whatsapp">Número do WhatsApp (fallback)</Label>
           <Input
             id="vendas-whatsapp"
             value={numero}
@@ -60,8 +83,7 @@ export function VendasConfigCard() {
             inputMode="tel"
           />
           <p className="text-xs text-muted-foreground">
-            DDI 55 é assumido automaticamente. Em branco, os botões voltam a usar o e-mail
-            comercial.
+            DDI 55 é assumido automaticamente. Usado apenas se o link acima estiver em branco.
           </p>
         </div>
 
@@ -77,18 +99,24 @@ export function VendasConfigCard() {
 
         <div className="rounded-xl border border-border bg-card p-3">
           <div className="text-xs font-medium text-muted-foreground">Prévia do link</div>
-          <div className="mt-1 break-all text-xs">{link.href}</div>
-          <div className="mt-2 flex items-center gap-2">
-            <Button type="button" variant="outline" size="sm" asChild>
-              <a href={link.href} target="_blank" rel="noreferrer">
-                <ExternalLink className="mr-1 h-3.5 w-3.5" />
-                Testar link
-              </a>
-            </Button>
-            {!link.isWhatsapp && (
-              <span className="text-xs text-muted-foreground">Usando e-mail (fallback)</span>
-            )}
-          </div>
+          {vendasLink ? (
+            <>
+              <div className="mt-1 break-all text-xs">{vendasLink.href}</div>
+              <div className="mt-2 flex items-center gap-2">
+                <Button type="button" variant="outline" size="sm" asChild>
+                  <a href={vendasLink.href} target="_blank" rel="noreferrer">
+                    <ExternalLink className="mr-1 h-3.5 w-3.5" />
+                    Testar link
+                  </a>
+                </Button>
+              </div>
+            </>
+          ) : (
+            <div className="mt-1 text-xs text-muted-foreground">
+              Configure um número ou link para ativar o botão “Fale com vendas”. O botão ficará
+              inativo enquanto não houver WhatsApp.
+            </div>
+          )}
         </div>
 
         <Button type="submit" disabled={salvar.isPending || isLoading}>

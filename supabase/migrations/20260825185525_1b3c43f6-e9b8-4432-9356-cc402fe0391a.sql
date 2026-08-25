@@ -1,0 +1,1 @@
+ALTER TABLE public.plataforma_config ADD COLUMN IF NOT EXISTS vendas_link text;
