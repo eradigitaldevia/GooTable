@@ -20,7 +20,7 @@ O card já tem um campo, mas ele se chama "Número de WhatsApp" e só aceita dí
 
 ## Detalhes técnicos
 
-- `src/lib/vendas-link.ts`: estender `montarLinkVendas` para detectar URL (`^https?://`) de domínios do WhatsApp e devolvê-la como href; remover o fallback `mailto:` (sem número/link válido, devolve `null` e o CTA não é renderizado).
+- `src/lib/vendas-link.ts`: estender `montarLinkVendas` para detectar URL (`^https?://`) de domínios do WhatsApp e devolvê-la como href; remover o fallback `mailto:` (sem número/link válido, devolve `null`; a landing e login desativam o CTA "Fale com vendas" nesse caso, sem ocultá-lo).
 - `src/components/superadmin/vendas-config-card.tsx`: ajustar rótulo, placeholder, texto de ajuda e o bloco de prévia.
 - `src/lib/plataforma.functions.ts`: nenhuma mudança de schema — o campo já é texto até 30 caracteres; aumentar o limite para 200 para caber URLs.
 - Nenhuma migração de banco é necessária (a coluna é `text`).
