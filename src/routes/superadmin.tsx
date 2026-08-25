@@ -30,6 +30,7 @@ const NAV = [
   { to: "/superadmin", label: "Dashboard", icon: LayoutDashboard, exact: true },
   { to: "/superadmin/restaurantes", label: "Restaurantes", icon: Building2, exact: false },
   { to: "/superadmin/logs", label: "Logs", icon: ScrollText, exact: false },
+  { to: "/superadmin/configuracoes", label: "Configurações", icon: Settings, exact: false },
 ] as const;
 
 function SuperAdminLayout() {
