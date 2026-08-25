@@ -1723,6 +1723,30 @@ export type Database = {
           },
         ]
       }
+      plataforma_config: {
+        Row: {
+          atualizado_em: string
+          criado_em: string
+          id: string
+          vendas_mensagem: string | null
+          vendas_whatsapp: string | null
+        }
+        Insert: {
+          atualizado_em?: string
+          criado_em?: string
+          id?: string
+          vendas_mensagem?: string | null
+          vendas_whatsapp?: string | null
+        }
+        Update: {
+          atualizado_em?: string
+          criado_em?: string
+          id?: string
+          vendas_mensagem?: string | null
+          vendas_whatsapp?: string | null
+        }
+        Relationships: []
+      }
       platform_admins: {
         Row: {
           criado_em: string
