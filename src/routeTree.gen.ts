@@ -16,6 +16,7 @@ import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as SuperadminRouteImport } from './routes/superadmin'
+import { Route as TermosRouteImport } from './routes/termos'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
 import { Route as AuthenticatedBarRouteImport } from './routes/_authenticated/bar'
 import { Route as AuthenticatedCaixaRouteImport } from './routes/_authenticated/caixa'
@@ -93,6 +94,11 @@ const ResetPasswordRoute = ResetPasswordRouteImport.update({
 const SuperadminRoute = SuperadminRouteImport.update({
   id: '/superadmin',
   path: '/superadmin',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TermosRoute = TermosRouteImport.update({
+  id: '/termos',
+  path: '/termos',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
@@ -347,6 +353,7 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/reset-password': typeof ResetPasswordRoute
   '/superadmin': typeof SuperadminRouteWithChildren
+  '/termos': typeof TermosRoute
   '/admin': typeof AuthenticatedAdminRouteWithChildren
   '/bar': typeof AuthenticatedBarRoute
   '/caixa': typeof AuthenticatedCaixaRouteWithChildren
@@ -398,6 +405,7 @@ export interface FileRoutesByTo {
   '/forgot-password': typeof ForgotPasswordRoute
   '/login': typeof LoginRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/termos': typeof TermosRoute
   '/bar': typeof AuthenticatedBarRoute
   '/cozinha': typeof AuthenticatedCozinhaRoute
   '/cumim': typeof AuthenticatedCumimRoute
@@ -450,6 +458,7 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/reset-password': typeof ResetPasswordRoute
   '/superadmin': typeof SuperadminRouteWithChildren
+  '/termos': typeof TermosRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRouteWithChildren
   '/_authenticated/bar': typeof AuthenticatedBarRoute
   '/_authenticated/caixa': typeof AuthenticatedCaixaRouteWithChildren
@@ -504,6 +513,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/reset-password'
     | '/superadmin'
+    | '/termos'
     | '/admin'
     | '/bar'
     | '/caixa'
@@ -555,6 +565,7 @@ export interface FileRouteTypes {
     | '/forgot-password'
     | '/login'
     | '/reset-password'
+    | '/termos'
     | '/bar'
     | '/cozinha'
     | '/cumim'
@@ -606,6 +617,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/reset-password'
     | '/superadmin'
+    | '/termos'
     | '/_authenticated/admin'
     | '/_authenticated/bar'
     | '/_authenticated/caixa'
@@ -660,6 +672,7 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   SuperadminRoute: typeof SuperadminRouteWithChildren
+  TermosRoute: typeof TermosRoute
   DeliverySlugRoute: typeof DeliverySlugRoute
   MQrTokenRoute: typeof MQrTokenRoute
   MQrTokenCarrinhoRoute: typeof MQrTokenCarrinhoRoute
@@ -718,6 +731,13 @@ declare module '@tanstack/react-router' {
       path: '/superadmin'
       fullPath: '/superadmin'
       preLoaderRoute: typeof SuperadminRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/termos': {
+      id: '/termos'
+      path: '/termos'
+      fullPath: '/termos'
+      preLoaderRoute: typeof TermosRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/admin': {
@@ -1182,6 +1202,7 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   SuperadminRoute: SuperadminRouteWithChildren,
+  TermosRoute: TermosRoute,
   DeliverySlugRoute: DeliverySlugRoute,
   MQrTokenRoute: MQrTokenRoute,
   MQrTokenCarrinhoRoute: MQrTokenCarrinhoRoute,
