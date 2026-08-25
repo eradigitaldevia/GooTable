@@ -14,6 +14,7 @@ import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as CadastroRouteImport } from './routes/cadastro'
 import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as PrivacidadeRouteImport } from './routes/privacidade'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as SuperadminRouteImport } from './routes/superadmin'
 import { Route as TermosRouteImport } from './routes/termos'
@@ -84,6 +85,11 @@ const ForgotPasswordRoute = ForgotPasswordRouteImport.update({
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PrivacidadeRoute = PrivacidadeRouteImport.update({
+  id: '/privacidade',
+  path: '/privacidade',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
@@ -351,6 +357,7 @@ export interface FileRoutesByFullPath {
   '/cadastro': typeof CadastroRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/login': typeof LoginRoute
+  '/privacidade': typeof PrivacidadeRoute
   '/reset-password': typeof ResetPasswordRoute
   '/superadmin': typeof SuperadminRouteWithChildren
   '/termos': typeof TermosRoute
@@ -404,6 +411,7 @@ export interface FileRoutesByTo {
   '/cadastro': typeof CadastroRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/login': typeof LoginRoute
+  '/privacidade': typeof PrivacidadeRoute
   '/reset-password': typeof ResetPasswordRoute
   '/termos': typeof TermosRoute
   '/bar': typeof AuthenticatedBarRoute
@@ -456,6 +464,7 @@ export interface FileRoutesById {
   '/cadastro': typeof CadastroRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/login': typeof LoginRoute
+  '/privacidade': typeof PrivacidadeRoute
   '/reset-password': typeof ResetPasswordRoute
   '/superadmin': typeof SuperadminRouteWithChildren
   '/termos': typeof TermosRoute
@@ -511,6 +520,7 @@ export interface FileRouteTypes {
     | '/cadastro'
     | '/forgot-password'
     | '/login'
+    | '/privacidade'
     | '/reset-password'
     | '/superadmin'
     | '/termos'
@@ -564,6 +574,7 @@ export interface FileRouteTypes {
     | '/cadastro'
     | '/forgot-password'
     | '/login'
+    | '/privacidade'
     | '/reset-password'
     | '/termos'
     | '/bar'
@@ -615,6 +626,7 @@ export interface FileRouteTypes {
     | '/cadastro'
     | '/forgot-password'
     | '/login'
+    | '/privacidade'
     | '/reset-password'
     | '/superadmin'
     | '/termos'
@@ -670,6 +682,7 @@ export interface RootRouteChildren {
   CadastroRoute: typeof CadastroRoute
   ForgotPasswordRoute: typeof ForgotPasswordRoute
   LoginRoute: typeof LoginRoute
+  PrivacidadeRoute: typeof PrivacidadeRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   SuperadminRoute: typeof SuperadminRouteWithChildren
   TermosRoute: typeof TermosRoute
@@ -717,6 +730,13 @@ declare module '@tanstack/react-router' {
       path: '/login'
       fullPath: '/login'
       preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/privacidade': {
+      id: '/privacidade'
+      path: '/privacidade'
+      fullPath: '/privacidade'
+      preLoaderRoute: typeof PrivacidadeRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/reset-password': {
@@ -1200,6 +1220,7 @@ const rootRouteChildren: RootRouteChildren = {
   CadastroRoute: CadastroRoute,
   ForgotPasswordRoute: ForgotPasswordRoute,
   LoginRoute: LoginRoute,
+  PrivacidadeRoute: PrivacidadeRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   SuperadminRoute: SuperadminRouteWithChildren,
   TermosRoute: TermosRoute,
