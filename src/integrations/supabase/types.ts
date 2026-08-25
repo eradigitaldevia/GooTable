@@ -1728,6 +1728,12 @@ export type Database = {
           atualizado_em: string
           criado_em: string
           id: string
+          social_facebook: string | null
+          social_instagram: string | null
+          social_linkedin: string | null
+          social_tiktok: string | null
+          social_x: string | null
+          social_youtube: string | null
           vendas_mensagem: string | null
           vendas_whatsapp: string | null
         }
@@ -1735,6 +1741,12 @@ export type Database = {
           atualizado_em?: string
           criado_em?: string
           id?: string
+          social_facebook?: string | null
+          social_instagram?: string | null
+          social_linkedin?: string | null
+          social_tiktok?: string | null
+          social_x?: string | null
+          social_youtube?: string | null
           vendas_mensagem?: string | null
           vendas_whatsapp?: string | null
         }
@@ -1742,6 +1754,12 @@ export type Database = {
           atualizado_em?: string
           criado_em?: string
           id?: string
+          social_facebook?: string | null
+          social_instagram?: string | null
+          social_linkedin?: string | null
+          social_tiktok?: string | null
+          social_x?: string | null
+          social_youtube?: string | null
           vendas_mensagem?: string | null
           vendas_whatsapp?: string | null
         }

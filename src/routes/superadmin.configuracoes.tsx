@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { VendasConfigCard } from "@/components/superadmin/vendas-config-card";
+import { SociaisConfigCard } from "@/components/superadmin/sociais-config-card";
 
 export const Route = createFileRoute("/superadmin/configuracoes")({
   component: ConfiguracoesPlataformaPage,
@@ -13,9 +14,11 @@ function ConfiguracoesPlataformaPage() {
         <p className="text-sm text-muted-foreground">Ajustes gerais da plataforma</p>
       </div>
 
-      <div className="max-w-2xl">
+      <div className="max-w-2xl space-y-6">
         <VendasConfigCard />
+        <SociaisConfigCard />
       </div>
     </div>
   );
 }
+

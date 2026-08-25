@@ -6,6 +6,9 @@ import { lazy, Suspense } from "react";
 import { useCookieConsent } from "@/hooks/use-cookie-consent";
 import { usePlataformaConfig } from "@/hooks/use-plataforma-config";
 import { montarLinkVendas } from "@/lib/vendas-link";
+import { REDES_SOCIAIS, montarLinkSocial } from "@/lib/social-links";
+import { SocialIcon } from "@/components/social-icon";
+
 
 const CookieBanner = lazy(() =>
   import("@/components/legal/cookie-banner").then((m) => ({ default: m.CookieBanner })),
@@ -25,6 +28,12 @@ function Landing() {
   const { data: config } = usePlataformaConfig();
   const vendas = montarLinkVendas(config?.vendas_whatsapp, config?.vendas_mensagem);
   const vendasProps = vendas.isWhatsapp ? { target: "_blank", rel: "noreferrer" } : {};
+  const sociais = REDES_SOCIAIS.map((rede) => ({
+    chave: rede.chave,
+    rotulo: rede.rotulo,
+    href: montarLinkSocial(rede.chave, config?.[rede.campo]),
+  })).filter((s): s is { chave: typeof s.chave; rotulo: string; href: string } => !!s.href);
+
 
   return (
     <div className="min-h-screen bg-background">
@@ -119,7 +128,24 @@ function Landing() {
           <span>
             © {new Date().getFullYear()} Mesa. Feito para restaurantes que querem servir mais rápido.
           </span>
+          {sociais.length > 0 && (
+            <nav className="flex items-center gap-3">
+              {sociais.map((s) => (
+                <a
+                  key={s.chave}
+                  href={s.href}
+                  target="_blank"
+                  rel="noreferrer"
+                  aria-label={s.rotulo}
+                  className="text-muted-foreground transition-colors hover:text-foreground"
+                >
+                  <SocialIcon rede={s.chave} className="h-5 w-5" />
+                </a>
+              ))}
+            </nav>
+          )}
           <nav className="flex flex-wrap gap-4">
+
             <Link to="/termos" className="hover:text-foreground">
               Termos de Uso
             </Link>
