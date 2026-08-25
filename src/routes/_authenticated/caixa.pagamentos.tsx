@@ -29,7 +29,7 @@ import { ConfirmarPagamentoDialog } from "@/components/admin/confirmar-pagamento
 import { formatBRL } from "@/lib/cart";
 import { useTick } from "@/hooks/use-tick";
 import { ComprovanteConta } from "@/components/impressao/comprovante-conta";
-import { useImprimir } from "@/hooks/use-imprimir";
+import { useImprimir, registrarImpressao } from "@/hooks/use-imprimir";
 import { resumoComandaImpressaoFn } from "@/lib/pedidos.functions";
 import { toast } from "sonner";
 
@@ -410,6 +410,7 @@ function CaixaPagamentosPage() {
             variante={
               dadosImpressao.totais.saldo <= 0 ? "pago" : "rascunho"
             }
+            segundaVia={segundaVia}
           />
         </div>
       )}
