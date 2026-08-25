@@ -12,14 +12,15 @@ O card já tem um campo, mas ele se chama "Número de WhatsApp" e só aceita dí
    - Quando for um link, ele é usado como está (apenas a mensagem é anexada quando o link ainda não tem texto).
 
 2. **Prévia mais clara**
-   - Mostra um rótulo "WhatsApp" ou "E-mail (fallback)" ao lado da prévia.
-   - Quando o campo está vazio, a prévia diz explicitamente que, sem WhatsApp configurado, os botões usam o e-mail comercial.
+   - Mostra o link final do WhatsApp com o botão "Testar link".
+   - Quando o campo está vazio, a prévia avisa que o CTA "Fale com vendas" fica oculto até um WhatsApp ser configurado (sem fallback de e-mail).
+
 
 3. **Sem mudanças visuais além do card** — landing e login continuam consumindo o mesmo helper, então passam a abrir o WhatsApp assim que o valor for salvo.
 
 ## Detalhes técnicos
 
-- `src/lib/vendas-link.ts`: estender `montarLinkVendas` para detectar URL (`^https?://`) de domínios do WhatsApp e devolvê-la como href, preservando o comportamento atual para números e o fallback `mailto:`.
+- `src/lib/vendas-link.ts`: estender `montarLinkVendas` para detectar URL (`^https?://`) de domínios do WhatsApp e devolvê-la como href; remover o fallback `mailto:` (sem número/link válido, devolve `null` e o CTA não é renderizado).
 - `src/components/superadmin/vendas-config-card.tsx`: ajustar rótulo, placeholder, texto de ajuda e o bloco de prévia.
 - `src/lib/plataforma.functions.ts`: nenhuma mudança de schema — o campo já é texto até 30 caracteres; aumentar o limite para 200 para caber URLs.
 - Nenhuma migração de banco é necessária (a coluna é `text`).
