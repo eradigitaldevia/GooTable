@@ -1100,6 +1100,39 @@ export type Database = {
         }
         Relationships: []
       }
+      lgpd_cookies_consentimentos: {
+        Row: {
+          analise: boolean
+          criado_em: string
+          essenciais: boolean
+          funcionais: boolean
+          id: string
+          origem: string
+          versao: string
+          visitante_id: string
+        }
+        Insert: {
+          analise?: boolean
+          criado_em?: string
+          essenciais?: boolean
+          funcionais?: boolean
+          id?: string
+          origem?: string
+          versao: string
+          visitante_id: string
+        }
+        Update: {
+          analise?: boolean
+          criado_em?: string
+          essenciais?: boolean
+          funcionais?: boolean
+          id?: string
+          origem?: string
+          versao?: string
+          visitante_id?: string
+        }
+        Relationships: []
+      }
       lgpd_solicitacoes: {
         Row: {
           atualizado_em: string

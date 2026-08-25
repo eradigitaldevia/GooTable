@@ -20,3 +20,26 @@ export async function registrarConsentimentoLgpd(params: {
     console.error("[lgpd] falha ao registrar consentimento:", error.message);
   }
 }
+
+/**
+ * Registra, de forma anônima, a escolha de cookies de um visitante.
+ * Nunca lança: falha de registro não deve bloquear a navegação.
+ */
+export async function registrarConsentimentoCookies(params: {
+  visitanteId: string;
+  funcionais: boolean;
+  analise: boolean;
+  origem: string;
+}): Promise<void> {
+  const { error } = await supabaseAdmin.from("lgpd_cookies_consentimentos").insert({
+    visitante_id: params.visitanteId,
+    versao: LGPD_VERSAO,
+    essenciais: true,
+    funcionais: params.funcionais,
+    analise: params.analise,
+    origem: params.origem,
+  });
+  if (error) {
+    console.error("[lgpd] falha ao registrar consentimento de cookies:", error.message);
+  }
+}

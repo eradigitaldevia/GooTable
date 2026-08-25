@@ -1,12 +1,26 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
 import { QrCode, ChefHat, Zap, Smartphone, BarChart3, Wallet } from "lucide-react";
+import { ClientOnly } from "@tanstack/react-router";
+import { lazy, Suspense } from "react";
+import { useCookieConsent } from "@/hooks/use-cookie-consent";
+
+const CookieBanner = lazy(() =>
+  import("@/components/legal/cookie-banner").then((m) => ({ default: m.CookieBanner })),
+);
+const CookiePreferenciasDialog = lazy(() =>
+  import("@/components/legal/cookie-preferencias-dialog").then((m) => ({
+    default: m.CookiePreferenciasDialog,
+  })),
+);
 
 export const Route = createFileRoute("/")({
   component: Landing,
 });
 
 function Landing() {
+  const cookies = useCookieConsent("landing");
+
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
@@ -110,9 +124,35 @@ function Landing() {
             <Link to="/direitos" className="hover:text-foreground">
               Direitos do titular
             </Link>
+            <button
+              type="button"
+              onClick={cookies.abrirPreferencias}
+              className="text-left hover:text-foreground"
+            >
+              Preferências de cookies
+            </button>
           </nav>
         </div>
       </footer>
+
+      <ClientOnly>
+        <Suspense fallback={null}>
+          {cookies.mostrarBanner && (
+            <CookieBanner
+              onAceitarTodos={cookies.aceitarTodos}
+              onRejeitar={cookies.rejeitarNaoEssenciais}
+              onPersonalizar={cookies.abrirPreferencias}
+            />
+          )}
+          <CookiePreferenciasDialog
+            open={cookies.dialogAberto}
+            onOpenChange={(o) => (o ? cookies.abrirPreferencias() : cookies.fecharPreferencias())}
+            preferencias={cookies.preferencias}
+            onSalvar={cookies.salvarPreferencias}
+          />
+        </Suspense>
+      </ClientOnly>
     </div>
+
   );
 }

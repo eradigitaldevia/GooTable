@@ -121,7 +121,19 @@ function PrivacidadePage() {
           mesa, o carrinho e as preferências de exibição. Não utilizamos cookies
           de publicidade de terceiros.
         </p>
+        <p>
+          No site institucional, o uso é organizado em três categorias:{" "}
+          <strong className="text-foreground">essenciais</strong> (sempre ativos,
+          necessários para funcionamento e segurança),{" "}
+          <strong className="text-foreground">funcionais</strong> (preferências de
+          exibição) e <strong className="text-foreground">análise</strong> (métricas
+          agregadas de uso). Na primeira visita você escolhe o que aceitar, e pode
+          alterar a qualquer momento pelo link "Preferências de cookies" no rodapé
+          da página inicial. Registramos cada escolha de forma anônima, apenas com um
+          identificador aleatório do navegador, para fins de auditoria.
+        </p>
       </LegalSecao>
+
 
       <LegalSecao titulo="9. Alterações">
         <p>
