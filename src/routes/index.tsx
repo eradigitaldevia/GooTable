@@ -87,11 +87,12 @@ function Landing() {
               painel da cozinha. Você só precisa servir.
             </p>
             <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
-              <a href={vendas.href} {...vendasProps}>
-                <Button size="lg" className="h-12 px-7 text-base shadow-[var(--shadow-elegant)]">
+              <a href={vendas?.href ?? undefined} {...vendasProps}>
+                <Button size="lg" className="h-12 px-7 text-base shadow-[var(--shadow-elegant)]" disabled={!vendas}>
                   Fale com vendas
                 </Button>
               </a>
+
               <Link to="/login">
                 <Button size="lg" variant="outline" className="h-12 px-7 text-base">
                   Já tenho conta
