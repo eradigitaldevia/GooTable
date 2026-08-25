@@ -1734,6 +1734,7 @@ export type Database = {
           social_tiktok: string | null
           social_x: string | null
           social_youtube: string | null
+          vendas_link: string | null
           vendas_mensagem: string | null
           vendas_whatsapp: string | null
         }
@@ -1747,6 +1748,7 @@ export type Database = {
           social_tiktok?: string | null
           social_x?: string | null
           social_youtube?: string | null
+          vendas_link?: string | null
           vendas_mensagem?: string | null
           vendas_whatsapp?: string | null
         }
@@ -1760,6 +1762,7 @@ export type Database = {
           social_tiktok?: string | null
           social_x?: string | null
           social_youtube?: string | null
+          vendas_link?: string | null
           vendas_mensagem?: string | null
           vendas_whatsapp?: string | null
         }
