@@ -119,7 +119,24 @@ function Landing() {
           <span>
             © {new Date().getFullYear()} Mesa. Feito para restaurantes que querem servir mais rápido.
           </span>
+          {sociais.length > 0 && (
+            <nav className="flex items-center gap-3">
+              {sociais.map((s) => (
+                <a
+                  key={s.chave}
+                  href={s.href}
+                  target="_blank"
+                  rel="noreferrer"
+                  aria-label={s.rotulo}
+                  className="text-muted-foreground transition-colors hover:text-foreground"
+                >
+                  <SocialIcon rede={s.chave} className="h-5 w-5" />
+                </a>
+              ))}
+            </nav>
+          )}
           <nav className="flex flex-wrap gap-4">
+
             <Link to="/termos" className="hover:text-foreground">
               Termos de Uso
             </Link>
