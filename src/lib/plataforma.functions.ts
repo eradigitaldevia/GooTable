@@ -4,6 +4,7 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 export type ConfigPlataforma = {
   vendas_whatsapp: string | null;
+  vendas_link: string | null;
   vendas_mensagem: string | null;
   social_instagram: string | null;
   social_facebook: string | null;
@@ -12,6 +13,7 @@ export type ConfigPlataforma = {
   social_tiktok: string | null;
   social_x: string | null;
 };
+
 
 /** Configuração pública da plataforma (link de vendas e redes sociais). */
 export const getConfigPlataforma = createServerFn({ method: "GET" }).handler(
