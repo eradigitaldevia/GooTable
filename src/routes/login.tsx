@@ -7,6 +7,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { QrCode, Loader2 } from "lucide-react";
+import { usePlataformaConfig } from "@/hooks/use-plataforma-config";
+import { montarLinkVendas } from "@/lib/vendas-link";
 
 function safeRedirect(value: unknown): string | undefined {
   if (typeof value !== "string") return undefined;
