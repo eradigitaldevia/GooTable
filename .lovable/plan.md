@@ -20,6 +20,9 @@ Por que uma página própria e não um campo solto: dá lugar natural para futur
 
 Todos passam a abrir o WhatsApp em nova aba quando configurado.
 
+A própria página do Super-Admin exibe essa lista em um bloco informativo ("Este link é usado em: landing — header e hero; tela de login"), para ficar claro onde a configuração tem efeito.
+
+
 ## Detalhes técnicos
 
 **Banco**
