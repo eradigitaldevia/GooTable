@@ -7,6 +7,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { QrCode, Loader2 } from "lucide-react";
+import { usePlataformaConfig } from "@/hooks/use-plataforma-config";
+import { montarLinkVendas } from "@/lib/vendas-link";
 
 function safeRedirect(value: unknown): string | undefined {
   if (typeof value !== "string") return undefined;
@@ -108,6 +110,11 @@ function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const { data: plataformaConfig } = usePlataformaConfig();
+  const vendas = montarLinkVendas(
+    plataformaConfig?.vendas_whatsapp,
+    plataformaConfig?.vendas_mensagem,
+  );
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -191,7 +198,11 @@ function Login() {
 
           <p className="mt-6 text-center text-sm text-muted-foreground">
             Quer contratar?{" "}
-            <a href="mailto:comercial@mesasistema.com.br" className="font-semibold text-primary hover:underline">
+            <a
+              href={vendas.href}
+              {...(vendas.isWhatsapp ? { target: "_blank", rel: "noreferrer" } : {})}
+              className="font-semibold text-primary hover:underline"
+            >
               Fale com vendas
             </a>
           </p>

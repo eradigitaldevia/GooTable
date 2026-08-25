@@ -4,6 +4,8 @@ import { QrCode, ChefHat, Zap, Smartphone, BarChart3, Wallet } from "lucide-reac
 import { ClientOnly } from "@tanstack/react-router";
 import { lazy, Suspense } from "react";
 import { useCookieConsent } from "@/hooks/use-cookie-consent";
+import { usePlataformaConfig } from "@/hooks/use-plataforma-config";
+import { montarLinkVendas } from "@/lib/vendas-link";
 
 const CookieBanner = lazy(() =>
   import("@/components/legal/cookie-banner").then((m) => ({ default: m.CookieBanner })),
@@ -20,6 +22,9 @@ export const Route = createFileRoute("/")({
 
 function Landing() {
   const cookies = useCookieConsent("landing");
+  const { data: config } = usePlataformaConfig();
+  const vendas = montarLinkVendas(config?.vendas_whatsapp, config?.vendas_mensagem);
+  const vendasProps = vendas.isWhatsapp ? { target: "_blank", rel: "noreferrer" } : {};
 
   return (
     <div className="min-h-screen bg-background">
@@ -36,7 +41,7 @@ function Landing() {
             <Link to="/login">
               <Button variant="ghost" size="sm">Entrar</Button>
             </Link>
-            <a href="mailto:comercial@mesasistema.com.br">
+            <a href={vendas.href} {...vendasProps}>
               <Button size="sm">Fale com vendas</Button>
             </a>
           </nav>
@@ -71,7 +76,7 @@ function Landing() {
               painel da cozinha. Você só precisa servir.
             </p>
             <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
-              <a href="mailto:comercial@mesasistema.com.br">
+              <a href={vendas.href} {...vendasProps}>
                 <Button size="lg" className="h-12 px-7 text-base shadow-[var(--shadow-elegant)]">
                   Fale com vendas
                 </Button>
