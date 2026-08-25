@@ -35,6 +35,13 @@ export function GeralForm({
   sessaoOciosaHoras: number;
   onChange: (patch: GeralPatch) => void;
 }) {
+  const faltandoImpressao = camposImpressaoFaltando({
+    nome,
+    cnpj,
+    telefone,
+    endereco,
+  });
+
   return (
     <div className="space-y-6">
       <section className="space-y-5 rounded-2xl border border-border bg-card p-6 shadow-[var(--shadow-soft)]">
