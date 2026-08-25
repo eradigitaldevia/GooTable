@@ -137,7 +137,30 @@ function Cadastro() {
                 required
               />
             </div>
-            <Button type="submit" className="h-11 w-full text-base" disabled={loading}>
+            <div className="flex items-start gap-2">
+              <Checkbox
+                id="aceite"
+                checked={aceite}
+                onCheckedChange={(v) => setAceite(v === true)}
+                className="mt-0.5"
+              />
+              <Label htmlFor="aceite" className="text-sm font-normal leading-snug text-muted-foreground">
+                Li e aceito os{" "}
+                <Link to="/termos" target="_blank" className="font-medium text-primary hover:underline">
+                  Termos de Uso
+                </Link>{" "}
+                e a{" "}
+                <Link to="/privacidade" target="_blank" className="font-medium text-primary hover:underline">
+                  Política de Privacidade
+                </Link>
+                .
+              </Label>
+            </div>
+            <Button
+              type="submit"
+              className="h-11 w-full text-base"
+              disabled={loading || !aceite}
+            >
               {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Criar conta
             </Button>
@@ -147,6 +170,20 @@ function Cadastro() {
             Já tem conta?{" "}
             <Link to="/login" className="font-semibold text-primary hover:underline">
               Entrar
+            </Link>
+          </p>
+
+          <p className="mt-3 text-center text-xs text-muted-foreground">
+            <Link to="/termos" className="hover:underline">
+              Termos
+            </Link>
+            {" · "}
+            <Link to="/privacidade" className="hover:underline">
+              Privacidade
+            </Link>
+            {" · "}
+            <Link to="/direitos" className="hover:underline">
+              Direitos do titular
             </Link>
           </p>
         </div>
