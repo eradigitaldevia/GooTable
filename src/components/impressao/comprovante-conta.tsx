@@ -105,9 +105,16 @@ export function ComprovanteConta({
   pagamentos = [],
   divisao,
   variante,
+  segundaVia = false,
 }: ComprovanteContaProps) {
-  return (
-    <div className="print-only">
+  // O cupom é renderizado direto no <body> para que a regra de impressão possa
+  // esconder toda a interface sem deixar páginas em branco.
+  const [montado, setMontado] = useState(false);
+  useEffect(() => setMontado(true), []);
+  if (!montado) return null;
+
+  const conteudo = (
+    <div className="print-only" data-print-root="">
       <div style={{ textAlign: "center" }}>
         {restaurante.logo_url ? (
           <img
