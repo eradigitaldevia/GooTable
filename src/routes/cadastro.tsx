@@ -1,4 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
 import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
@@ -6,6 +7,8 @@ import { useCriarRestaurante } from "@/hooks/use-restaurante";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
+import { registrarConsentimentoRestauranteFn } from "@/lib/lgpd.functions";
 import { toast } from "sonner";
 import { QrCode, Loader2 } from "lucide-react";
 
