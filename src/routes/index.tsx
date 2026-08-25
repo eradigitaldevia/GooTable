@@ -6,6 +6,9 @@ import { lazy, Suspense } from "react";
 import { useCookieConsent } from "@/hooks/use-cookie-consent";
 import { usePlataformaConfig } from "@/hooks/use-plataforma-config";
 import { montarLinkVendas } from "@/lib/vendas-link";
+import { REDES_SOCIAIS, montarLinkSocial } from "@/lib/social-links";
+import { SocialIcon } from "@/components/social-icon";
+
 
 const CookieBanner = lazy(() =>
   import("@/components/legal/cookie-banner").then((m) => ({ default: m.CookieBanner })),
