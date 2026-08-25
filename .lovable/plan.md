@@ -13,7 +13,7 @@ O card já tem um campo, mas ele se chama "Número de WhatsApp" e só aceita dí
 
 2. **Prévia mais clara**
    - Mostra o link final do WhatsApp com o botão "Testar link".
-   - Quando o campo está vazio, a prévia avisa que o CTA "Fale com vendas" fica oculto até um WhatsApp ser configurado (sem fallback de e-mail).
+   - Quando o campo está vazio, a prévia avisa que o CTA "Fale com vendas" fica inativo até um WhatsApp ser configurado (sem fallback de e-mail).
 
 
 3. **Sem mudanças visuais além do card** — landing e login continuam consumindo o mesmo helper, então passam a abrir o WhatsApp assim que o valor for salvo.
