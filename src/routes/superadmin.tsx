@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
-import { Shield, LayoutDashboard, Building2, ScrollText, LogOut, Menu } from "lucide-react";
+import { Shield, LayoutDashboard, Building2, ScrollText, LogOut, Menu, Settings } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/superadmin")({

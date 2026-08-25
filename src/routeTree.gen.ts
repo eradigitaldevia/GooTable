@@ -28,6 +28,7 @@ import { Route as AuthenticatedSalaRouteImport } from './routes/_authenticated/s
 import { Route as DeliverySlugRouteImport } from './routes/delivery.$slug'
 import { Route as MQrTokenRouteImport } from './routes/m.$qrToken'
 import { Route as SuperadminIndexRouteImport } from './routes/superadmin.index'
+import { Route as SuperadminConfiguracoesRouteImport } from './routes/superadmin.configuracoes'
 import { Route as SuperadminLogsRouteImport } from './routes/superadmin.logs'
 import { Route as SuperadminRestaurantesRouteImport } from './routes/superadmin.restaurantes'
 import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin/index'
@@ -156,6 +157,11 @@ const MQrTokenRoute = MQrTokenRouteImport.update({
 const SuperadminIndexRoute = SuperadminIndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => SuperadminRoute,
+} as any)
+const SuperadminConfiguracoesRoute = SuperadminConfiguracoesRouteImport.update({
+  id: '/configuracoes',
+  path: '/configuracoes',
   getParentRoute: () => SuperadminRoute,
 } as any)
 const SuperadminLogsRoute = SuperadminLogsRouteImport.update({
@@ -376,6 +382,7 @@ export interface FileRoutesByFullPath {
   '/sala': typeof AuthenticatedSalaRoute
   '/delivery/$slug': typeof DeliverySlugRoute
   '/m/$qrToken': typeof MQrTokenRoute
+  '/superadmin/configuracoes': typeof SuperadminConfiguracoesRoute
   '/superadmin/logs': typeof SuperadminLogsRoute
   '/superadmin/restaurantes': typeof SuperadminRestaurantesRouteWithChildren
   '/superadmin/': typeof SuperadminIndexRoute
@@ -428,6 +435,7 @@ export interface FileRoutesByTo {
   '/sala': typeof AuthenticatedSalaRoute
   '/delivery/$slug': typeof DeliverySlugRoute
   '/m/$qrToken': typeof MQrTokenRoute
+  '/superadmin/configuracoes': typeof SuperadminConfiguracoesRoute
   '/superadmin/logs': typeof SuperadminLogsRoute
   '/superadmin/restaurantes': typeof SuperadminRestaurantesRouteWithChildren
   '/superadmin': typeof SuperadminIndexRoute
@@ -485,6 +493,7 @@ export interface FileRoutesById {
   '/_authenticated/sala': typeof AuthenticatedSalaRoute
   '/delivery/$slug': typeof DeliverySlugRoute
   '/m/$qrToken': typeof MQrTokenRoute
+  '/superadmin/configuracoes': typeof SuperadminConfiguracoesRoute
   '/superadmin/logs': typeof SuperadminLogsRoute
   '/superadmin/restaurantes': typeof SuperadminRestaurantesRouteWithChildren
   '/superadmin/': typeof SuperadminIndexRoute
@@ -542,6 +551,7 @@ export interface FileRouteTypes {
     | '/sala'
     | '/delivery/$slug'
     | '/m/$qrToken'
+    | '/superadmin/configuracoes'
     | '/superadmin/logs'
     | '/superadmin/restaurantes'
     | '/superadmin/'
@@ -594,6 +604,7 @@ export interface FileRouteTypes {
     | '/sala'
     | '/delivery/$slug'
     | '/m/$qrToken'
+    | '/superadmin/configuracoes'
     | '/superadmin/logs'
     | '/superadmin/restaurantes'
     | '/superadmin'
@@ -650,6 +661,7 @@ export interface FileRouteTypes {
     | '/_authenticated/sala'
     | '/delivery/$slug'
     | '/m/$qrToken'
+    | '/superadmin/configuracoes'
     | '/superadmin/logs'
     | '/superadmin/restaurantes'
     | '/superadmin/'
@@ -841,6 +853,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/superadmin/'
       preLoaderRoute: typeof SuperadminIndexRouteImport
+      parentRoute: typeof SuperadminRoute
+    }
+    '/superadmin/configuracoes': {
+      id: '/superadmin/configuracoes'
+      path: '/configuracoes'
+      fullPath: '/superadmin/configuracoes'
+      preLoaderRoute: typeof SuperadminConfiguracoesRouteImport
       parentRoute: typeof SuperadminRoute
     }
     '/superadmin/logs': {
@@ -1219,12 +1238,14 @@ const SuperadminRestaurantesRouteWithChildren =
   )
 
 interface SuperadminRouteChildren {
+  SuperadminConfiguracoesRoute: typeof SuperadminConfiguracoesRoute
   SuperadminLogsRoute: typeof SuperadminLogsRoute
   SuperadminRestaurantesRoute: typeof SuperadminRestaurantesRouteWithChildren
   SuperadminIndexRoute: typeof SuperadminIndexRoute
 }
 
 const SuperadminRouteChildren: SuperadminRouteChildren = {
+  SuperadminConfiguracoesRoute: SuperadminConfiguracoesRoute,
   SuperadminLogsRoute: SuperadminLogsRoute,
   SuperadminRestaurantesRoute: SuperadminRestaurantesRouteWithChildren,
   SuperadminIndexRoute: SuperadminIndexRoute,
