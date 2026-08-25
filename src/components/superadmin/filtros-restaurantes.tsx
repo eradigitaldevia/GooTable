@@ -2,7 +2,7 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Search } from "lucide-react";
 
-export type FiltroStatus = "todos" | "ativos" | "suspensos";
+export type FiltroStatus = "todos" | "ativos" | "suspensos" | "a_vencer" | "vencidos";
 
 export function FiltrosRestaurantes({
   busca,
@@ -28,7 +28,7 @@ export function FiltrosRestaurantes({
           />
         </div>
         <div className="flex gap-1 rounded-lg border border-border p-1">
-          {(["todos", "ativos", "suspensos"] as const).map((f) => (
+          {(["todos", "ativos", "suspensos", "a_vencer", "vencidos"] as const).map((f) => (
             <button
               key={f}
               onClick={() => onFiltroChange(f)}
@@ -36,7 +36,7 @@ export function FiltrosRestaurantes({
                 filtro === f ? "bg-primary text-primary-foreground" : "text-muted-foreground"
               }`}
             >
-              {f}
+              {f === "a_vencer" ? "A vencer" : f === "vencidos" ? "Vencidos" : f}
             </button>
           ))}
         </div>

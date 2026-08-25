@@ -3,6 +3,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { queryKeys } from "@/lib/query-keys";
 import {
   adicionarMembro,
+  atualizarContratoRestaurante,
   atualizarRestauranteAdmin,
   criarRestauranteAdmin,
   excluirRestaurante,
@@ -28,7 +29,15 @@ export function useCriarRestauranteAdmin() {
   const fn = useServerFn(criarRestauranteAdmin);
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (data: { nome: string; slug: string; donoEmail: string }) => fn({ data }),
+    mutationFn: (data: {
+      nome: string;
+      slug: string;
+      donoEmail: string;
+      donoSenha: string;
+      donoNome: string;
+      vencimento?: string | null;
+      notas?: string | null;
+    }) => fn({ data }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: queryKeys.restaurantes() });
     },
@@ -122,6 +131,18 @@ export function useAtualizarRestauranteAdmin() {
       pix_chave: string | null;
       pix_nome_titular: string | null;
     }) => fn({ data }),
+    onSuccess: (_r, vars) => {
+      qc.invalidateQueries({ queryKey: queryKeys.restaurante(vars.id) });
+      qc.invalidateQueries({ queryKey: queryKeys.restaurantes() });
+    },
+  });
+}
+
+export function useAtualizarContratoRestaurante() {
+  const fn = useServerFn(atualizarContratoRestaurante);
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (data: { id: string; vencimento?: string | null; notas?: string | null }) => fn({ data }),
     onSuccess: (_r, vars) => {
       qc.invalidateQueries({ queryKey: queryKeys.restaurante(vars.id) });
       qc.invalidateQueries({ queryKey: queryKeys.restaurantes() });
