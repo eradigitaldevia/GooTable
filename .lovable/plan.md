@@ -6,21 +6,24 @@ O card já tem um campo, mas ele se chama "Número de WhatsApp" e só aceita dí
 
 ## O que muda
 
-1. **O campo passa a aceitar número ou link completo**
-   - Rótulo: "WhatsApp de vendas (número ou link)".
-   - Aceita `(88) 99999-9999`, `5588999999999`, `https://wa.me/5588...`, `https://api.whatsapp.com/send?phone=...` e `https://wa.me/message/XXXX` (link de convite do WhatsApp Business).
-   - Quando for um link, ele é usado como está (apenas a mensagem é anexada quando o link ainda não tem texto).
+1. **Dois campos no card**
+   - **Número do WhatsApp de vendas** (existente) — número local, DDI 55 automático.
+   - **Link alternativo do WhatsApp** (novo) — aceita `https://wa.me/...`, `https://api.whatsapp.com/send?phone=...` e `https://wa.me/message/XXXX` (link de convite do WhatsApp Business).
+   - Quando preenchido, o **link** tem prioridade: a prévia e os CTAs usam ele como href.
+   - Se o link estiver vazio, a prévia volta a usar o número como antes.
 
-2. **Prévia mais clara**
+2. **Remover o fallback de e-mail**
+   - Quando não houver número nem link, o CTA "Fale com vendas" fica inativo (sem `mailto:`).
+
+3. **Prévia mais clara**
    - Mostra o link final do WhatsApp com o botão "Testar link".
-   - Quando o campo está vazio, a prévia avisa que o CTA "Fale com vendas" fica inativo até um WhatsApp ser configurado (sem fallback de e-mail).
+   - Quando ambos os campos estiverem vazios, a prévia avisa que o CTA "Fale com vendas" fica inativo até um WhatsApp ser configurado (sem fallback de e-mail).
 
-
-3. **Sem mudanças visuais além do card** — landing e login continuam consumindo o mesmo helper, então passam a abrir o WhatsApp assim que o valor for salvo.
+4. **Sem mudanças visuais além do card** — landing e login continuam consumindo o mesmo helper, então passam a abrir o WhatsApp assim que o link/número for salvo.
 
 ## Detalhes técnicos
 
-- `src/lib/vendas-link.ts`: estender `montarLinkVendas` para detectar URL (`^https?://`) de domínios do WhatsApp e devolvê-la como href; remover o fallback `mailto:` (sem número/link válido, devolve `null`; a landing e login desativam o CTA "Fale com vendas" nesse caso, sem ocultá-lo).
-- `src/components/superadmin/vendas-config-card.tsx`: ajustar rótulo, placeholder, texto de ajuda e o bloco de prévia.
-- `src/lib/plataforma.functions.ts`: nenhuma mudança de schema — o campo já é texto até 30 caracteres; aumentar o limite para 200 para caber URLs.
-- Nenhuma migração de banco é necessária (a coluna é `text`).
+- Banco: adicionar coluna `vendas_link text` em `public.plataforma_config`.
+- `src/lib/vendas-link.ts`: estender `montarLinkVendas` para aceitar `link` e devolvê-lo quando presente; usar número como fallback; remover o fallback `mailto:` (sem número/link válido, devolve `null`; a landing e login desativam o CTA "Fale com vendas" nesse caso, sem ocultá-lo).
+- `src/components/superadmin/vendas-config-card.tsx`: adicionar o novo input de link, ajustar rótulo, placeholder, texto de ajuda e o bloco de prévia.
+- `src/lib/plataforma.functions.ts`: incluir `vendas_link` no tipo, no GET e no POST.
