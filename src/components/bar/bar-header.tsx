@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { GlassWater, LogOut, Maximize2, Minimize2 } from "lucide-react";
+import { GlassWater, LogOut, Maximize2, Minimize2, Printer } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "@tanstack/react-router";
 
@@ -10,12 +10,14 @@ export function BarHeader({
   prontosHoje,
   filtro,
   onFiltroChange,
+  impressaoAuto = false,
 }: {
   pendentes: number;
   emPreparo: number;
   prontosHoje: number;
   filtro: "pendentes" | "em_preparo" | "todos";
   onFiltroChange: (f: "pendentes" | "em_preparo" | "todos") => void;
+  impressaoAuto?: boolean;
 }) {
   const [hora, setHora] = useState("");
   const [fs, setFs] = useState(false);
