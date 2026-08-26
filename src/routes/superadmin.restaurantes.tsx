@@ -146,6 +146,61 @@ function RestaurantesList() {
         onClose={() => setContratoRestaurante(null)}
         restaurante={contratoRestaurante}
       />
+
+      <AlertDialog open={!!suspenderAlvo} onOpenChange={(o) => !o && setSuspenderAlvo(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {suspenderAlvo?.ativo ? "Suspender restaurante?" : "Reativar restaurante?"}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {suspenderAlvo?.ativo
+                ? `"${suspenderAlvo?.nome}" ficará com cardápio, delivery e novos pedidos bloqueados.`
+                : `"${suspenderAlvo?.nome}" voltará a aceitar acessos ao cardápio e novos pedidos.`}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={setAtivo.isPending}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={setAtivo.isPending}
+              onClick={(e) => {
+                e.preventDefault();
+                void confirmarSuspender();
+              }}
+            >
+              {setAtivo.isPending
+                ? "Salvando…"
+                : suspenderAlvo?.ativo
+                  ? "Suspender"
+                  : "Reativar"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={!!excluirAlvo} onOpenChange={(o) => !o && setExcluirAlvo(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir restaurante?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {`"${excluirAlvo?.nome}" e todos os seus dados (mesas, pedidos, cardápio e histórico) serão excluídos definitivamente. Esta ação não pode ser desfeita.`}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={excluir.isPending}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              disabled={excluir.isPending}
+              onClick={(e) => {
+                e.preventDefault();
+                void confirmarExcluir();
+              }}
+            >
+              {excluir.isPending ? "Excluindo…" : "Excluir"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
