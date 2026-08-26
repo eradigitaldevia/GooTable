@@ -24,27 +24,24 @@ export function RestauranteRow({
   r,
   onSuspender,
   onExcluir,
+  onEditar,
   onEditarContrato,
 }: {
   r: RestauranteRowData;
   onSuspender: (r: RestauranteRowData) => void;
   onExcluir: (r: RestauranteRowData) => void;
+  onEditar: (r: RestauranteRowData) => void;
   onEditarContrato: (r: RestauranteRowData) => void;
 }) {
-  const navigate = useNavigate();
   const contrato = contratoStatus(r.contrato_vencimento_em);
   const isVencido = contrato.estado === "vencido";
 
   return (
     <tr className={isVencido ? "bg-destructive/5 hover:bg-destructive/10" : "hover:bg-muted/30"}>
       <td className="px-4 py-3">
-        <Link
-          to="/superadmin/restaurantes/$id"
-          params={{ id: r.id }}
-          className="font-medium hover:underline"
-        >
+        <button type="button" onClick={() => onEditar(r)} className="font-medium hover:underline">
           {r.nome}
-        </Link>
+        </button>
         <div className="text-xs text-muted-foreground">/{r.slug}</div>
         {contrato.estado !== "sem_data" && (
           <div className="mt-1 flex flex-wrap items-center gap-1">
