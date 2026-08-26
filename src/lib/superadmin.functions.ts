@@ -298,6 +298,88 @@ export const setRestauranteAtivo = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
+/** Retorna o dono (primeiro membro admin) de um restaurante. */
+export const getDonoRestaurante = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) => z.object({ restauranteId: z.string().uuid() }).parse(d))
+  .handler(async ({ context, data }) => {
+    const { supabase, userId } = context;
+    await assertPlatformAdmin(supabase, userId);
+
+    const { data: membro, error } = await supabaseAdmin
+      .from("restaurante_membros")
+      .select("user_id")
+      .eq("restaurante_id", data.restauranteId)
+      .eq("papel", "admin")
+      .order("criado_em", { ascending: true })
+      .limit(1)
+      .maybeSingle();
+    if (error) throw new Error(error.message);
+    if (!membro) return { dono: null };
+
+    const { data: userRes, error: errUser } = await supabaseAdmin.auth.admin.getUserById(membro.user_id);
+    if (errUser) throw new Error(errUser.message);
+    const u = userRes.user;
+    return {
+      dono: {
+        user_id: u.id,
+        nome: (u.user_metadata?.nome as string) ?? "",
+        email: u.email ?? "",
+      },
+    };
+  });
+
+/** Atualiza nome, email e (opcionalmente) senha do dono de um restaurante. */
+export const atualizarDonoRestaurante = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) =>
+    z.object({
+      restauranteId: z.string().uuid(),
+      nome: z.string().trim().min(1).max(100),
+      email: z.string().trim().email().max(255),
+      senha: z.string().min(6).max(72).optional(),
+    }).parse(d)
+  )
+  .handler(async ({ context, data }) => {
+    const { supabase, userId } = context;
+    await assertPlatformAdmin(supabase, userId);
+
+    const { data: membro, error } = await supabaseAdmin
+      .from("restaurante_membros")
+      .select("user_id")
+      .eq("restaurante_id", data.restauranteId)
+      .eq("papel", "admin")
+      .order("criado_em", { ascending: true })
+      .limit(1)
+      .maybeSingle();
+    if (error) throw new Error(error.message);
+    if (!membro) throw new Error("Este restaurante não possui um dono cadastrado.");
+
+    const { data: usersList, error: errUsers } = await supabaseAdmin.auth.admin.listUsers({
+      page: 1,
+      perPage: 1000,
+    });
+    if (errUsers) throw new Error(errUsers.message);
+    const emailEmUso = usersList.users.find(
+      (u) => u.id !== membro.user_id && u.email?.toLowerCase() === data.email.toLowerCase()
+    );
+    if (emailEmUso) throw new Error("Já existe outro usuário com este email.");
+
+    const { error: updErr } = await supabaseAdmin.auth.admin.updateUserById(membro.user_id, {
+      email: data.email,
+      email_confirm: true,
+      user_metadata: { nome: data.nome },
+      ...(data.senha ? { password: data.senha } : {}),
+    });
+    if (updErr) throw new Error(updErr.message);
+
+    await logAction(userId, "atualizar_dono_restaurante", "restaurante", data.restauranteId, {
+      donoEmail: data.email,
+      senhaAlterada: !!data.senha,
+    });
+    return { ok: true };
+  });
+
 /** Exclui restaurante (cascata manual). */
 export const excluirRestaurante = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])

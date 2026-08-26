@@ -4,9 +4,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { ExternalLink } from "lucide-react";
+import { ExternalLink, Eye, EyeOff } from "lucide-react";
 import { toast } from "sonner";
-import { useAtualizarRestauranteAdmin, useAtualizarContratoRestaurante } from "@/hooks/use-superadmin";
+import {
+  useAtualizarDonoRestaurante,
+  useAtualizarRestauranteAdmin,
+  useAtualizarContratoRestaurante,
+  useDonoRestaurante,
+} from "@/hooks/use-superadmin";
 
 export function EditarRestauranteDialog({
   open,
@@ -25,10 +30,17 @@ export function EditarRestauranteDialog({
 }) {
   const atualizar = useAtualizarRestauranteAdmin();
   const atualizarContrato = useAtualizarContratoRestaurante();
+  const atualizarDono = useAtualizarDonoRestaurante();
+  const donoQuery = useDonoRestaurante(restaurante?.id, open);
+
   const [nome, setNome] = useState("");
   const [slug, setSlug] = useState("");
   const [vencimento, setVencimento] = useState("");
   const [notas, setNotas] = useState("");
+  const [donoNome, setDonoNome] = useState("");
+  const [donoEmail, setDonoEmail] = useState("");
+  const [donoSenha, setDonoSenha] = useState("");
+  const [mostrarSenha, setMostrarSenha] = useState(false);
 
   useEffect(() => {
     if (open && restaurante) {
@@ -36,10 +48,20 @@ export function EditarRestauranteDialog({
       setSlug(restaurante.slug);
       setVencimento(restaurante.contrato_vencimento_em ?? "");
       setNotas(restaurante.contrato_notas ?? "");
+      setDonoSenha("");
+      setMostrarSenha(false);
     }
   }, [open, restaurante]);
 
-  const salvando = atualizar.isPending || atualizarContrato.isPending;
+  useEffect(() => {
+    if (open && donoQuery.data?.dono) {
+      setDonoNome(donoQuery.data.dono.nome);
+      setDonoEmail(donoQuery.data.dono.email);
+    }
+  }, [open, donoQuery.data]);
+
+  const salvando = atualizar.isPending || atualizarContrato.isPending || atualizarDono.isPending;
+  const dono = donoQuery.data?.dono ?? null;
 
   const submit = async () => {
     if (!restaurante) return;
@@ -51,12 +73,32 @@ export function EditarRestauranteDialog({
         vencimento: vencimento || null,
         notas: notas || null,
       });
+      if (dono) {
+        const donoMudou =
+          donoNome.trim() !== dono.nome ||
+          donoEmail.trim().toLowerCase() !== dono.email.toLowerCase() ||
+          donoSenha.length > 0;
+        if (donoMudou) {
+          await atualizarDono.mutateAsync({
+            restauranteId: restaurante.id,
+            nome: donoNome.trim(),
+            email: donoEmail.trim(),
+            ...(donoSenha.length > 0 ? { senha: donoSenha } : {}),
+          });
+        }
+      }
       toast.success("Restaurante atualizado");
       onClose();
     } catch (e: any) {
       toast.error(e.message ?? "Erro");
     }
   };
+
+  const formValido =
+    nome.trim().length >= 2 &&
+    slug.trim().length >= 2 &&
+    (!dono || (donoNome.trim().length >= 1 && donoEmail.trim().length >= 3)) &&
+    (donoSenha.length === 0 || donoSenha.length >= 6);
 
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
@@ -86,12 +128,51 @@ export function EditarRestauranteDialog({
               <Input value={notas} onChange={(e) => setNotas(e.target.value)} placeholder="Plano, observações…" />
             </div>
           </div>
+
+          {dono && (
+            <div className="space-y-4 border-t pt-4">
+              <p className="text-sm font-medium">Dono</p>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label>Nome do dono</Label>
+                  <Input value={donoNome} onChange={(e) => setDonoNome(e.target.value)} />
+                </div>
+                <div>
+                  <Label>Email do dono</Label>
+                  <Input type="email" value={donoEmail} onChange={(e) => setDonoEmail(e.target.value)} />
+                </div>
+              </div>
+              <div>
+                <Label>Nova senha (opcional)</Label>
+                <div className="relative">
+                  <Input
+                    type={mostrarSenha ? "text" : "password"}
+                    value={donoSenha}
+                    onChange={(e) => setDonoSenha(e.target.value)}
+                    placeholder="Deixe em branco para manter a atual"
+                    className="pr-10"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setMostrarSenha((v) => !v)}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground"
+                    aria-label={mostrarSenha ? "Ocultar senha" : "Mostrar senha"}
+                  >
+                    {mostrarSenha ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
+                </div>
+                {donoSenha.length > 0 && donoSenha.length < 6 && (
+                  <p className="mt-1 text-xs text-destructive">A senha deve ter no mínimo 6 caracteres.</p>
+                )}
+              </div>
+            </div>
+          )}
         </div>
         <DialogFooter>
           <Button variant="ghost" onClick={onClose}>
             Cancelar
           </Button>
-          <Button onClick={submit} disabled={salvando || nome.trim().length < 2 || slug.trim().length < 2}>
+          <Button onClick={submit} disabled={salvando || donoQuery.isLoading || !formValido}>
             {salvando ? "Salvando…" : "Salvar"}
           </Button>
         </DialogFooter>
