@@ -53,6 +53,8 @@ export interface Restaurante {
   delivery_aceita_pix?: boolean;
   url_publica_cardapio?: string | null;
   banners_habilitados?: boolean;
+  impressao_auto_cozinha?: boolean;
+  impressao_auto_bar?: boolean;
 }
 
 /** Restaurante do usuário autenticado (primeiro vínculo). */
