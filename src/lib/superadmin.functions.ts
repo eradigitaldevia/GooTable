@@ -222,11 +222,14 @@ export const atualizarRestauranteAdmin = createServerFn({ method: "POST" })
   .handler(async ({ context, data }) => {
     const { supabase, userId } = context;
     await assertPlatformAdmin(supabase, userId);
-    const patch: Record<string, unknown> = { nome: data.nome, slug: data.slug };
-    if (data.cor_primaria !== undefined) patch.cor_primaria = data.cor_primaria;
-    if (data.pix_habilitado !== undefined) patch.pix_habilitado = data.pix_habilitado;
-    if (data.pix_chave !== undefined) patch.pix_chave = data.pix_chave;
-    if (data.pix_nome_titular !== undefined) patch.pix_nome_titular = data.pix_nome_titular;
+    const patch = {
+      nome: data.nome,
+      slug: data.slug,
+      ...(data.cor_primaria !== undefined ? { cor_primaria: data.cor_primaria } : {}),
+      ...(data.pix_habilitado !== undefined ? { pix_habilitado: data.pix_habilitado } : {}),
+      ...(data.pix_chave !== undefined ? { pix_chave: data.pix_chave } : {}),
+      ...(data.pix_nome_titular !== undefined ? { pix_nome_titular: data.pix_nome_titular } : {}),
+    };
     const { error } = await supabaseAdmin
       .from("restaurantes")
       .update(patch)
