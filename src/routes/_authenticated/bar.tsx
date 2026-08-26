@@ -129,6 +129,40 @@ function BarPanel() {
     [itensRaw, pedidoMap],
   );
 
+  // Impressão automática de comandas de preparo (configurável pelo admin).
+  const impressaoAutoLigada = restaurante?.impressao_auto_bar === true;
+  const pedidosImpressao = useMemo<PedidoImpressao[]>(() => {
+    const porPedido = new Map<string, ItemRaw[]>();
+    for (const it of itensRaw) {
+      if ((it.destino ?? "cozinha") !== "bar") continue;
+      if (!porPedido.has(it.pedido_id)) porPedido.set(it.pedido_id, []);
+      porPedido.get(it.pedido_id)!.push(it);
+    }
+    return Array.from(porPedido.entries()).map(([pedidoId, lista]) => {
+      const p = pedidoMap.get(pedidoId);
+      return {
+        pedidoId,
+        mesaNumero: p ? mesas.get(p.mesa_id)?.numero ?? null : null,
+        canal: p?.canal ?? null,
+        criadoEm: p?.criado_em ?? null,
+        cancelado: p?.status === "cancelado",
+        itens: lista.map((it) => ({
+          id: it.id,
+          nome: it.nome_produto,
+          quantidade: it.quantidade,
+          observacao: it.observacao,
+        })),
+      };
+    });
+  }, [itensRaw, pedidoMap, mesas]);
+  const { jobAtual } = useImpressaoAuto({
+    enabled: impressaoAutoLigada,
+    destino: "bar",
+    restauranteId,
+    pedidos: pedidosImpressao,
+  });
+
+
   const pendentesCount = itensBar.filter((i) => i.status === "pendente").length;
   const emPreparoCount = itensBar.filter((i) => i.status === "em_preparo").length;
   const prontosHojeCount = itensRaw.filter(
