@@ -2,6 +2,7 @@ import { AlertTriangle } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Switch } from "@/components/ui/switch";
 import { HorarioFuncionamentoForm } from "./horario-funcionamento-form";
 import type { HorarioFuncionamento } from "@/lib/configuracoes.functions";
 import { camposImpressaoFaltando } from "@/lib/impressao";
