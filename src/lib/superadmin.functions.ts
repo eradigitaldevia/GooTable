@@ -213,25 +213,26 @@ export const atualizarRestauranteAdmin = createServerFn({ method: "POST" })
       id: z.string().uuid(),
       nome: z.string().trim().min(2),
       slug: z.string().trim().min(2),
-      cor_primaria: z.string().nullable(),
-      pix_habilitado: z.boolean(),
-      pix_chave: z.string().nullable(),
-      pix_nome_titular: z.string().nullable(),
+      cor_primaria: z.string().nullable().optional(),
+      pix_habilitado: z.boolean().optional(),
+      pix_chave: z.string().nullable().optional(),
+      pix_nome_titular: z.string().nullable().optional(),
     }).parse(d)
   )
   .handler(async ({ context, data }) => {
     const { supabase, userId } = context;
     await assertPlatformAdmin(supabase, userId);
+    const patch = {
+      nome: data.nome,
+      slug: data.slug,
+      ...(data.cor_primaria !== undefined ? { cor_primaria: data.cor_primaria } : {}),
+      ...(data.pix_habilitado !== undefined ? { pix_habilitado: data.pix_habilitado } : {}),
+      ...(data.pix_chave !== undefined ? { pix_chave: data.pix_chave } : {}),
+      ...(data.pix_nome_titular !== undefined ? { pix_nome_titular: data.pix_nome_titular } : {}),
+    };
     const { error } = await supabaseAdmin
       .from("restaurantes")
-      .update({
-        nome: data.nome,
-        slug: data.slug,
-        cor_primaria: data.cor_primaria,
-        pix_habilitado: data.pix_habilitado,
-        pix_chave: data.pix_chave,
-        pix_nome_titular: data.pix_nome_titular,
-      })
+      .update(patch)
       .eq("id", data.id);
     if (error) throw new Error(error.message);
     await logAction(userId, "atualizar_restaurante", "restaurante", data.id, {});
