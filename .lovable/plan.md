@@ -6,7 +6,7 @@ A ação **Ver** na lista `/superadmin/restaurantes` sai e dá lugar a **Editar*
 
 | Ação | Comportamento |
 | --- | --- |
-| **Editar** (nova, substitui Ver) | Abre diálogo com Nome, Slug, Cor primária, PIX (habilitado, chave, titular) e salva na hora |
+| **Editar** (nova, substitui Ver) | Abre o mesmo formulário do cadastro em modo edição: Nome, Slug, Vencimento do contrato e Notas comerciais (os campos de dono/senha ficam ocultos, pois só se aplicam na criação) |
 | **Contrato** | Sem mudança — vencimento, notas, suspensão automática |
 | **Suspender / Reativar** | Sem mudança — diálogo de confirmação |
 | **Excluir** | Sem mudança — diálogo destrutivo |
