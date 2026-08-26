@@ -29,11 +29,14 @@ function Landing() {
   const vendas = montarLinkVendas(config?.vendas_whatsapp, config?.vendas_link, config?.vendas_mensagem);
   const vendasProps = vendas?.isWhatsapp ? { target: "_blank", rel: "noreferrer" } : {};
 
-  const sociais = REDES_SOCIAIS.map((rede) => ({
-    chave: rede.chave,
-    rotulo: rede.rotulo,
-    href: montarLinkSocial(rede.chave, config?.[rede.campo]),
-  })).filter((s): s is { chave: typeof s.chave; rotulo: string; href: string } => !!s.href);
+  const sociais = REDES_SOCIAIS.filter((rede) => config?.[rede.campoAtivo] ?? true)
+    .map((rede) => ({
+      chave: rede.chave,
+      rotulo: rede.rotulo,
+      href: montarLinkSocial(rede.chave, config?.[rede.campo]),
+    }))
+    .filter((s): s is { chave: typeof s.chave; rotulo: string; href: string } => !!s.href);
+
 
 
   return (
