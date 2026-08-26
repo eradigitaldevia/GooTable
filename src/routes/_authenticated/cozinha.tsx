@@ -176,6 +176,37 @@ function CozinhaKDS() {
     return m;
   }, [itens]);
 
+  // Impressão automática de comandas de preparo (configurável pelo admin).
+  const impressaoAutoLigada = restaurante?.impressao_auto_cozinha === true;
+  const pedidosImpressao = useMemo<PedidoImpressao[]>(
+    () =>
+      pedidos
+        .filter((p) => (itensPorPedido.get(p.id)?.length ?? 0) > 0)
+        .map((p) => ({
+          pedidoId: p.id,
+          mesaNumero: mesas.get(p.mesa_id)?.numero ?? null,
+          garcomNome: nomeDoPedido(p),
+          canal: p.canal,
+          observacao: p.observacao,
+          criadoEm: p.criado_em,
+          cancelado: p.status === "cancelado",
+          itens: (itensPorPedido.get(p.id) ?? []).map((it) => ({
+            id: it.id,
+            nome: it.nome_produto,
+            quantidade: it.quantidade,
+            observacao: it.observacao,
+          })),
+        })),
+    [pedidos, itensPorPedido, mesas, nomeDoPedido],
+  );
+  const { jobAtual } = useImpressaoAuto({
+    enabled: impressaoAutoLigada,
+    destino: "cozinha",
+    restauranteId,
+    pedidos: pedidosImpressao,
+  });
+
+
   // Beep distinto na queda (transição para "disconnected").
   const prevStatusRef = useRef<typeof rtStatus>("connecting");
   useEffect(() => {
