@@ -16,6 +16,8 @@ import { useGarcomLookup } from "@/hooks/use-garcom-lookup";
 import { KdsHeader } from "@/components/cozinha/kds-header";
 import { KdsCard } from "@/components/cozinha/kds-card";
 import { KdsConnectionBanner } from "@/components/cozinha/kds-connection-banner";
+import { ComandaPreparo } from "@/components/impressao/comanda-preparo";
+import { useImpressaoAuto, type PedidoImpressao } from "@/hooks/use-impressao-auto";
 
 export const Route = createFileRoute("/_authenticated/cozinha")({
   component: CozinhaKDS,
@@ -174,6 +176,37 @@ function CozinhaKDS() {
     return m;
   }, [itens]);
 
+  // Impressão automática de comandas de preparo (configurável pelo admin).
+  const impressaoAutoLigada = restaurante?.impressao_auto_cozinha === true;
+  const pedidosImpressao = useMemo<PedidoImpressao[]>(
+    () =>
+      pedidos
+        .filter((p) => (itensPorPedido.get(p.id)?.length ?? 0) > 0)
+        .map((p) => ({
+          pedidoId: p.id,
+          mesaNumero: mesas.get(p.mesa_id)?.numero ?? null,
+          garcomNome: nomeDoPedido(p),
+          canal: p.canal,
+          observacao: p.observacao,
+          criadoEm: p.criado_em,
+          cancelado: p.status === "cancelado",
+          itens: (itensPorPedido.get(p.id) ?? []).map((it) => ({
+            id: it.id,
+            nome: it.nome_produto,
+            quantidade: it.quantidade,
+            observacao: it.observacao,
+          })),
+        })),
+    [pedidos, itensPorPedido, mesas, nomeDoPedido],
+  );
+  const { jobAtual } = useImpressaoAuto({
+    enabled: impressaoAutoLigada,
+    destino: "cozinha",
+    restauranteId,
+    pedidos: pedidosImpressao,
+  });
+
+
   // Beep distinto na queda (transição para "disconnected").
   const prevStatusRef = useRef<typeof rtStatus>("connecting");
   useEffect(() => {
@@ -252,7 +285,10 @@ function CozinhaKDS() {
         ativos={ativos.length}
         somLigado={somLigado}
         onToggleSom={() => setSomLigado((v) => !v)}
+        impressaoAuto={impressaoAutoLigada}
       />
+
+      {jobAtual && <ComandaPreparo {...jobAtual} />}
 
       <KdsConnectionBanner
         status={rtStatus}

@@ -75,6 +75,8 @@ function Configuracoes() {
     horario_funcionamento: horarioPadrao() as HorarioFuncionamento,
     url_publica_cardapio: "" as string,
     sessao_ociosa_horas: 4,
+    impressao_auto_cozinha: false,
+    impressao_auto_bar: false,
     pix_habilitado: false,
     pix_chave: "",
     pix_nome_titular: "",
@@ -131,6 +133,8 @@ function Configuracoes() {
         : horarioPadrao(),
       url_publica_cardapio: (restaurante as any).url_publica_cardapio ?? "",
       sessao_ociosa_horas: (restaurante as any).sessao_ociosa_horas ?? 4,
+      impressao_auto_cozinha: (restaurante as any).impressao_auto_cozinha ?? false,
+      impressao_auto_bar: (restaurante as any).impressao_auto_bar ?? false,
       pix_habilitado: restaurante.pix_habilitado,
       pix_chave: restaurante.pix_chave ?? "",
       pix_nome_titular: restaurante.pix_nome_titular ?? "",
@@ -240,6 +244,8 @@ function Configuracoes() {
         : horarioPadrao(),
       url_publica_cardapio: (restaurante as any).url_publica_cardapio ?? "",
       sessao_ociosa_horas: (restaurante as any).sessao_ociosa_horas ?? 4,
+      impressao_auto_cozinha: (restaurante as any).impressao_auto_cozinha ?? false,
+      impressao_auto_bar: (restaurante as any).impressao_auto_bar ?? false,
       pix_habilitado: restaurante.pix_habilitado,
       pix_chave: restaurante.pix_chave ?? "",
       pix_nome_titular: restaurante.pix_nome_titular ?? "",
@@ -314,6 +320,8 @@ function Configuracoes() {
       "horario_funcionamento",
       "url_publica_cardapio",
       "sessao_ociosa_horas",
+      "impressao_auto_cozinha",
+      "impressao_auto_bar",
     ],
     identidade: [
       "cor_primaria",
@@ -461,6 +469,8 @@ function Configuracoes() {
         horario_funcionamento: f.horario_funcionamento,
         url_publica_cardapio: f.url_publica_cardapio.trim() || null,
         sessao_ociosa_horas: f.sessao_ociosa_horas,
+        impressao_auto_cozinha: f.impressao_auto_cozinha,
+        impressao_auto_bar: f.impressao_auto_bar,
       };
     } else if (aba === "identidade") {
       payload = {
@@ -711,6 +721,8 @@ function Configuracoes() {
             horario={form.horario_funcionamento}
             urlPublicaCardapio={form.url_publica_cardapio}
             sessaoOciosaHoras={form.sessao_ociosa_horas}
+            impressaoAutoCozinha={form.impressao_auto_cozinha}
+            impressaoAutoBar={form.impressao_auto_bar}
             onChange={patch}
           />
           <SaveBtn aba="geral" />

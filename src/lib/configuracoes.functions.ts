@@ -60,6 +60,8 @@ const configSchema = z.discriminatedUnion("aba", [
       .regex(/^https?:\/\/.+/i, "URL deve começar com http:// ou https://")
       .nullable(),
     sessao_ociosa_horas: z.number().int().min(1).max(48),
+    impressao_auto_cozinha: z.boolean(),
+    impressao_auto_bar: z.boolean(),
   }),
   z.object({
     aba: z.literal("identidade"),
@@ -168,6 +170,8 @@ export const atualizarConfiguracoesFn = createServerFn({ method: "POST" })
             ? data.url_publica_cardapio.replace(/\/+$/, "")
             : null,
           sessao_ociosa_horas: data.sessao_ociosa_horas,
+          impressao_auto_cozinha: data.impressao_auto_cozinha,
+          impressao_auto_bar: data.impressao_auto_bar,
         } as TablesUpdate<"restaurantes">;
         break;
       }

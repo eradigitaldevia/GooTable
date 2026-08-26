@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { ChefHat, LogOut, Maximize2, Minimize2, Volume2, VolumeX } from "lucide-react";
+import { ChefHat, LogOut, Maximize2, Minimize2, Printer, Volume2, VolumeX } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "@tanstack/react-router";
 
@@ -8,10 +8,12 @@ export function KdsHeader({
   ativos,
   somLigado,
   onToggleSom,
+  impressaoAuto = false,
 }: {
   ativos: number;
   somLigado: boolean;
   onToggleSom: () => void;
+  impressaoAuto?: boolean;
 }) {
   const [hora, setHora] = useState("");
   const [fs, setFs] = useState(false);
@@ -58,6 +60,12 @@ export function KdsHeader({
         <span className="font-semibold">
           {ativos} {ativos === 1 ? "pedido ativo" : "pedidos ativos"}
         </span>
+        {impressaoAuto && (
+          <span className="hidden items-center gap-1 text-xs text-muted-foreground sm:flex">
+            <Printer className="h-3.5 w-3.5" />
+            Impressão automática
+          </span>
+        )}
         <Button variant="outline" size="sm" onClick={onToggleSom}>
           {somLigado ? <Volume2 className="h-4 w-4" /> : <VolumeX className="h-4 w-4" />}
           <span className="ml-2 hidden sm:inline">

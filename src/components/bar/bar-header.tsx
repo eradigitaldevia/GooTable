@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { GlassWater, LogOut, Maximize2, Minimize2 } from "lucide-react";
+import { GlassWater, LogOut, Maximize2, Minimize2, Printer } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "@tanstack/react-router";
 
@@ -10,12 +10,14 @@ export function BarHeader({
   prontosHoje,
   filtro,
   onFiltroChange,
+  impressaoAuto = false,
 }: {
   pendentes: number;
   emPreparo: number;
   prontosHoje: number;
   filtro: "pendentes" | "em_preparo" | "todos";
   onFiltroChange: (f: "pendentes" | "em_preparo" | "todos") => void;
+  impressaoAuto?: boolean;
 }) {
   const [hora, setHora] = useState("");
   const [fs, setFs] = useState(false);
@@ -86,6 +88,12 @@ export function BarHeader({
         <span className="hidden sm:inline">
           <strong className="text-foreground tabular-nums">{prontosHoje}</strong> prontos hoje
         </span>
+        {impressaoAuto && (
+          <span className="hidden items-center gap-1 sm:flex">
+            <Printer className="h-3.5 w-3.5" />
+            Impressão automática
+          </span>
+        )}
         <Button variant="outline" size="sm" onClick={toggleFs}>
           {fs ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
         </Button>

@@ -2054,6 +2054,8 @@ export type Database = {
           endereco: string | null
           horario_funcionamento: Json
           id: string
+          impressao_auto_bar: boolean
+          impressao_auto_cozinha: boolean
           logo_url: string | null
           nome: string
           permitir_atendimento_cruzado: boolean
@@ -2115,6 +2117,8 @@ export type Database = {
           endereco?: string | null
           horario_funcionamento?: Json
           id?: string
+          impressao_auto_bar?: boolean
+          impressao_auto_cozinha?: boolean
           logo_url?: string | null
           nome: string
           permitir_atendimento_cruzado?: boolean
@@ -2176,6 +2180,8 @@ export type Database = {
           endereco?: string | null
           horario_funcionamento?: Json
           id?: string
+          impressao_auto_bar?: boolean
+          impressao_auto_cozinha?: boolean
           logo_url?: string | null
           nome?: string
           permitir_atendimento_cruzado?: boolean
