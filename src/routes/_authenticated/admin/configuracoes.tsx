@@ -320,6 +320,8 @@ function Configuracoes() {
       "horario_funcionamento",
       "url_publica_cardapio",
       "sessao_ociosa_horas",
+      "impressao_auto_cozinha",
+      "impressao_auto_bar",
     ],
     identidade: [
       "cor_primaria",
