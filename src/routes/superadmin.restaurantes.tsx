@@ -31,9 +31,6 @@ function RestaurantesList() {
 
   const rows: RestauranteRowData[] = data?.rows ?? [];
 
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-
   const filtradas = useMemo(
     () =>
       rows.filter((r) => {
@@ -47,7 +44,7 @@ function RestaurantesList() {
         if (busca && !`${r.nome} ${r.slug}`.toLowerCase().includes(busca.toLowerCase())) return false;
         return true;
       }),
-    [rows, busca, filtro, today]
+    [rows, busca, filtro]
   );
 
   const onSuspender = async (r: RestauranteRowData) => {
