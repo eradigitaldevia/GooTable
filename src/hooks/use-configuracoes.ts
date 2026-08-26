@@ -24,6 +24,8 @@ export type ConfigPayload =
       horario_funcionamento: HorarioFuncionamento;
       url_publica_cardapio: string | null;
       sessao_ociosa_horas: number;
+      impressao_auto_cozinha: boolean;
+      impressao_auto_bar: boolean;
     })
   | (Base & {
       aba: "identidade";
