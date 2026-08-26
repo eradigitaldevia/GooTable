@@ -127,6 +127,7 @@ export const atualizarConfigSociais = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d) => {
     const campo = z.string().trim().max(200).nullable();
+    const flag = z.boolean();
     return z
       .object({
         social_instagram: campo,
@@ -135,9 +136,28 @@ export const atualizarConfigSociais = createServerFn({ method: "POST" })
         social_linkedin: campo,
         social_tiktok: campo,
         social_x: campo,
+        social_instagram_ativo: flag,
+        social_facebook_ativo: flag,
+        social_youtube_ativo: flag,
+        social_linkedin_ativo: flag,
+        social_tiktok_ativo: flag,
+        social_x_ativo: flag,
+      })
+      .superRefine((valores, ctx) => {
+        for (const rede of REDES_SOCIAIS) {
+          const res = validarValorSocial(rede.chave, valores[rede.campo]);
+          if (!res.ok) {
+            ctx.addIssue({
+              code: "custom",
+              path: [rede.campo],
+              message: `${rede.rotulo}: ${res.erro}`,
+            });
+          }
+        }
       })
       .parse(d);
   })
+
   .handler(async ({ context, data }) => {
     const { supabase, userId } = context;
     const { data: pa, error: errPa } = await supabase
