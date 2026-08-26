@@ -60,6 +60,8 @@ const configSchema = z.discriminatedUnion("aba", [
       .regex(/^https?:\/\/.+/i, "URL deve começar com http:// ou https://")
       .nullable(),
     sessao_ociosa_horas: z.number().int().min(1).max(48),
+    impressao_auto_cozinha: z.boolean(),
+    impressao_auto_bar: z.boolean(),
   }),
   z.object({
     aba: z.literal("identidade"),
