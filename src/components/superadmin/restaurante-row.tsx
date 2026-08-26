@@ -1,6 +1,8 @@
 import { Link, useNavigate } from "@tanstack/react-router";
+import { Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { contratoStatus } from "@/lib/contrato-status";
 
 export interface RestauranteRowData {
   id: string;
@@ -9,6 +11,7 @@ export interface RestauranteRowData {
   ativo: boolean;
   contrato_vencimento_em?: string | null;
   contrato_notas?: string | null;
+  contrato_bloqueio_automatico?: boolean | null;
   criado_em: string;
   pedidosMes: number;
   faturamentoMes: number;
@@ -29,10 +32,11 @@ export function RestauranteRow({
   onEditarContrato: (r: RestauranteRowData) => void;
 }) {
   const navigate = useNavigate();
-  const vencimento = r.contrato_vencimento_em;
-  const isVencido = vencimento ? new Date(vencimento) < new Date(new Date().toDateString()) : false;
+  const contrato = contratoStatus(r.contrato_vencimento_em);
+  const isVencido = contrato.estado === "vencido";
+
   return (
-    <tr className="hover:bg-muted/30">
+    <tr className={isVencido ? "bg-destructive/5 hover:bg-destructive/10" : "hover:bg-muted/30"}>
       <td className="px-4 py-3">
         <Link
           to="/superadmin/restaurantes/$id"
@@ -42,13 +46,29 @@ export function RestauranteRow({
           {r.nome}
         </Link>
         <div className="text-xs text-muted-foreground">/{r.slug}</div>
-        {vencimento && (
-          <div className={`mt-1 text-xs ${isVencido ? "text-destructive font-medium" : "text-muted-foreground"}`}>
-            Vencimento: {new Date(vencimento).toLocaleDateString("pt-BR")}
-            {isVencido && " (vencido)"}
+        {contrato.estado !== "sem_data" && (
+          <div className="mt-1 flex flex-wrap items-center gap-1">
+            <Badge
+              variant={isVencido ? "destructive" : "outline"}
+              className={
+                contrato.estado === "proximo"
+                  ? "border-amber-500/50 bg-amber-500/10 text-amber-700 dark:text-amber-400"
+                  : undefined
+              }
+            >
+              {contrato.rotulo}
+            </Badge>
+            {r.contrato_bloqueio_automatico && (
+              <span
+                className="inline-flex items-center gap-1 text-xs text-muted-foreground"
+                title="Suspende automaticamente ao vencer"
+              >
+                <Lock className="h-3 w-3" /> auto
+              </span>
+            )}
           </div>
         )}
-        {r.contrato_notas && <div className="text-xs text-muted-foreground">{r.contrato_notas}</div>}
+        {r.contrato_notas && <div className="mt-1 text-xs text-muted-foreground">{r.contrato_notas}</div>}
       </td>
       <td className="px-4 py-3">
         {r.ativo ? <Badge variant="default">Ativo</Badge> : <Badge variant="destructive">Suspenso</Badge>}
