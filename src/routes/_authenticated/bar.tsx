@@ -205,7 +205,10 @@ function BarPanel() {
         prontosHoje={prontosHojeCount}
         filtro={filtro}
         onFiltroChange={setFiltro}
+        impressaoAuto={impressaoAutoLigada}
       />
+
+      {jobAtual && <ComandaPreparo {...jobAtual} />}
 
       <KdsConnectionBanner
         status={rtStatus}
