@@ -126,10 +126,10 @@ export function useAtualizarRestauranteAdmin() {
       id: string;
       nome: string;
       slug: string;
-      cor_primaria: string | null;
-      pix_habilitado: boolean;
-      pix_chave: string | null;
-      pix_nome_titular: string | null;
+      cor_primaria?: string | null;
+      pix_habilitado?: boolean;
+      pix_chave?: string | null;
+      pix_nome_titular?: string | null;
     }) => fn({ data }),
     onSuccess: (_r, vars) => {
       qc.invalidateQueries({ queryKey: queryKeys.restaurante(vars.id) });
