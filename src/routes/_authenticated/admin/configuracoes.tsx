@@ -721,6 +721,8 @@ function Configuracoes() {
             horario={form.horario_funcionamento}
             urlPublicaCardapio={form.url_publica_cardapio}
             sessaoOciosaHoras={form.sessao_ociosa_horas}
+            impressaoAutoCozinha={form.impressao_auto_cozinha}
+            impressaoAutoBar={form.impressao_auto_bar}
             onChange={patch}
           />
           <SaveBtn aba="geral" />
