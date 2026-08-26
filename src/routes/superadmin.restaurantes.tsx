@@ -13,6 +13,7 @@ import { FiltrosRestaurantes, type FiltroStatus } from "@/components/superadmin/
 import { RestauranteRow, type RestauranteRowData } from "@/components/superadmin/restaurante-row";
 import { NovoRestauranteDialog } from "@/components/superadmin/novo-restaurante-dialog";
 import { EditarContratoDialog } from "@/components/superadmin/editar-contrato-dialog";
+import { EditarRestauranteDialog } from "@/components/superadmin/editar-restaurante-dialog";
 import { contratoStatus } from "@/lib/contrato-status";
 import {
   AlertDialog,
@@ -38,6 +39,7 @@ function RestaurantesList() {
   const [filtro, setFiltro] = useState<FiltroStatus>("todos");
   const [novoOpen, setNovoOpen] = useState(false);
   const [contratoRestaurante, setContratoRestaurante] = useState<RestauranteRowData | null>(null);
+  const [editando, setEditando] = useState<RestauranteRowData | null>(null);
   const [suspenderAlvo, setSuspenderAlvo] = useState<RestauranteRowData | null>(null);
   const [excluirAlvo, setExcluirAlvo] = useState<RestauranteRowData | null>(null);
 
@@ -141,6 +143,7 @@ function RestaurantesList() {
                   key={r.id}
                   r={r}
                   onSuspender={onSuspender}
+                  onEditar={setEditando}
                   onExcluir={onExcluir}
                   onEditarContrato={onEditarContrato}
                 />
@@ -151,6 +154,11 @@ function RestaurantesList() {
       </Card>
 
       <NovoRestauranteDialog open={novoOpen} onClose={() => setNovoOpen(false)} />
+      <EditarRestauranteDialog
+        open={!!editando}
+        onClose={() => setEditando(null)}
+        restaurante={editando}
+      />
       <EditarContratoDialog
         open={!!contratoRestaurante}
         onClose={() => setContratoRestaurante(null)}
