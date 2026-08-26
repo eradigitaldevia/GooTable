@@ -14,6 +14,8 @@ type GeralPatch = {
   horario_funcionamento?: HorarioFuncionamento;
   url_publica_cardapio?: string;
   sessao_ociosa_horas?: number;
+  impressao_auto_cozinha?: boolean;
+  impressao_auto_bar?: boolean;
 };
 
 export function GeralForm({
@@ -24,6 +26,8 @@ export function GeralForm({
   horario,
   urlPublicaCardapio,
   sessaoOciosaHoras,
+  impressaoAutoCozinha,
+  impressaoAutoBar,
   onChange,
 }: {
   nome: string;
@@ -33,6 +37,8 @@ export function GeralForm({
   horario: HorarioFuncionamento;
   urlPublicaCardapio: string;
   sessaoOciosaHoras: number;
+  impressaoAutoCozinha: boolean;
+  impressaoAutoBar: boolean;
   onChange: (patch: GeralPatch) => void;
 }) {
   const faltandoImpressao = camposImpressaoFaltando({
