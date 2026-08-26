@@ -4,9 +4,11 @@ import { queryKeys } from "@/lib/query-keys";
 import {
   adicionarMembro,
   atualizarContratoRestaurante,
+  atualizarDonoRestaurante,
   atualizarRestauranteAdmin,
   criarRestauranteAdmin,
   excluirRestaurante,
+  getDonoRestaurante,
   getRestauranteAdmin,
   listarMembros,
   listarPedidosRestaurante,
