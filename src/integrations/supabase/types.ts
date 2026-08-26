@@ -10,7 +10,7 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "14.5"
+    PostgrestVersion: "14.17"
   }
   public: {
     Tables: {
@@ -1729,11 +1729,17 @@ export type Database = {
           criado_em: string
           id: string
           social_facebook: string | null
+          social_facebook_ativo: boolean
           social_instagram: string | null
+          social_instagram_ativo: boolean
           social_linkedin: string | null
+          social_linkedin_ativo: boolean
           social_tiktok: string | null
+          social_tiktok_ativo: boolean
           social_x: string | null
+          social_x_ativo: boolean
           social_youtube: string | null
+          social_youtube_ativo: boolean
           vendas_link: string | null
           vendas_mensagem: string | null
           vendas_whatsapp: string | null
@@ -1743,11 +1749,17 @@ export type Database = {
           criado_em?: string
           id?: string
           social_facebook?: string | null
+          social_facebook_ativo?: boolean
           social_instagram?: string | null
+          social_instagram_ativo?: boolean
           social_linkedin?: string | null
+          social_linkedin_ativo?: boolean
           social_tiktok?: string | null
+          social_tiktok_ativo?: boolean
           social_x?: string | null
+          social_x_ativo?: boolean
           social_youtube?: string | null
+          social_youtube_ativo?: boolean
           vendas_link?: string | null
           vendas_mensagem?: string | null
           vendas_whatsapp?: string | null
@@ -1757,11 +1769,17 @@ export type Database = {
           criado_em?: string
           id?: string
           social_facebook?: string | null
+          social_facebook_ativo?: boolean
           social_instagram?: string | null
+          social_instagram_ativo?: boolean
           social_linkedin?: string | null
+          social_linkedin_ativo?: boolean
           social_tiktok?: string | null
+          social_tiktok_ativo?: boolean
           social_x?: string | null
+          social_x_ativo?: boolean
           social_youtube?: string | null
+          social_youtube_ativo?: boolean
           vendas_link?: string | null
           vendas_mensagem?: string | null
           vendas_whatsapp?: string | null

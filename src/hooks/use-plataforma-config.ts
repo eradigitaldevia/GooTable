@@ -45,7 +45,14 @@ export function useAtualizarConfigSociais() {
       social_linkedin: string | null;
       social_tiktok: string | null;
       social_x: string | null;
+      social_instagram_ativo: boolean;
+      social_facebook_ativo: boolean;
+      social_youtube_ativo: boolean;
+      social_linkedin_ativo: boolean;
+      social_tiktok_ativo: boolean;
+      social_x_ativo: boolean;
     }) => fn({ data }),
+
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: plataformaConfigKey });
     },

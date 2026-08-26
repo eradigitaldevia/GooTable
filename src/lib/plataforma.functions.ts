@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { REDES_SOCIAIS, validarValorSocial } from "@/lib/social-links";
 
 export type ConfigPlataforma = {
   vendas_whatsapp: string | null;
@@ -12,6 +13,12 @@ export type ConfigPlataforma = {
   social_linkedin: string | null;
   social_tiktok: string | null;
   social_x: string | null;
+  social_instagram_ativo: boolean;
+  social_facebook_ativo: boolean;
+  social_youtube_ativo: boolean;
+  social_linkedin_ativo: boolean;
+  social_tiktok_ativo: boolean;
+  social_x_ativo: boolean;
 };
 
 
@@ -22,7 +29,7 @@ export const getConfigPlataforma = createServerFn({ method: "GET" }).handler(
     const { data } = await supabaseAdmin
       .from("plataforma_config")
       .select(
-        "vendas_whatsapp, vendas_link, vendas_mensagem, social_instagram, social_facebook, social_youtube, social_linkedin, social_tiktok, social_x",
+        "vendas_whatsapp, vendas_link, vendas_mensagem, social_instagram, social_facebook, social_youtube, social_linkedin, social_tiktok, social_x, social_instagram_ativo, social_facebook_ativo, social_youtube_ativo, social_linkedin_ativo, social_tiktok_ativo, social_x_ativo",
       )
 
       .order("criado_em", { ascending: true })
@@ -39,9 +46,16 @@ export const getConfigPlataforma = createServerFn({ method: "GET" }).handler(
       social_linkedin: data?.social_linkedin ?? null,
       social_tiktok: data?.social_tiktok ?? null,
       social_x: data?.social_x ?? null,
+      social_instagram_ativo: data?.social_instagram_ativo ?? true,
+      social_facebook_ativo: data?.social_facebook_ativo ?? true,
+      social_youtube_ativo: data?.social_youtube_ativo ?? true,
+      social_linkedin_ativo: data?.social_linkedin_ativo ?? true,
+      social_tiktok_ativo: data?.social_tiktok_ativo ?? true,
+      social_x_ativo: data?.social_x_ativo ?? true,
     };
   },
 );
+
 
 
 /** Atualiza o WhatsApp de vendas (somente platform admin). */
@@ -113,6 +127,7 @@ export const atualizarConfigSociais = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d) => {
     const campo = z.string().trim().max(200).nullable();
+    const flag = z.boolean();
     return z
       .object({
         social_instagram: campo,
@@ -121,9 +136,28 @@ export const atualizarConfigSociais = createServerFn({ method: "POST" })
         social_linkedin: campo,
         social_tiktok: campo,
         social_x: campo,
+        social_instagram_ativo: flag,
+        social_facebook_ativo: flag,
+        social_youtube_ativo: flag,
+        social_linkedin_ativo: flag,
+        social_tiktok_ativo: flag,
+        social_x_ativo: flag,
+      })
+      .superRefine((valores, ctx) => {
+        for (const rede of REDES_SOCIAIS) {
+          const res = validarValorSocial(rede.chave, valores[rede.campo]);
+          if (!res.ok) {
+            ctx.addIssue({
+              code: "custom",
+              path: [rede.campo],
+              message: `${rede.rotulo}: ${res.erro}`,
+            });
+          }
+        }
       })
       .parse(d);
   })
+
   .handler(async ({ context, data }) => {
     const { supabase, userId } = context;
     const { data: pa, error: errPa } = await supabase
@@ -149,7 +183,14 @@ export const atualizarConfigSociais = createServerFn({ method: "POST" })
       social_linkedin: data.social_linkedin || null,
       social_tiktok: data.social_tiktok || null,
       social_x: data.social_x || null,
+      social_instagram_ativo: data.social_instagram_ativo,
+      social_facebook_ativo: data.social_facebook_ativo,
+      social_youtube_ativo: data.social_youtube_ativo,
+      social_linkedin_ativo: data.social_linkedin_ativo,
+      social_tiktok_ativo: data.social_tiktok_ativo,
+      social_x_ativo: data.social_x_ativo,
     };
+
 
     if (existente) {
       const { error } = await supabaseAdmin
