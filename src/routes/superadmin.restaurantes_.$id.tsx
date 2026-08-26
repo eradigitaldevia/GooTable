@@ -14,7 +14,7 @@ import { DadosPanel, type DadosForm } from "@/components/superadmin/dados-panel"
 import { MembrosPanel } from "@/components/superadmin/membros-panel";
 import { AtividadePanel } from "@/components/superadmin/atividade-panel";
 
-export const Route = createFileRoute("/superadmin/restaurantes/$id")({
+export const Route = createFileRoute("/superadmin/restaurantes_/$id")({
   component: RestauranteDetalhe,
 });
 
