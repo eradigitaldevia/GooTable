@@ -285,7 +285,10 @@ function CozinhaKDS() {
         ativos={ativos.length}
         somLigado={somLigado}
         onToggleSom={() => setSomLigado((v) => !v)}
+        impressaoAuto={impressaoAutoLigada}
       />
+
+      {jobAtual && <ComandaPreparo {...jobAtual} />}
 
       <KdsConnectionBanner
         status={rtStatus}
