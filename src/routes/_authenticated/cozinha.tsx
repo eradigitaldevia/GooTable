@@ -16,6 +16,8 @@ import { useGarcomLookup } from "@/hooks/use-garcom-lookup";
 import { KdsHeader } from "@/components/cozinha/kds-header";
 import { KdsCard } from "@/components/cozinha/kds-card";
 import { KdsConnectionBanner } from "@/components/cozinha/kds-connection-banner";
+import { ComandaPreparo } from "@/components/impressao/comanda-preparo";
+import { useImpressaoAuto, type PedidoImpressao } from "@/hooks/use-impressao-auto";
 
 export const Route = createFileRoute("/_authenticated/cozinha")({
   component: CozinhaKDS,
