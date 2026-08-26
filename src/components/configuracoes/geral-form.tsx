@@ -157,6 +157,54 @@ export function GeralForm({
         </div>
       </section>
 
+      <section className="space-y-5 rounded-2xl border border-border bg-card p-6 shadow-[var(--shadow-soft)]">
+        <div>
+          <h2 className="text-lg font-semibold">
+            Impressão automática de comandas
+          </h2>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Quando ligada, a tela da Cozinha (KDS) ou do Bar aberta no
+            computador ligado à impressora imprime sozinha a comanda de preparo
+            de cada pedido novo, de itens adicionados depois e de
+            cancelamentos.
+          </p>
+        </div>
+
+        <div className="flex items-center justify-between gap-4 rounded-xl border border-border p-4">
+          <div>
+            <Label className="text-sm font-medium">Cozinha</Label>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Imprime na tela da Cozinha os itens com destino cozinha.
+            </p>
+          </div>
+          <Switch
+            checked={impressaoAutoCozinha}
+            onCheckedChange={(v) => onChange({ impressao_auto_cozinha: v })}
+          />
+        </div>
+
+        <div className="flex items-center justify-between gap-4 rounded-xl border border-border p-4">
+          <div>
+            <Label className="text-sm font-medium">Bar</Label>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Imprime na tela do Bar os itens com destino bar.
+            </p>
+          </div>
+          <Switch
+            checked={impressaoAutoBar}
+            onCheckedChange={(v) => onChange({ impressao_auto_bar: v })}
+          />
+        </div>
+
+        <p className="rounded-xl bg-muted/40 p-3 text-xs text-muted-foreground">
+          Para os cupons saírem direto, sem a janela de confirmação do
+          navegador, abra a tela em modo quiosque com impressão silenciosa (por
+          exemplo, Chrome iniciado com <code>--kiosk --kiosk-printing</code> e a
+          impressora térmica definida como padrão do sistema). Sem isso, a
+          janela de impressão aparece a cada cupom.
+        </p>
+      </section>
+
       <HorarioFuncionamentoForm
         horario={horario}
         onChangeHorario={(h) => onChange({ horario_funcionamento: h })}
