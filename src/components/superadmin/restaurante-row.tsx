@@ -75,12 +75,8 @@ export function RestauranteRow({
       <td className="px-4 py-3 text-right tabular-nums">{fmt(r.faturamentoMes)}</td>
       <td className="px-4 py-3 text-right">
         <div className="flex justify-end gap-1">
-          <Button
-            size="sm"
-            variant="ghost"
-            onClick={() => navigate({ to: "/superadmin/restaurantes/$id", params: { id: r.id } })}
-          >
-            Ver
+          <Button size="sm" variant="ghost" onClick={() => onEditar(r)}>
+            Editar
           </Button>
           <Button size="sm" variant="ghost" onClick={() => onEditarContrato(r)}>
             Contrato
