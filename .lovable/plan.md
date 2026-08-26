@@ -11,7 +11,7 @@ A ação **Ver** na lista `/superadmin/restaurantes` sai e dá lugar a **Editar*
 | **Suspender / Reativar** | Sem mudança — diálogo de confirmação |
 | **Excluir** | Sem mudança — diálogo destrutivo |
 
-O clique no nome do restaurante continua abrindo a tela de detalhe (abas Dados, Membros, Atividade), que segue existindo sem alterações.
+O clique no nome do restaurante passa a abrir o mesmo formulário (modo edição), em vez da tela de detalhe com abas Dados, Membros e Atividade — essas abas deixam de ser usadas pela lista.
 
 Após salvar, a lista é atualizada automaticamente e aparece um aviso de sucesso.
 
