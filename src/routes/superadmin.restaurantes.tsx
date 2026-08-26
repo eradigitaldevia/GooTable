@@ -14,6 +14,16 @@ import { RestauranteRow, type RestauranteRowData } from "@/components/superadmin
 import { NovoRestauranteDialog } from "@/components/superadmin/novo-restaurante-dialog";
 import { EditarContratoDialog } from "@/components/superadmin/editar-contrato-dialog";
 import { contratoStatus } from "@/lib/contrato-status";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 export const Route = createFileRoute("/superadmin/restaurantes")({
   component: RestaurantesList,
