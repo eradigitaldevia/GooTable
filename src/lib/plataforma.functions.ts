@@ -183,7 +183,14 @@ export const atualizarConfigSociais = createServerFn({ method: "POST" })
       social_linkedin: data.social_linkedin || null,
       social_tiktok: data.social_tiktok || null,
       social_x: data.social_x || null,
+      social_instagram_ativo: data.social_instagram_ativo,
+      social_facebook_ativo: data.social_facebook_ativo,
+      social_youtube_ativo: data.social_youtube_ativo,
+      social_linkedin_ativo: data.social_linkedin_ativo,
+      social_tiktok_ativo: data.social_tiktok_ativo,
+      social_x_ativo: data.social_x_ativo,
     };
+
 
     if (existente) {
       const { error } = await supabaseAdmin
