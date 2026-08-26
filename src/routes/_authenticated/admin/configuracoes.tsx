@@ -244,6 +244,8 @@ function Configuracoes() {
         : horarioPadrao(),
       url_publica_cardapio: (restaurante as any).url_publica_cardapio ?? "",
       sessao_ociosa_horas: (restaurante as any).sessao_ociosa_horas ?? 4,
+      impressao_auto_cozinha: (restaurante as any).impressao_auto_cozinha ?? false,
+      impressao_auto_bar: (restaurante as any).impressao_auto_bar ?? false,
       pix_habilitado: restaurante.pix_habilitado,
       pix_chave: restaurante.pix_chave ?? "",
       pix_nome_titular: restaurante.pix_nome_titular ?? "",
