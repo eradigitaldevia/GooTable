@@ -60,6 +60,12 @@ export function KdsHeader({
         <span className="font-semibold">
           {ativos} {ativos === 1 ? "pedido ativo" : "pedidos ativos"}
         </span>
+        {impressaoAuto && (
+          <span className="hidden items-center gap-1 text-xs text-muted-foreground sm:flex">
+            <Printer className="h-3.5 w-3.5" />
+            Impressão automática
+          </span>
+        )}
         <Button variant="outline" size="sm" onClick={onToggleSom}>
           {somLigado ? <Volume2 className="h-4 w-4" /> : <VolumeX className="h-4 w-4" />}
           <span className="ml-2 hidden sm:inline">
