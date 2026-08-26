@@ -54,7 +54,7 @@ import { Route as AuthenticatedCaixaRelatorioRouteImport } from './routes/_authe
 import { Route as MQrTokenCarrinhoRouteImport } from './routes/m.$qrToken_.carrinho'
 import { Route as MQrTokenContaRouteImport } from './routes/m.$qrToken_.conta'
 import { Route as MQrTokenMinhaContaRouteImport } from './routes/m.$qrToken_.minha-conta'
-import { Route as SuperadminRestaurantesIdRouteImport } from './routes/superadmin.restaurantes.$id'
+import { Route as SuperadminRestaurantesIdRouteImport } from './routes/superadmin.restaurantes_.$id'
 import { Route as AuthenticatedAdminClientesIdRouteImport } from './routes/_authenticated/admin/clientes.$id'
 import { Route as AuthenticatedAdminMesasMesaIdRouteImport } from './routes/_authenticated/admin/mesas_.$mesaId'
 import { Route as AuthenticatedSalaMesaMesaIdRouteImport } from './routes/_authenticated/sala_.mesa.$mesaId'
@@ -306,9 +306,9 @@ const MQrTokenMinhaContaRoute = MQrTokenMinhaContaRouteImport.update({
 } as any)
 const SuperadminRestaurantesIdRoute =
   SuperadminRestaurantesIdRouteImport.update({
-    id: '/$id',
-    path: '/$id',
-    getParentRoute: () => SuperadminRestaurantesRoute,
+    id: '/restaurantes_/$id',
+    path: '/restaurantes/$id',
+    getParentRoute: () => SuperadminRoute,
   } as any)
 const AuthenticatedAdminClientesIdRoute =
   AuthenticatedAdminClientesIdRouteImport.update({
@@ -384,7 +384,7 @@ export interface FileRoutesByFullPath {
   '/m/$qrToken': typeof MQrTokenRoute
   '/superadmin/configuracoes': typeof SuperadminConfiguracoesRoute
   '/superadmin/logs': typeof SuperadminLogsRoute
-  '/superadmin/restaurantes': typeof SuperadminRestaurantesRouteWithChildren
+  '/superadmin/restaurantes': typeof SuperadminRestaurantesRoute
   '/superadmin/': typeof SuperadminIndexRoute
   '/admin/caixa': typeof AuthenticatedAdminCaixaRoute
   '/admin/cardapio': typeof AuthenticatedAdminCardapioRoute
@@ -437,7 +437,7 @@ export interface FileRoutesByTo {
   '/m/$qrToken': typeof MQrTokenRoute
   '/superadmin/configuracoes': typeof SuperadminConfiguracoesRoute
   '/superadmin/logs': typeof SuperadminLogsRoute
-  '/superadmin/restaurantes': typeof SuperadminRestaurantesRouteWithChildren
+  '/superadmin/restaurantes': typeof SuperadminRestaurantesRoute
   '/superadmin': typeof SuperadminIndexRoute
   '/admin/caixa': typeof AuthenticatedAdminCaixaRoute
   '/admin/cardapio': typeof AuthenticatedAdminCardapioRoute
@@ -495,7 +495,7 @@ export interface FileRoutesById {
   '/m/$qrToken': typeof MQrTokenRoute
   '/superadmin/configuracoes': typeof SuperadminConfiguracoesRoute
   '/superadmin/logs': typeof SuperadminLogsRoute
-  '/superadmin/restaurantes': typeof SuperadminRestaurantesRouteWithChildren
+  '/superadmin/restaurantes': typeof SuperadminRestaurantesRoute
   '/superadmin/': typeof SuperadminIndexRoute
   '/_authenticated/admin/caixa': typeof AuthenticatedAdminCaixaRoute
   '/_authenticated/admin/cardapio': typeof AuthenticatedAdminCardapioRoute
@@ -518,7 +518,7 @@ export interface FileRoutesById {
   '/m/$qrToken_/carrinho': typeof MQrTokenCarrinhoRoute
   '/m/$qrToken_/conta': typeof MQrTokenContaRoute
   '/m/$qrToken_/minha-conta': typeof MQrTokenMinhaContaRoute
-  '/superadmin/restaurantes/$id': typeof SuperadminRestaurantesIdRoute
+  '/superadmin/restaurantes_/$id': typeof SuperadminRestaurantesIdRoute
   '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
   '/_authenticated/caixa/': typeof AuthenticatedCaixaIndexRoute
   '/_authenticated/admin/clientes/$id': typeof AuthenticatedAdminClientesIdRoute
@@ -686,7 +686,7 @@ export interface FileRouteTypes {
     | '/m/$qrToken_/carrinho'
     | '/m/$qrToken_/conta'
     | '/m/$qrToken_/minha-conta'
-    | '/superadmin/restaurantes/$id'
+    | '/superadmin/restaurantes_/$id'
     | '/_authenticated/admin/'
     | '/_authenticated/caixa/'
     | '/_authenticated/admin/clientes/$id'
@@ -1037,12 +1037,12 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof MQrTokenMinhaContaRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/superadmin/restaurantes/$id': {
-      id: '/superadmin/restaurantes/$id'
-      path: '/$id'
+    '/superadmin/restaurantes_/$id': {
+      id: '/superadmin/restaurantes_/$id'
+      path: '/restaurantes/$id'
       fullPath: '/superadmin/restaurantes/$id'
       preLoaderRoute: typeof SuperadminRestaurantesIdRouteImport
-      parentRoute: typeof SuperadminRestaurantesRoute
+      parentRoute: typeof SuperadminRoute
     }
     '/_authenticated/admin/clientes/$id': {
       id: '/_authenticated/admin/clientes/$id'
@@ -1223,32 +1223,20 @@ const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
   AuthenticatedRouteChildren,
 )
 
-interface SuperadminRestaurantesRouteChildren {
-  SuperadminRestaurantesIdRoute: typeof SuperadminRestaurantesIdRoute
-}
-
-const SuperadminRestaurantesRouteChildren: SuperadminRestaurantesRouteChildren =
-  {
-    SuperadminRestaurantesIdRoute: SuperadminRestaurantesIdRoute,
-  }
-
-const SuperadminRestaurantesRouteWithChildren =
-  SuperadminRestaurantesRoute._addFileChildren(
-    SuperadminRestaurantesRouteChildren,
-  )
-
 interface SuperadminRouteChildren {
   SuperadminConfiguracoesRoute: typeof SuperadminConfiguracoesRoute
   SuperadminLogsRoute: typeof SuperadminLogsRoute
-  SuperadminRestaurantesRoute: typeof SuperadminRestaurantesRouteWithChildren
+  SuperadminRestaurantesRoute: typeof SuperadminRestaurantesRoute
   SuperadminIndexRoute: typeof SuperadminIndexRoute
+  SuperadminRestaurantesIdRoute: typeof SuperadminRestaurantesIdRoute
 }
 
 const SuperadminRouteChildren: SuperadminRouteChildren = {
   SuperadminConfiguracoesRoute: SuperadminConfiguracoesRoute,
   SuperadminLogsRoute: SuperadminLogsRoute,
-  SuperadminRestaurantesRoute: SuperadminRestaurantesRouteWithChildren,
+  SuperadminRestaurantesRoute: SuperadminRestaurantesRoute,
   SuperadminIndexRoute: SuperadminIndexRoute,
+  SuperadminRestaurantesIdRoute: SuperadminRestaurantesIdRoute,
 }
 
 const SuperadminRouteWithChildren = SuperadminRoute._addFileChildren(

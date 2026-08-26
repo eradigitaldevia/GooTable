@@ -47,21 +47,27 @@ function RestaurantesList() {
     [rows, busca, filtro]
   );
 
-  const onSuspender = async (r: RestauranteRowData) => {
-    if (!confirm(`${r.ativo ? "Suspender" : "Reativar"} "${r.nome}"?`)) return;
+  const onSuspender = (r: RestauranteRowData) => setSuspenderAlvo(r);
+  const onExcluir = (r: RestauranteRowData) => setExcluirAlvo(r);
+
+  const confirmarSuspender = async () => {
+    if (!suspenderAlvo) return;
+    const r = suspenderAlvo;
     try {
       await setAtivo.mutateAsync({ id: r.id, ativo: !r.ativo });
       toast.success(r.ativo ? "Restaurante suspenso" : "Restaurante reativado");
+      setSuspenderAlvo(null);
     } catch (e: any) {
       toast.error(e.message ?? "Erro");
     }
   };
 
-  const onExcluir = async (r: RestauranteRowData) => {
-    if (!confirm(`Excluir DEFINITIVAMENTE "${r.nome}" e todos os seus dados?`)) return;
+  const confirmarExcluir = async () => {
+    if (!excluirAlvo) return;
     try {
-      await excluir.mutateAsync({ id: r.id });
+      await excluir.mutateAsync({ id: excluirAlvo.id });
       toast.success("Restaurante excluído");
+      setExcluirAlvo(null);
     } catch (e: any) {
       toast.error(e.message ?? "Erro");
     }
