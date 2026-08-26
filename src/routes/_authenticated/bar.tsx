@@ -15,6 +15,8 @@ import { BarHeader } from "@/components/bar/bar-header";
 import { BarItemRow, type BarItem } from "@/components/bar/bar-item-row";
 import { BarEmptyState } from "@/components/bar/bar-empty-state";
 import { KdsConnectionBanner } from "@/components/cozinha/kds-connection-banner";
+import { ComandaPreparo } from "@/components/impressao/comanda-preparo";
+import { useImpressaoAuto, type PedidoImpressao } from "@/hooks/use-impressao-auto";
 
 export const Route = createFileRoute("/_authenticated/bar")({
   component: BarPanel,
