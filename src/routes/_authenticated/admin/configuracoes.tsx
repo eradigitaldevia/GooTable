@@ -469,6 +469,8 @@ function Configuracoes() {
         horario_funcionamento: f.horario_funcionamento,
         url_publica_cardapio: f.url_publica_cardapio.trim() || null,
         sessao_ociosa_horas: f.sessao_ociosa_horas,
+        impressao_auto_cozinha: f.impressao_auto_cozinha,
+        impressao_auto_bar: f.impressao_auto_bar,
       };
     } else if (aba === "identidade") {
       payload = {
