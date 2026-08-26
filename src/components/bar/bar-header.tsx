@@ -88,6 +88,12 @@ export function BarHeader({
         <span className="hidden sm:inline">
           <strong className="text-foreground tabular-nums">{prontosHoje}</strong> prontos hoje
         </span>
+        {impressaoAuto && (
+          <span className="hidden items-center gap-1 sm:flex">
+            <Printer className="h-3.5 w-3.5" />
+            Impressão automática
+          </span>
+        )}
         <Button variant="outline" size="sm" onClick={toggleFs}>
           {fs ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
         </Button>
