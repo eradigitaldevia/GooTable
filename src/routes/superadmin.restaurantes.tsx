@@ -13,6 +13,7 @@ import { FiltrosRestaurantes, type FiltroStatus } from "@/components/superadmin/
 import { RestauranteRow, type RestauranteRowData } from "@/components/superadmin/restaurante-row";
 import { NovoRestauranteDialog } from "@/components/superadmin/novo-restaurante-dialog";
 import { EditarContratoDialog } from "@/components/superadmin/editar-contrato-dialog";
+import { contratoStatus } from "@/lib/contrato-status";
 
 export const Route = createFileRoute("/superadmin/restaurantes")({
   component: RestaurantesList,
@@ -30,23 +31,20 @@ function RestaurantesList() {
 
   const rows: RestauranteRowData[] = data?.rows ?? [];
 
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-
   const filtradas = useMemo(
     () =>
       rows.filter((r) => {
         if (filtro === "ativos" && !r.ativo) return false;
         if (filtro === "suspensos" && r.ativo) return false;
-        if (filtro === "a_vencer" && (!r.contrato_vencimento_em || new Date(r.contrato_vencimento_em) < today)) return false;
-        if (filtro === "vencidos") {
-          if (!r.contrato_vencimento_em) return false;
-          if (new Date(r.contrato_vencimento_em) >= today) return false;
+        if (filtro === "a_vencer") {
+          const st = contratoStatus(r.contrato_vencimento_em);
+          if (st.estado !== "proximo") return false;
         }
+        if (filtro === "vencidos" && contratoStatus(r.contrato_vencimento_em).estado !== "vencido") return false;
         if (busca && !`${r.nome} ${r.slug}`.toLowerCase().includes(busca.toLowerCase())) return false;
         return true;
       }),
-    [rows, busca, filtro, today]
+    [rows, busca, filtro]
   );
 
   const onSuspender = async (r: RestauranteRowData) => {

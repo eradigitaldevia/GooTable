@@ -49,7 +49,7 @@ export const listarRestaurantesAdmin = createServerFn({ method: "GET" })
     inicioMes.setHours(0, 0, 0, 0);
 
     const [{ data: rests, error: e1 }, { data: pedidos, error: e2 }, { data: mesas, error: e3 }] = await Promise.all([
-      supabaseAdmin.from("restaurantes").select("id, nome, slug, ativo, contrato_vencimento_em, contrato_notas, criado_em").order("criado_em", { ascending: false }),
+      supabaseAdmin.from("restaurantes").select("id, nome, slug, ativo, contrato_vencimento_em, contrato_notas, contrato_bloqueio_automatico, criado_em").order("criado_em", { ascending: false }),
       supabaseAdmin.from("pedidos").select("restaurante_id, total, status, criado_em").gte("criado_em", inicioMes.toISOString()),
       supabaseAdmin.from("mesas").select("restaurante_id"),
     ]);
@@ -77,6 +77,7 @@ export const listarRestaurantesAdmin = createServerFn({ method: "GET" })
       ativo: r.ativo,
       contrato_vencimento_em: r.contrato_vencimento_em,
       contrato_notas: r.contrato_notas,
+      contrato_bloqueio_automatico: r.contrato_bloqueio_automatico,
       criado_em: r.criado_em,
       pedidosMes: pedidosByRest[r.id] ?? 0,
       faturamentoMes: fatByRest[r.id] ?? 0,
@@ -98,6 +99,7 @@ export const criarRestauranteAdmin = createServerFn({ method: "POST" })
       donoNome: z.string().min(1),
       vencimento: z.string().nullable().optional(),
       notas: z.string().nullable().optional(),
+      bloqueioAutomatico: z.boolean().optional(),
     }).parse(d)
   )
   .handler(async ({ context, data }) => {
@@ -140,6 +142,9 @@ export const criarRestauranteAdmin = createServerFn({ method: "POST" })
         delivery_slug: data.slug,
         contrato_vencimento_em: data.vencimento ?? null,
         contrato_notas: data.notas ?? null,
+        ...(data.bloqueioAutomatico === undefined
+          ? {}
+          : { contrato_bloqueio_automatico: data.bloqueioAutomatico }),
       })
       .select()
       .single();
@@ -241,6 +246,7 @@ export const atualizarContratoRestaurante = createServerFn({ method: "POST" })
       id: z.string().uuid(),
       vencimento: z.string().nullable().optional(),
       notas: z.string().nullable().optional(),
+      bloqueioAutomatico: z.boolean().optional(),
     }).parse(d)
   )
   .handler(async ({ context, data }) => {
@@ -251,11 +257,15 @@ export const atualizarContratoRestaurante = createServerFn({ method: "POST" })
       .update({
         contrato_vencimento_em: data.vencimento ?? null,
         contrato_notas: data.notas ?? null,
+        ...(data.bloqueioAutomatico === undefined
+          ? {}
+          : { contrato_bloqueio_automatico: data.bloqueioAutomatico }),
       })
       .eq("id", data.id);
     if (error) throw new Error(error.message);
     await logAction(userId, "atualizar_contrato", "restaurante", data.id, {
       vencimento: data.vencimento,
+      bloqueio_automatico: data.bloqueioAutomatico,
     });
     return { ok: true };
   });

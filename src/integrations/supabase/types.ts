@@ -2025,6 +2025,7 @@ export type Database = {
           comissao_pedido_cliente: boolean
           comissao_pedido_cliente_percentual: number | null
           comissao_rateio_troca_turno: boolean
+          contrato_bloqueio_automatico: boolean
           contrato_notas: string | null
           contrato_vencimento_em: string | null
           cor_acento: string | null
@@ -2085,6 +2086,7 @@ export type Database = {
           comissao_pedido_cliente?: boolean
           comissao_pedido_cliente_percentual?: number | null
           comissao_rateio_troca_turno?: boolean
+          contrato_bloqueio_automatico?: boolean
           contrato_notas?: string | null
           contrato_vencimento_em?: string | null
           cor_acento?: string | null
@@ -2145,6 +2147,7 @@ export type Database = {
           comissao_pedido_cliente?: boolean
           comissao_pedido_cliente_percentual?: number | null
           comissao_rateio_troca_turno?: boolean
+          contrato_bloqueio_automatico?: boolean
           contrato_notas?: string | null
           contrato_vencimento_em?: string | null
           cor_acento?: string | null
@@ -2323,6 +2326,7 @@ export type Database = {
         Args: { _comanda_id: string }
         Returns: undefined
       }
+      aplicar_bloqueio_contratos: { Args: never; Returns: number }
       aplicar_cashback: {
         Args: { _cliente_id: string; _comanda_id: string; _valor: number }
         Returns: Json
