@@ -38,7 +38,10 @@ function RestaurantesList() {
       rows.filter((r) => {
         if (filtro === "ativos" && !r.ativo) return false;
         if (filtro === "suspensos" && r.ativo) return false;
-        if (filtro === "a_vencer" && (!r.contrato_vencimento_em || new Date(r.contrato_vencimento_em) < today)) return false;
+        if (filtro === "a_vencer") {
+          const st = contratoStatus(r.contrato_vencimento_em);
+          if (st.estado !== "proximo") return false;
+        }
         if (filtro === "vencidos") {
           if (!r.contrato_vencimento_em) return false;
           if (new Date(r.contrato_vencimento_em) >= today) return false;
