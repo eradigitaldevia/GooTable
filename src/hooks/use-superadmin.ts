@@ -157,6 +157,27 @@ export function useAtualizarContratoRestaurante() {
   });
 }
 
+export function useDonoRestaurante(restauranteId: string | undefined, enabled = true) {
+  const fn = useServerFn(getDonoRestaurante);
+  return useQuery({
+    queryKey: restauranteId ? ["dono-restaurante", restauranteId] : ["dono-restaurante", "none"],
+    queryFn: () => fn({ data: { restauranteId: restauranteId! } }),
+    enabled: !!restauranteId && enabled,
+  });
+}
+
+export function useAtualizarDonoRestaurante() {
+  const fn = useServerFn(atualizarDonoRestaurante);
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (data: { restauranteId: string; nome: string; email: string; senha?: string }) =>
+      fn({ data }),
+    onSuccess: (_r, vars) => {
+      qc.invalidateQueries({ queryKey: ["dono-restaurante", vars.restauranteId] });
+    },
+  });
+}
+
 export function useListarRestaurantesAdmin() {
   const fn = useServerFn(listarRestaurantesAdmin);
   return useQuery({
