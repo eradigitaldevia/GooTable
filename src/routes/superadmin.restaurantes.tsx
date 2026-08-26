@@ -28,6 +28,8 @@ function RestaurantesList() {
   const [filtro, setFiltro] = useState<FiltroStatus>("todos");
   const [novoOpen, setNovoOpen] = useState(false);
   const [contratoRestaurante, setContratoRestaurante] = useState<RestauranteRowData | null>(null);
+  const [suspenderAlvo, setSuspenderAlvo] = useState<RestauranteRowData | null>(null);
+  const [excluirAlvo, setExcluirAlvo] = useState<RestauranteRowData | null>(null);
 
   const rows: RestauranteRowData[] = data?.rows ?? [];
 
