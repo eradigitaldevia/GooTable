@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { ChefHat, LogOut, Maximize2, Minimize2, Volume2, VolumeX } from "lucide-react";
+import { ChefHat, LogOut, Maximize2, Minimize2, Printer, Volume2, VolumeX } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "@tanstack/react-router";
 
@@ -8,10 +8,12 @@ export function KdsHeader({
   ativos,
   somLigado,
   onToggleSom,
+  impressaoAuto = false,
 }: {
   ativos: number;
   somLigado: boolean;
   onToggleSom: () => void;
+  impressaoAuto?: boolean;
 }) {
   const [hora, setHora] = useState("");
   const [fs, setFs] = useState(false);
