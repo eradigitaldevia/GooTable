@@ -75,7 +75,7 @@ export function useSalvarLancamento() {
   const fn = useServerFn(salvarLancamentoFn);
   const inv = useInvalidar();
   return useMutation({
-    mutationFn: (data: Parameters<typeof fn>[0]["data"]) => fn({ data }),
+    mutationFn: (data: NonNullable<Parameters<typeof fn>[0]>["data"]) => fn({ data }),
     onSuccess: inv,
   });
 }
@@ -84,7 +84,7 @@ export function useAlterarStatusLancamento() {
   const fn = useServerFn(alterarStatusLancamentoFn);
   const inv = useInvalidar();
   return useMutation({
-    mutationFn: (data: Parameters<typeof fn>[0]["data"]) => fn({ data }),
+    mutationFn: (data: NonNullable<Parameters<typeof fn>[0]>["data"]) => fn({ data }),
     onSuccess: inv,
   });
 }
@@ -102,7 +102,7 @@ export function useSalvarCategoria() {
   const fn = useServerFn(salvarCategoriaFn);
   const inv = useInvalidar();
   return useMutation({
-    mutationFn: (data: Parameters<typeof fn>[0]["data"]) => fn({ data }),
+    mutationFn: (data: NonNullable<Parameters<typeof fn>[0]>["data"]) => fn({ data }),
     onSuccess: inv,
   });
 }
@@ -111,7 +111,7 @@ export function useSalvarFornecedor() {
   const fn = useServerFn(salvarFornecedorFn);
   const inv = useInvalidar();
   return useMutation({
-    mutationFn: (data: Parameters<typeof fn>[0]["data"]) => fn({ data }),
+    mutationFn: (data: NonNullable<Parameters<typeof fn>[0]>["data"]) => fn({ data }),
     onSuccess: inv,
   });
 }
@@ -120,7 +120,7 @@ export function useExcluirCadastro() {
   const fn = useServerFn(excluirCadastroFn);
   const inv = useInvalidar();
   return useMutation({
-    mutationFn: (data: Parameters<typeof fn>[0]["data"]) => fn({ data }),
+    mutationFn: (data: NonNullable<Parameters<typeof fn>[0]>["data"]) => fn({ data }),
     onSuccess: inv,
   });
 }
