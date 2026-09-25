@@ -204,6 +204,7 @@ function CozinhaKDS() {
     destino: "cozinha",
     restauranteId,
     pedidos: pedidosImpressao,
+    carregado: !isLoading,
   });
 
 

@@ -62,11 +62,14 @@ export function useImpressaoAuto({
   destino,
   restauranteId,
   pedidos,
+  carregado = true,
 }: {
   enabled: boolean;
   destino: "cozinha" | "bar";
   restauranteId: string | null;
   pedidos: PedidoImpressao[];
+  /** Indica que a lista de pedidos já terminou o primeiro carregamento. */
+  carregado?: boolean;
 }) {
   const [fila, setFila] = useState<Job[]>([]);
   const [atual, setAtual] = useState<Job | null>(null);
@@ -78,7 +81,7 @@ export function useImpressaoAuto({
   const snapshot = useMemo(() => pedidos, [pedidos]);
 
   useEffect(() => {
-    if (!enabled || !skey) return;
+    if (!enabled || !skey || !carregado) return;
     if (chavesRef.current === null) chavesRef.current = lerChaves(skey);
     const chaves = chavesRef.current;
     const primeiraCarga = !inicializadoRef.current;
