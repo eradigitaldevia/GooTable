@@ -44,6 +44,7 @@ import { Route as AuthenticatedAdminCuponsRouteImport } from './routes/_authenti
 import { Route as AuthenticatedAdminDestinosPreparoRouteImport } from './routes/_authenticated/admin/destinos-preparo'
 import { Route as AuthenticatedAdminEquipeRouteImport } from './routes/_authenticated/admin/equipe'
 import { Route as AuthenticatedAdminFidelidadeRouteImport } from './routes/_authenticated/admin/fidelidade'
+import { Route as AuthenticatedAdminFinanceiroRouteImport } from './routes/_authenticated/admin/financeiro'
 import { Route as AuthenticatedAdminGarconsRouteImport } from './routes/_authenticated/admin/garcons'
 import { Route as AuthenticatedAdminMesasRouteImport } from './routes/_authenticated/admin/mesas'
 import { Route as AuthenticatedAdminPedidosRouteImport } from './routes/_authenticated/admin/pedidos'
@@ -249,6 +250,12 @@ const AuthenticatedAdminFidelidadeRoute =
     path: '/fidelidade',
     getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
+const AuthenticatedAdminFinanceiroRoute =
+  AuthenticatedAdminFinanceiroRouteImport.update({
+    id: '/financeiro',
+    path: '/financeiro',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
 const AuthenticatedAdminGarconsRoute =
   AuthenticatedAdminGarconsRouteImport.update({
     id: '/garcons',
@@ -398,6 +405,7 @@ export interface FileRoutesByFullPath {
   '/admin/destinos-preparo': typeof AuthenticatedAdminDestinosPreparoRoute
   '/admin/equipe': typeof AuthenticatedAdminEquipeRoute
   '/admin/fidelidade': typeof AuthenticatedAdminFidelidadeRoute
+  '/admin/financeiro': typeof AuthenticatedAdminFinanceiroRoute
   '/admin/garcons': typeof AuthenticatedAdminGarconsRoute
   '/admin/mesas': typeof AuthenticatedAdminMesasRoute
   '/admin/pedidos': typeof AuthenticatedAdminPedidosRoute
@@ -451,6 +459,7 @@ export interface FileRoutesByTo {
   '/admin/destinos-preparo': typeof AuthenticatedAdminDestinosPreparoRoute
   '/admin/equipe': typeof AuthenticatedAdminEquipeRoute
   '/admin/fidelidade': typeof AuthenticatedAdminFidelidadeRoute
+  '/admin/financeiro': typeof AuthenticatedAdminFinanceiroRoute
   '/admin/garcons': typeof AuthenticatedAdminGarconsRoute
   '/admin/mesas': typeof AuthenticatedAdminMesasRoute
   '/admin/pedidos': typeof AuthenticatedAdminPedidosRoute
@@ -509,6 +518,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/destinos-preparo': typeof AuthenticatedAdminDestinosPreparoRoute
   '/_authenticated/admin/equipe': typeof AuthenticatedAdminEquipeRoute
   '/_authenticated/admin/fidelidade': typeof AuthenticatedAdminFidelidadeRoute
+  '/_authenticated/admin/financeiro': typeof AuthenticatedAdminFinanceiroRoute
   '/_authenticated/admin/garcons': typeof AuthenticatedAdminGarconsRoute
   '/_authenticated/admin/mesas': typeof AuthenticatedAdminMesasRoute
   '/_authenticated/admin/pedidos': typeof AuthenticatedAdminPedidosRoute
@@ -567,6 +577,7 @@ export interface FileRouteTypes {
     | '/admin/destinos-preparo'
     | '/admin/equipe'
     | '/admin/fidelidade'
+    | '/admin/financeiro'
     | '/admin/garcons'
     | '/admin/mesas'
     | '/admin/pedidos'
@@ -620,6 +631,7 @@ export interface FileRouteTypes {
     | '/admin/destinos-preparo'
     | '/admin/equipe'
     | '/admin/fidelidade'
+    | '/admin/financeiro'
     | '/admin/garcons'
     | '/admin/mesas'
     | '/admin/pedidos'
@@ -677,6 +689,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/destinos-preparo'
     | '/_authenticated/admin/equipe'
     | '/_authenticated/admin/fidelidade'
+    | '/_authenticated/admin/financeiro'
     | '/_authenticated/admin/garcons'
     | '/_authenticated/admin/mesas'
     | '/_authenticated/admin/pedidos'
@@ -967,6 +980,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminFidelidadeRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
+    '/_authenticated/admin/financeiro': {
+      id: '/_authenticated/admin/financeiro'
+      path: '/financeiro'
+      fullPath: '/admin/financeiro'
+      preLoaderRoute: typeof AuthenticatedAdminFinanceiroRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
     '/_authenticated/admin/garcons': {
       id: '/_authenticated/admin/garcons'
       path: '/garcons'
@@ -1137,6 +1157,7 @@ interface AuthenticatedAdminRouteChildren {
   AuthenticatedAdminDestinosPreparoRoute: typeof AuthenticatedAdminDestinosPreparoRoute
   AuthenticatedAdminEquipeRoute: typeof AuthenticatedAdminEquipeRoute
   AuthenticatedAdminFidelidadeRoute: typeof AuthenticatedAdminFidelidadeRoute
+  AuthenticatedAdminFinanceiroRoute: typeof AuthenticatedAdminFinanceiroRoute
   AuthenticatedAdminGarconsRoute: typeof AuthenticatedAdminGarconsRoute
   AuthenticatedAdminMesasRoute: typeof AuthenticatedAdminMesasRoute
   AuthenticatedAdminPedidosRoute: typeof AuthenticatedAdminPedidosRoute
@@ -1163,6 +1184,7 @@ const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
     AuthenticatedAdminDestinosPreparoRoute,
   AuthenticatedAdminEquipeRoute: AuthenticatedAdminEquipeRoute,
   AuthenticatedAdminFidelidadeRoute: AuthenticatedAdminFidelidadeRoute,
+  AuthenticatedAdminFinanceiroRoute: AuthenticatedAdminFinanceiroRoute,
   AuthenticatedAdminGarconsRoute: AuthenticatedAdminGarconsRoute,
   AuthenticatedAdminMesasRoute: AuthenticatedAdminMesasRoute,
   AuthenticatedAdminPedidosRoute: AuthenticatedAdminPedidosRoute,

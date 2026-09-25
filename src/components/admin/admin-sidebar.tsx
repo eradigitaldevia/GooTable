@@ -28,6 +28,7 @@ import {
   Footprints,
   Wallet,
   Music,
+  Landmark,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
@@ -43,6 +44,7 @@ const NAV_GROUPS = [
       { to: "/admin/pedidos", label: "Pedidos", icon: ClipboardList, exact: false },
       { to: "/admin/chamados", label: "Chamados", icon: Bell, exact: false },
       { to: "/caixa", label: "Caixa", icon: Wallet, exact: false, target: "_blank" as const },
+      { to: "/admin/financeiro", label: "Financeiro", icon: Landmark, exact: false },
     ],
   },
   {
@@ -137,6 +139,7 @@ export function AdminSidebar({
     isPlatformAdmin || papel === "admin" || papel === "caixa";
   const filterItem = (to: string) => {
     if (to === "/admin/equipe" && !podeVerEquipe) return false;
+    if (to === "/admin/financeiro" && !podeVerEquipe) return false;
     if (to === "/caixa" && !podeAcessarCaixa) return false;
     return true;
   };

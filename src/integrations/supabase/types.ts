@@ -394,6 +394,50 @@ export type Database = {
           },
         ]
       }
+      categorias_financeiras: {
+        Row: {
+          atualizado_em: string
+          cor: string | null
+          criado_em: string
+          icone: string | null
+          id: string
+          nome: string
+          padrao: boolean
+          restaurante_id: string
+          tipo: string
+        }
+        Insert: {
+          atualizado_em?: string
+          cor?: string | null
+          criado_em?: string
+          icone?: string | null
+          id?: string
+          nome: string
+          padrao?: boolean
+          restaurante_id: string
+          tipo: string
+        }
+        Update: {
+          atualizado_em?: string
+          cor?: string | null
+          criado_em?: string
+          icone?: string | null
+          id?: string
+          nome?: string
+          padrao?: boolean
+          restaurante_id?: string
+          tipo?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "categorias_financeiras_restaurante_id_fkey"
+            columns: ["restaurante_id"]
+            isOneToOne: false
+            referencedRelation: "restaurantes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       chamados_garcom: {
         Row: {
           atendido_em: string | null
@@ -829,6 +873,47 @@ export type Database = {
         }
         Relationships: []
       }
+      fornecedores_financeiro: {
+        Row: {
+          atualizado_em: string
+          cnpj_cpf: string | null
+          criado_em: string
+          email: string | null
+          id: string
+          nome: string
+          restaurante_id: string
+          telefone: string | null
+        }
+        Insert: {
+          atualizado_em?: string
+          cnpj_cpf?: string | null
+          criado_em?: string
+          email?: string | null
+          id?: string
+          nome: string
+          restaurante_id: string
+          telefone?: string | null
+        }
+        Update: {
+          atualizado_em?: string
+          cnpj_cpf?: string | null
+          criado_em?: string
+          email?: string | null
+          id?: string
+          nome?: string
+          restaurante_id?: string
+          telefone?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fornecedores_financeiro_restaurante_id_fkey"
+            columns: ["restaurante_id"]
+            isOneToOne: false
+            referencedRelation: "restaurantes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       garcom_bonus: {
         Row: {
           calculado_em: string
@@ -1066,6 +1151,94 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "identificacao_tentativas_restaurante_id_fkey"
+            columns: ["restaurante_id"]
+            isOneToOne: false
+            referencedRelation: "restaurantes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      lancamentos_financeiros: {
+        Row: {
+          atualizado_em: string
+          categoria_id: string | null
+          comprovante_url: string | null
+          criado_em: string
+          criado_por: string | null
+          data_competencia: string
+          data_pagamento: string | null
+          data_vencimento: string
+          descricao: string
+          forma_pagamento: string | null
+          fornecedor_id: string | null
+          id: string
+          observacao: string | null
+          origem: string
+          referencia_id: string | null
+          restaurante_id: string
+          status: string
+          tipo: string
+          valor: number
+        }
+        Insert: {
+          atualizado_em?: string
+          categoria_id?: string | null
+          comprovante_url?: string | null
+          criado_em?: string
+          criado_por?: string | null
+          data_competencia: string
+          data_pagamento?: string | null
+          data_vencimento: string
+          descricao: string
+          forma_pagamento?: string | null
+          fornecedor_id?: string | null
+          id?: string
+          observacao?: string | null
+          origem?: string
+          referencia_id?: string | null
+          restaurante_id: string
+          status?: string
+          tipo: string
+          valor: number
+        }
+        Update: {
+          atualizado_em?: string
+          categoria_id?: string | null
+          comprovante_url?: string | null
+          criado_em?: string
+          criado_por?: string | null
+          data_competencia?: string
+          data_pagamento?: string | null
+          data_vencimento?: string
+          descricao?: string
+          forma_pagamento?: string | null
+          fornecedor_id?: string | null
+          id?: string
+          observacao?: string | null
+          origem?: string
+          referencia_id?: string | null
+          restaurante_id?: string
+          status?: string
+          tipo?: string
+          valor?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lancamentos_financeiros_categoria_id_fkey"
+            columns: ["categoria_id"]
+            isOneToOne: false
+            referencedRelation: "categorias_financeiras"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lancamentos_financeiros_fornecedor_id_fkey"
+            columns: ["fornecedor_id"]
+            isOneToOne: false
+            referencedRelation: "fornecedores_financeiro"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lancamentos_financeiros_restaurante_id_fkey"
             columns: ["restaurante_id"]
             isOneToOne: false
             referencedRelation: "restaurantes"
@@ -2444,6 +2617,10 @@ export type Database = {
         }
         Returns: Json
       }
+      fin_assert_acesso: {
+        Args: { _restaurante_id: string }
+        Returns: undefined
+      }
       gerar_comissao_comanda: {
         Args: { _comanda_id: string }
         Returns: undefined
@@ -2460,6 +2637,10 @@ export type Database = {
         Args: { p_comanda_id: string }
         Returns: undefined
       }
+      integrar_repasses_caixa_financeiro: {
+        Args: { _restaurante_id: string }
+        Returns: number
+      }
       is_platform_admin: { Args: { _user_id: string }; Returns: boolean }
       is_restaurante_membro: {
         Args: { _restaurante_id: string; _user_id: string }
@@ -2468,6 +2649,23 @@ export type Database = {
       liberar_garcom_mesa: { Args: { _mesa_id: string }; Returns: undefined }
       limpar_identificacao_tentativas: { Args: never; Returns: number }
       metricas_chamados: { Args: { _restaurante_id: string }; Returns: Json }
+      obter_dre_gerencial: {
+        Args: { _fim: string; _inicio: string; _restaurante_id: string }
+        Returns: Json
+      }
+      obter_fluxo_caixa: {
+        Args: {
+          _agrupamento?: string
+          _fim: string
+          _inicio: string
+          _restaurante_id: string
+        }
+        Returns: Json
+      }
+      obter_resumo_financeiro: {
+        Args: { _fim: string; _inicio: string; _restaurante_id: string }
+        Returns: Json
+      }
       pagar_bonus: { Args: { _ids: string[] }; Returns: number }
       pagar_comissoes: { Args: { _ids: string[] }; Returns: number }
       pagar_repasses_couvert_artistico: {
@@ -2534,6 +2732,10 @@ export type Database = {
         Returns: boolean
       }
       resumo_comissoes: { Args: { _restaurante_id: string }; Returns: Json }
+      seed_categorias_financeiras: {
+        Args: { _restaurante_id: string }
+        Returns: undefined
+      }
       totais_turno_caixa: { Args: { _turno_id: string }; Returns: Json }
       unaccent: { Args: { "": string }; Returns: string }
       validar_cupom: {
