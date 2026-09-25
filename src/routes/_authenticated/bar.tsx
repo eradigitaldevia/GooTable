@@ -160,6 +160,7 @@ function BarPanel() {
     destino: "bar",
     restauranteId,
     pedidos: pedidosImpressao,
+    carregado: !isLoading,
   });
 
 
