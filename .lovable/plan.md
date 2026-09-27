@@ -1,7 +1,7 @@
 # Módulo de Estoque (opcional por restaurante)
 
 ## Objetivo
-Controlar insumos do restaurante com fichas técnicas, baixa automática nas vendas e movimentações manuais. Restaurantes que não usarem o módulo não percebem nenhuma diferença.
+Controlar insumos do restaurante com fichas técnicas, baixa automática nas vendas, movimentações manuais e inventário (contagem física com ajuste automático das diferenças). Restaurantes que não usarem o módulo não percebem nenhuma diferença.
 
 ## Decisões
 - Módulo completo: insumos, fichas técnicas (simples e compostas), movimentações manuais e automáticas.
