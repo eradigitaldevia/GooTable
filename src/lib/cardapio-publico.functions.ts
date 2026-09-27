@@ -87,6 +87,7 @@ export const carregarCardapioPublicoFn = createServerFn({ method: "POST" })
         .select("id, nome, descricao, preco, imagem_url, categoria_id, disponivel, ordem, destaque_upsell")
         .eq("restaurante_id", m.restaurante_id)
         .eq("disponivel", true)
+        .eq("estoque_bloqueado", false)
         .order("ordem"),
       carregarBannersPublicos(m.restaurante_id, "mesa"),
     ]);

@@ -244,6 +244,7 @@ export const getRestauranteDeliveryFn = createServerFn({ method: "POST" })
           )
           .eq("restaurante_id", r.id)
           .eq("disponivel", true)
+          .eq("estoque_bloqueado", false)
           .order("ordem"),
         carregarBannersPublicos(r.id, "delivery"),
       ]);

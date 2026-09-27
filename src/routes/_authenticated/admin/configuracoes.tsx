@@ -20,6 +20,7 @@ import { ComissaoModoForm } from "@/components/configuracoes/comissao-modo-form"
 import { TaxaServicoForm } from "@/components/configuracoes/taxa-servico-form";
 import { CouvertMesaForm } from "@/components/configuracoes/couvert-form";
 import { DeliveryForm } from "@/components/configuracoes/delivery-form";
+import { EstoqueConfig } from "@/components/configuracoes/estoque-config";
 import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -35,11 +36,12 @@ type TabId =
   | "comissoes"
   | "caixa"
   | "cardapio"
-  | "delivery";
+  | "delivery"
+  | "estoque";
 
 const searchSchema = z.object({
   tab: z
-    .enum(["geral", "identidade", "pagamentos", "taxas", "comissoes", "caixa", "cardapio", "delivery"])
+    .enum(["geral", "identidade", "pagamentos", "taxas", "comissoes", "caixa", "cardapio", "delivery", "estoque"])
     .default("geral"),
 });
 
@@ -61,6 +63,7 @@ function Configuracoes() {
   const { tab } = Route.useSearch();
   const navigate = useNavigate({ from: Route.fullPath });
   const [abaSalvando, setAbaSalvando] = useState<TabId | null>(null);
+  const [estoqueSalvando, setEstoqueSalvando] = useState(false);
 
   const [form, setForm] = useState({
     nome: "",
@@ -368,6 +371,7 @@ function Configuracoes() {
       "delivery_aceita_cartao_entrega",
       "delivery_aceita_pix",
     ],
+    estoque: [],
   };
 
   const abasSujas = useMemo(() => {
@@ -380,6 +384,7 @@ function Configuracoes() {
       caixa: false,
       cardapio: false,
       delivery: false,
+      estoque: false,
     };
     if (!snapshot) return r;
     (Object.keys(CAMPOS_POR_ABA) as TabId[]).forEach((aba) => {
@@ -698,6 +703,7 @@ function Configuracoes() {
               ["caixa", "Caixa"],
               ["cardapio", "Cardápio"],
               ["delivery", "Delivery"],
+              ["estoque", "Estoque"],
             ] as [TabId, string][]
           ).map(([id, label]) => (
             <TabsTrigger key={id} value={id} className="w-full sm:w-auto">
@@ -961,6 +967,24 @@ function Configuracoes() {
             onChange={patch}
           />
           <SaveBtn aba="delivery" />
+        </TabsContent>
+
+        <TabsContent value="estoque" className="space-y-6">
+          <EstoqueConfig
+            ativo={!!restaurante.estoque_ativo}
+            salvando={estoqueSalvando}
+            onToggle={async (v) => {
+              setEstoqueSalvando(true);
+              try {
+                await atualizar.mutateAsync({ aba: "estoque", restauranteId: restaurante.id, estoque_ativo: v });
+                toast.success(v ? "Controle de estoque ativado" : "Controle de estoque desativado");
+              } catch (e: any) {
+                toast.error(e?.message ?? "Erro ao salvar");
+              } finally {
+                setEstoqueSalvando(false);
+              }
+            }}
+          />
         </TabsContent>
       </Tabs>
     </div>

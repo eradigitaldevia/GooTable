@@ -129,6 +129,11 @@ const configSchema = z.discriminatedUnion("aba", [
     banners_habilitados: z.boolean(),
   }),
   z.object({
+    aba: z.literal("estoque"),
+    restauranteId: z.string().uuid(),
+    estoque_ativo: z.boolean(),
+  }),
+  z.object({
     aba: z.literal("delivery"),
     restauranteId: z.string().uuid(),
     delivery_ativo: z.boolean(),
@@ -270,6 +275,10 @@ export const atualizarConfiguracoesFn = createServerFn({ method: "POST" })
       }
       case "banners": {
         update = { banners_habilitados: data.banners_habilitados };
+        break;
+      }
+      case "estoque": {
+        update = { estoque_ativo: data.estoque_ativo };
         break;
       }
       case "delivery": {

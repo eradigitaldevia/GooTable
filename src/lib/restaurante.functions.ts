@@ -55,6 +55,7 @@ export interface Restaurante {
   banners_habilitados?: boolean;
   impressao_auto_cozinha?: boolean;
   impressao_auto_bar?: boolean;
+  estoque_ativo?: boolean;
 }
 
 /** Restaurante do usuário autenticado (primeiro vínculo). */
