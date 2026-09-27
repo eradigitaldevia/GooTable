@@ -873,6 +873,198 @@ export type Database = {
         }
         Relationships: []
       }
+      estoque_fichas: {
+        Row: {
+          criado_em: string
+          id: string
+          insumo_id: string
+          preparo_id: string | null
+          produto_id: string | null
+          quantidade: number
+          restaurante_id: string
+        }
+        Insert: {
+          criado_em?: string
+          id?: string
+          insumo_id: string
+          preparo_id?: string | null
+          produto_id?: string | null
+          quantidade: number
+          restaurante_id: string
+        }
+        Update: {
+          criado_em?: string
+          id?: string
+          insumo_id?: string
+          preparo_id?: string | null
+          produto_id?: string | null
+          quantidade?: number
+          restaurante_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "estoque_fichas_insumo_id_fkey"
+            columns: ["insumo_id"]
+            isOneToOne: false
+            referencedRelation: "estoque_insumos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "estoque_fichas_preparo_id_fkey"
+            columns: ["preparo_id"]
+            isOneToOne: false
+            referencedRelation: "estoque_insumos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "estoque_fichas_produto_id_fkey"
+            columns: ["produto_id"]
+            isOneToOne: false
+            referencedRelation: "produtos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "estoque_fichas_restaurante_id_fkey"
+            columns: ["restaurante_id"]
+            isOneToOne: false
+            referencedRelation: "restaurantes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      estoque_insumos: {
+        Row: {
+          ativo: boolean
+          atualizado_em: string
+          bloquear_ao_zerar: boolean
+          criado_em: string
+          custo_medio: number
+          estoque_minimo: number
+          id: string
+          is_preparo: boolean
+          nome: string
+          restaurante_id: string
+          saldo: number
+          unidade: string
+        }
+        Insert: {
+          ativo?: boolean
+          atualizado_em?: string
+          bloquear_ao_zerar?: boolean
+          criado_em?: string
+          custo_medio?: number
+          estoque_minimo?: number
+          id?: string
+          is_preparo?: boolean
+          nome: string
+          restaurante_id: string
+          saldo?: number
+          unidade?: string
+        }
+        Update: {
+          ativo?: boolean
+          atualizado_em?: string
+          bloquear_ao_zerar?: boolean
+          criado_em?: string
+          custo_medio?: number
+          estoque_minimo?: number
+          id?: string
+          is_preparo?: boolean
+          nome?: string
+          restaurante_id?: string
+          saldo?: number
+          unidade?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "estoque_insumos_restaurante_id_fkey"
+            columns: ["restaurante_id"]
+            isOneToOne: false
+            referencedRelation: "restaurantes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      estoque_movimentos: {
+        Row: {
+          criado_em: string
+          criado_por: string | null
+          custo_unit: number | null
+          fornecedor_id: string | null
+          id: string
+          insumo_id: string
+          lancamento_id: string | null
+          observacao: string | null
+          pedido_id: string | null
+          pedido_item_id: string | null
+          quantidade: number
+          restaurante_id: string
+          saldo_apos: number
+          tipo: string
+        }
+        Insert: {
+          criado_em?: string
+          criado_por?: string | null
+          custo_unit?: number | null
+          fornecedor_id?: string | null
+          id?: string
+          insumo_id: string
+          lancamento_id?: string | null
+          observacao?: string | null
+          pedido_id?: string | null
+          pedido_item_id?: string | null
+          quantidade: number
+          restaurante_id: string
+          saldo_apos: number
+          tipo: string
+        }
+        Update: {
+          criado_em?: string
+          criado_por?: string | null
+          custo_unit?: number | null
+          fornecedor_id?: string | null
+          id?: string
+          insumo_id?: string
+          lancamento_id?: string | null
+          observacao?: string | null
+          pedido_id?: string | null
+          pedido_item_id?: string | null
+          quantidade?: number
+          restaurante_id?: string
+          saldo_apos?: number
+          tipo?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "estoque_movimentos_fornecedor_id_fkey"
+            columns: ["fornecedor_id"]
+            isOneToOne: false
+            referencedRelation: "fornecedores_financeiro"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "estoque_movimentos_insumo_id_fkey"
+            columns: ["insumo_id"]
+            isOneToOne: false
+            referencedRelation: "estoque_insumos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "estoque_movimentos_lancamento_id_fkey"
+            columns: ["lancamento_id"]
+            isOneToOne: false
+            referencedRelation: "lancamentos_financeiros"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "estoque_movimentos_restaurante_id_fkey"
+            columns: ["restaurante_id"]
+            isOneToOne: false
+            referencedRelation: "restaurantes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       fornecedores_financeiro: {
         Row: {
           atualizado_em: string
@@ -1985,6 +2177,7 @@ export type Database = {
             | Database["public"]["Enums"]["destino_preparo"]
             | null
           disponivel: boolean
+          estoque_bloqueado: boolean
           id: string
           imagem_url: string | null
           nome: string
@@ -2003,6 +2196,7 @@ export type Database = {
             | Database["public"]["Enums"]["destino_preparo"]
             | null
           disponivel?: boolean
+          estoque_bloqueado?: boolean
           id?: string
           imagem_url?: string | null
           nome: string
@@ -2021,6 +2215,7 @@ export type Database = {
             | Database["public"]["Enums"]["destino_preparo"]
             | null
           disponivel?: boolean
+          estoque_bloqueado?: boolean
           id?: string
           imagem_url?: string | null
           nome?: string
@@ -2225,6 +2420,7 @@ export type Database = {
           delivery_tempo_estimado_min: number
           delivery_whatsapp: string | null
           endereco: string | null
+          estoque_ativo: boolean
           horario_funcionamento: Json
           id: string
           impressao_auto_bar: boolean
@@ -2288,6 +2484,7 @@ export type Database = {
           delivery_tempo_estimado_min?: number
           delivery_whatsapp?: string | null
           endereco?: string | null
+          estoque_ativo?: boolean
           horario_funcionamento?: Json
           id?: string
           impressao_auto_bar?: boolean
@@ -2351,6 +2548,7 @@ export type Database = {
           delivery_tempo_estimado_min?: number
           delivery_whatsapp?: string | null
           endereco?: string | null
+          estoque_ativo?: boolean
           horario_funcionamento?: Json
           id?: string
           impressao_auto_bar?: boolean
@@ -2604,6 +2802,55 @@ export type Database = {
       encerrar_sessoes_ociosas: { Args: never; Returns: number }
       encerrar_turno_garcom: { Args: { _garcom_id: string }; Returns: number }
       encerrar_turnos_expirados: { Args: never; Returns: number }
+      estoque_aplicar_inventario: {
+        Args: { _itens: Json; _observacao?: string; _restaurante_id: string }
+        Returns: number
+      }
+      estoque_assert_acesso: {
+        Args: { _restaurante_id: string }
+        Returns: undefined
+      }
+      estoque_custo_produtos: {
+        Args: { _restaurante_id: string }
+        Returns: Json
+      }
+      estoque_estornar_item: { Args: { _item_id: string }; Returns: undefined }
+      estoque_mov_interno: {
+        Args: {
+          _custo_unit: number
+          _fornecedor_id: string
+          _insumo_id: string
+          _item_id: string
+          _lancamento_id: string
+          _obs: string
+          _pedido_id: string
+          _qtd: number
+          _tipo: string
+        }
+        Returns: string
+      }
+      estoque_produzir_preparo: {
+        Args: { _observacao?: string; _preparo_id: string; _quantidade: number }
+        Returns: undefined
+      }
+      estoque_recalc_bloqueio: {
+        Args: { _restaurante_id: string }
+        Returns: undefined
+      }
+      estoque_registrar_movimento: {
+        Args: {
+          _custo_unit?: number
+          _fornecedor_id?: string
+          _gerar_conta?: boolean
+          _insumo_id: string
+          _observacao?: string
+          _quantidade: number
+          _tipo: string
+          _vencimento?: string
+        }
+        Returns: string
+      }
+      estoque_resumo: { Args: { _restaurante_id: string }; Returns: Json }
       fechar_comanda_se_quitada: {
         Args: { _comanda_id: string }
         Returns: boolean

@@ -43,6 +43,7 @@ import { Route as AuthenticatedAdminCumimRouteImport } from './routes/_authentic
 import { Route as AuthenticatedAdminCuponsRouteImport } from './routes/_authenticated/admin/cupons'
 import { Route as AuthenticatedAdminDestinosPreparoRouteImport } from './routes/_authenticated/admin/destinos-preparo'
 import { Route as AuthenticatedAdminEquipeRouteImport } from './routes/_authenticated/admin/equipe'
+import { Route as AuthenticatedAdminEstoqueRouteImport } from './routes/_authenticated/admin/estoque'
 import { Route as AuthenticatedAdminFidelidadeRouteImport } from './routes/_authenticated/admin/fidelidade'
 import { Route as AuthenticatedAdminFinanceiroRouteImport } from './routes/_authenticated/admin/financeiro'
 import { Route as AuthenticatedAdminGarconsRouteImport } from './routes/_authenticated/admin/garcons'
@@ -244,6 +245,12 @@ const AuthenticatedAdminEquipeRoute =
     path: '/equipe',
     getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
+const AuthenticatedAdminEstoqueRoute =
+  AuthenticatedAdminEstoqueRouteImport.update({
+    id: '/estoque',
+    path: '/estoque',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
 const AuthenticatedAdminFidelidadeRoute =
   AuthenticatedAdminFidelidadeRouteImport.update({
     id: '/fidelidade',
@@ -404,6 +411,7 @@ export interface FileRoutesByFullPath {
   '/admin/cupons': typeof AuthenticatedAdminCuponsRoute
   '/admin/destinos-preparo': typeof AuthenticatedAdminDestinosPreparoRoute
   '/admin/equipe': typeof AuthenticatedAdminEquipeRoute
+  '/admin/estoque': typeof AuthenticatedAdminEstoqueRoute
   '/admin/fidelidade': typeof AuthenticatedAdminFidelidadeRoute
   '/admin/financeiro': typeof AuthenticatedAdminFinanceiroRoute
   '/admin/garcons': typeof AuthenticatedAdminGarconsRoute
@@ -458,6 +466,7 @@ export interface FileRoutesByTo {
   '/admin/cupons': typeof AuthenticatedAdminCuponsRoute
   '/admin/destinos-preparo': typeof AuthenticatedAdminDestinosPreparoRoute
   '/admin/equipe': typeof AuthenticatedAdminEquipeRoute
+  '/admin/estoque': typeof AuthenticatedAdminEstoqueRoute
   '/admin/fidelidade': typeof AuthenticatedAdminFidelidadeRoute
   '/admin/financeiro': typeof AuthenticatedAdminFinanceiroRoute
   '/admin/garcons': typeof AuthenticatedAdminGarconsRoute
@@ -517,6 +526,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/cupons': typeof AuthenticatedAdminCuponsRoute
   '/_authenticated/admin/destinos-preparo': typeof AuthenticatedAdminDestinosPreparoRoute
   '/_authenticated/admin/equipe': typeof AuthenticatedAdminEquipeRoute
+  '/_authenticated/admin/estoque': typeof AuthenticatedAdminEstoqueRoute
   '/_authenticated/admin/fidelidade': typeof AuthenticatedAdminFidelidadeRoute
   '/_authenticated/admin/financeiro': typeof AuthenticatedAdminFinanceiroRoute
   '/_authenticated/admin/garcons': typeof AuthenticatedAdminGarconsRoute
@@ -576,6 +586,7 @@ export interface FileRouteTypes {
     | '/admin/cupons'
     | '/admin/destinos-preparo'
     | '/admin/equipe'
+    | '/admin/estoque'
     | '/admin/fidelidade'
     | '/admin/financeiro'
     | '/admin/garcons'
@@ -630,6 +641,7 @@ export interface FileRouteTypes {
     | '/admin/cupons'
     | '/admin/destinos-preparo'
     | '/admin/equipe'
+    | '/admin/estoque'
     | '/admin/fidelidade'
     | '/admin/financeiro'
     | '/admin/garcons'
@@ -688,6 +700,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/cupons'
     | '/_authenticated/admin/destinos-preparo'
     | '/_authenticated/admin/equipe'
+    | '/_authenticated/admin/estoque'
     | '/_authenticated/admin/fidelidade'
     | '/_authenticated/admin/financeiro'
     | '/_authenticated/admin/garcons'
@@ -973,6 +986,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminEquipeRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
+    '/_authenticated/admin/estoque': {
+      id: '/_authenticated/admin/estoque'
+      path: '/estoque'
+      fullPath: '/admin/estoque'
+      preLoaderRoute: typeof AuthenticatedAdminEstoqueRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
     '/_authenticated/admin/fidelidade': {
       id: '/_authenticated/admin/fidelidade'
       path: '/fidelidade'
@@ -1156,6 +1176,7 @@ interface AuthenticatedAdminRouteChildren {
   AuthenticatedAdminCuponsRoute: typeof AuthenticatedAdminCuponsRoute
   AuthenticatedAdminDestinosPreparoRoute: typeof AuthenticatedAdminDestinosPreparoRoute
   AuthenticatedAdminEquipeRoute: typeof AuthenticatedAdminEquipeRoute
+  AuthenticatedAdminEstoqueRoute: typeof AuthenticatedAdminEstoqueRoute
   AuthenticatedAdminFidelidadeRoute: typeof AuthenticatedAdminFidelidadeRoute
   AuthenticatedAdminFinanceiroRoute: typeof AuthenticatedAdminFinanceiroRoute
   AuthenticatedAdminGarconsRoute: typeof AuthenticatedAdminGarconsRoute
@@ -1183,6 +1204,7 @@ const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
   AuthenticatedAdminDestinosPreparoRoute:
     AuthenticatedAdminDestinosPreparoRoute,
   AuthenticatedAdminEquipeRoute: AuthenticatedAdminEquipeRoute,
+  AuthenticatedAdminEstoqueRoute: AuthenticatedAdminEstoqueRoute,
   AuthenticatedAdminFidelidadeRoute: AuthenticatedAdminFidelidadeRoute,
   AuthenticatedAdminFinanceiroRoute: AuthenticatedAdminFinanceiroRoute,
   AuthenticatedAdminGarconsRoute: AuthenticatedAdminGarconsRoute,

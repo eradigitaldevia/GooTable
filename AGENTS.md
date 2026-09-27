@@ -1,0 +1,1 @@
+- Estoque: baixa/estorno/bloqueio feitos por triggers em pedido_itens/pedidos (não nas RPCs de pedido); saldo só muda via estoque_mov_interno — mantém fluxos de pedido intactos e o módulo opcional.

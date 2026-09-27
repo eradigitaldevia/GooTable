@@ -85,6 +85,10 @@ export type ConfigPayload =
       banners_habilitados: boolean;
     })
   | (Base & {
+      aba: "estoque";
+      estoque_ativo: boolean;
+    })
+  | (Base & {
       aba: "delivery";
       delivery_ativo: boolean;
       delivery_retirada_ativa: boolean;
