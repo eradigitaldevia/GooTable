@@ -306,11 +306,11 @@ export const salvarFornecedorFn = createServerFn({ method: "POST" })
     const valores = {
       nome: data.nome, cnpj_cpf: data.cnpjCpf,
       telefone: data.telefone, email: data.email,
-    } as never;
+    };
     const t = supabase.from("fornecedores_financeiro" as never);
     const res = data.id
-      ? await t.update(valores).eq("id", data.id).eq("restaurante_id", data.restauranteId)
-      : await t.insert({ restaurante_id: data.restauranteId, ...valores });
+      ? await t.update(valores as never).eq("id", data.id).eq("restaurante_id", data.restauranteId)
+      : await t.insert({ restaurante_id: data.restauranteId, ...valores } as never);
     if (res.error) throw new Error(res.error.message);
     return { ok: true };
   });
