@@ -15,7 +15,6 @@ import {
 } from "@/lib/estoque.functions";
 
 const K = ["estoque"] as const;
-type DataOf<F extends (...a: never[]) => unknown> = NonNullable<Parameters<F>[0]> extends { data: infer D } ? D : never;
 
 export function useInsumos(rid: string) {
   const fn = useServerFn(listarInsumosFn);
@@ -33,26 +32,69 @@ export function useCustoProdutos(rid: string) {
   const fn = useServerFn(obterCustoProdutosFn);
   return useQuery({ queryKey: [...K, "custos", rid], queryFn: () => fn({ data: { restauranteId: rid } }) });
 }
-export function useMovimentos(f: DataOf<typeof listarMovimentosFn>) {
+export function useMovimentos(f: NonNullable<Parameters<typeof listarMovimentosFn>[0]>["data"]) {
   const fn = useServerFn(listarMovimentosFn);
   return useQuery({ queryKey: [...K, "movimentos", f], queryFn: () => fn({ data: f }) });
 }
 
-function useEstoqueMutation<F extends (a: { data: never }) => Promise<unknown>>(serverFn: F) {
-  const fn = useServerFn(serverFn as never) as unknown as (a: { data: DataOf<F> }) => Promise<Awaited<ReturnType<F>>>;
+function useInvalidar() {
   const qc = useQueryClient();
+  return () => {
+    qc.invalidateQueries({ queryKey: K });
+    qc.invalidateQueries({ queryKey: ["financeiro"] });
+  };
+}
+
+export function useSalvarInsumo() {
+  const fn = useServerFn(salvarInsumoFn);
+  const inv = useInvalidar();
   return useMutation({
-    mutationFn: (data: DataOf<F>) => fn({ data }),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: K });
-      qc.invalidateQueries({ queryKey: ["financeiro"] });
-    },
+    mutationFn: (data: NonNullable<Parameters<typeof salvarInsumoFn>[0]>["data"]) => fn({ data }),
+    onSuccess: inv,
   });
 }
 
-export const useSalvarInsumo = () => useEstoqueMutation(salvarInsumoFn);
-export const useExcluirInsumo = () => useEstoqueMutation(excluirInsumoFn);
-export const useSalvarFicha = () => useEstoqueMutation(salvarFichaFn);
-export const useRegistrarMovimento = () => useEstoqueMutation(registrarMovimentoFn);
-export const useProduzirPreparo = () => useEstoqueMutation(produzirPreparoFn);
-export const useAplicarInventario = () => useEstoqueMutation(aplicarInventarioFn);
+export function useExcluirInsumo() {
+  const fn = useServerFn(excluirInsumoFn);
+  const inv = useInvalidar();
+  return useMutation({
+    mutationFn: (data: NonNullable<Parameters<typeof excluirInsumoFn>[0]>["data"]) => fn({ data }),
+    onSuccess: inv,
+  });
+}
+
+export function useSalvarFicha() {
+  const fn = useServerFn(salvarFichaFn);
+  const inv = useInvalidar();
+  return useMutation({
+    mutationFn: (data: NonNullable<Parameters<typeof salvarFichaFn>[0]>["data"]) => fn({ data }),
+    onSuccess: inv,
+  });
+}
+
+export function useRegistrarMovimento() {
+  const fn = useServerFn(registrarMovimentoFn);
+  const inv = useInvalidar();
+  return useMutation({
+    mutationFn: (data: NonNullable<Parameters<typeof registrarMovimentoFn>[0]>["data"]) => fn({ data }),
+    onSuccess: inv,
+  });
+}
+
+export function useProduzirPreparo() {
+  const fn = useServerFn(produzirPreparoFn);
+  const inv = useInvalidar();
+  return useMutation({
+    mutationFn: (data: NonNullable<Parameters<typeof produzirPreparoFn>[0]>["data"]) => fn({ data }),
+    onSuccess: inv,
+  });
+}
+
+export function useAplicarInventario() {
+  const fn = useServerFn(aplicarInventarioFn);
+  const inv = useInvalidar();
+  return useMutation({
+    mutationFn: (data: NonNullable<Parameters<typeof aplicarInventarioFn>[0]>["data"]) => fn({ data }),
+    onSuccess: inv,
+  });
+}
