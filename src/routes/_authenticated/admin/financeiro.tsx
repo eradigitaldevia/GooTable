@@ -6,7 +6,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { useMeuRestaurante } from "@/hooks/use-restaurante";
 import { useIntegrarRepasses, type Periodo } from "@/hooks/use-financeiro";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { dataLocal, inicioDoMes } from "@/lib/data-fuso";
+import { dataLocal, fimDoMes, inicioDoMes } from "@/lib/data-fuso";
 import type { Lancamento } from "@/lib/financeiro.functions";
 import { FinanceiroHeader } from "@/components/financeiro/financeiro-header";
 import { AbaVisaoGeral } from "@/components/financeiro/aba-visao-geral";
