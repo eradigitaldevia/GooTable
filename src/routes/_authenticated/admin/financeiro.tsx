@@ -6,7 +6,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { useMeuRestaurante } from "@/hooks/use-restaurante";
 import { useIntegrarRepasses, type Periodo } from "@/hooks/use-financeiro";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { dataLocal, inicioDoMes } from "@/lib/data-fuso";
+import { dataLocal, fimDoMes, inicioDoMes } from "@/lib/data-fuso";
 import type { Lancamento } from "@/lib/financeiro.functions";
 import { FinanceiroHeader } from "@/components/financeiro/financeiro-header";
 import { AbaVisaoGeral } from "@/components/financeiro/aba-visao-geral";
@@ -30,7 +30,7 @@ function FinanceiroPage() {
   const { data: restaurante, isLoading } = useMeuRestaurante(user?.id);
   const { tab } = Route.useSearch();
   const navigate = useNavigate({ from: Route.fullPath });
-  const [periodo, setPeriodo] = useState<Periodo>(() => ({ inicio: dataLocal(inicioDoMes()), fim: dataLocal() }));
+  const [periodo, setPeriodo] = useState<Periodo>(() => ({ inicio: dataLocal(inicioDoMes()), fim: dataLocal(fimDoMes()) }));
   const [dialog, setDialog] = useState<{ open: boolean; editar: Lancamento | null }>({ open: false, editar: null });
   const integrar = useIntegrarRepasses();
   const onEditar = useCallback((l: Lancamento) => setDialog({ open: true, editar: l }), []);

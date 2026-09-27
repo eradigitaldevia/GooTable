@@ -56,3 +56,12 @@ export function inicioDoMes(base: Date = new Date(), timeZone = FUSO_OPERACIONAL
   const ymd = dataLocal(base, timeZone);
   return instanteLocal(`${ymd.slice(0, 8)}01`, "00:00:00.000", timeZone);
 }
+
+/** 23:59:59.999 do último dia do mês corrente no fuso operacional. */
+export function fimDoMes(base: Date = new Date(), timeZone = FUSO_OPERACIONAL): Date {
+  const ymd = dataLocal(base, timeZone);
+  const ano = Number(ymd.slice(0, 4));
+  const mes = Number(ymd.slice(5, 7));
+  const ultimoDia = new Date(Date.UTC(ano, mes, 0)).getUTCDate();
+  return instanteLocal(`${ymd.slice(0, 8)}${String(ultimoDia).padStart(2, "0")}`, "23:59:59.999", timeZone);
+}
