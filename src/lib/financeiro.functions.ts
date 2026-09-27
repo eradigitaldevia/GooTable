@@ -323,6 +323,21 @@ export const excluirCadastroFn = createServerFn({ method: "POST" })
   .handler(async ({ context, data }) => {
     const { supabase, userId } = context;
     await assertAcessoRestaurante(supabase, userId, data.restauranteId);
+    const coluna = data.tipo === "categoria" ? "categoria_id" : "fornecedor_id";
+    const rotulo = data.tipo === "categoria" ? "categoria" : "fornecedor";
+    const { count, error: errCount } = await supabase
+      .from("lancamentos_financeiros" as never)
+      .select("id", { count: "exact", head: true })
+      .eq(coluna as never, data.id)
+      .eq("restaurante_id", data.restauranteId);
+    if (errCount) throw new Error(errCount.message);
+    if ((count ?? 0) > 0) {
+      throw new Error(
+        (count ?? 0) === 1
+          ? `Esta ${rotulo} está em uso por 1 lançamento. Mova ou exclua o lançamento antes de excluir.`
+          : `Esta ${rotulo} está em uso por ${count} lançamentos. Mova ou exclua os lançamentos antes de excluir.`,
+      );
+    }
     const tabela = data.tipo === "categoria" ? "categorias_financeiras" : "fornecedores_financeiro";
     const { error } = await supabase.from(tabela as never).delete()
       .eq("id", data.id).eq("restaurante_id", data.restauranteId);
