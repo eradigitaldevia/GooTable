@@ -272,6 +272,7 @@ export const salvarCategoriaFn = createServerFn({ method: "POST" })
   .inputValidator((d) =>
     z.object({
       restauranteId: uuid,
+      id: uuid.optional(),
       tipo: z.enum(["receita", "despesa"]),
       nome: z.string().trim().min(1).max(80),
     }).parse(d),
@@ -279,9 +280,11 @@ export const salvarCategoriaFn = createServerFn({ method: "POST" })
   .handler(async ({ context, data }) => {
     const { supabase, userId } = context;
     await assertAcessoRestaurante(supabase, userId, data.restauranteId);
-    const { error } = await supabase.from("categorias_financeiras" as never)
-      .insert({ restaurante_id: data.restauranteId, tipo: data.tipo, nome: data.nome } as never);
-    if (error) throw new Error(error.code === "23505" ? "Categoria já existe" : error.message);
+    const t = supabase.from("categorias_financeiras" as never);
+    const res = data.id
+      ? await t.update({ nome: data.nome } as never).eq("id", data.id).eq("restaurante_id", data.restauranteId)
+      : await t.insert({ restaurante_id: data.restauranteId, tipo: data.tipo, nome: data.nome } as never);
+    if (res.error) throw new Error(res.error.code === "23505" ? "Categoria já existe" : res.error.message);
     return { ok: true };
   });
 
@@ -290,6 +293,7 @@ export const salvarFornecedorFn = createServerFn({ method: "POST" })
   .inputValidator((d) =>
     z.object({
       restauranteId: uuid,
+      id: uuid.optional(),
       nome: z.string().trim().min(1).max(120),
       cnpjCpf: z.string().trim().max(20).nullable(),
       telefone: z.string().trim().max(20).nullable(),
@@ -299,11 +303,15 @@ export const salvarFornecedorFn = createServerFn({ method: "POST" })
   .handler(async ({ context, data }) => {
     const { supabase, userId } = context;
     await assertAcessoRestaurante(supabase, userId, data.restauranteId);
-    const { error } = await supabase.from("fornecedores_financeiro" as never).insert({
-      restaurante_id: data.restauranteId, nome: data.nome, cnpj_cpf: data.cnpjCpf,
+    const valores = {
+      nome: data.nome, cnpj_cpf: data.cnpjCpf,
       telefone: data.telefone, email: data.email,
-    } as never);
-    if (error) throw new Error(error.message);
+    } as never;
+    const t = supabase.from("fornecedores_financeiro" as never);
+    const res = data.id
+      ? await t.update(valores).eq("id", data.id).eq("restaurante_id", data.restauranteId)
+      : await t.insert({ restaurante_id: data.restauranteId, ...valores });
+    if (res.error) throw new Error(res.error.message);
     return { ok: true };
   });
 
