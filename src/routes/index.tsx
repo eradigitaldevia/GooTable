@@ -20,6 +20,16 @@ const CookiePreferenciasDialog = lazy(() =>
 );
 
 export const Route = createFileRoute("/")({
+  head: () => ({
+    meta: [
+      { title: "GooMesa — Pedidos por QR Code para restaurantes" },
+      { name: "description", content: "GooMesa é uma plataforma SaaS para restaurantes com pedidos por QR Code na mesa." },
+      { property: "og:title", content: "GooMesa — Pedidos por QR Code para restaurantes" },
+      { property: "og:description", content: "GooMesa é uma plataforma SaaS para restaurantes com pedidos por QR Code na mesa." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
+    ],
+  }),
   component: Landing,
 });
 
