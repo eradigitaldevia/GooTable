@@ -1,4 +1,6 @@
+import { Loader2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { useBuscaCep } from "@/hooks/use-busca-cep";
 import { Label } from "@/components/ui/label";
 import type { EnderecoCliente } from "@/lib/delivery.functions";
 import type { BairroTaxa } from "@/lib/taxa-bairro";
@@ -24,19 +26,43 @@ export function EnderecoForm({
 }) {
   const set = <K extends keyof EnderecoCliente>(k: K, v: EnderecoCliente[K]) =>
     onChange({ ...value, [k]: v });
+  const { buscar, buscando, erro } = useBuscaCep();
+
+  const onCep = async (raw: string) => {
+    const cep = formatCep(raw);
+    const base = { ...value, cep };
+    onChange(base);
+    if (cep.replace(/\D/g, "").length !== 8) return;
+    const r = await buscar(cep);
+    if (!r) return;
+    onChange({
+      ...base,
+      rua: r.rua || base.rua,
+      bairro: r.bairro || base.bairro,
+      cidade: r.cidade || base.cidade,
+      uf: (r.uf || base.uf).toUpperCase(),
+    });
+    document.getElementById("end-num")?.focus();
+  };
 
   return (
     <div className="space-y-3">
       <div className="grid grid-cols-3 gap-3">
         <div className="col-span-2">
           <Label htmlFor="end-cep">CEP</Label>
-          <Input
-            id="end-cep"
-            inputMode="numeric"
-            value={value.cep ?? ""}
-            onChange={(e) => set("cep", formatCep(e.target.value))}
-            placeholder="00000-000"
-          />
+          <div className="relative">
+            <Input
+              id="end-cep"
+              inputMode="numeric"
+              value={value.cep ?? ""}
+              onChange={(e) => onCep(e.target.value)}
+              placeholder="00000-000"
+            />
+            {buscando && (
+              <Loader2 className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 animate-spin text-muted-foreground" />
+            )}
+          </div>
+          {erro && <p className="mt-1 text-xs text-destructive">{erro}</p>}
         </div>
         <div>
           <Label htmlFor="end-uf">UF</Label>
