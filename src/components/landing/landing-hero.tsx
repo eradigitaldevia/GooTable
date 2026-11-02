@@ -42,18 +42,18 @@ export function LandingHero({ vendasHref, vendasProps }: LandingHeroProps) {
           <div className="mx-auto max-w-3xl text-center">
             <span className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-3 py-1 text-xs font-medium text-muted-foreground">
               <Zap className="h-3.5 w-3.5 text-primary" />
-              A plataforma completa de operação e gestão gastronômica
+              Pedido sem fila, sem app, sem espera
             </span>
             <h1 className="mt-6 text-4xl font-extrabold tracking-tight sm:text-6xl">
-              Do pedido na mesa ao controle financeiro:{" "}
+              Seu cardápio na mesa,{" "}
               <span className="bg-gradient-to-r from-primary to-primary-glow bg-clip-text text-transparent">
-                a operação completa do seu restaurante
-              </span>{" "}
-              em um só lugar.
+                em um QR Code
+              </span>
+              .
             </h1>
             <p className="mt-6 text-lg text-muted-foreground">
-              O GooMesa unifica o atendimento no salão, o canal próprio de delivery, a produção na
-              cozinha e no bar e a gestão de retaguarda — sem cobrar comissão sobre as suas vendas.
+              Do pedido na mesa ao controle financeiro: a operação completa do seu restaurante em um
+              só lugar.
             </p>
             <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
               <a href={vendasHref} {...vendasProps}>
