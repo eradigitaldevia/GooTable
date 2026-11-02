@@ -30,6 +30,7 @@ import {
   Music,
   Landmark,
   Boxes,
+  LifeBuoy,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
@@ -84,6 +85,7 @@ const NAV_GROUPS = [
       { to: "/admin/garcons", label: "Garçons", icon: UsersRound, exact: false },
       { to: "/admin/cumim", label: "Cumim", icon: Footprints, exact: false },
       { to: "/admin/configuracoes", label: "Configurações", icon: Settings, exact: false },
+      { to: "/admin/suporte", label: "Suporte", icon: LifeBuoy, exact: false },
     ],
   },
 ] as const;
