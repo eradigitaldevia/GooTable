@@ -1,14 +1,18 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
-import { Button } from "@/components/ui/button";
-import { QrCode, ChefHat, Zap, Smartphone, BarChart3, Wallet } from "lucide-react";
-import { ClientOnly } from "@tanstack/react-router";
+import { createFileRoute, ClientOnly } from "@tanstack/react-router";
 import { lazy, Suspense } from "react";
 import { useCookieConsent } from "@/hooks/use-cookie-consent";
 import { usePlataformaConfig } from "@/hooks/use-plataforma-config";
 import { montarLinkVendas } from "@/lib/vendas-link";
 import { REDES_SOCIAIS, montarLinkSocial } from "@/lib/social-links";
-import { SocialIcon } from "@/components/social-icon";
-
+import { LandingHero } from "@/components/landing/landing-hero";
+import { LandingModulosNav } from "@/components/landing/landing-modulos-nav";
+import { LandingSalaoSection } from "@/components/landing/landing-salao-section";
+import { LandingDeliverySection } from "@/components/landing/landing-delivery-section";
+import { LandingKdsSection } from "@/components/landing/landing-kds-section";
+import { LandingRetaguardaSection } from "@/components/landing/landing-retaguarda-section";
+import { LandingDiferenciaisSection } from "@/components/landing/landing-diferenciais-section";
+import { LandingCtaSection } from "@/components/landing/landing-cta-section";
+import { LandingFooter } from "@/components/landing/landing-footer";
 
 const CookieBanner = lazy(() =>
   import("@/components/legal/cookie-banner").then((m) => ({ default: m.CookieBanner })),
@@ -19,13 +23,17 @@ const CookiePreferenciasDialog = lazy(() =>
   })),
 );
 
+const TITULO = "GooMesa — Operação e gestão completa para restaurantes";
+const DESCRICAO =
+  "Pedidos por QR Code, delivery próprio sem comissão, KDS com impressão automática, estoque com ficha técnica e financeiro com DRE.";
+
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "GooMesa — Pedidos por QR Code para restaurantes" },
-      { name: "description", content: "GooMesa é uma plataforma SaaS para restaurantes com pedidos por QR Code na mesa." },
-      { property: "og:title", content: "GooMesa — Pedidos por QR Code para restaurantes" },
-      { property: "og:description", content: "GooMesa é uma plataforma SaaS para restaurantes com pedidos por QR Code na mesa." },
+      { title: TITULO },
+      { name: "description", content: DESCRICAO },
+      { property: "og:title", content: TITULO },
+      { property: "og:description", content: DESCRICAO },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
@@ -37,7 +45,8 @@ function Landing() {
   const cookies = useCookieConsent("landing");
   const { data: config } = usePlataformaConfig();
   const vendas = montarLinkVendas(config?.vendas_whatsapp, config?.vendas_link, config?.vendas_mensagem);
-  const vendasProps = vendas?.isWhatsapp ? { target: "_blank", rel: "noreferrer" } : {};
+  const vendasProps: Record<string, string> = vendas?.isWhatsapp ? { target: "_blank", rel: "noreferrer" } : {};
+  const vendasHref = vendas?.href ?? undefined;
 
   const sociais = REDES_SOCIAIS.filter((rede) => config?.[rede.campoAtivo] ?? true)
     .map((rede) => ({
@@ -47,140 +56,17 @@ function Landing() {
     }))
     .filter((s): s is { chave: typeof s.chave; rotulo: string; href: string } => !!s.href);
 
-
-
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="sticky top-0 z-30 border-b border-border/60 bg-background/80 backdrop-blur">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4">
-          <Link to="/" className="flex items-center gap-2">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary text-primary-foreground">
-              <QrCode className="h-5 w-5" />
-            </div>
-            <span className="text-lg font-bold tracking-tight">GooMesa</span>
-          </Link>
-          <nav className="flex items-center gap-2">
-            <Link to="/login">
-              <Button variant="ghost" size="sm">Entrar</Button>
-            </Link>
-            <a href={vendas?.href ?? undefined} {...vendasProps}>
-              <Button size="sm" disabled={!vendas}>Fale com vendas</Button>
-            </a>
-
-          </nav>
-        </div>
-      </header>
-
-      {/* Hero */}
-      <section className="relative overflow-hidden">
-        <div
-          aria-hidden
-          className="pointer-events-none absolute inset-x-0 -top-32 h-[480px] opacity-60"
-          style={{
-            background:
-              "radial-gradient(60% 50% at 50% 0%, oklch(0.72 0.18 50 / 0.25), transparent 70%)",
-          }}
-        />
-        <div className="relative mx-auto max-w-6xl px-4 pb-24 pt-16 sm:pt-24">
-          <div className="mx-auto max-w-3xl text-center">
-            <span className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-3 py-1 text-xs font-medium text-muted-foreground">
-              <Zap className="h-3.5 w-3.5 text-primary" />
-              Pedido sem fila, sem app, sem espera
-            </span>
-            <h1 className="mt-6 text-4xl font-extrabold tracking-tight sm:text-6xl">
-              Seu cardápio na mesa,{" "}
-              <span className="bg-gradient-to-r from-primary to-primary-glow bg-clip-text text-transparent">
-                em um QR Code
-              </span>
-              .
-            </h1>
-            <p className="mt-6 text-lg text-muted-foreground">
-              O cliente escaneia, escolhe e pede pelo celular. O pedido cai em tempo real no
-              painel da cozinha. Você só precisa servir.
-            </p>
-            <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
-              <a href={vendas?.href ?? undefined} {...vendasProps}>
-                <Button size="lg" className="h-12 px-7 text-base shadow-[var(--shadow-elegant)]" disabled={!vendas}>
-                  Fale com vendas
-                </Button>
-              </a>
-
-              <Link to="/login">
-                <Button size="lg" variant="outline" className="h-12 px-7 text-base">
-                  Já tenho conta
-                </Button>
-              </Link>
-            </div>
-          </div>
-
-          {/* Features */}
-          <div className="mt-20 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {[
-              { icon: QrCode, title: "QR Code por mesa", desc: "Token único e seguro impresso para cada mesa." },
-              { icon: Smartphone, title: "Mobile-first", desc: "Cardápio bonito e rápido — funciona em qualquer celular." },
-              { icon: ChefHat, title: "Painel realtime", desc: "Pedidos aparecem na cozinha instantaneamente." },
-              { icon: BarChart3, title: "Dashboard", desc: "Faturamento, mesas ocupadas e pedidos do dia." },
-              { icon: Wallet, title: "PIX opcional", desc: "Habilite pagamento via PIX direto no carrinho." },
-              { icon: Zap, title: "Dividir conta", desc: "Cada cliente diz o nome dele em cada item." },
-            ].map((f) => (
-              <div
-                key={f.title}
-                className="rounded-2xl border border-border bg-card p-6 shadow-[var(--shadow-soft)] transition-all hover:-translate-y-0.5 hover:shadow-[var(--shadow-elegant)]"
-              >
-                <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-accent text-primary">
-                  <f.icon className="h-5 w-5" />
-                </div>
-                <h3 className="mt-4 text-lg font-semibold">{f.title}</h3>
-                <p className="mt-1 text-sm text-muted-foreground">{f.desc}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <footer className="border-t border-border bg-card/40">
-        <div className="mx-auto flex max-w-6xl flex-col gap-3 px-4 py-8 text-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
-          <span>
-            © {new Date().getFullYear()} GooMesa. Feito para restaurantes que querem servir mais rápido.
-          </span>
-          {sociais.length > 0 && (
-            <nav className="flex items-center gap-3">
-              {sociais.map((s) => (
-                <a
-                  key={s.chave}
-                  href={s.href}
-                  target="_blank"
-                  rel="noreferrer"
-                  aria-label={s.rotulo}
-                  className="text-muted-foreground transition-colors hover:text-foreground"
-                >
-                  <SocialIcon rede={s.chave} className="h-5 w-5" />
-                </a>
-              ))}
-            </nav>
-          )}
-          <nav className="flex flex-wrap gap-4">
-
-            <Link to="/termos" className="hover:text-foreground">
-              Termos de Uso
-            </Link>
-            <Link to="/privacidade" className="hover:text-foreground">
-              Política de Privacidade
-            </Link>
-            <Link to="/direitos" className="hover:text-foreground">
-              Direitos do titular
-            </Link>
-            <button
-              type="button"
-              onClick={cookies.abrirPreferencias}
-              className="text-left hover:text-foreground"
-            >
-              Preferências de cookies
-            </button>
-          </nav>
-        </div>
-      </footer>
+      <LandingHero vendasHref={vendasHref} vendasProps={vendasProps} />
+      <LandingModulosNav />
+      <LandingSalaoSection />
+      <LandingDeliverySection />
+      <LandingKdsSection />
+      <LandingRetaguardaSection />
+      <LandingDiferenciaisSection />
+      <LandingCtaSection vendasHref={vendasHref} vendasProps={vendasProps} />
+      <LandingFooter sociais={sociais} onAbrirCookies={cookies.abrirPreferencias} />
 
       <ClientOnly>
         <Suspense fallback={null}>
@@ -200,6 +86,5 @@ function Landing() {
         </Suspense>
       </ClientOnly>
     </div>
-
   );
 }
