@@ -52,7 +52,11 @@ export const perguntarSuporteFn = createServerFn({ method: "POST" })
         instructions: INSTRUCOES,
         input: data.mensagens.map((m) => ({ role: m.role, content: m.content })),
       });
-      const texto = (res as { output_text?: string }).output_text?.trim();
+      const texto = res.output
+        .flatMap((o) => (o.type === "message" ? o.content : []))
+        .map((c) => (c.type === "output_text" ? c.text : ""))
+        .join("")
+        .trim();
       return { resposta: texto || "Desculpe, não consegui gerar uma resposta agora." };
     } catch (e) {
       if (e instanceof RateLimitError)
