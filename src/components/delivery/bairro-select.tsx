@@ -20,7 +20,9 @@ export function BairroSelect({
   permitirOutro: boolean;
 }) {
   const achado = bairros.find((b) => normalizarBairro(b.nome) === normalizarBairro(value));
-  const [outro, setOutro] = useState(!!value.trim() && !achado);
+  const [outroEscolhido, setOutro] = useState(!!value.trim() && !achado);
+  // Bairro preenchido externamente (ex.: CEP) e fora da lista conta como "outro".
+  const outro = outroEscolhido || (!!value.trim() && !achado);
   const selecionado = achado ? achado.nome : outro && permitirOutro ? OUTRO : "";
 
   return (
