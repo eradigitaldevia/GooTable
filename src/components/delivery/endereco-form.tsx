@@ -1,6 +1,8 @@
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import type { EnderecoCliente } from "@/lib/delivery.functions";
+import type { BairroTaxa } from "@/lib/taxa-bairro";
+import { BairroSelect } from "./bairro-select";
 
 function formatCep(raw: string) {
   const d = raw.replace(/\D/g, "").slice(0, 8);
@@ -11,9 +13,14 @@ function formatCep(raw: string) {
 export function EnderecoForm({
   value,
   onChange,
+  bairros,
+  permitirOutro,
 }: {
   value: EnderecoCliente;
   onChange: (e: EnderecoCliente) => void;
+  /** Quando informado, o bairro é escolhido nesta lista (taxa por bairro). */
+  bairros?: BairroTaxa[];
+  permitirOutro?: boolean;
 }) {
   const set = <K extends keyof EnderecoCliente>(k: K, v: EnderecoCliente[K]) =>
     onChange({ ...value, [k]: v });
@@ -71,15 +78,24 @@ export function EnderecoForm({
           />
         </div>
       </div>
-      <div>
-        <Label htmlFor="end-bai">Bairro</Label>
-        <Input
-          id="end-bai"
+      {bairros ? (
+        <BairroSelect
           value={value.bairro}
-          onChange={(e) => set("bairro", e.target.value)}
-          placeholder="Bela Vista"
+          onChange={(v) => set("bairro", v)}
+          bairros={bairros}
+          permitirOutro={!!permitirOutro}
         />
-      </div>
+      ) : (
+        <div>
+          <Label htmlFor="end-bai">Bairro</Label>
+          <Input
+            id="end-bai"
+            value={value.bairro}
+            onChange={(e) => set("bairro", e.target.value)}
+            placeholder="Bela Vista"
+          />
+        </div>
+      )}
       <div>
         <Label htmlFor="end-cid">Cidade</Label>
         <Input
