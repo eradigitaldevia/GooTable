@@ -61,7 +61,8 @@ export function MovimentoDialog({ restauranteId, open, onClose }: { restauranteI
           <div className="grid grid-cols-2 gap-3">
             <div className="grid gap-1.5">
               <Label>Tipo</Label>
-              <Select value={f.tipo} onValueChange={(v) => setF({ ...f, tipo: v as Tipo })}>
+              <Select value={f.tipo} onValueChange={(v) => setF({ ...f, tipo: v as Tipo, ...(v !== "entrada" ? { conta: false } : {}) })}>
+
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="entrada">Entrada (compra)</SelectItem>
