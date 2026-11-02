@@ -357,7 +357,11 @@ export const criarPedidoDeliveryFn = createServerFn({ method: "POST" })
     // 1. Validações de modalidade
     if (data.modo === "delivery") {
       if (!data.endereco) throw new Error("Endereço obrigatório para delivery");
+    } else if (!r.delivery_retirada_ativa) {
+      throw new Error("Retirada indisponível");
     }
+
+    // 1b. Taxa de entrega (por bairro, quando configurado) — sempre calculada no servidor
     const resTaxa = resolverTaxaEntrega(data.modo, data.endereco?.bairro, {
       porBairro: !!r.delivery_taxa_por_bairro,
       foraLista: r.delivery_bairro_fora_lista ?? "bloquear",
@@ -366,11 +370,6 @@ export const criarPedidoDeliveryFn = createServerFn({ method: "POST" })
         data.modo === "delivery" && r.delivery_taxa_por_bairro ? await carregarBairrosAtivos(r.id) : [],
     });
     if (!resTaxa.ok) throw new Error(resTaxa.erro);
-    if (data.modo === "delivery") {
-      // endereço já validado acima
-    } else if (!r.delivery_retirada_ativa) {
-      throw new Error("Retirada indisponível");
-    }
 
     // 2. Validação de pagamento aceito
     if (data.pagamento.tipo === "pix" && !(r.delivery_aceita_pix && r.pix_habilitado && r.pix_chave)) {
