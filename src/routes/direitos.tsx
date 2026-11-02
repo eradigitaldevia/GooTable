@@ -23,9 +23,9 @@ import {
   LGPD_TIPOS_SOLICITACAO,
 } from "@/lib/lgpd";
 
-const TITULO = "Direitos do titular (LGPD) — Mesa";
+const TITULO = "Direitos do titular (LGPD) — GooMesa";
 const DESC =
-  "Solicite acesso, correção, portabilidade ou exclusão dos seus dados pessoais tratados na plataforma Mesa.";
+  "Solicite acesso, correção, portabilidade ou exclusão dos seus dados pessoais tratados na plataforma GooMesa.";
 
 export const Route = createFileRoute("/direitos")({
   head: () => ({

@@ -18,7 +18,7 @@ export function LegalLayout({
             <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary text-primary-foreground">
               <QrCode className="h-4 w-4" />
             </div>
-            <span className="font-bold">Mesa</span>
+            <span className="font-bold">GooMesa</span>
           </Link>
           <nav className="flex gap-4 text-sm text-muted-foreground">
             <Link to="/termos" className="hover:text-foreground">

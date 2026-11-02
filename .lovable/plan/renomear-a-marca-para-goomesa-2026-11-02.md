@@ -26,3 +26,17 @@ Trocar apenas o nome da plataforma ("Mesa" / "Mesa Express") por **GooMesa**. A 
 - Domínios (registro/conexão de goomesa.com / .com.br) — pode ser feito depois.
 - Mensagem de vendas já salva no painel Superadmin, se tiver sido personalizada (fica como está).
 - Nenhuma alteração de banco, regras ou layout.
+
+&nbsp;
+
+IMPORTANTE:
+
+Execute APENAS a alteração explicitamente solicitada.
+
+NÃO refatore, otimize, melhore ou modifique código não relacionado.
+
+NÃO faça suposições.
+
+Se algo não estiver claro, PARE e pergunte antes de alterar qualquer coisa.
+
+Preserve 100% do comportamento e da funcionalidade existentes.
