@@ -7,6 +7,7 @@ import { gerarPixPayload } from "./pix";
 import { carregarBannersPublicos } from "./banners-publicos.server";
 import type { BannerPublico } from "./banners.functions";
 import type { Json } from "@/integrations/supabase/types";
+import { resolverTaxaEntrega, type BairroForaLista, type BairroTaxa } from "./taxa-bairro";
 import type {
   CategoriaPublica,
   ProdutoPublico,
@@ -30,6 +31,9 @@ export interface RestauranteDeliveryPublico extends RestaurantePublico {
   delivery_aceita_pix: boolean;
   delivery_whatsapp: string | null;
   pix_habilitado: boolean;
+  delivery_taxa_por_bairro: boolean;
+  delivery_bairro_fora_lista: BairroForaLista;
+  delivery_bairros: BairroTaxa[];
   aberto_agora: boolean;
   proxima_abertura_label: string | null;
 }
@@ -124,6 +128,17 @@ async function carregarRestaurantePorSlug(slug: string): Promise<RestauranteDeli
   if (!data.ativo) throw new Error("Restaurante temporariamente indisponível");
   if (!data.delivery_ativo) throw new Error("Delivery indisponível");
   return data as unknown as RestauranteDeliveryRow;
+}
+
+async function carregarBairrosAtivos(restauranteId: string): Promise<BairroTaxa[]> {
+  const { data, error } = await supabaseAdmin
+    .from("delivery_bairros")
+    .select("nome, taxa")
+    .eq("restaurante_id", restauranteId)
+    .eq("ativo", true)
+    .order("nome");
+  if (error) throw new Error(error.message);
+  return (data ?? []).map((b) => ({ nome: b.nome, taxa: Number(b.taxa) }));
 }
 
 function toPublicRestaurante(r: RestauranteDeliveryRow): RestauranteDeliveryPublico {
@@ -254,6 +269,9 @@ export const getRestauranteDeliveryFn = createServerFn({ method: "POST" })
       const aberto = await checarAbertoAgora(r.id);
       const publico = toPublicRestaurante(r);
       publico.aberto_agora = aberto;
+      publico.delivery_bairros = publico.delivery_taxa_por_bairro
+        ? await carregarBairrosAtivos(r.id)
+        : [];
       publico.proxima_abertura_label = aberto
         ? null
         : calcularProximaAbertura((r as unknown as { horario_funcionamento: unknown }).horario_funcionamento);
@@ -342,6 +360,16 @@ export const criarPedidoDeliveryFn = createServerFn({ method: "POST" })
     } else if (!r.delivery_retirada_ativa) {
       throw new Error("Retirada indisponível");
     }
+
+    // 1b. Taxa de entrega (por bairro, quando configurado) — sempre calculada no servidor
+    const resTaxa = resolverTaxaEntrega(data.modo, data.endereco?.bairro, {
+      porBairro: !!r.delivery_taxa_por_bairro,
+      foraLista: r.delivery_bairro_fora_lista ?? "bloquear",
+      taxaPadrao: Number(r.delivery_taxa_entrega ?? 0),
+      bairros:
+        data.modo === "delivery" && r.delivery_taxa_por_bairro ? await carregarBairrosAtivos(r.id) : [],
+    });
+    if (!resTaxa.ok) throw new Error(resTaxa.erro);
 
     // 2. Validação de pagamento aceito
     if (data.pagamento.tipo === "pix" && !(r.delivery_aceita_pix && r.pix_habilitado && r.pix_chave)) {
@@ -512,7 +540,7 @@ export const criarPedidoDeliveryFn = createServerFn({ method: "POST" })
     }
 
     // 10. Atualiza pedido com canal/endereço/taxa/telefone/previsão
-    const taxa = data.modo === "delivery" ? Number(r.delivery_taxa_entrega ?? 0) : 0;
+    const taxa = resTaxa.taxa;
     const previsaoMin = Number(r.delivery_tempo_estimado_min ?? 45);
     const enderecoPayload =
       data.modo === "delivery" && data.endereco

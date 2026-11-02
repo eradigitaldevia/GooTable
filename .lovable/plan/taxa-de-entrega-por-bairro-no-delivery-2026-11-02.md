@@ -1,9 +1,11 @@
 # Taxa de entrega por bairro no Delivery
 
 ## Objetivo
+
 O restaurante cadastra os bairros que atende, cada um com sua própria taxa. Quando o cliente informa o endereço de entrega, o app identifica o bairro e cobra a taxa certa automaticamente. Retirada no balcão continua sem taxa.
 
 ## Como vai funcionar para o restaurante (Admin > Configurações > Delivery)
+
 - Nova seção **"Taxa por bairro"** com uma chave liga/desliga.
   - Desligada: tudo continua igual ao de hoje (taxa única).
   - Ligada: a cobrança passa a seguir a tabela de bairros.
@@ -13,6 +15,7 @@ O restaurante cadastra os bairros que atende, cada um com sua própria taxa. Qua
   - **Cobrar taxa padrão** — usa a taxa única atual como reserva.
 
 ## Como vai funcionar para o cliente (endereço de entrega)
+
 - No formulário de endereço, o campo Bairro vira uma lista com os bairros cadastrados e a taxa ao lado de cada um.
 - Se a opção for "Cobrar taxa padrão", a lista inclui "Outro bairro", que abre um campo para digitar o nome e aplica a taxa padrão.
 - Se for "Bloquear", só os bairros da lista podem ser escolhidos.
@@ -20,13 +23,16 @@ O restaurante cadastra os bairros que atende, cada um com sua própria taxa. Qua
 - Endereços salvos do cliente: ao reutilizar um, o app reconhece o bairro pelo nome (sem diferenciar acentos/maiúsculas); se não reconhecer, aplica a regra acima.
 
 ## Segurança do valor
+
 - O servidor sempre recalcula a taxa pelo bairro informado, ignorando qualquer valor vindo do navegador. Bairro fora da lista com regra "Bloquear" é rejeitado também no servidor.
 
 ## Fora do escopo
+
 - Cobrança por distância (km), mapas e CEP automático.
 - Mudanças em pedidos de mesa, Kanban, relatórios e taxa única existente (preservada).
 
 ## Detalhes técnicos
+
 - Migração:
   - Tabela `delivery_bairros` (id, restaurante_id, nome, nome_normalizado via `unaccent+lower`, taxa numeric >= 0, ativo, ordem, timestamps; único por restaurante+nome_normalizado). GRANT + RLS: membros admin gerenciam; leitura pública feita apenas pelo servidor.
   - Colunas em `restaurantes`: `delivery_taxa_por_bairro boolean default false`, `delivery_bairro_fora_lista text default 'bloquear'` (`bloquear` | `taxa_padrao`).
@@ -36,3 +42,17 @@ O restaurante cadastra os bairros que atende, cada um com sua própria taxa. Qua
 - `src/components/delivery/endereco-form.tsx`: seletor de bairro + "Outro bairro" condicional.
 - `src/routes/delivery.$slug.tsx`: taxa exibida passa a vir do bairro escolhido.
 - Teste Vitest para a regra: bairro cadastrado cobra sua taxa; fora da lista bloqueia ou usa taxa padrão conforme configuração; retirada = 0.
+
+&nbsp;
+
+IMPORTANTE:
+
+Execute APENAS a alteração explicitamente solicitada.
+
+NÃO refatore, otimize, melhore ou modifique código não relacionado.
+
+NÃO faça suposições.
+
+Se algo não estiver claro, PARE e pergunte antes de alterar qualquer coisa.
+
+Preserve 100% do comportamento e da funcionalidade existentes.

@@ -30,6 +30,11 @@ import { CarrinhoItemRow } from "@/components/cliente/carrinho-item-row";
 import { DeliveryHeader } from "@/components/delivery/delivery-header";
 import { EnderecoForm } from "@/components/delivery/endereco-form";
 import {
+  MSG_BAIRRO_NAO_ATENDIDO,
+  resolverTaxaEntrega,
+  type ConfigTaxaBairro,
+} from "@/lib/taxa-bairro";
+import {
   buscarClienteDeliveryFn,
   criarPedidoDeliveryFn,
   getRestauranteDeliveryFn,
@@ -258,6 +263,12 @@ function DeliveryPage() {
           state={state}
           setState={setState}
           taxa={Number(restaurante.delivery_taxa_entrega ?? 0)}
+          cfgTaxa={{
+            porBairro: !!restaurante.delivery_taxa_por_bairro,
+            foraLista: restaurante.delivery_bairro_fora_lista ?? "bloquear",
+            taxaPadrao: Number(restaurante.delivery_taxa_entrega ?? 0),
+            bairros: restaurante.delivery_bairros ?? [],
+          }}
           minimo={Number(restaurante.delivery_pedido_minimo ?? 0)}
           previsao={restaurante.delivery_tempo_estimado_min}
           retiradaAtiva={restaurante.delivery_retirada_ativa}
@@ -614,6 +625,7 @@ function StepRevisao({
   state,
   setState,
   taxa,
+  cfgTaxa,
   minimo,
   previsao,
   retiradaAtiva,
@@ -632,6 +644,7 @@ function StepRevisao({
   state: DeliveryState;
   setState: (s: DeliveryState | ((p: DeliveryState) => DeliveryState)) => void;
   taxa: number;
+  cfgTaxa: ConfigTaxaBairro;
   minimo: number;
   previsao: number;
   retiradaAtiva: boolean;
@@ -683,7 +696,11 @@ function StepRevisao({
     atualizar(cart.map((it, i) => (i === idx ? { ...it, observacao: o || undefined } : it)));
 
   const subtotal = cartTotal(cart);
-  const taxaAplicada = state.modo === "delivery" ? taxa : 0;
+  void taxa;
+  const resTaxa = resolverTaxaEntrega(state.modo, state.endereco?.bairro, cfgTaxa);
+  const bairroBloqueado =
+    state.modo === "delivery" && !!state.endereco?.bairro.trim() && !resTaxa.ok;
+  const taxaAplicada = resTaxa.ok ? resTaxa.taxa : 0;
   const total = subtotal + taxaAplicada;
   const falta = Math.max(0, minimo - subtotal);
   const enderecoOk =
@@ -695,7 +712,7 @@ function StepRevisao({
       state.endereco.cidade.trim() &&
       state.endereco.uf.trim().length === 2);
   const podeEnviar =
-    cart.length > 0 && falta === 0 && enderecoOk && metodosDisp.length > 0 && !enviando && aberto;
+    cart.length > 0 && falta === 0 && enderecoOk && !bairroBloqueado && metodosDisp.length > 0 && !enviando && aberto;
 
   const handleEnviar = async () => {
     if (!podeEnviar) return;
@@ -850,7 +867,12 @@ function StepRevisao({
                 <EnderecoForm
                   value={state.endereco ?? EMPTY_ENDERECO}
                   onChange={(e) => setState((p) => ({ ...p, endereco: e }))}
+                  bairros={cfgTaxa.porBairro ? cfgTaxa.bairros : undefined}
+                  permitirOutro={cfgTaxa.foraLista === "taxa_padrao"}
                 />
+                {bairroBloqueado && (
+                  <p className="text-sm text-destructive">{MSG_BAIRRO_NAO_ATENDIDO}</p>
+                )}
               </section>
             )}
 
