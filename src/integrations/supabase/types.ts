@@ -873,6 +873,50 @@ export type Database = {
         }
         Relationships: []
       }
+      delivery_bairros: {
+        Row: {
+          ativo: boolean
+          atualizado_em: string
+          criado_em: string
+          id: string
+          nome: string
+          nome_normalizado: string
+          ordem: number
+          restaurante_id: string
+          taxa: number
+        }
+        Insert: {
+          ativo?: boolean
+          atualizado_em?: string
+          criado_em?: string
+          id?: string
+          nome: string
+          nome_normalizado: string
+          ordem?: number
+          restaurante_id: string
+          taxa?: number
+        }
+        Update: {
+          ativo?: boolean
+          atualizado_em?: string
+          criado_em?: string
+          id?: string
+          nome?: string
+          nome_normalizado?: string
+          ordem?: number
+          restaurante_id?: string
+          taxa?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "delivery_bairros_restaurante_id_fkey"
+            columns: ["restaurante_id"]
+            isOneToOne: false
+            referencedRelation: "restaurantes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       estoque_fichas: {
         Row: {
           criado_em: string
@@ -2412,11 +2456,13 @@ export type Database = {
           delivery_aceita_dinheiro: boolean
           delivery_aceita_pix: boolean
           delivery_ativo: boolean
+          delivery_bairro_fora_lista: string
           delivery_pedido_minimo: number
           delivery_raio_km: number | null
           delivery_retirada_ativa: boolean
           delivery_slug: string | null
           delivery_taxa_entrega: number
+          delivery_taxa_por_bairro: boolean
           delivery_tempo_estimado_min: number
           delivery_whatsapp: string | null
           endereco: string | null
@@ -2476,11 +2522,13 @@ export type Database = {
           delivery_aceita_dinheiro?: boolean
           delivery_aceita_pix?: boolean
           delivery_ativo?: boolean
+          delivery_bairro_fora_lista?: string
           delivery_pedido_minimo?: number
           delivery_raio_km?: number | null
           delivery_retirada_ativa?: boolean
           delivery_slug?: string | null
           delivery_taxa_entrega?: number
+          delivery_taxa_por_bairro?: boolean
           delivery_tempo_estimado_min?: number
           delivery_whatsapp?: string | null
           endereco?: string | null
@@ -2540,11 +2588,13 @@ export type Database = {
           delivery_aceita_dinheiro?: boolean
           delivery_aceita_pix?: boolean
           delivery_ativo?: boolean
+          delivery_bairro_fora_lista?: string
           delivery_pedido_minimo?: number
           delivery_raio_km?: number | null
           delivery_retirada_ativa?: boolean
           delivery_slug?: string | null
           delivery_taxa_entrega?: number
+          delivery_taxa_por_bairro?: boolean
           delivery_tempo_estimado_min?: number
           delivery_whatsapp?: string | null
           endereco?: string | null
