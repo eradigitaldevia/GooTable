@@ -49,6 +49,7 @@ import { Route as AuthenticatedAdminFinanceiroRouteImport } from './routes/_auth
 import { Route as AuthenticatedAdminGarconsRouteImport } from './routes/_authenticated/admin/garcons'
 import { Route as AuthenticatedAdminMesasRouteImport } from './routes/_authenticated/admin/mesas'
 import { Route as AuthenticatedAdminPedidosRouteImport } from './routes/_authenticated/admin/pedidos'
+import { Route as AuthenticatedAdminSuporteRouteImport } from './routes/_authenticated/admin/suporte'
 import { Route as AuthenticatedCaixaIndexRouteImport } from './routes/_authenticated/caixa.index'
 import { Route as AuthenticatedCaixaMovimentosRouteImport } from './routes/_authenticated/caixa.movimentos'
 import { Route as AuthenticatedCaixaPagamentosRouteImport } from './routes/_authenticated/caixa.pagamentos'
@@ -280,6 +281,12 @@ const AuthenticatedAdminPedidosRoute =
     path: '/pedidos',
     getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
+const AuthenticatedAdminSuporteRoute =
+  AuthenticatedAdminSuporteRouteImport.update({
+    id: '/suporte',
+    path: '/suporte',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
 const AuthenticatedCaixaIndexRoute = AuthenticatedCaixaIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -417,6 +424,7 @@ export interface FileRoutesByFullPath {
   '/admin/garcons': typeof AuthenticatedAdminGarconsRoute
   '/admin/mesas': typeof AuthenticatedAdminMesasRoute
   '/admin/pedidos': typeof AuthenticatedAdminPedidosRoute
+  '/admin/suporte': typeof AuthenticatedAdminSuporteRoute
   '/caixa/movimentos': typeof AuthenticatedCaixaMovimentosRoute
   '/caixa/pagamentos': typeof AuthenticatedCaixaPagamentosRoute
   '/caixa/relatorio': typeof AuthenticatedCaixaRelatorioRoute
@@ -472,6 +480,7 @@ export interface FileRoutesByTo {
   '/admin/garcons': typeof AuthenticatedAdminGarconsRoute
   '/admin/mesas': typeof AuthenticatedAdminMesasRoute
   '/admin/pedidos': typeof AuthenticatedAdminPedidosRoute
+  '/admin/suporte': typeof AuthenticatedAdminSuporteRoute
   '/caixa/movimentos': typeof AuthenticatedCaixaMovimentosRoute
   '/caixa/pagamentos': typeof AuthenticatedCaixaPagamentosRoute
   '/caixa/relatorio': typeof AuthenticatedCaixaRelatorioRoute
@@ -532,6 +541,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/garcons': typeof AuthenticatedAdminGarconsRoute
   '/_authenticated/admin/mesas': typeof AuthenticatedAdminMesasRoute
   '/_authenticated/admin/pedidos': typeof AuthenticatedAdminPedidosRoute
+  '/_authenticated/admin/suporte': typeof AuthenticatedAdminSuporteRoute
   '/_authenticated/caixa/movimentos': typeof AuthenticatedCaixaMovimentosRoute
   '/_authenticated/caixa/pagamentos': typeof AuthenticatedCaixaPagamentosRoute
   '/_authenticated/caixa/relatorio': typeof AuthenticatedCaixaRelatorioRoute
@@ -592,6 +602,7 @@ export interface FileRouteTypes {
     | '/admin/garcons'
     | '/admin/mesas'
     | '/admin/pedidos'
+    | '/admin/suporte'
     | '/caixa/movimentos'
     | '/caixa/pagamentos'
     | '/caixa/relatorio'
@@ -647,6 +658,7 @@ export interface FileRouteTypes {
     | '/admin/garcons'
     | '/admin/mesas'
     | '/admin/pedidos'
+    | '/admin/suporte'
     | '/caixa/movimentos'
     | '/caixa/pagamentos'
     | '/caixa/relatorio'
@@ -706,6 +718,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/garcons'
     | '/_authenticated/admin/mesas'
     | '/_authenticated/admin/pedidos'
+    | '/_authenticated/admin/suporte'
     | '/_authenticated/caixa/movimentos'
     | '/_authenticated/caixa/pagamentos'
     | '/_authenticated/caixa/relatorio'
@@ -1028,6 +1041,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminPedidosRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
+    '/_authenticated/admin/suporte': {
+      id: '/_authenticated/admin/suporte'
+      path: '/suporte'
+      fullPath: '/admin/suporte'
+      preLoaderRoute: typeof AuthenticatedAdminSuporteRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
     '/_authenticated/caixa/': {
       id: '/_authenticated/caixa/'
       path: '/'
@@ -1182,6 +1202,7 @@ interface AuthenticatedAdminRouteChildren {
   AuthenticatedAdminGarconsRoute: typeof AuthenticatedAdminGarconsRoute
   AuthenticatedAdminMesasRoute: typeof AuthenticatedAdminMesasRoute
   AuthenticatedAdminPedidosRoute: typeof AuthenticatedAdminPedidosRoute
+  AuthenticatedAdminSuporteRoute: typeof AuthenticatedAdminSuporteRoute
   AuthenticatedAdminIndexRoute: typeof AuthenticatedAdminIndexRoute
   AuthenticatedAdminMesasMesaIdRoute: typeof AuthenticatedAdminMesasMesaIdRoute
   AuthenticatedAdminCuminsCumimIdDisplayRoute: typeof AuthenticatedAdminCuminsCumimIdDisplayRoute
@@ -1210,6 +1231,7 @@ const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
   AuthenticatedAdminGarconsRoute: AuthenticatedAdminGarconsRoute,
   AuthenticatedAdminMesasRoute: AuthenticatedAdminMesasRoute,
   AuthenticatedAdminPedidosRoute: AuthenticatedAdminPedidosRoute,
+  AuthenticatedAdminSuporteRoute: AuthenticatedAdminSuporteRoute,
   AuthenticatedAdminIndexRoute: AuthenticatedAdminIndexRoute,
   AuthenticatedAdminMesasMesaIdRoute: AuthenticatedAdminMesasMesaIdRoute,
   AuthenticatedAdminCuminsCumimIdDisplayRoute:
