@@ -6,7 +6,7 @@
 @custom-variant dark (&:is(.dark *));
 
 /*
- * Mesa — design system
+ * GooMesa — design system
  * Estética: SaaS premium para restaurantes, mobile-first, acentos quentes em fundo claro/neutro.
  * Fonte: Inter (self-hosted em /public/fonts/inter, declarada em src/styles/inter.css).
  */

@@ -17,7 +17,7 @@ function Cadastro() {
           <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-primary-foreground">
             <QrCode className="h-5 w-5" />
           </div>
-          <span className="text-xl font-bold">Mesa</span>
+          <span className="text-xl font-bold">GooMesa</span>
         </Link>
         <h1 className="text-2xl font-bold tracking-tight">Cadastro fechado</h1>
         <p className="mt-2 text-sm text-muted-foreground">

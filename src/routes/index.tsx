@@ -48,7 +48,7 @@ function Landing() {
             <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary text-primary-foreground">
               <QrCode className="h-5 w-5" />
             </div>
-            <span className="text-lg font-bold tracking-tight">Mesa</span>
+            <span className="text-lg font-bold tracking-tight">GooMesa</span>
           </Link>
           <nav className="flex items-center gap-2">
             <Link to="/login">
@@ -132,7 +132,7 @@ function Landing() {
       <footer className="border-t border-border bg-card/40">
         <div className="mx-auto flex max-w-6xl flex-col gap-3 px-4 py-8 text-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
           <span>
-            © {new Date().getFullYear()} Mesa. Feito para restaurantes que querem servir mais rápido.
+            © {new Date().getFullYear()} GooMesa. Feito para restaurantes que querem servir mais rápido.
           </span>
           {sociais.length > 0 && (
             <nav className="flex items-center gap-3">

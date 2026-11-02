@@ -8,7 +8,7 @@ import {
   LGPD_VERSAO,
 } from "@/lib/lgpd";
 
-const TITULO = "Política de Privacidade — Mesa";
+const TITULO = "Política de Privacidade — GooMesa";
 const DESC =
   "Como a Mesa coleta, usa, compartilha e protege dados pessoais de restaurantes e clientes, conforme a LGPD.";
 
@@ -30,7 +30,7 @@ function PrivacidadePage() {
   return (
     <LegalLayout titulo="Política de Privacidade" atualizadoEm={`versão ${LGPD_VERSAO}`}>
       <p>
-        Esta Política explica como tratamos dados pessoais na plataforma Mesa,
+        Esta Política explica como tratamos dados pessoais na plataforma GooMesa,
         em conformidade com a Lei nº 13.709/2018 (LGPD). Controlador:{" "}
         {LGPD_RAZAO_SOCIAL}, CNPJ {LGPD_CNPJ}. Encarregado (DPO):{" "}
         {LGPD_EMAIL_DPO}.
