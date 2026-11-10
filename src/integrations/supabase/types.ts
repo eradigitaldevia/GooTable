@@ -3123,6 +3123,10 @@ export type Database = {
         Args: { _restaurante_id: string }
         Returns: boolean
       }
+      restaurante_esta_ativo: {
+        Args: { _restaurante_id: string }
+        Returns: boolean
+      }
       resumo_comissoes: { Args: { _restaurante_id: string }; Returns: Json }
       seed_categorias_financeiras: {
         Args: { _restaurante_id: string }
