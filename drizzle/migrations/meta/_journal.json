@@ -15,6 +15,13 @@
       "when": 1794339988642,
       "tag": "0001_delivery_taxa_distancia",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1794340814161,
+      "tag": "0002_tighten_public_policies",
+      "breakpoints": true
     }
   ]
 }
