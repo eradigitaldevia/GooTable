@@ -33,7 +33,7 @@ export function SuporteChat() {
       <div className="flex items-center justify-between border-b px-4 py-3">
         <div className="flex items-center gap-2">
           <LifeBuoy className="h-5 w-5 text-primary" />
-          <span className="font-semibold">Assistente GooMesa</span>
+          <span className="font-semibold">Assistente GooTable</span>
         </div>
         <Button variant="ghost" size="sm" onClick={reiniciar} disabled={!mensagens.length}>
           <RotateCcw className="mr-1 h-4 w-4" /> Nova conversa
@@ -44,7 +44,7 @@ export function SuporteChat() {
         {mensagens.length === 0 && (
           <div className="mx-auto max-w-lg space-y-3 pt-8 text-center">
             <p className="text-muted-foreground">
-              Tire suas dúvidas sobre como usar o GooMesa. Experimente:
+              Tire suas dúvidas sobre como usar o GooTable. Experimente:
             </p>
             <div className="grid gap-2 sm:grid-cols-2">
               {SUGESTOES.map((s) => (

@@ -1,6 +1,6 @@
 /** Helpers puros para montar o link do CTA "Fale com vendas". */
 
-export const MENSAGEM_VENDAS_PADRAO = "Olá! Quero conhecer o sistema GooMesa.";
+export const MENSAGEM_VENDAS_PADRAO = "Olá! Quero conhecer o sistema GooTable.";
 
 /** Normaliza o número para o formato aceito pelo wa.me (somente dígitos, com DDI 55). */
 export function normalizarWhatsapp(numero: string | null | undefined): string | null {

@@ -10,7 +10,7 @@ export function LandingDiferenciaisSection() {
   return (
     <section className="border-y border-border/60 bg-card/40 py-20">
       <div className="mx-auto max-w-6xl px-4">
-        <h2 className="text-center text-3xl font-extrabold tracking-tight sm:text-4xl">Por que o GooMesa?</h2>
+        <h2 className="text-center text-3xl font-extrabold tracking-tight sm:text-4xl">Por que o GooTable?</h2>
         <div className="mt-10 grid gap-4 md:grid-cols-3">
           {DIFERENCIAIS.map((d) => (
             <div key={d.title} className="rounded-2xl border border-border bg-card p-6 text-center shadow-[var(--shadow-soft)]">

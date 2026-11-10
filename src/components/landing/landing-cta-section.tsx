@@ -9,7 +9,7 @@ export function LandingCtaSection({ vendasHref, vendasProps }: LandingCtaSection
   return (
     <section className="py-20">
       <div className="mx-auto max-w-3xl px-4 text-center">
-        <h2 className="text-3xl font-extrabold tracking-tight sm:text-4xl">Pronto para ver o GooMesa na prática?</h2>
+        <h2 className="text-3xl font-extrabold tracking-tight sm:text-4xl">Pronto para ver o GooTable na prática?</h2>
         <p className="mt-4 text-muted-foreground">
           Fale com nosso time e agende uma demonstração para o seu restaurante.
         </p>

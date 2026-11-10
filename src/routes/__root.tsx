@@ -73,24 +73,25 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "GooMesa — Pedidos por QR Code para restaurantes" },
+      { title: "GooTable — Pedidos por QR Code para restaurantes" },
       {
         name: "description",
         content:
           "Cardápio digital com pedidos via QR Code direto da mesa. Painel realtime, cardápio fácil de gerenciar e zero fila no caixa.",
       },
-      { property: "og:title", content: "GooMesa — Pedidos por QR Code para restaurantes" },
-      { property: "og:description", content: "GooMesa é uma plataforma SaaS para restaurantes com pedidos por QR Code na mesa." },
+      { property: "og:title", content: "GooTable — Pedidos por QR Code para restaurantes" },
+      { property: "og:description", content: "GooTable é uma plataforma SaaS para restaurantes com pedidos por QR Code na mesa." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
-      { name: "twitter:title", content: "GooMesa — Pedidos por QR Code para restaurantes" },
-      { name: "description", content: "GooMesa é uma plataforma SaaS para restaurantes com pedidos por QR Code na mesa." },
-      { name: "twitter:description", content: "GooMesa é uma plataforma SaaS para restaurantes com pedidos por QR Code na mesa." },
+      { name: "twitter:title", content: "GooTable — Pedidos por QR Code para restaurantes" },
+      { name: "description", content: "GooTable é uma plataforma SaaS para restaurantes com pedidos por QR Code na mesa." },
+      { name: "twitter:description", content: "GooTable é uma plataforma SaaS para restaurantes com pedidos por QR Code na mesa." },
       { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/f3bdeeec-626b-4c36-87ec-fdd94ab17c33/id-preview-186bbed0--c24d7197-c8a0-49c0-a2aa-639d277dc385.lovable.app-1780235433560.png" },
       { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/f3bdeeec-626b-4c36-87ec-fdd94ab17c33/id-preview-186bbed0--c24d7197-c8a0-49c0-a2aa-639d277dc385.lovable.app-1780235433560.png" },
     ],
     links: [
       { rel: "stylesheet", href: appCss },
+      { rel: "icon", type: "image/png", href: "/favicon.png" },
       {
         rel: "preload",
         as: "font",

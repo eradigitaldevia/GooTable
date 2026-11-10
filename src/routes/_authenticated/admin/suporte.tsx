@@ -12,7 +12,7 @@ function SuportePage() {
       <div>
         <h1 className="text-2xl font-bold">Suporte inteligente</h1>
         <p className="text-sm text-muted-foreground">
-          Pergunte como usar qualquer recurso do GooMesa.
+          Pergunte como usar qualquer recurso do GooTable.
         </p>
       </div>
       <SuporteChat />
