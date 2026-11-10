@@ -8,6 +8,7 @@ interface DeliveryPedido {
   cliente_nome?: string | null;
   cliente_telefone?: string | null;
   endereco_cep?: string | null;
+  distancia_km?: number | null;
   endereco_rua?: string | null;
   endereco_numero?: string | null;
   endereco_complemento?: string | null;
@@ -95,6 +96,11 @@ export function DeliveryInfoSection({
           <MapPin className="mt-0.5 h-3.5 w-3.5 shrink-0" />
           <span>{enderecoTexto}</span>
         </div>
+      )}
+      {isDelivery && pedido.distancia_km != null && (
+        <p className="text-xs text-muted-foreground">
+          Distância: {Number(pedido.distancia_km).toLocaleString("pt-BR", { maximumFractionDigits: 1 })} km
+        </p>
       )}
       <div className="flex flex-wrap gap-2 pt-1">
         {whatsappHref && (

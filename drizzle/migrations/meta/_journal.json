@@ -8,6 +8,13 @@
       "when": 1793641914709,
       "tag": "0000_delivery_bairros",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1794339988642,
+      "tag": "0001_delivery_taxa_distancia",
+      "breakpoints": true
     }
   ]
 }

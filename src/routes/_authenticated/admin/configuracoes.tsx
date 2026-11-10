@@ -20,7 +20,7 @@ import { ComissaoModoForm } from "@/components/configuracoes/comissao-modo-form"
 import { TaxaServicoForm } from "@/components/configuracoes/taxa-servico-form";
 import { CouvertMesaForm } from "@/components/configuracoes/couvert-form";
 import { DeliveryForm } from "@/components/configuracoes/delivery-form";
-import { DeliveryBairrosCard } from "@/components/configuracoes/delivery-bairros-card";
+import { DeliveryTaxaCard } from "@/components/configuracoes/delivery-taxa-card";
 import { EstoqueConfig } from "@/components/configuracoes/estoque-config";
 import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
@@ -968,7 +968,7 @@ function Configuracoes() {
             onChange={patch}
           />
           <SaveBtn aba="delivery" />
-          <DeliveryBairrosCard restauranteId={restaurante.id} />
+          <DeliveryTaxaCard restauranteId={restaurante.id} />
         </TabsContent>
 
         <TabsContent value="estoque" className="space-y-6">

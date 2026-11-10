@@ -29,6 +29,8 @@ import { ProdutoDialog } from "@/components/cliente/produto-dialog";
 import { CarrinhoItemRow } from "@/components/cliente/carrinho-item-row";
 import { DeliveryHeader } from "@/components/delivery/delivery-header";
 import { EnderecoForm } from "@/components/delivery/endereco-form";
+import { DistanciaStatus } from "@/components/delivery/distancia-status";
+import { useTaxaDistancia } from "@/hooks/use-taxa-distancia";
 import {
   MSG_BAIRRO_NAO_ATENDIDO,
   resolverTaxaEntrega,
@@ -263,6 +265,7 @@ function DeliveryPage() {
           state={state}
           setState={setState}
           taxa={Number(restaurante.delivery_taxa_entrega ?? 0)}
+          porDistancia={restaurante.delivery_modo_taxa === "distancia"}
           cfgTaxa={{
             porBairro: !!restaurante.delivery_taxa_por_bairro,
             foraLista: restaurante.delivery_bairro_fora_lista ?? "bloquear",
@@ -625,6 +628,7 @@ function StepRevisao({
   state,
   setState,
   taxa,
+  porDistancia,
   cfgTaxa,
   minimo,
   previsao,
@@ -644,6 +648,7 @@ function StepRevisao({
   state: DeliveryState;
   setState: (s: DeliveryState | ((p: DeliveryState) => DeliveryState)) => void;
   taxa: number;
+  porDistancia: boolean;
   cfgTaxa: ConfigTaxaBairro;
   minimo: number;
   previsao: number;
@@ -698,9 +703,12 @@ function StepRevisao({
   const subtotal = cartTotal(cart);
   void taxa;
   const resTaxa = resolverTaxaEntrega(state.modo, state.endereco?.bairro, cfgTaxa);
+  const dist = useTaxaDistancia(slug, state.endereco, porDistancia && state.modo === "delivery");
   const bairroBloqueado =
-    state.modo === "delivery" && !!state.endereco?.bairro.trim() && !resTaxa.ok;
-  const taxaAplicada = resTaxa.ok ? resTaxa.taxa : 0;
+    !porDistancia && state.modo === "delivery" && !!state.endereco?.bairro.trim() && !resTaxa.ok;
+  const distanciaPendente = dist.status === "aguardando" || dist.status === "carregando" || dist.status === "erro";
+  const taxaAplicada =
+    dist.status === "ok" ? dist.taxa : porDistancia && state.modo === "delivery" ? 0 : resTaxa.ok ? resTaxa.taxa : 0;
   const total = subtotal + taxaAplicada;
   const falta = Math.max(0, minimo - subtotal);
   const enderecoOk =
@@ -712,7 +720,14 @@ function StepRevisao({
       state.endereco.cidade.trim() &&
       state.endereco.uf.trim().length === 2);
   const podeEnviar =
-    cart.length > 0 && falta === 0 && enderecoOk && !bairroBloqueado && metodosDisp.length > 0 && !enviando && aberto;
+    cart.length > 0 &&
+    falta === 0 &&
+    enderecoOk &&
+    !bairroBloqueado &&
+    !distanciaPendente &&
+    metodosDisp.length > 0 &&
+    !enviando &&
+    aberto;
 
   const handleEnviar = async () => {
     if (!podeEnviar) return;
@@ -873,6 +888,7 @@ function StepRevisao({
                 {bairroBloqueado && (
                   <p className="text-sm text-destructive">{MSG_BAIRRO_NAO_ATENDIDO}</p>
                 )}
+                <DistanciaStatus estado={dist} />
               </section>
             )}
 
