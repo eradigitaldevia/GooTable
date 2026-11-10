@@ -15,6 +15,7 @@ export function DistanciaStatus({ estado }: { estado: EstadoTaxaDistancia }) {
       </p>
     );
   if (estado.status === "erro") return <p className="text-sm text-destructive">{estado.erro}</p>;
+  if (estado.status !== "ok") return null;
   return (
     <p className="text-sm font-medium">
       {estado.distanciaKm != null
