@@ -34,6 +34,7 @@ export interface RestauranteDeliveryPublico extends RestaurantePublico {
   delivery_taxa_por_bairro: boolean;
   delivery_bairro_fora_lista: BairroForaLista;
   delivery_bairros: BairroTaxa[];
+  delivery_modo_taxa: "fixa" | "bairro" | "distancia";
   aberto_agora: boolean;
   proxima_abertura_label: string | null;
 }
@@ -361,14 +362,29 @@ export const criarPedidoDeliveryFn = createServerFn({ method: "POST" })
       throw new Error("Retirada indisponível");
     }
 
-    // 1b. Taxa de entrega (por bairro, quando configurado) — sempre calculada no servidor
-    const resTaxa = resolverTaxaEntrega(data.modo, data.endereco?.bairro, {
-      porBairro: !!r.delivery_taxa_por_bairro,
-      foraLista: r.delivery_bairro_fora_lista ?? "bloquear",
-      taxaPadrao: Number(r.delivery_taxa_entrega ?? 0),
-      bairros:
-        data.modo === "delivery" && r.delivery_taxa_por_bairro ? await carregarBairrosAtivos(r.id) : [],
-    });
+    // 1b. Taxa de entrega (por bairro ou distância, quando configurado) — sempre calculada no servidor
+    let distanciaKm: number | null = null;
+    let resTaxa: { ok: true; taxa: number } | { ok: false; erro: string };
+    if (data.modo === "delivery" && data.endereco && r.delivery_modo_taxa === "distancia") {
+      const { resolverEntregaPorDistancia, idVisitante } = await import("./delivery-distancia.server");
+      const { getRequestHeader } = await import("@tanstack/react-start/server");
+      const ip = getRequestHeader("cf-connecting-ip") ?? getRequestHeader("x-forwarded-for")?.split(",")[0];
+      const resDist = await resolverEntregaPorDistancia(
+        r as unknown as Parameters<typeof resolverEntregaPorDistancia>[0],
+        data.endereco,
+        await idVisitante(ip),
+      );
+      distanciaKm = resDist.distanciaKm;
+      resTaxa = resDist.ok ? { ok: true, taxa: resDist.taxa } : { ok: false, erro: resDist.erro };
+    } else {
+      resTaxa = resolverTaxaEntrega(data.modo, data.endereco?.bairro, {
+        porBairro: !!r.delivery_taxa_por_bairro,
+        foraLista: r.delivery_bairro_fora_lista ?? "bloquear",
+        taxaPadrao: Number(r.delivery_taxa_entrega ?? 0),
+        bairros:
+          data.modo === "delivery" && r.delivery_taxa_por_bairro ? await carregarBairrosAtivos(r.id) : [],
+      });
+    }
     if (!resTaxa.ok) throw new Error(resTaxa.erro);
 
     // 2. Validação de pagamento aceito
@@ -562,6 +578,7 @@ export const criarPedidoDeliveryFn = createServerFn({ method: "POST" })
         cliente_telefone: data.cliente.telefone,
         taxa_entrega: taxa,
         previsao_entrega_min: previsaoMin,
+        distancia_km: distanciaKm,
         ...enderecoPayload,
       })
       .eq("id", pedidoId);
