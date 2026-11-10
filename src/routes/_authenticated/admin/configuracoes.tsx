@@ -968,7 +968,7 @@ function Configuracoes() {
             onChange={patch}
           />
           <SaveBtn aba="delivery" />
-          <DeliveryBairrosCard restauranteId={restaurante.id} />
+          <DeliveryTaxaCard restauranteId={restaurante.id} />
         </TabsContent>
 
         <TabsContent value="estoque" className="space-y-6">

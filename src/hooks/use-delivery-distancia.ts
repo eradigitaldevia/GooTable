@@ -42,7 +42,6 @@ export interface ConfigDistanciaInput {
   baseKm: number;
   valorKmExtra: number;
   falha: FalhaDistancia;
-  raioKm: number | null;
 }
 
 export function useSalvarConfigDistancia(restauranteId: string) {

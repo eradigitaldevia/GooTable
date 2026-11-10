@@ -89,7 +89,6 @@ export const salvarConfigDistanciaFn = createServerFn({ method: "POST" })
         baseKm: z.number().min(0).max(200),
         valorKmExtra: z.number().min(0).max(100),
         falha: z.enum(["taxa_fixa", "bloquear"]),
-        raioKm: z.number().positive().max(200).nullable(),
       })
       .parse(d),
   )
@@ -105,7 +104,6 @@ export const salvarConfigDistanciaFn = createServerFn({ method: "POST" })
         delivery_km_base_km: data.baseKm,
         delivery_km_valor_extra: data.valorKmExtra,
         delivery_km_falha: data.falha,
-        delivery_raio_km: data.raioKm,
       })
       .eq("id", data.restauranteId);
     if (error) throw new Error(error.message);

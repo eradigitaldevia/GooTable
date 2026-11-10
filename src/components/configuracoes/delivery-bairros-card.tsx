@@ -48,16 +48,10 @@ export function DeliveryBairrosCard({ restauranteId }: { restauranteId: string }
         <div className="min-w-0">
           <h2 className="text-base font-semibold">Taxa por bairro</h2>
           <p className="mt-1 text-sm text-muted-foreground">
-            Quando ligada, a taxa de entrega é cobrada conforme o bairro do cliente. Desligada,
-            vale a taxa única acima. As alterações desta seção são salvas na hora.
+            A taxa de entrega é cobrada conforme o bairro do cliente. As alterações desta seção
+            são salvas na hora.
           </p>
         </div>
-        <Switch
-          checked={data.porBairro}
-          disabled={salvarCfg.isPending}
-          onCheckedChange={(v) => salvar({ porBairro: v })}
-          aria-label="Ativar taxa por bairro"
-        />
       </div>
 
       <div className="space-y-2">
