@@ -1,5 +1,4 @@
 import { Link } from "@tanstack/react-router";
-import { QrCode } from "lucide-react";
 import gootableLogo from "@/assets/gootable-logo.png.asset.json";
 
 export function LegalLayout({

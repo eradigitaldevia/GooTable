@@ -1,6 +1,5 @@
 import { createFileRoute, Link, redirect } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
-import { QrCode } from "lucide-react";
 import gootableLogo from "@/assets/gootable-logo.png.asset.json";
 
 export const Route = createFileRoute("/cadastro")({

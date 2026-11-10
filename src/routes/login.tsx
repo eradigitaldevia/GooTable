@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { QrCode, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { usePlataformaConfig } from "@/hooks/use-plataforma-config";
 import { montarLinkVendas } from "@/lib/vendas-link";
 import gootableLogo from "@/assets/gootable-logo.png.asset.json";
