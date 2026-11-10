@@ -5,7 +5,9 @@ import { calcularDistanciaEntregaFn } from "@/lib/delivery-distancia.functions";
 import type { EnderecoCliente } from "@/lib/delivery.functions";
 
 export type EstadoTaxaDistancia =
-  | { status: "inativo" | "aguardando" | "carregando" }
+  | { status: "inativo" }
+  | { status: "aguardando" }
+  | { status: "carregando" }
   | { status: "ok"; distanciaKm: number | null; taxa: number }
   | { status: "erro"; erro: string };
 
