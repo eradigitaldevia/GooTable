@@ -1,6 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { QrCode, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import gootableLogo from "@/assets/gootable-logo.png.asset.json";
 
 interface LandingHeroProps {
   vendasHref?: string;
@@ -13,10 +14,7 @@ export function LandingHero({ vendasHref, vendasProps }: LandingHeroProps) {
       <header className="sticky top-0 z-30 border-b border-border/60 bg-background/80 backdrop-blur">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4">
           <Link to="/" className="flex items-center gap-2">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary text-primary-foreground">
-              <QrCode className="h-5 w-5" />
-            </div>
-            <span className="text-lg font-bold tracking-tight">GooMesa</span>
+            <img src={gootableLogo.url} alt="GooTable" className="h-9 w-auto" />
           </Link>
           <nav className="flex items-center gap-2">
             <Link to="/login">

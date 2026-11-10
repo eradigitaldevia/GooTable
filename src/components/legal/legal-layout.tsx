@@ -1,5 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { QrCode } from "lucide-react";
+import gootableLogo from "@/assets/gootable-logo.png.asset.json";
 
 export function LegalLayout({
   titulo,
@@ -15,10 +16,7 @@ export function LegalLayout({
       <header className="border-b border-border bg-card/40">
         <div className="mx-auto flex max-w-3xl items-center justify-between px-4 py-4">
           <Link to="/" className="flex items-center gap-2">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary text-primary-foreground">
-              <QrCode className="h-4 w-4" />
-            </div>
-            <span className="font-bold">GooMesa</span>
+            <img src={gootableLogo.url} alt="GooTable" className="h-8 w-auto" />
           </Link>
           <nav className="flex gap-4 text-sm text-muted-foreground">
             <Link to="/termos" className="hover:text-foreground">

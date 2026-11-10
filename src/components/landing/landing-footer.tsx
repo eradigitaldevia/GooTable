@@ -12,7 +12,7 @@ export function LandingFooter({ sociais, onAbrirCookies }: LandingFooterProps) {
     <footer className="border-t border-border bg-card/40">
       <div className="mx-auto flex max-w-6xl flex-col gap-3 px-4 py-8 text-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
         <span>
-          © {new Date().getFullYear()} GooMesa. Feito para restaurantes que querem servir mais rápido.
+          © {new Date().getFullYear()} GooTable. Feito para restaurantes que querem servir mais rápido.
         </span>
         {sociais.length > 0 && (
           <nav className="flex items-center gap-3">

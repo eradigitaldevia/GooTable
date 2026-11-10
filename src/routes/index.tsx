@@ -23,7 +23,7 @@ const CookiePreferenciasDialog = lazy(() =>
   })),
 );
 
-const TITULO = "GooMesa — Operação e gestão completa para restaurantes";
+const TITULO = "GooTable — Operação e gestão completa para restaurantes";
 const DESCRICAO =
   "Pedidos por QR Code, delivery próprio sem comissão, KDS com impressão automática, estoque com ficha técnica e financeiro com DRE.";
 

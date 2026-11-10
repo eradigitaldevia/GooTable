@@ -7,9 +7,9 @@ import {
   LGPD_VERSAO,
 } from "@/lib/lgpd";
 
-const TITULO = "Termos de Uso — GooMesa";
+const TITULO = "Termos de Uso — GooTable";
 const DESC =
-  "Termos de Uso da plataforma GooMesa: cardápio digital por QR Code, pedidos, comandas e pagamentos para restaurantes.";
+  "Termos de Uso da plataforma GooTable: cardápio digital por QR Code, pedidos, comandas e pagamentos para restaurantes.";
 
 export const Route = createFileRoute("/termos")({
   head: () => ({
@@ -29,7 +29,7 @@ function TermosPage() {
   return (
     <LegalLayout titulo="Termos de Uso" atualizadoEm={`versão ${LGPD_VERSAO}`}>
       <p>
-        Estes Termos de Uso regulam o acesso e a utilização da plataforma GooMesa,
+        Estes Termos de Uso regulam o acesso e a utilização da plataforma GooTable,
         operada por {LGPD_RAZAO_SOCIAL}, CNPJ {LGPD_CNPJ} ("nós"). Ao criar uma
         conta, ler o QR Code de uma mesa ou realizar um pedido, você concorda
         com as condições abaixo.
