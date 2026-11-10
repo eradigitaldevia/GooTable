@@ -1,2 +1,3 @@
 - Estoque: baixa/estorno/bloqueio feitos por triggers em pedido_itens/pedidos (não nas RPCs de pedido); saldo só muda via estoque_mov_interno — mantém fluxos de pedido intactos e o módulo opcional.
-- Delivery: taxa de entrega resolvida por `src/lib/taxa-bairro.ts` (função pura usada no servidor e no checkout); o servidor sempre recalcula — evita taxa adulterada pelo navegador.
+- Delivery: taxa de entrega resolvida por funções puras (`src/lib/taxa-bairro.ts`, `src/lib/taxa-distancia.ts`) usadas no servidor e no checkout; o servidor sempre recalcula — evita taxa adulterada pelo navegador.
+- Taxa por distância: chamadas ao Google Maps só no servidor (`delivery-distancia.server.ts`) com cache por endereço e limites diários/por visitante — o checkout é público e o Google cobra por consulta.
