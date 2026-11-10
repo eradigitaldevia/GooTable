@@ -917,6 +917,59 @@ export type Database = {
           },
         ]
       }
+      delivery_distancia_cache: {
+        Row: {
+          chave: string
+          criado_em: string
+          distancia_m: number | null
+          duracao_s: number | null
+          origem: string
+          restaurante_id: string
+        }
+        Insert: {
+          chave: string
+          criado_em?: string
+          distancia_m?: number | null
+          duracao_s?: number | null
+          origem: string
+          restaurante_id: string
+        }
+        Update: {
+          chave?: string
+          criado_em?: string
+          distancia_m?: number | null
+          duracao_s?: number | null
+          origem?: string
+          restaurante_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "delivery_distancia_cache_restaurante_id_fkey"
+            columns: ["restaurante_id"]
+            isOneToOne: false
+            referencedRelation: "restaurantes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      delivery_distancia_uso: {
+        Row: {
+          consultas: number
+          escopo: string
+          janela: string
+        }
+        Insert: {
+          consultas?: number
+          escopo: string
+          janela: string
+        }
+        Update: {
+          consultas?: number
+          escopo?: string
+          janela?: string
+        }
+        Relationships: []
+      }
       estoque_fichas: {
         Row: {
           criado_em: string
@@ -1984,6 +2037,7 @@ export type Database = {
           cliente_telefone: string | null
           comanda_id: string | null
           criado_em: string
+          distancia_km: number | null
           endereco_bairro: string | null
           endereco_cep: string | null
           endereco_cidade: string | null
@@ -2017,6 +2071,7 @@ export type Database = {
           cliente_telefone?: string | null
           comanda_id?: string | null
           criado_em?: string
+          distancia_km?: number | null
           endereco_bairro?: string | null
           endereco_cep?: string | null
           endereco_cidade?: string | null
@@ -2050,6 +2105,7 @@ export type Database = {
           cliente_telefone?: string | null
           comanda_id?: string | null
           criado_em?: string
+          distancia_km?: number | null
           endereco_bairro?: string | null
           endereco_cep?: string | null
           endereco_cidade?: string | null
@@ -2457,6 +2513,16 @@ export type Database = {
           delivery_aceita_pix: boolean
           delivery_ativo: boolean
           delivery_bairro_fora_lista: string
+          delivery_km_base_km: number
+          delivery_km_base_valor: number
+          delivery_km_faixas: Json
+          delivery_km_falha: string
+          delivery_km_modelo: string
+          delivery_km_valor_extra: number
+          delivery_modo_taxa: string
+          delivery_origem_endereco: string | null
+          delivery_origem_lat: number | null
+          delivery_origem_lng: number | null
           delivery_pedido_minimo: number
           delivery_raio_km: number | null
           delivery_retirada_ativa: boolean
@@ -2523,6 +2589,16 @@ export type Database = {
           delivery_aceita_pix?: boolean
           delivery_ativo?: boolean
           delivery_bairro_fora_lista?: string
+          delivery_km_base_km?: number
+          delivery_km_base_valor?: number
+          delivery_km_faixas?: Json
+          delivery_km_falha?: string
+          delivery_km_modelo?: string
+          delivery_km_valor_extra?: number
+          delivery_modo_taxa?: string
+          delivery_origem_endereco?: string | null
+          delivery_origem_lat?: number | null
+          delivery_origem_lng?: number | null
           delivery_pedido_minimo?: number
           delivery_raio_km?: number | null
           delivery_retirada_ativa?: boolean
@@ -2589,6 +2665,16 @@ export type Database = {
           delivery_aceita_pix?: boolean
           delivery_ativo?: boolean
           delivery_bairro_fora_lista?: string
+          delivery_km_base_km?: number
+          delivery_km_base_valor?: number
+          delivery_km_faixas?: Json
+          delivery_km_falha?: string
+          delivery_km_modelo?: string
+          delivery_km_valor_extra?: number
+          delivery_modo_taxa?: string
+          delivery_origem_endereco?: string | null
+          delivery_origem_lat?: number | null
+          delivery_origem_lng?: number | null
           delivery_pedido_minimo?: number
           delivery_raio_km?: number | null
           delivery_retirada_ativa?: boolean
@@ -2997,6 +3083,15 @@ export type Database = {
           _pedido_id: string
         }
         Returns: undefined
+      }
+      registrar_consulta_distancia: {
+        Args: {
+          _limite_dia: number
+          _limite_hora: number
+          _restaurante_id: string
+          _visitante: string
+        }
+        Returns: boolean
       }
       registrar_movimento_caixa: {
         Args: {
