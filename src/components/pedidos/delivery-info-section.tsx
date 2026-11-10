@@ -97,6 +97,11 @@ export function DeliveryInfoSection({
           <span>{enderecoTexto}</span>
         </div>
       )}
+      {isDelivery && pedido.distancia_km != null && (
+        <p className="text-xs text-muted-foreground">
+          Distância: {Number(pedido.distancia_km).toLocaleString("pt-BR", { maximumFractionDigits: 1 })} km
+        </p>
+      )}
       <div className="flex flex-wrap gap-2 pt-1">
         {whatsappHref && (
           <Button asChild size="sm" variant="outline">
