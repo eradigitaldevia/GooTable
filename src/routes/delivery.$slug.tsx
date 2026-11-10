@@ -29,6 +29,8 @@ import { ProdutoDialog } from "@/components/cliente/produto-dialog";
 import { CarrinhoItemRow } from "@/components/cliente/carrinho-item-row";
 import { DeliveryHeader } from "@/components/delivery/delivery-header";
 import { EnderecoForm } from "@/components/delivery/endereco-form";
+import { DistanciaStatus } from "@/components/delivery/distancia-status";
+import { useTaxaDistancia } from "@/hooks/use-taxa-distancia";
 import {
   MSG_BAIRRO_NAO_ATENDIDO,
   resolverTaxaEntrega,
