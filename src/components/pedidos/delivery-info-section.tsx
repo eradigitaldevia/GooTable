@@ -8,6 +8,7 @@ interface DeliveryPedido {
   cliente_nome?: string | null;
   cliente_telefone?: string | null;
   endereco_cep?: string | null;
+  distancia_km?: number | null;
   endereco_rua?: string | null;
   endereco_numero?: string | null;
   endereco_complemento?: string | null;

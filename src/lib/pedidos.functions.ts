@@ -30,6 +30,7 @@ export interface Pedido {
   cliente_telefone?: string | null;
   taxa_entrega?: number | null;
   endereco_cep?: string | null;
+  distancia_km?: number | null;
   endereco_rua?: string | null;
   endereco_numero?: string | null;
   endereco_complemento?: string | null;
@@ -75,7 +76,7 @@ export const listarPedidosDoDiaFn = createServerFn({ method: "POST" })
     const { data: peds, error: pErr } = await supabase
       .from("pedidos")
       .select(
-        "id, status, total, observacao, criado_em, mesa_id, restaurante_id, comanda_id, garcom_id, canal, cliente_nome, cliente_telefone, taxa_entrega, endereco_cep, endereco_rua, endereco_numero, endereco_complemento, endereco_bairro, endereco_cidade, endereco_uf, endereco_referencia",
+        "id, status, total, observacao, criado_em, mesa_id, restaurante_id, comanda_id, garcom_id, canal, cliente_nome, cliente_telefone, taxa_entrega, distancia_km, endereco_cep, endereco_rua, endereco_numero, endereco_complemento, endereco_bairro, endereco_cidade, endereco_uf, endereco_referencia",
       )
       .eq("restaurante_id", data.restauranteId)
       .gte("criado_em", inicio.toISOString())
@@ -1496,6 +1497,7 @@ export interface PedidoListaItem {
   observacao?: string | null;
   taxa_entrega?: number | null;
   endereco_cep?: string | null;
+  distancia_km?: number | null;
   endereco_rua?: string | null;
   endereco_numero?: string | null;
   endereco_complemento?: string | null;
@@ -1506,7 +1508,7 @@ export interface PedidoListaItem {
 }
 
 const COLUNAS_PEDIDO =
-  "id, status, total, observacao, criado_em, mesa_id, restaurante_id, comanda_id, garcom_id, canal, cliente_nome, cliente_telefone, taxa_entrega, endereco_cep, endereco_rua, endereco_numero, endereco_complemento, endereco_bairro, endereco_cidade, endereco_uf, endereco_referencia";
+  "id, status, total, observacao, criado_em, mesa_id, restaurante_id, comanda_id, garcom_id, canal, cliente_nome, cliente_telefone, taxa_entrega, distancia_km, endereco_cep, endereco_rua, endereco_numero, endereco_complemento, endereco_bairro, endereco_cidade, endereco_uf, endereco_referencia";
 
 function inicioHoje(): Date {
   return inicioDoDia();
