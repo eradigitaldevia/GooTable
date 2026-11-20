@@ -7,7 +7,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { TermosConteudo } from "@/components/legal/termos-conteudo";
 import { PrivacidadeConteudo } from "@/components/legal/privacidade-conteudo";
 import { DireitosConteudo } from "@/components/legal/direitos-conteudo";
@@ -51,13 +50,13 @@ export function LegalDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <ScrollArea className="min-h-0 flex-1 px-6 py-5">
+        <div className="min-h-0 flex-1 overflow-y-auto px-6 py-5">
           <div className="space-y-6 text-sm leading-relaxed text-muted-foreground">
             {doc === "termos" && <TermosConteudo />}
             {doc === "privacidade" && <PrivacidadeConteudo />}
             {doc === "direitos" && <DireitosConteudo />}
           </div>
-        </ScrollArea>
+        </div>
 
         {atual && (
           <div className="border-t border-border px-6 py-3">
