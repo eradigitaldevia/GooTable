@@ -1,4 +1,4 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -30,6 +30,7 @@ import { CarrinhoItemRow } from "@/components/cliente/carrinho-item-row";
 import { DeliveryHeader } from "@/components/delivery/delivery-header";
 import { EnderecoForm } from "@/components/delivery/endereco-form";
 import { DistanciaStatus } from "@/components/delivery/distancia-status";
+import { LegalDialog, type LegalDoc } from "@/components/legal/legal-dialog";
 import { useTaxaDistancia } from "@/hooks/use-taxa-distancia";
 import {
   MSG_BAIRRO_NAO_ATENDIDO,
@@ -667,6 +668,7 @@ function StepRevisao({
   const [cupom, setCupom] = useState("");
   const [troco, setTroco] = useState("");
   const [enviando, setEnviando] = useState(false);
+  const [legalDoc, setLegalDoc] = useState<LegalDoc | null>(null);
 
   const metodosDisp = useMemo(() => {
     const lista: Array<"pix" | "dinheiro" | "cartao_entrega"> = [];
@@ -1009,18 +1011,31 @@ function StepRevisao({
             </Button>
             <p className="mt-2 text-center text-[11px] leading-snug text-muted-foreground">
               Ao enviar, você concorda com os{" "}
-              <Link to="/termos" target="_blank" className="underline">
+              <button
+                type="button"
+                onClick={() => setLegalDoc("termos")}
+                className="underline"
+              >
                 Termos de Uso
-              </Link>{" "}
+              </button>{" "}
               e a{" "}
-              <Link to="/privacidade" target="_blank" className="underline">
+              <button
+                type="button"
+                onClick={() => setLegalDoc("privacidade")}
+                className="underline"
+              >
                 Política de Privacidade
-              </Link>
+              </button>
               .
             </p>
           </div>
         </div>
       )}
+      <LegalDialog
+        doc={legalDoc}
+        open={legalDoc !== null}
+        onOpenChange={(o) => !o && setLegalDoc(null)}
+      />
     </>
   );
 }

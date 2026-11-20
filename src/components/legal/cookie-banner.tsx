@@ -1,6 +1,7 @@
-import { Link } from "@tanstack/react-router";
+import { useState } from "react";
 import { Cookie } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { LegalDialog, type LegalDoc } from "@/components/legal/legal-dialog";
 
 export function CookieBanner({
   onAceitarTodos,
@@ -11,6 +12,8 @@ export function CookieBanner({
   onRejeitar: () => void;
   onPersonalizar: () => void;
 }) {
+  const [legalDoc, setLegalDoc] = useState<LegalDoc | null>(null);
+
   return (
     <div className="fixed inset-x-0 bottom-0 z-50 p-3 sm:p-4">
       <div className="mx-auto flex max-w-4xl flex-col gap-4 rounded-2xl border border-border bg-card p-4 shadow-[var(--shadow-elegant)] sm:flex-row sm:items-center sm:gap-6 sm:p-5">
@@ -21,9 +24,13 @@ export function CookieBanner({
           <p className="text-sm text-muted-foreground">
             Usamos cookies para operar o site e entender como ele é usado. Você pode
             escolher quais categorias aceitar. Saiba mais na{" "}
-            <Link to="/privacidade" className="font-medium text-primary hover:underline">
+            <button
+              type="button"
+              onClick={() => setLegalDoc("privacidade")}
+              className="font-medium text-primary hover:underline"
+            >
               Política de Privacidade
-            </Link>
+            </button>
             .
           </p>
         </div>
@@ -39,6 +46,11 @@ export function CookieBanner({
           </Button>
         </div>
       </div>
+      <LegalDialog
+        doc={legalDoc}
+        open={legalDoc !== null}
+        onOpenChange={(o) => !o && setLegalDoc(null)}
+      />
     </div>
   );
 }

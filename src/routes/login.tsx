@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 import { usePlataformaConfig } from "@/hooks/use-plataforma-config";
 import { montarLinkVendas } from "@/lib/vendas-link";
+import { LegalDialog, type LegalDoc } from "@/components/legal/legal-dialog";
 import gootableLogo from "@/assets/gootable-logo.png.asset.json";
 
 function safeRedirect(value: unknown): string | undefined {
@@ -111,6 +112,7 @@ function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [legalDoc, setLegalDoc] = useState<LegalDoc | null>(null);
   const { data: plataformaConfig } = usePlataformaConfig();
   const vendas = montarLinkVendas(
     plataformaConfig?.vendas_whatsapp,
@@ -209,20 +211,25 @@ function Login() {
           </p>
 
           <p className="mt-3 text-center text-xs text-muted-foreground">
-            <Link to="/termos" className="hover:underline">
+            <button type="button" onClick={() => setLegalDoc("termos")} className="hover:underline">
               Termos
-            </Link>
+            </button>
             {" · "}
-            <Link to="/privacidade" className="hover:underline">
+            <button type="button" onClick={() => setLegalDoc("privacidade")} className="hover:underline">
               Privacidade
-            </Link>
+            </button>
             {" · "}
-            <Link to="/direitos" className="hover:underline">
+            <button type="button" onClick={() => setLegalDoc("direitos")} className="hover:underline">
               Direitos do titular
-            </Link>
+            </button>
           </p>
         </div>
       </div>
+      <LegalDialog
+        doc={legalDoc}
+        open={legalDoc !== null}
+        onOpenChange={(o) => !o && setLegalDoc(null)}
+      />
     </div>
   );
 }

@@ -1,5 +1,5 @@
 import { createFileRoute, ClientOnly } from "@tanstack/react-router";
-import { lazy, Suspense } from "react";
+import { lazy, Suspense, useState } from "react";
 import { useCookieConsent } from "@/hooks/use-cookie-consent";
 import { usePlataformaConfig } from "@/hooks/use-plataforma-config";
 import { montarLinkVendas } from "@/lib/vendas-link";
@@ -13,6 +13,7 @@ import { LandingRetaguardaSection } from "@/components/landing/landing-retaguard
 import { LandingDiferenciaisSection } from "@/components/landing/landing-diferenciais-section";
 import { LandingCtaSection } from "@/components/landing/landing-cta-section";
 import { LandingFooter } from "@/components/landing/landing-footer";
+import { LegalDialog, type LegalDoc } from "@/components/legal/legal-dialog";
 
 const CookieBanner = lazy(() =>
   import("@/components/legal/cookie-banner").then((m) => ({ default: m.CookieBanner })),
@@ -43,6 +44,7 @@ export const Route = createFileRoute("/")({
 
 function Landing() {
   const cookies = useCookieConsent("landing");
+  const [legalDoc, setLegalDoc] = useState<LegalDoc | null>(null);
   const { data: config } = usePlataformaConfig();
   const vendas = montarLinkVendas(config?.vendas_whatsapp, config?.vendas_link, config?.vendas_mensagem);
   const vendasProps: Record<string, string> = vendas?.isWhatsapp ? { target: "_blank", rel: "noreferrer" } : {};
@@ -66,7 +68,16 @@ function Landing() {
       <LandingRetaguardaSection />
       <LandingDiferenciaisSection />
       <LandingCtaSection vendasHref={vendasHref} vendasProps={vendasProps} />
-      <LandingFooter sociais={sociais} onAbrirCookies={cookies.abrirPreferencias} />
+      <LandingFooter
+        sociais={sociais}
+        onAbrirCookies={cookies.abrirPreferencias}
+        onAbrirLegal={setLegalDoc}
+      />
+      <LegalDialog
+        doc={legalDoc}
+        open={legalDoc !== null}
+        onOpenChange={(o) => !o && setLegalDoc(null)}
+      />
 
       <ClientOnly>
         <Suspense fallback={null}>

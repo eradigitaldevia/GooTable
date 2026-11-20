@@ -1,13 +1,14 @@
-import { Link } from "@tanstack/react-router";
 import { SocialIcon } from "@/components/social-icon";
+import type { LegalDoc } from "@/components/legal/legal-dialog";
 import type { REDES_SOCIAIS } from "@/lib/social-links";
 
 interface LandingFooterProps {
   sociais: { chave: (typeof REDES_SOCIAIS)[number]["chave"]; rotulo: string; href: string }[];
   onAbrirCookies: () => void;
+  onAbrirLegal: (doc: LegalDoc) => void;
 }
 
-export function LandingFooter({ sociais, onAbrirCookies }: LandingFooterProps) {
+export function LandingFooter({ sociais, onAbrirCookies, onAbrirLegal }: LandingFooterProps) {
   return (
     <footer className="border-t border-border bg-card/40">
       <div className="mx-auto flex max-w-6xl flex-col gap-3 px-4 py-8 text-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
@@ -31,9 +32,15 @@ export function LandingFooter({ sociais, onAbrirCookies }: LandingFooterProps) {
           </nav>
         )}
         <nav className="flex flex-wrap gap-4">
-          <Link to="/termos" className="hover:text-foreground">Termos de Uso</Link>
-          <Link to="/privacidade" className="hover:text-foreground">Política de Privacidade</Link>
-          <Link to="/direitos" className="hover:text-foreground">Direitos do titular</Link>
+          <button type="button" onClick={() => onAbrirLegal("termos")} className="text-left hover:text-foreground">
+            Termos de Uso
+          </button>
+          <button type="button" onClick={() => onAbrirLegal("privacidade")} className="text-left hover:text-foreground">
+            Política de Privacidade
+          </button>
+          <button type="button" onClick={() => onAbrirLegal("direitos")} className="text-left hover:text-foreground">
+            Direitos do titular
+          </button>
           <button type="button" onClick={onAbrirCookies} className="text-left hover:text-foreground">
             Preferências de cookies
           </button>

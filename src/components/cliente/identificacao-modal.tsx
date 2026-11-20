@@ -1,10 +1,10 @@
 import { useState } from "react";
 import { Loader2 } from "lucide-react";
-import { Link } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
+import { LegalDialog, type LegalDoc } from "@/components/legal/legal-dialog";
 
 export interface IdentificacaoValores {
   nome: string;
@@ -31,6 +31,7 @@ export function IdentificacaoModal({
   const [telefone, setTelefone] = useState("");
   const [erro, setErro] = useState<string | null>(null);
   const [aceite, setAceite] = useState(false);
+  const [legalDoc, setLegalDoc] = useState<LegalDoc | null>(null);
 
   const handle = (e: React.FormEvent) => {
     e.preventDefault();
@@ -103,13 +104,21 @@ export function IdentificacaoModal({
               className="text-xs font-normal leading-snug text-muted-foreground"
             >
               Li e aceito os{" "}
-              <Link to="/termos" target="_blank" className="font-medium text-primary underline">
+              <button
+                type="button"
+                onClick={() => setLegalDoc("termos")}
+                className="font-medium text-primary underline"
+              >
                 Termos de Uso
-              </Link>{" "}
+              </button>{" "}
               e a{" "}
-              <Link to="/privacidade" target="_blank" className="font-medium text-primary underline">
+              <button
+                type="button"
+                onClick={() => setLegalDoc("privacidade")}
+                className="font-medium text-primary underline"
+              >
                 Política de Privacidade
-              </Link>
+              </button>
               .
             </Label>
           </div>
@@ -131,6 +140,11 @@ export function IdentificacaoModal({
           </p>
         </form>
       </div>
+      <LegalDialog
+        doc={legalDoc}
+        open={legalDoc !== null}
+        onOpenChange={(o) => !o && setLegalDoc(null)}
+      />
     </div>
   );
 }
