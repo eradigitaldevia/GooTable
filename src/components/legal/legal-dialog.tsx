@@ -1,5 +1,3 @@
-import { Link } from "@tanstack/react-router";
-import { ExternalLink } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -58,18 +56,6 @@ export function LegalDialog({
           </div>
         </div>
 
-        {atual && (
-          <div className="border-t border-border px-6 py-3">
-            <Link
-              to={atual.rota}
-              target="_blank"
-              className="inline-flex items-center gap-1.5 text-xs font-medium text-primary hover:underline"
-            >
-              <ExternalLink className="h-3.5 w-3.5" />
-              Abrir página completa
-            </Link>
-          </div>
-        )}
       </DialogContent>
     </Dialog>
   );
